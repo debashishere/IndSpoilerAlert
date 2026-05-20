@@ -1,0 +1,33 @@
+# Dependency directories
+node_modules/
+.venv/
+venv/
+ENV/
+env/
+
+# Build artifacts
+dist/
+build/
+out/
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Local config & environments
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+logs/
+
+# IDEs & System files
+.DS_Store
+.idea/
+.vscode/
+
+# Uploads and temporary files
+backend/uploads/

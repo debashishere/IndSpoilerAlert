@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: inventory-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+  localstack:
+    image: localstack/localstack:3.4.0
+    container_name: inventory-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3,sqs
+      - AWS_DEFAULT_REGION=us-east-1
+      - SKIP_SSL_CERT_DOWNLOAD=1
+    volumes:
+      - "./localstack-init:/etc/localstack/init/ready.d"
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: inventory-redis
+    command: redis-server --save 60 1 --loglevel notice
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+  sidecar:
+    build:
+      context: ./sidecar
+      dockerfile: Dockerfile
+    container_name: inventory-sidecar
+    ports:
+      - "8000:8000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - S3_ENDPOINT=http://localstack:4566
+      - SQS_ENDPOINT=http://localstack:4566
+    depends_on:
+      - localstack
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: inventory-backend
+    ports:
+      - "5001:5001"
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/spoiler-alert
+      - SIDECAR_URL=http://sidecar:8000
+      - PORT=5001
+      - NODE_ENV=production
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_REGION=us-east-1
+      - S3_ENDPOINT=http://localstack:4566
+      - SQS_ENDPOINT=http://localstack:4566
+      - REDIS_URL=redis://redis:6379
+      - SEED_DATA=${SEED_DATA:-false}
+      - seedData=${seedData:-false}
+    depends_on:
+      - mongo
+      - sidecar
+      - localstack
+      - redis
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: inventory-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - BACKEND_URL=http://backend:5001
+      - VITE_PROXY_TARGET=http://backend:5001
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  redis-data:
+
