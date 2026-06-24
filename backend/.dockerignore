@@ -1,0 +1,6 @@
+node_modules
+dist
+backend.log
+uploads/*
+.pytest_cache
+.env
