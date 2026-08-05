@@ -25,7 +25,7 @@ export function compileClientPreview(
     buyer_name: 'FreshMart Wholesale',
     supplier_name: 'Unilever Supply Operations',
     lot_title: 'Surplus Dairy & Beverage Pack Lot #880',
-    quick_bid_link: 'https://spoileralert.com/bid?token=demo-token-123',
+    quick_bid_link: 'https://indspoileralert.com/bid?token=demo-token-123',
     ...context
   };
 

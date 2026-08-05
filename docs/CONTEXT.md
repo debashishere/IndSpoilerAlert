@@ -1,6 +1,6 @@
 # InventoryFlowing Platform Domain Context
 
-This document outlines the core domain model, glossary of terms, and architectural design constraints for the InventoryFlowing Platform (formerly Spoiler Alert).
+This document outlines the core domain model, glossary of terms, and architectural design constraints for the InventoryFlowing Platform (formerly IndSpoiler Alert).
 
 
 ## Core Glossary
@@ -21,7 +21,7 @@ A recommendation engine that scores and pairs newly ingested surplus inventory w
 A compiled catalog or batch of surplus inventory items made available to retail buyers for bidding or direct purchase.
 
 ### Buyer Marketplace (Public Buyer Portal)
-A standalone public-facing portal (`marketplace.spoileralert.com`) and product landing page where secondary market retail buyers browse active, compliance-verified Marketplace Listings, evaluate Remaining Shelf Life (RSL), and submit bids using email identification. It is architecturally and visually isolated from the authenticated Supplier Inventory Platform. *(See [ADR 0026](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0026-separation-of-buyer-marketplace-and-inventory-platform.md)).*
+A standalone public-facing portal (`marketplace.indspoileralert.com`) and product landing page where secondary market retail buyers browse active, compliance-verified Marketplace Listings, evaluate Remaining Shelf Life (RSL), and submit bids using email identification. It is architecturally and visually isolated from the authenticated Supplier Inventory Platform. *(See [ADR 0026](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0026-separation-of-buyer-marketplace-and-inventory-platform.md)).*
 
 
 ### Bidding & Awarding
@@ -37,7 +37,7 @@ The proportion of a product's shelf life left at the time of ingestion or transa
 Off-channel options to redirect distressed inventory to food banks (donation) or processing centers (recycling) when liquidation sales are no longer viable, helping CPG brands avoid landfill waste and fees.
 
 ### Distressed Inventory Analytics
-Decision intelligence reporting (e.g., "Remaining Shelf Life" and "Leftovers" reports) assessing team efficiency, cost of goods sold (COGS) recovery rates, and landfill diversion stats. *(Note: The Distressed Analytics navigation section is hidden for the base version release via `SHOW_DISTRESSED_ANALYTICS = false` feature flag to ensure a streamlined base release; see [ADR 0025](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).*
+Decision intelligence reporting (e.g., "Remaining Shelf Life" and "Leftovers" reports) assessing team efficiency, cost of goods sold (COGS) recovery rates, and landfill diversion stats. *(Note: The Distressed Analytics navigation section is hidden for the base version release via `SHOW_DISTRESSED_ANALYTICS = false` feature flag to ensure a streamlined base release; see [ADR 0025](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).*
 
 
 ### AI Bid Evaluator
@@ -47,7 +47,7 @@ An intelligent decision support module that automatically scores and classifies 
 An editable notification template generated upon accepting a bid, permitting the supplier to customize logistics details (pickup window, dock instructions) before notifying the buyer.
 
 ### Inventory Analytics & Charts View
-A visual decision intelligence view of Surplus Inventory metrics, presenting high-level KPI cards and interactive performance charts (COGS Risk Trajectory, RSL & Category Distribution, Landfill Diversion Velocity, and Buyer Bidding Heatmap; marked as Coming Soon). Raw Inventory Data and Buyer Data lists are centralized within the Surplus Ingestion Pipeline (`IngestionView`). *(See [ADR 0028](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0028-relocate-inventory-and-buyer-lists-to-ingestion-pipeline-and-transition-inventory-tab-to-charts.md)).*
+A visual decision intelligence view of Surplus Inventory metrics, presenting high-level KPI cards and interactive performance charts (COGS Risk Trajectory, RSL & Category Distribution, Landfill Diversion Velocity, and Buyer Bidding Heatmap; marked as Coming Soon). Raw Inventory Data and Buyer Data lists are centralized within the Surplus Ingestion Pipeline (`IngestionView`). *(See [ADR 0028](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0028-relocate-inventory-and-buyer-lists-to-ingestion-pipeline-and-transition-inventory-tab-to-charts.md)).*
 
 ### Lot Operations Hub
 A dedicated workspace view for a single Surplus Inventory lot that consolidates item management, active bid evaluations and awarding, and chronological activity tracking into structured sub-tabs.
@@ -154,7 +154,7 @@ A UI state triggered when a previously authenticated OAuth Mailbox token expires
 An interactive modal inspection drawer attached to stage buyer segment tabs that lists all registered buyers matching a target segment (including company name, email address, and registration date).
 
 ### Multi-Entity Donation Diversion
-A dynamic configuration model permitting distressed inventory fallbacks or direct donation stages to split surplus cases across multiple certified non-profit and food bank entities according to configurable case caps and diversion strategies (`percentage_split` or `priority_cascade`). *(Note: The Section 5 UI card in `LiquidationAutomationStudio.tsx` is hidden for the base release via `SHOW_DYNAMIC_DONATION_SECTION = false` feature flag to ensure a streamlined base version, while backend models remain fully functional for future activation; see [ADR 0024](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0024-defer-dynamic-donation-section-in-workflow-builder.md)).*
+A dynamic configuration model permitting distressed inventory fallbacks or direct donation stages to split surplus cases across multiple certified non-profit and food bank entities according to configurable case caps and diversion strategies (`percentage_split` or `priority_cascade`). *(Note: The Section 5 UI card in `LiquidationAutomationStudio.tsx` is hidden for the base release via `SHOW_DYNAMIC_DONATION_SECTION = false` feature flag to ensure a streamlined base version, while backend models remain fully functional for future activation; see [ADR 0024](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0024-defer-dynamic-donation-section-in-workflow-builder.md)).*
 
 ### Campaign Builder Editing Session Indicator
 A prominent Amber/Gold banner and control bar displayed at the top of the Liquidation Automation Studio when editing an existing campaign strategy, indicating active editing mode and offering actions to "Clear & Start New" or "Update Strategy".

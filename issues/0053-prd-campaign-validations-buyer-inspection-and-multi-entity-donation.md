@@ -11,7 +11,7 @@ Sales managers liquidating surplus inventory faced several usability and workflo
 
 ## Solution
 
-The Spoiler Alert platform has been upgraded with a comprehensive campaign validation framework, segment roster inspection modal, popover positioning fixes, smooth view transitions, complete edit re-hydration, and a dynamic multi-entity donation diversion engine.
+The IndSpoiler Alert platform has been upgraded with a comprehensive campaign validation framework, segment roster inspection modal, popover positioning fixes, smooth view transitions, complete edit re-hydration, and a dynamic multi-entity donation diversion engine.
 
 1. **Campaign Save Validation Invariants**: Strict validation enforcing at least 1 valid inventory lot and at least 1 total case for both Draft and Active campaign saves.
 2. **Buyer Segment Roster Inspection Modal**: An Eye button adjacent to segment selection opens a drawer showing buyer company name, email, and registration date with live search filtering.

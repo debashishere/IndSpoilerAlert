@@ -9,7 +9,7 @@ describe('Liquidation Automations API Endpoints', () => {
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
       try {
-        const uri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/spoiler-alert';
+        const uri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ind-spoiler-alert';
         await mongoose.connect(uri);
       } catch (e) {}
     }

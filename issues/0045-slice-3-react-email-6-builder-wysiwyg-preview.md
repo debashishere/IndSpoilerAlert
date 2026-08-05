@@ -14,4 +14,4 @@ Implement a modern React Email 6.0 style code-first Email Builder component inte
 
 ## Blocked by
 
-- [0043 - Backend Campaign Status & Persistence REST Endpoints](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0043-slice-1-backend-campaign-status-persistence-api.md)
+- [0043 - Backend Campaign Status & Persistence REST Endpoints](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0043-slice-1-backend-campaign-status-persistence-api.md)

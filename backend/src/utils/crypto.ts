@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
-const SECRET_KEY = crypto.scryptSync(process.env.ENCRYPTION_SECRET || 'spoiler-alert-secret-key-2026!', 'salt', 32);
+const SECRET_KEY = crypto.scryptSync(process.env.ENCRYPTION_SECRET || 'ind-spoiler-alert-secret-key-2026!', 'salt', 32);
 
 export function encryptText(text: string): string {
   const iv = crypto.randomBytes(16);

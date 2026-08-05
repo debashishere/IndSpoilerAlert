@@ -11,7 +11,7 @@ describe('0085 — Public Buyer Marketplace Listings API (GET /api/v1/marketplac
 
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
-      const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/spoiler-alert-test';
+      const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert-test';
       await mongoose.connect(mongoUri);
     }
 

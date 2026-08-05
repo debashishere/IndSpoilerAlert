@@ -1,16 +1,16 @@
 # Product Concepts and Feature Designs
 
-This document contains case studies, problem definitions, and design documentation for key product features in the Spoiler Alert Inventory Platform.
+This document contains case studies, problem definitions, and design documentation for key product features in the IndSpoiler Alert Inventory Platform.
 
 ## Reference Case Studies
-1. [Conagra Data-Driven Decisions](https://www.spoileralert.com/resources/data-driven-decisions-made-faster-at-conagra)
-2. [Danone Markdown Digitization](https://www.spoileralert.com/resources/spoiler-alert-digitizes-danone-markdown)
-3. [Ferrara Efficiency & Scale](https://www.spoileralert.com/resources/sweet-success-ferraras-efficiency-scale)
-4. [Campbell Soup Co. Partnership](https://www.spoileralert.com/resources/campbell-soup-co-partners-with-spoiler-alert)
-5. [A Day in the Life: Hormel](https://www.spoileralert.com/resources/a-day-in-the-life-hormel)
-6. [Consistent Sales Processes for Excess Inventory](https://www.spoileralert.com/resources/creating-a-consistent-sales-process-for-excess-inventory)
-7. [Land O'Lakes on Fast Company](https://www.spoileralert.com/resources/land-olakes-fast-company)
-8. [Sausages & Sustainability at Johnsonville](https://www.spoileralert.com/resources/sausages-sustainability-streamlined-sales-johnsonville)
+1. [Conagra Data-Driven Decisions](https://www.indspoileralert.com/resources/data-driven-decisions-made-faster-at-conagra)
+2. [Danone Markdown Digitization](https://www.indspoileralert.com/resources/ind-spoiler-alert-digitizes-danone-markdown)
+3. [Ferrara Efficiency & Scale](https://www.indspoileralert.com/resources/sweet-success-ferraras-efficiency-scale)
+4. [Campbell Soup Co. Partnership](https://www.indspoileralert.com/resources/campbell-soup-co-partners-with-ind-spoiler-alert)
+5. [A Day in the Life: Hormel](https://www.indspoileralert.com/resources/a-day-in-the-life-hormel)
+6. [Consistent Sales Processes for Excess Inventory](https://www.indspoileralert.com/resources/creating-a-consistent-sales-process-for-excess-inventory)
+7. [Land O'Lakes on Fast Company](https://www.indspoileralert.com/resources/land-olakes-fast-company)
+8. [Sausages & Sustainability at Johnsonville](https://www.indspoileralert.com/resources/sausages-sustainability-streamlined-sales-johnsonville)
 
 ---
 

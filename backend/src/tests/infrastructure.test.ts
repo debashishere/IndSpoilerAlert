@@ -24,9 +24,9 @@ describe('Infrastructure Connection Integration Tests', () => {
     expect(response.$metadata.httpStatusCode).toBe(200);
     expect(response.Buckets).toBeDefined();
     
-    // Check if the spoiler-alert-surplus bucket exists
+    // Check if the ind-spoiler-alert-surplus bucket exists
     const bucketNames = response.Buckets?.map(b => b.Name) || [];
-    expect(bucketNames).toContain('spoiler-alert-surplus');
+    expect(bucketNames).toContain('ind-spoiler-alert-surplus');
   });
 
   it('should successfully connect to LocalStack SQS and list queues', async () => {
@@ -35,9 +35,9 @@ describe('Infrastructure Connection Integration Tests', () => {
     expect(response.$metadata.httpStatusCode).toBe(200);
     expect(response.QueueUrls).toBeDefined();
     
-    // Check if the spoiler-alert-ingestion-jobs queue exists
+    // Check if the ind-spoiler-alert-ingestion-jobs queue exists
     const queueUrls = response.QueueUrls || [];
-    const hasIngestionQueue = queueUrls.some(url => url.includes('spoiler-alert-ingestion-jobs'));
+    const hasIngestionQueue = queueUrls.some(url => url.includes('ind-spoiler-alert-ingestion-jobs'));
     expect(hasIngestionQueue).toBe(true);
   });
 });

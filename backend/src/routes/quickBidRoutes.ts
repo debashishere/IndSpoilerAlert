@@ -15,7 +15,7 @@ router.post('/quick-bid-token', async (req: Request, res: Response) => {
 
     // Cryptographically signed token (32 random bytes + HMAC)
     const rawToken = crypto.randomBytes(32).toString('hex');
-    const hmacSecret = process.env.ENCRYPTION_SECRET || 'spoiler-alert-secret-key-2026!';
+    const hmacSecret = process.env.ENCRYPTION_SECRET || 'ind-spoiler-alert-secret-key-2026!';
     const sig = crypto
       .createHmac('sha256', hmacSecret)
       .update(`${rawToken}:${buyerEmail}:${listingId}`)

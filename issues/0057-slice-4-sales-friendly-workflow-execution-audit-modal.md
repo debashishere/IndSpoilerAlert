@@ -18,4 +18,4 @@ Build a sales-friendly Workflow Execution Data Inspector Modal that opens when a
 
 ## Blocked by
 
-- [Issue 0056](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0056-slice-3-saved-campaigns-executedat-column-dropdown-ui.md)
+- [Issue 0056](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0056-slice-3-saved-campaigns-executedat-column-dropdown-ui.md)

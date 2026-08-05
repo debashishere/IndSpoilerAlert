@@ -52,41 +52,41 @@ export const InteractiveTour: React.FC<InteractiveTourProps> = ({
   openLotOperationsHub,
 }) => {
   const [isOpen, setIsOpen] = useState(() => {
-    return localStorage.getItem('spoilerAlert_tourOpen') !== 'false';
+    return localStorage.getItem('indSpoilerAlert_tourOpen') !== 'false';
   });
   const [currentStep, setCurrentStep] = useState<number>(() => {
-    return parseInt(localStorage.getItem('spoilerAlert_tourStep') || '1', 10);
+    return parseInt(localStorage.getItem('indSpoilerAlert_tourStep') || '1', 10);
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [targetLotId, setTargetLotId] = useState<string>(() => {
-    return localStorage.getItem('spoilerAlert_tourLotId') || '';
+    return localStorage.getItem('indSpoilerAlert_tourLotId') || '';
   });
   const [targetBidId, setTargetBidId] = useState<string>(() => {
-    return localStorage.getItem('spoilerAlert_tourBidId') || '';
+    return localStorage.getItem('indSpoilerAlert_tourBidId') || '';
   });
   const [targetShipmentId, setTargetShipmentId] = useState<string>(() => {
-    return localStorage.getItem('spoilerAlert_tourShipmentId') || '';
+    return localStorage.getItem('indSpoilerAlert_tourShipmentId') || '';
   });
 
   useEffect(() => {
-    localStorage.setItem('spoilerAlert_tourOpen', String(isOpen));
+    localStorage.setItem('indSpoilerAlert_tourOpen', String(isOpen));
   }, [isOpen]);
 
   useEffect(() => {
-    localStorage.setItem('spoilerAlert_tourStep', String(currentStep));
+    localStorage.setItem('indSpoilerAlert_tourStep', String(currentStep));
   }, [currentStep]);
 
   useEffect(() => {
-    localStorage.setItem('spoilerAlert_tourLotId', targetLotId);
+    localStorage.setItem('indSpoilerAlert_tourLotId', targetLotId);
   }, [targetLotId]);
 
   useEffect(() => {
-    localStorage.setItem('spoilerAlert_tourBidId', targetBidId);
+    localStorage.setItem('indSpoilerAlert_tourBidId', targetBidId);
   }, [targetBidId]);
 
   useEffect(() => {
-    localStorage.setItem('spoilerAlert_tourShipmentId', targetShipmentId);
+    localStorage.setItem('indSpoilerAlert_tourShipmentId', targetShipmentId);
   }, [targetShipmentId]);
 
   const isCorrectTab = () => {
@@ -446,7 +446,7 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
           body: JSON.stringify({
             awardedQty: 300,
             emailSent: 'Dear Buyer, We have accepted your bid of $2.75/cs for 300 cases of Greek Yogurt. Purchase Order has been generated.',
-            emailSubject: 'Spoiler Alert Closeout Award: Danone Greek Yogurt 4-Pack'
+            emailSubject: 'IndSpoiler Alert Closeout Award: Danone Greek Yogurt 4-Pack'
           })
         });
 

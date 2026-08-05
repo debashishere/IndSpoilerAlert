@@ -1,7 +1,7 @@
 {
-  "name": "spoiler-alert-backend",
+  "name": "ind-spoiler-alert-backend",
   "version": "1.0.0",
-  "description": "Spoiler Alert Inventory Platform Express Backend",
+  "description": "IndSpoiler Alert Inventory Platform Express Backend",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",

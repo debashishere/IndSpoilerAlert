@@ -6,7 +6,7 @@ import Buyer from '../models/Buyer';
 describe('Slice 4: POST /api/emails/broadcast-preview', () => {
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
-      await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/spoileralert_test');
+      await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/indspoileralert_test');
     }
   });
 

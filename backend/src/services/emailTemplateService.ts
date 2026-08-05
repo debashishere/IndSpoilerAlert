@@ -78,7 +78,7 @@ Handlebars.registerHelper('inventory_table', function (this: any) {
 
 // Register Handlebars helper for unescaped URL links
 Handlebars.registerHelper('quick_bid_link', function (this: any) {
-  const link = this?.quick_bid_link || 'https://spoileralert.com/bid?token=sample-quick-bid-token';
+  const link = this?.quick_bid_link || 'https://indspoileralert.com/bid?token=sample-quick-bid-token';
   return new Handlebars.SafeString(link);
 });
 
@@ -97,19 +97,19 @@ function normalizeContext(context: EmailCompilationContext = {}): EmailCompilati
   }
 
   if (!normalized.supplier_name) {
-    normalized.supplier_name = 'Spoiler Alert Operations';
+    normalized.supplier_name = 'IndSpoiler Alert Operations';
   }
   if (!normalized.lot_title) {
     normalized.lot_title = 'Surplus Liquidation Lot';
   }
   if (!normalized.quick_bid_link) {
-    normalized.quick_bid_link = 'https://spoileralert.com/bid?token=sample-quick-bid-token';
+    normalized.quick_bid_link = 'https://indspoileralert.com/bid?token=sample-quick-bid-token';
   }
 
   if (!normalized.header) {
     normalized.header = new Handlebars.SafeString(
       `<div style="background-color: #4f46e5; color: #ffffff; padding: 14px 20px; border-radius: 8px; font-family: sans-serif; text-align: center; margin-bottom: 16px;">` +
-      `<h2 style="margin: 0; font-size: 18px; font-weight: bold; color: #ffffff;">Clearance Opportunity | ${normalized.supplier_name || 'Spoiler Alert Operations'}</h2>` +
+      `<h2 style="margin: 0; font-size: 18px; font-weight: bold; color: #ffffff;">Clearance Opportunity | ${normalized.supplier_name || 'IndSpoiler Alert Operations'}</h2>` +
       `</div>`
     ) as any;
   } else if (typeof normalized.header === 'string') {

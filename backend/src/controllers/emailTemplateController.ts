@@ -289,11 +289,11 @@ export async function dispatchBroadcast(req: Request, res: Response) {
       });
       createdTokens.push(tokenDoc);
 
-      const quickBidLink = `https://spoileralert.com/bid?token=${tokenString}`;
+      const quickBidLink = `https://indspoileralert.com/bid?token=${tokenString}`;
 
       const context = {
         buyer_name: buyer.companyName || 'Valued Buyer',
-        supplier_name: 'Spoiler Alert Operations',
+        supplier_name: 'IndSpoiler Alert Operations',
         lot_title: selectedLots.length > 0 ? selectedLots[0].description : 'Surplus Inventory Lot',
         quick_bid_link: quickBidLink,
         inventory_table: selectedLots.length > 0 ? selectedLots : undefined

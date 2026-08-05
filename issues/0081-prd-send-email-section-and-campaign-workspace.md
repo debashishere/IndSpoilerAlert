@@ -1,6 +1,6 @@
 ## Problem Statement
 
-Sales representatives currently lack an integrated, enterprise-grade tool within SpoilerAlert to manually compose and send ad-hoc email campaign broadcasts to targeted retail buyers. Furthermore, custom email templates are embedded inside individual liquidation workflow configurations, forcing sales reps to duplicate template text. Hand-coding HTML emails frequently leads to broken layouts in Microsoft Outlook and mobile mail clients, while managing email deliverability across external tools creates workflow friction and risks domain reputation.
+Sales representatives currently lack an integrated, enterprise-grade tool within IndSpoilerAlert to manually compose and send ad-hoc email campaign broadcasts to targeted retail buyers. Furthermore, custom email templates are embedded inside individual liquidation workflow configurations, forcing sales reps to duplicate template text. Hand-coding HTML emails frequently leads to broken layouts in Microsoft Outlook and mobile mail clients, while managing email deliverability across external tools creates workflow friction and risks domain reputation.
 
 ## Solution
 

@@ -7,7 +7,7 @@ import Buyer from '../models/Buyer';
 import Activity from '../models/Activity';
 import { sendEmailHelper, syncEmailToThread } from './emailService';
 
-const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/spoiler-alert';
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
 
 // 1. Initialize Agenda
 export const agenda = new Agenda({
@@ -46,7 +46,7 @@ export function compileCron(schedule: any): string {
 agenda.define('trigger-liquidation-workflow', async (job: any) => {
   try {
     if (mongoose.connection.readyState !== 1) {
-      const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/spoiler-alert';
+      const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
       await mongoose.connect(mongoUri);
     }
 
@@ -339,7 +339,7 @@ export async function createAutomationRun(
           subject: emailSubject,
           content: emailText,
           recipient: email,
-          sender: automation.createdBy || 'SpoilerAlert Engine',
+          sender: automation.createdBy || 'IndSpoilerAlert Engine',
           timestamp: new Date()
         });
       }
@@ -472,7 +472,7 @@ export async function startAgenda(): Promise<void> {
   if (process.env.NODE_ENV === 'test') return;
   try {
     if (mongoose.connection.readyState !== 1) {
-      const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/spoiler-alert';
+      const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
       await mongoose.connect(mongoUri);
     }
     await agenda.start();

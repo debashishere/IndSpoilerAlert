@@ -59,7 +59,7 @@ services:
     ports:
       - "5001:5001"
     environment:
-      - MONGO_URI=mongodb://mongo:27017/spoiler-alert
+      - MONGO_URI=mongodb://mongo:27017/ind-spoiler-alert
       - SIDECAR_URL=http://sidecar:8000
       - PORT=5001
       - NODE_ENV=production

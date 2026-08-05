@@ -83,7 +83,7 @@ export async function queueUploadAndParseFile(
     console.error('Error calculating checksum:', err);
   }
 
-  const s3Bucket = 'spoiler-alert-surplus';
+  const s3Bucket = 'ind-spoiler-alert-surplus';
   const s3Key = `uploads/${Date.now()}-${originalName}`;
 
   const docImport = new DocumentImport({
@@ -109,7 +109,7 @@ export async function queueUploadAndParseFile(
       mimetype,
       supplierId: supplierId || undefined
     };
-    await sendSQSMessage('spoiler-alert-ingestion-jobs', payload);
+    await sendSQSMessage('ind-spoiler-alert-ingestion-jobs', payload);
 
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);

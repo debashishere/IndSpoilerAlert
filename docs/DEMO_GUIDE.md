@@ -1,6 +1,6 @@
 # B2B Surplus Liquidation Platform - Feature Demonstration Guide
 
-This guide provides a structured, step-by-step walkthrough to demonstrate how the **Spoiler Alert Inventory Platform** aligns with the real-world **Spoiler Alert iQ** enterprise platform features and its prominent industry case studies (*Danone, HelloFresh, Kraft Heinz, Conagra, and Hormel*).
+This guide provides a structured, step-by-step walkthrough to demonstrate how the **IndSpoiler Alert Inventory Platform** aligns with the real-world **IndSpoiler Alert iQ** enterprise platform features and its prominent industry case studies (*Danone, HelloFresh, Kraft Heinz, Conagra, and Hormel*).
 
 ---
 
@@ -8,17 +8,17 @@ This guide provides a structured, step-by-step walkthrough to demonstrate how th
 
 ### 💡 Danone: Markdown Digitization
 *   **Challenge**: Determining discount levels manually for soon-to-expire yogurts.
-*   **Spoiler Alert Solution**: Analytical yield pricing engines that suggest markdown schedules based on remaining shelf-life, category elasticity, and volume.
+*   **IndSpoiler Alert Solution**: Analytical yield pricing engines that suggest markdown schedules based on remaining shelf-life, category elasticity, and volume.
 *   **Our Platform Alignment**: The **Dynamic Yield Optimization Engine** uses SciPy solvers (L-BFGS-B method) to compute optimal discount recommendations.
 
 ### 💡 HelloFresh: Landfill Diversion
 *   **Challenge**: Surplus food going to waste in distribution centers.
-*   **Spoiler Alert Solution**: Automatic redirection to food bank networks and organic recycling facilities. HelloFresh achieved a **65% reduction in organic waste sent to landfills** and **nearly doubled charity donations (from 33% to 61%)**.
+*   **IndSpoiler Alert Solution**: Automatic redirection to food bank networks and organic recycling facilities. HelloFresh achieved a **65% reduction in organic waste sent to landfills** and **nearly doubled charity donations (from 33% to 61%)**.
 *   **Our Platform Alignment**: Integrated **Alternative Disposal Actions** (Donate and Recycle) on inventory lots, with automatically calculated environmental stats (waste diverted, CO2 prevented, and tax benefits).
 
 ### 💡 Conagra & Ferrara: Scale and Data-Driven Decisions
 *   **Challenge**: Messy supplier spreadsheets and raw invoices (different layouts, abbreviated products) slow down closeout sales.
-*   **Spoiler Alert Solution**: Standardized ingestion templates and AI normalization to clean names, combined with real-time analytics.
+*   **IndSpoiler Alert Solution**: Standardized ingestion templates and AI normalization to clean names, combined with real-time analytics.
 *   **Our Platform Alignment**: Self-serve **Column Mapping Wizard** and **Gemini AI normalizer** to parse raw files and map them to standard inventory slots.
 
 ---
@@ -46,7 +46,7 @@ We will follow a single lot of short-dated Greek Yogurt from a messy spreadsheet
 *   **Goal**: Demonstrate how the platform handles messy, non-standard datasets without manual data entry.
 *   **Steps**:
     1.  Navigate to the **Ingestion** tab.
-    2.  Click **Choose File** and select [test_files/danone_messy_invoice.csv](file:///Users/debashisroy/Documents/SpoilerAlert/test_files/danone_messy_invoice.csv).
+    2.  Click **Choose File** and select [test_files/danone_messy_invoice.csv](file:///Users/debashisroy/Documents/IndSpoilerAlert/test_files/danone_messy_invoice.csv).
     3.  Select **Danone North America** as the supplier.
     4.  Click **Upload & Preview**.
     5.  Observe the **B2B Column Mapping Wizard**:.
@@ -69,7 +69,7 @@ We will follow a single lot of short-dated Greek Yogurt from a messy spreadsheet
     1.  Go to the **Inventory** tab.
     2.  Locate the newly ingested lot: **Danone Greek Yogurt 4-Pack** (Lot Number will be generated).
     3.  Observe the visual **Remaining Shelf Life (RSL)** countdown timer (showing days remaining and percentage of shelf life remaining).
-    4.  Click on the row or click **Manage** to open the [Lot Operations Hub](file:///Users/debashisroy/Documents/SpoilerAlert/frontend/src/components/LotOperationsHubView.tsx).
+    4.  Click on the row or click **Manage** to open the [Lot Operations Hub](file:///Users/debashisroy/Documents/IndSpoilerAlert/frontend/src/components/LotOperationsHubView.tsx).
     5.  Go to the **Overview / Risk** sub-tab.
     6.  Click **Assess Risk**. The backend will assess inventory risk and output:
         - A **Risk Category** (e.g. *High* because yogurts expire soon).
@@ -82,7 +82,7 @@ We will follow a single lot of short-dated Greek Yogurt from a messy spreadsheet
 *   **Steps**:
     1.  Still in the **Lot Operations Hub**, navigate to the **Pricing & Disposition** sub-tab.
     2.  Click **Calculate Recommended Price**.
-    3.  The system uses the SciPy solver inside the FastAPI sidecar ([sidecar/main.py](file:///Users/debashisroy/Documents/SpoilerAlert/sidecar/main.py)) to simulate expected sell-through based on the category's elasticity (Dairy is high elasticity: `-1.8`).
+    3.  The system uses the SciPy solver inside the FastAPI sidecar ([sidecar/main.py](file:///Users/debashisroy/Documents/IndSpoilerAlert/sidecar/main.py)) to simulate expected sell-through based on the category's elasticity (Dairy is high elasticity: `-1.8`).
     4.  Adjust the **Days to Expiration** and **Quantity** sliders:
         - Notice how reducing the days to expiration increases the recommended discount exponentially to ensure liquidation.
         - Observe the calculated **Expected Recovery Value** and **Sell-Through Probability**.
@@ -146,13 +146,13 @@ We will follow a single lot of short-dated Greek Yogurt from a messy spreadsheet
 For developers interested in exploring how these features are wired, check these code entry points:
 
 -   **Ingestion Wizard & AI parsing**:
-    -   API Endpoints: [routes/api.ts](file:///Users/debashisroy/Documents/SpoilerAlert/backend/src/routes/api.ts#L57-L60)
-    -   FastAPI Docling parsing: [sidecar/main.py](file:///Users/debashisroy/Documents/SpoilerAlert/sidecar/main.py#L93-L177)
+    -   API Endpoints: [routes/api.ts](file:///Users/debashisroy/Documents/IndSpoilerAlert/backend/src/routes/api.ts#L57-L60)
+    -   FastAPI Docling parsing: [sidecar/main.py](file:///Users/debashisroy/Documents/IndSpoilerAlert/sidecar/main.py#L93-L177)
 -   **Dynamic Pricing Solver**:
-    -   FastAPI SciPy optimize solver: [sidecar/main.py](file:///Users/debashisroy/Documents/SpoilerAlert/sidecar/main.py#L225-L277)
+    -   FastAPI SciPy optimize solver: [sidecar/main.py](file:///Users/debashisroy/Documents/IndSpoilerAlert/sidecar/main.py#L225-L277)
 -   **Semantic Buyer Matching**:
-    -   Distance & category recommendation: [sidecar/main.py](file:///Users/debashisroy/Documents/SpoilerAlert/sidecar/main.py#L279-L337)
+    -   Distance & category recommendation: [sidecar/main.py](file:///Users/debashisroy/Documents/IndSpoilerAlert/sidecar/main.py#L279-L337)
 -   **Bidding, Awards, and Logistics**:
-    -   Express controllers: [controllers/inventoryController.ts](file:///Users/debashisroy/Documents/SpoilerAlert/backend/src/controllers/inventoryController.ts)
+    -   Express controllers: [controllers/inventoryController.ts](file:///Users/debashisroy/Documents/IndSpoilerAlert/backend/src/controllers/inventoryController.ts)
 -   **Aesthetics & CSS**:
-    -   Dark-mode styles and animations: [src/index.css](file:///Users/debashisroy/Documents/SpoilerAlert/frontend/src/index.css)
+    -   Dark-mode styles and animations: [src/index.css](file:///Users/debashisroy/Documents/IndSpoilerAlert/frontend/src/index.css)

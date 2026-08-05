@@ -1,6 +1,6 @@
-# Spoiler Alert Documentation Hub
+# IndSpoiler Alert Documentation Hub
 
-Welcome to the Spoiler Alert surplus inventory platform documentation. This directory serves as a central registry for all specifications, architectural design records, and product concepts.
+Welcome to the IndSpoiler Alert surplus inventory platform documentation. This directory serves as a central registry for all specifications, architectural design records, and product concepts.
 
 ## Core Documentation
 

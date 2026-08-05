@@ -22,7 +22,7 @@ const SupplierSmtpConfigSchema: Schema = new Schema(
     secure: { type: Boolean, default: false },
     user: { type: String, required: true },
     encryptedPass: { type: String, required: true },
-    senderName: { type: String, default: 'Spoiler Alert Operations' },
+    senderName: { type: String, default: 'IndSpoiler Alert Operations' },
     senderEmail: { type: String, required: true },
     isVerified: { type: Boolean, default: false },
   },

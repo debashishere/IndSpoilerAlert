@@ -20,4 +20,4 @@ Specifically:
 
 ## Blocked by
 
-- [Issue 0020](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0020-tdd4-multi-attribute-query-filter-api.md)
+- [Issue 0020](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0020-tdd4-multi-attribute-query-filter-api.md)

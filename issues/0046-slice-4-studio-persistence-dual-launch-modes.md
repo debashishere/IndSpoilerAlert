@@ -14,5 +14,5 @@ Integrate `LiquidationAutomationStudio.tsx` with the Redux `editingCampaignId` s
 
 ## Blocked by
 
-- [0044 - Saved Campaigns Management Tab & 3-Dots Action Lifecycle](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0044-slice-2-saved-campaigns-tab-table-ui.md)
-- [0045 - Code-First React Email 6.0 Block Builder & Live Device Preview](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0045-slice-3-react-email-6-builder-wysiwyg-preview.md)
+- [0044 - Saved Campaigns Management Tab & 3-Dots Action Lifecycle](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0044-slice-2-saved-campaigns-tab-table-ui.md)
+- [0045 - Code-First React Email 6.0 Block Builder & Live Device Preview](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0045-slice-3-react-email-6-builder-wysiwyg-preview.md)

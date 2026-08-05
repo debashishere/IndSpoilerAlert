@@ -131,7 +131,7 @@ router.post('/:threadId/reply', async (req: Request, res: Response) => {
     // Look up supplier SMTP config to get sender identity
     const smtpConfig = await SupplierSmtpConfig.findOne({ supplierId });
     const fromEmail = smtpConfig?.senderEmail || 'eveline94@ethereal.email';
-    const fromName = smtpConfig?.senderName || 'Spoiler Alert Platform';
+    const fromName = smtpConfig?.senderName || 'IndSpoiler Alert Platform';
 
     // Send email via Nodemailer
     const mailRes = await sendEmailHelper(

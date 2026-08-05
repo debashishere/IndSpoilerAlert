@@ -20,4 +20,4 @@ Specifically:
 
 ## Blocked by
 
-- [Issue 0019](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0019-tdd3-dynamic-facet-discovery-api.md)
+- [Issue 0019](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0019-tdd3-dynamic-facet-discovery-api.md)

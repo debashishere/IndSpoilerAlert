@@ -10,4 +10,4 @@ Build dynamic server-rendered SVG image generation endpoints for email templates
 
 ## Blocked by
 
-- [Issue #0065](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0065-slice-1-centralized-platform-settings-and-supplier-smtp.md)
+- [Issue #0065](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0065-slice-1-centralized-platform-settings-and-supplier-smtp.md)

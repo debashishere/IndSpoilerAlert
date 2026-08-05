@@ -2,7 +2,7 @@
 
 ## Problem Statement
 
-Suppliers operating on the Spoiler Alert Inventory Platform currently lack the capability to connect their corporate SMTP servers (e.g. SendGrid, Microsoft 365, AWS SES) for outbound communications. Outbound B2B offer sheet emails dispatches lack dynamic real-time elements—such as live highest bid figures, expiration countdown timers, and friction-free 1-click bidding links—forcing buyers to navigate through traditional login screens. Additionally, sales teams lack a centralized Email Communication Hub to track recipient open telemetry (`Opened 4x`) or manage listing-scoped negotiation message threads with retail buyers.
+Suppliers operating on the IndSpoiler Alert Inventory Platform currently lack the capability to connect their corporate SMTP servers (e.g. SendGrid, Microsoft 365, AWS SES) for outbound communications. Outbound B2B offer sheet emails dispatches lack dynamic real-time elements—such as live highest bid figures, expiration countdown timers, and friction-free 1-click bidding links—forcing buyers to navigate through traditional login screens. Additionally, sales teams lack a centralized Email Communication Hub to track recipient open telemetry (`Opened 4x`) or manage listing-scoped negotiation message threads with retail buyers.
 
 ## Solution
 
@@ -78,11 +78,11 @@ Deliver an end-to-end email communication, settings, and telemetry framework com
 
 ## Further Notes
 
-- Glossary updated in [`docs/CONTEXT.md`](file:///Users/debashisroy/Documents/SpoilerAlert/docs/CONTEXT.md).
-- ADR accepted in [`docs/adr/0020-supplier-smtp-email-communication-hub-and-telemetry.md`](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0020-supplier-smtp-email-communication-hub-and-telemetry.md).
+- Glossary updated in [`docs/CONTEXT.md`](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/CONTEXT.md).
+- ADR accepted in [`docs/adr/0020-supplier-smtp-email-communication-hub-and-telemetry.md`](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0020-supplier-smtp-email-communication-hub-and-telemetry.md).
 - Vertical slice issues published:
-  - [Issue #0065: Settings & Supplier SMTP Management](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0065-slice-1-centralized-platform-settings-and-supplier-smtp.md)
-  - [Issue #0066: Email Telemetry Pixel & Dispatches Log](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0066-slice-2-email-open-telemetry-pixel-and-dispatches-log.md)
-  - [Issue #0067: Dynamic Server-Rendered Email Assets](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0067-slice-3-dynamic-server-rendered-email-assets.md)
-  - [Issue #0068: Signed Quick-Bid Token & Modal](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0068-slice-4-signed-buyer-quick-bid-token-and-modal.md)
-  - [Issue #0069: Listing-Scoped Email Communication Hub](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0069-slice-5-listing-scoped-email-communication-hub.md)
+  - [Issue #0065: Settings & Supplier SMTP Management](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0065-slice-1-centralized-platform-settings-and-supplier-smtp.md)
+  - [Issue #0066: Email Telemetry Pixel & Dispatches Log](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0066-slice-2-email-open-telemetry-pixel-and-dispatches-log.md)
+  - [Issue #0067: Dynamic Server-Rendered Email Assets](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0067-slice-3-dynamic-server-rendered-email-assets.md)
+  - [Issue #0068: Signed Quick-Bid Token & Modal](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0068-slice-4-signed-buyer-quick-bid-token-and-modal.md)
+  - [Issue #0069: Listing-Scoped Email Communication Hub](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0069-slice-5-listing-scoped-email-communication-hub.md)

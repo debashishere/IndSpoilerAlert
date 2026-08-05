@@ -27,7 +27,7 @@ describe('PublicLandingPage Component', () => {
     expect(ctaButtons[0]).toBeInTheDocument();
   });
 
-  it('renders product showcases for InventoryFlow and SpoilerAlert with key capabilities', () => {
+  it('renders product showcases for InventoryFlow and IndSpoilerAlert with key capabilities', () => {
     renderLandingPage();
 
     // InventoryFlow Showcase
@@ -36,8 +36,8 @@ describe('PublicLandingPage Component', () => {
     expect(screen.getAllByText(/FSMA Temp Logs/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Expiration Tracking/i).length).toBeGreaterThanOrEqual(1);
 
-    // SpoilerAlert Showcase
-    expect(screen.getAllByText(/SpoilerAlert/i).length).toBeGreaterThanOrEqual(1);
+    // IndSpoilerAlert Showcase
+    expect(screen.getAllByText(/IndSpoilerAlert/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Secondary Marketplace/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Liquidation Automations/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Food Bank Donations/i).length).toBeGreaterThanOrEqual(1);

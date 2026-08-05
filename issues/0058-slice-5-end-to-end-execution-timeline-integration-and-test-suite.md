@@ -14,4 +14,4 @@ Add end-to-end integration test suites in backend (`backend/src/tests/execution_
 
 ## Blocked by
 
-- [Issue 0057](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0057-slice-4-sales-friendly-workflow-execution-audit-modal.md)
+- [Issue 0057](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0057-slice-4-sales-friendly-workflow-execution-audit-modal.md)

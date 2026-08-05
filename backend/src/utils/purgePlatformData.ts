@@ -28,7 +28,7 @@ import SupplierSmtpConfig from '../models/SupplierSmtpConfig';
 import ComplianceDocument from '../models/ComplianceDocument';
 
 export async function purgePlatformDataExceptBuyers() {
-  const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/spoiler-alert';
+  const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
   if (mongoose.connection.readyState === 0) {
     await mongoose.connect(mongoUri);
   }

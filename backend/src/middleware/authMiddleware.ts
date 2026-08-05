@@ -20,14 +20,14 @@ export function decodeToken(token: string): AuthenticatedUser | null {
 
   if (token.startsWith('mock-firebase-id-token-')) {
     const rawUid = token.replace('mock-firebase-id-token-', '');
-    let email = 'dev@spoileralert.com';
+    let email = 'dev@indspoileralert.com';
 
     if (rawUid.includes('mock-uid-')) {
       const b64 = rawUid.replace('mock-uid-', '');
       try {
         email = Buffer.from(b64, 'base64').toString('utf8');
       } catch {
-        email = 'dev@spoileralert.com';
+        email = 'dev@indspoileralert.com';
       }
     }
 
@@ -46,7 +46,7 @@ export function decodeToken(token: string): AuthenticatedUser | null {
   // Fallback dev token parse
   return {
     uid: token,
-    email: 'user@spoileralert.com',
+    email: 'user@indspoileralert.com',
     buyerProfile: true,
     supplierProfile: true,
     profiles: {

@@ -11,6 +11,6 @@ Build the central Email Communication Hub UI and thread management engine. Provi
 
 ## Blocked by
 
-- [Issue #0065](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0065-slice-1-centralized-platform-settings-and-supplier-smtp.md)
-- [Issue #0066](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0066-slice-2-email-open-telemetry-pixel-and-dispatches-log.md)
-- [Issue #0068](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0068-slice-4-signed-buyer-quick-bid-token-and-modal.md)
+- [Issue #0065](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0065-slice-1-centralized-platform-settings-and-supplier-smtp.md)
+- [Issue #0066](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0066-slice-2-email-open-telemetry-pixel-and-dispatches-log.md)
+- [Issue #0068](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0068-slice-4-signed-buyer-quick-bid-token-and-modal.md)

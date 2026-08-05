@@ -175,7 +175,7 @@ const getInitialTab = (): NavigationTab => {
       return tab as NavigationTab;
     }
     try {
-      const stored = localStorage.getItem('spoilerAlert_activeTab');
+      const stored = localStorage.getItem('indSpoilerAlert_activeTab');
       if (stored && validTabs.includes(stored as NavigationTab)) {
         return stored as NavigationTab;
       }
@@ -279,7 +279,7 @@ export const coreSlice = createSlice({
       state.activeTab = action.payload;
       if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
         try {
-          localStorage.setItem('spoilerAlert_activeTab', action.payload);
+          localStorage.setItem('indSpoilerAlert_activeTab', action.payload);
         } catch {
           // ignore
         }

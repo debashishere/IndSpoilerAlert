@@ -169,7 +169,7 @@ export function TipTapTemplateEditor({
     supplier_name: 'Unilever Supply Operations',
     lot_title: availableLots[0]?.title || availableLots[0]?.name || 'Surplus Dairy & Beverage Pack Lot #880',
     inventory_table: buildInventoryTableHtml(availableLots[0]),
-    quick_bid_link: 'https://spoileralert.com/bid?token=demo-token-123'
+    quick_bid_link: 'https://indspoileralert.com/bid?token=demo-token-123'
   });
 
   useEffect(() => {
@@ -280,7 +280,7 @@ export function TipTapTemplateEditor({
           label: '1-Click Buyer Action Link',
           description: 'Generates an encrypted 1-click action button for instant buyer bidding or PO awarding.',
           fields: ['Encrypted JWT Action URL'],
-          sampleValue: 'https://spoileralert.com/bid?token=secure-bidding-jwt'
+          sampleValue: 'https://indspoileralert.com/bid?token=secure-bidding-jwt'
         };
       default:
         return {
@@ -397,7 +397,7 @@ export function TipTapTemplateEditor({
     setSubject('Flash Offer: {{supplier_name}} Distressed Inventory');
     setBodyHtml(
       hydrateRawTokensInHtml(
-        `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155;"><h2 style="color: #4f46e5; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">Surplus Inventory Clearance</h2><p>Dear <strong>{{buyer_name}}</strong>,</p><p>We have uploaded a short-dated lot <strong>{{lot_title}}</strong> available for immediate auction bidding.</p>{{inventory_table}}<p style="text-align: center; margin: 24px 0;"><a href="{{quick_bid_link}}" style="background-color: #10b981; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Click Here to Bid</a></p><p style="font-size: 12px; color: #94a3b8;">Sent via SpoilerAlert Email Hub | {{supplier_name}}</p></div>`
+        `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155;"><h2 style="color: #4f46e5; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">Surplus Inventory Clearance</h2><p>Dear <strong>{{buyer_name}}</strong>,</p><p>We have uploaded a short-dated lot <strong>{{lot_title}}</strong> available for immediate auction bidding.</p>{{inventory_table}}<p style="text-align: center; margin: 24px 0;"><a href="{{quick_bid_link}}" style="background-color: #10b981; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Click Here to Bid</a></p><p style="font-size: 12px; color: #94a3b8;">Sent via IndSpoilerAlert Email Hub | {{supplier_name}}</p></div>`
       )
     );
     setAvailableTokens(DEFAULT_TOKENS);
@@ -441,7 +441,7 @@ export function TipTapTemplateEditor({
           </tbody>
         </table>`
       )
-      .replace(/\{\{quick_bid_link\}\}/g, 'https://spoileralert.com/bid?token=demo-token-123');
+      .replace(/\{\{quick_bid_link\}\}/g, 'https://indspoileralert.com/bid?token=demo-token-123');
 
     return { compiledSubject, compiledBody };
   };

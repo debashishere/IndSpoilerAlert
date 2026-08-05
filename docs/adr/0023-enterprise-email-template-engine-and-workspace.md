@@ -1,7 +1,7 @@
 # 0023: Enterprise Email Template Engine and Workspace Architecture
 
 ## Context
-As SpoilerAlert expands to support both automated stage-gate liquidation workflows and manual sales campaign broadcasts, suppliers need a high-grade, low-maintenance way to author, manage, and dispatch custom email templates without heavy third-party runtime dependencies or complex HTML coding.
+As IndSpoilerAlert expands to support both automated stage-gate liquidation workflows and manual sales campaign broadcasts, suppliers need a high-grade, low-maintenance way to author, manage, and dispatch custom email templates without heavy third-party runtime dependencies or complex HTML coding.
 
 ## Decision
 1. **Unified Email Campaign Workspace**:

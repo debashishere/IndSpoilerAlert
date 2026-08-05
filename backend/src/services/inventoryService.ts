@@ -391,8 +391,8 @@ export async function awardBid(
   try {
     const poBuffer = await generatePOPDFBuffer(award, buyer, lot, product);
     fs.writeFileSync(tempPoPath, poBuffer);
-    await uploadToS3(tempPoPath, 'spoiler-alert-surplus', `purchase-orders/${poFilename}`);
-    award.poPdfUrl = `https://spoiler-alert-surplus.s3.amazonaws.com/purchase-orders/${poFilename}`;
+    await uploadToS3(tempPoPath, 'ind-spoiler-alert-surplus', `purchase-orders/${poFilename}`);
+    award.poPdfUrl = `https://ind-spoiler-alert-surplus.s3.amazonaws.com/purchase-orders/${poFilename}`;
     await award.save();
   } catch (err: any) {
     console.error('Failed to generate/upload PO PDF:', err.message || err);
@@ -409,13 +409,13 @@ export async function awardBid(
 
   const shipment = new Shipment({
     awardId: award._id,
-    carrier: 'Spoiler Alert Logistics Partner',
+    carrier: 'IndSpoiler Alert Logistics Partner',
     pickupLocation,
     deliveryLocation: `${buyer.companyName} Warehouse`,
     status: 'scheduled',
     temperature: dc?.coldStorage ? 'Refrigerated (35-40°F)' : 'Ambient',
     bolNumber,
-    carrierName: 'Spoiler Alert Logistics Partner',
+    carrierName: 'IndSpoiler Alert Logistics Partner',
     carrierDotNumber: 'DOT-123456',
     pickupWindowStart: new Date(),
     pickupWindowEnd: new Date(Date.now() + 24 * 60 * 60 * 1000)
@@ -428,8 +428,8 @@ export async function awardBid(
   try {
     const bolBuffer = await generateBOLPDFBuffer(shipment, buyer, lot, product, award);
     fs.writeFileSync(tempBolPath, bolBuffer);
-    await uploadToS3(tempBolPath, 'spoiler-alert-surplus', `bills-of-lading/${bolFilename}`);
-    shipment.bolPdfUrl = `https://spoiler-alert-surplus.s3.amazonaws.com/bills-of-lading/${bolFilename}`;
+    await uploadToS3(tempBolPath, 'ind-spoiler-alert-surplus', `bills-of-lading/${bolFilename}`);
+    shipment.bolPdfUrl = `https://ind-spoiler-alert-surplus.s3.amazonaws.com/bills-of-lading/${bolFilename}`;
     await shipment.save();
   } catch (err: any) {
     console.error('Failed to generate/upload BOL PDF:', err.message || err);
@@ -595,7 +595,7 @@ Please arrange logistics pickup within 48 hours of scheduled pickup date.
 Reply to this notification or contact our logistics desk to confirm dock door appointment and receive 501(c)(3) tax attestation documentation.
 
 Sincerely,
-Spoiler Alert Surplus Recovery Division
+IndSpoiler Alert Surplus Recovery Division
 `;
 
     await sendEmailHelper(entityEmail, subject, textBody);
@@ -724,7 +724,7 @@ export async function uploadComplianceDoc(lotId: string, docType: string, filePa
     throw new Error('Inventory Lot not found.');
   }
 
-  const s3Bucket = 'spoiler-alert-surplus';
+  const s3Bucket = 'ind-spoiler-alert-surplus';
   const s3Key = `compliance/${lotId}-${docType}-${Date.now()}-${originalName}`;
 
   // 1. Upload to S3

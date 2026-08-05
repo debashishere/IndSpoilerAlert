@@ -14,4 +14,4 @@ Implement backend REST API endpoints to support execution history dropdown popul
 
 ## Blocked by
 
-- [Issue 0054](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0054-slice-1-automationrun-schema-executedat-logging.md)
+- [Issue 0054](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0054-slice-1-automationrun-schema-executedat-logging.md)

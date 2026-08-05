@@ -8,8 +8,8 @@ To scale the platform, improve security boundaries, and provide a dedicated, hig
 ## Decision
 
 1. **Application & Domain Boundary Split**:
-   - **Public Buyer Marketplace (`marketplace.spoileralert.com` / `/marketplace`)**: A standalone, public-facing portal with a dedicated product catalog landing page. Buyers can search, filter, and view active listings without logging in, and submit bids using email identification (ADR 0006).
-   - **Supplier Inventory Platform (`app.spoileralert.com` / `/app`)**: An authenticated B2B operational workspace where suppliers ingest messy data, run AI normalization, manage internal inventory lots, and construct automated stage-gate liquidation campaigns.
+   - **Public Buyer Marketplace (`marketplace.indspoileralert.com` / `/marketplace`)**: A standalone, public-facing portal with a dedicated product catalog landing page. Buyers can search, filter, and view active listings without logging in, and submit bids using email identification (ADR 0006).
+   - **Supplier Inventory Platform (`app.indspoileralert.com` / `/app`)**: An authenticated B2B operational workspace where suppliers ingest messy data, run AI normalization, manage internal inventory lots, and construct automated stage-gate liquidation campaigns.
 
 2. **Domain Isolation (Surplus Inventory Lot vs. Marketplace Listing)**:
    - **Surplus Inventory Lot**: An internal supplier entity stored in the Inventory Platform containing sensitive operational data (internal COGS, cost recovery targets, raw supplier notes, and draft markdown curves).

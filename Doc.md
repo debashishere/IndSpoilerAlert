@@ -1,14 +1,14 @@
-# Spoiler Alert Inventory & Surplus Liquidation Platform — Comprehensive Demo Document
+# IndSpoiler Alert Inventory & Surplus Liquidation Platform — Comprehensive Demo Document
 
-This document serves as the master guide, test specification, dataset reference, data validation schema, KPI calculation breakdown, and user benefit overview for the **Spoiler Alert Surplus Inventory Platform**.
+This document serves as the master guide, test specification, dataset reference, data validation schema, KPI calculation breakdown, and user benefit overview for the **IndSpoiler Alert Surplus Inventory Platform**.
 
 ---
 
 ## 1. System & Database Clean Report
 
-The local MongoDB database (`spoiler-alert`) has been cleaned and freshly populated with a complete, deterministic demo dataset.
+The local MongoDB database (`ind-spoiler-alert`) has been cleaned and freshly populated with a complete, deterministic demo dataset.
 
-- **MongoDB Host**: `mongodb://localhost:27017/spoiler-alert`
+- **MongoDB Host**: `mongodb://localhost:27017/ind-spoiler-alert`
 - **Database Status**: Wiped clean & re-seeded with 100% test-ready data.
 - **Seeded Collections**:
   - `buyers`: 50 Retail Buyers (Secondary market closeout buyers & food banks)
@@ -48,7 +48,7 @@ Here is a summary of primary buyers seeded in the system. The database contains 
 | **Second Harvest Food Bank** | `intake@secondharvest.org` | 2 days | 120 mi | Dairy, Produce, Meat, Dry Goods | None |
 | **Cheetah Wholesalers** | `orders@cheetahwholesale.com` | 8 days | 180 mi | Dairy, Meat, Beverages | Tree Nuts |
 | **Daily Table Outlet** | `sourcing@dailytable.org` | 3 days | 90 mi | Dairy, Produce, Dry Goods | None |
-| *+40 Additional Regional Buyers* | `*@spoileralert-demo.com` | 3–14 days | 100–350 mi | Multi-category | Various |
+| *+40 Additional Regional Buyers* | `*@indspoileralert-demo.com` | 3–14 days | 100–350 mi | Multi-category | Various |
 
 ---
 
@@ -232,8 +232,8 @@ $$\text{Landfill Diversion Rate} = \frac{4,200 + 500 + 300}{11,800} \times 100\%
 - **Yield Optimization Engine**: *Maximizes revenue recovery.* Automatically calculates optimal decay markdowns before expiration to prevent zero-value dumpsters.
 - **Smart Buyer Matching & Marketplace**: *Accelerates velocity.* Instantly matches distressed lots with verified closeout buyers while enforcing distance and allergen rules.
 - **Stage-Gate Liquidation Automation Studio**: *Automates closeout workflows.* Multi-stage automated emails, bidding windows, and fallback donations run seamlessly without manual supervision.
-- **Logistics & Cold Chain Module**: *Protects food safety.* Ensures FSMA compliance with carrier appointment scheduling, BOL generation, and real-time temperature audit trails. *(Note: UI navigation section disabled for base release via `SHOW_FREIGHT_LOGISTICS = false` feature flag; see [ADR 0025](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).*
-- **Sales Reconciliation & Distressed Analytics**: *Provides clear ROI visibility.* Gives supply chain executives real-time metrics on COGS recovery, revenue, and ESG landfill diversion. *(Note: UI navigation section disabled for base release via `SHOW_DISTRESSED_ANALYTICS = false` feature flag; see [ADR 0025](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).*
+- **Logistics & Cold Chain Module**: *Protects food safety.* Ensures FSMA compliance with carrier appointment scheduling, BOL generation, and real-time temperature audit trails. *(Note: UI navigation section disabled for base release via `SHOW_FREIGHT_LOGISTICS = false` feature flag; see [ADR 0025](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).*
+- **Sales Reconciliation & Distressed Analytics**: *Provides clear ROI visibility.* Gives supply chain executives real-time metrics on COGS recovery, revenue, and ESG landfill diversion. *(Note: UI navigation section disabled for base release via `SHOW_DISTRESSED_ANALYTICS = false` feature flag; see [ADR 0025](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).*
 
 ---
-*Document updated and verified on 2026-07-23 for Spoiler Alert Surplus Platform.*
+*Document updated and verified on 2026-07-23 for IndSpoiler Alert Surplus Platform.*

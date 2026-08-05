@@ -20,4 +20,4 @@ Specifically:
 
 ## Blocked by
 
-- [Issue 0018](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0018-tdd2-ingestion-pipeline-supplier-template-integration.md)
+- [Issue 0018](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0018-tdd2-ingestion-pipeline-supplier-template-integration.md)

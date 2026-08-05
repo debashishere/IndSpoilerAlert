@@ -86,7 +86,7 @@ export default function App() {
     if (tab && ['ingestion', 'dashboard', 'analytics', 'marketplace', 'inventory', 'logistics', 'lot-hub', 'workflows', 'inbox', 'settings'].includes(tab)) {
       return tab as any;
     }
-    return (localStorage.getItem('spoilerAlert_activeTab') as any) || 'ingestion';
+    return (localStorage.getItem('indSpoilerAlert_activeTab') as any) || 'ingestion';
   };
   const [activeTab, setActiveTab] = useState<'ingestion' | 'dashboard' | 'analytics' | 'marketplace' | 'inventory' | 'logistics' | 'lot-hub' | 'workflows' | 'inbox' | 'settings'>(getInitialTab);
   const [returnTab, setReturnTab] = useState<string | null>(null);
@@ -671,7 +671,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    localStorage.setItem('spoilerAlert_activeTab', activeTab);
+    localStorage.setItem('indSpoilerAlert_activeTab', activeTab);
     const params = new URLSearchParams(window.location.search);
     params.set('tab', activeTab);
     if (activeTab === 'lot-hub' && selectedLotHubId) {
@@ -1346,7 +1346,7 @@ Pickup Location Details:
 - Storage Type: ${selectedLot.distributionCenterId?.coldStorage ? 'Refrigerated (35-40°F)' : 'Ambient'}
 
 Our logistics partner has automatically scheduled a shipment carrier for this pickup. 
-Please coordinate the pickup date and time with our logistics office (info@spoileralertlogistics.com) referencing the above product description.
+Please coordinate the pickup date and time with our logistics office (info@indspoileralertlogistics.com) referencing the above product description.
 
 Best regards,
 ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
@@ -1747,7 +1747,7 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
           fontSize: '24px',
           animation: 'pulse 1.5s ease-in-out infinite',
         }}>⚡</div>
-        <p style={{ color: 'hsl(var(--text-muted))', fontSize: '0.875rem', margin: 0 }}>Loading Spoiler Alert…</p>
+        <p style={{ color: 'hsl(var(--text-muted))', fontSize: '0.875rem', margin: 0 }}>Loading IndSpoiler Alert…</p>
       </div>
     );
   }
@@ -1777,7 +1777,7 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
       <aside ref={sidebarRef as any} className={`sidebar ${sidebarExpanded ? '' : 'collapsed'}`} onClick={!sidebarExpanded ? () => setSidebarExpanded(true) : undefined}>
         <div className="brand" onClick={(e) => { e.stopPropagation(); setSidebarExpanded(!sidebarExpanded); }}>
           <div className="brand-icon">⚡</div>
-          <span className="brand-name">Spoiler Alert</span>
+          <span className="brand-name">IndSpoiler Alert</span>
           {sidebarExpanded && (
             <button className="sidebar-toggle-btn" style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'hsl(var(--text-muted))', cursor: 'pointer', fontSize: '0.8rem', padding: '4px', display: 'flex', alignItems: 'center' }} title="Collapse Sidebar">
               ◀
@@ -2797,7 +2797,7 @@ Pickup Location Details:
 - Storage Type: ${selectedLot.distributionCenterId?.coldStorage ? 'Refrigerated (35-40°F)' : 'Ambient'}
 
 Our logistics partner has automatically scheduled a shipment carrier for this pickup. 
-Please coordinate the pickup date and time with our logistics office (info@spoileralertlogistics.com) referencing the above product description.
+Please coordinate the pickup date and time with our logistics office (info@indspoileralertlogistics.com) referencing the above product description.
 
 Best regards,
 ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
@@ -2983,7 +2983,7 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
 
               <div className="email-visualizer-envelope">
                 <div className="email-visualizer-header">
-                  <div><strong>From:</strong> Spoiler Alert Platform &lt;eveline94@ethereal.email&gt;</div>
+                  <div><strong>From:</strong> IndSpoiler Alert Platform &lt;eveline94@ethereal.email&gt;</div>
                   <div><strong>To:</strong> Logistics Operations &lt;ops@{(visualizerEmailDetails.to || '').toLowerCase().replace(/\s+/g, '')}.com&gt;</div>
                   <div><strong>Date:</strong> {visualizerEmailDetails.date}</div>
                   <div><strong>Subject:</strong> {visualizerEmailDetails.subject}</div>

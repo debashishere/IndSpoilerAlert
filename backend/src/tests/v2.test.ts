@@ -173,7 +173,7 @@ describe('V2 Platform Features Integration Tests', () => {
       const doc = await DocumentImport.findById(ingestionJobId);
       expect(doc).toBeTruthy();
       expect(doc?.status).toBe('queued');
-      expect(doc?.s3Bucket).toBe('spoiler-alert-surplus');
+      expect(doc?.s3Bucket).toBe('ind-spoiler-alert-surplus');
     });
 
     it('should query job status endpoint', async () => {

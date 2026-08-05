@@ -24,8 +24,8 @@ describe('Issue 04: In-App Profile Activation & Upgrade Flow', () => {
         email: 'supplier@example.com',
         profiles: { buyer: false, supplier: true },
       };
-      localStorage.setItem('spoiler_auth_mock_user', JSON.stringify(initialUser));
-      localStorage.setItem('spoiler_auth_mock_token', 'mock-token');
+      localStorage.setItem('ind_spoiler_auth_mock_user', JSON.stringify(initialUser));
+      localStorage.setItem('ind_spoiler_auth_mock_token', 'mock-token');
 
       // Test component to verify useAuth updateProfiles
       const TestConsumer = () => {
@@ -135,8 +135,8 @@ describe('Issue 04: In-App Profile Activation & Upgrade Flow', () => {
         email: 'buyer@example.com',
         profiles: { buyer: true, supplier: false },
       };
-      localStorage.setItem('spoiler_auth_mock_user', JSON.stringify(initialUser));
-      localStorage.setItem('spoiler_auth_mock_token', 'mock-token');
+      localStorage.setItem('ind_spoiler_auth_mock_user', JSON.stringify(initialUser));
+      localStorage.setItem('ind_spoiler_auth_mock_token', 'mock-token');
 
       render(
         <Provider store={store}>

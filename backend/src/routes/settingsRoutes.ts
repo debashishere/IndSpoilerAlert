@@ -22,7 +22,7 @@ router.get('/smtp', async (req: Request, res: Response) => {
         secure: process.env.SMTP_SECURE === 'true',
         user: process.env.SMTP_USER || '',
         passMasked: process.env.SMTP_PASS ? '********' : '',
-        senderName: 'Spoiler Alert Platform',
+        senderName: 'IndSpoiler Alert Platform',
         senderEmail: process.env.SMTP_USER || 'eveline94@ethereal.email',
         isDefault: true
       });
@@ -56,7 +56,7 @@ router.post('/smtp', async (req: Request, res: Response) => {
       secure = false,
       user,
       pass,
-      senderName = 'Spoiler Alert Operations',
+      senderName = 'IndSpoiler Alert Operations',
       senderEmail
     } = req.body;
 
@@ -194,7 +194,7 @@ router.post('/send-email', async (req: Request, res: Response) => {
 
     const smtpConfig = await SupplierSmtpConfig.findOne({ supplierId });
     const fromEmail = smtpConfig?.senderEmail || 'eveline94@ethereal.email';
-    const fromName = smtpConfig?.senderName || 'Spoiler Alert Platform';
+    const fromName = smtpConfig?.senderName || 'IndSpoiler Alert Platform';
 
     const result = await sendEmailHelper(to, subject, body, fromEmail, fromName);
 

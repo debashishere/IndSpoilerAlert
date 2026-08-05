@@ -51,7 +51,7 @@ export const getSupplierTransporter = async (supplierId: string = 'default') => 
 
   return {
     transporter: await getDefaultMailTransporter(),
-    fromAddress: `"Spoiler Alert Platform" <eveline94@ethereal.email>`
+    fromAddress: `"IndSpoiler Alert Platform" <eveline94@ethereal.email>`
   };
 };
 
@@ -78,8 +78,8 @@ export async function sendEmailHelper(
     const transporter = await getDefaultMailTransporter();
 
     const fromIdentity = fromEmail
-      ? `"${fromName || 'Spoiler Alert'}" <${fromEmail}>`
-      : '"Spoiler Alert Platform" <eveline94@ethereal.email>';
+      ? `"${fromName || 'IndSpoiler Alert'}" <${fromEmail}>`
+      : '"IndSpoiler Alert Platform" <eveline94@ethereal.email>';
 
     const info = await transporter.sendMail({
       from: fromIdentity,

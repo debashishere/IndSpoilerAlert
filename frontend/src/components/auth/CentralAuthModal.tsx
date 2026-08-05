@@ -84,7 +84,7 @@ export const CentralAuthModal: React.FC<CentralAuthModalProps> = ({
           </h2>
           <p className="text-sm text-slate-400 mt-1">
             {mode === 'signup'
-              ? 'Join SpoilerAlert with single sign-on access to all modules.'
+              ? 'Join IndSpoilerAlert with single sign-on access to all modules.'
               : 'Enter your credentials to access your organization workspace.'}
           </p>
         </div>

@@ -11,9 +11,9 @@ export interface AuthUser {
   photoURL?: string;
 }
 
-const MOCK_USER_STORAGE_KEY = 'spoiler_auth_mock_user';
-const MOCK_TOKEN_STORAGE_KEY = 'spoiler_auth_mock_token';
-const MOCK_PROFILES_STORAGE_KEY = 'spoiler_auth_mock_profiles';
+const MOCK_USER_STORAGE_KEY = 'ind_spoiler_auth_mock_user';
+const MOCK_TOKEN_STORAGE_KEY = 'ind_spoiler_auth_mock_token';
+const MOCK_PROFILES_STORAGE_KEY = 'ind_spoiler_auth_mock_profiles';
 
 const isFirebaseConfigured = (): boolean => {
   const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
@@ -36,7 +36,7 @@ class FirebaseAuthService {
     try {
       const storedUser = localStorage.getItem(MOCK_USER_STORAGE_KEY);
       const storedToken = localStorage.getItem(MOCK_TOKEN_STORAGE_KEY);
-      const sessionActive = localStorage.getItem('spoiler_auth_session_active');
+      const sessionActive = localStorage.getItem('ind_spoiler_auth_session_active');
       if (storedUser && storedToken && sessionActive === 'true') {
         this.mockUser = JSON.parse(storedUser);
         this.mockToken = storedToken;
@@ -123,7 +123,7 @@ class FirebaseAuthService {
 
       localStorage.setItem(MOCK_USER_STORAGE_KEY, JSON.stringify(user));
       localStorage.setItem(MOCK_TOKEN_STORAGE_KEY, token);
-      localStorage.setItem('spoiler_auth_session_active', 'true');
+      localStorage.setItem('ind_spoiler_auth_session_active', 'true');
 
       this.notifyListeners();
       return user;
@@ -153,7 +153,7 @@ class FirebaseAuthService {
       localStorage.setItem(MOCK_USER_STORAGE_KEY, JSON.stringify(user));
       localStorage.setItem(MOCK_TOKEN_STORAGE_KEY, token);
       localStorage.setItem(`${MOCK_PROFILES_STORAGE_KEY}_${email}`, JSON.stringify(profiles));
-      localStorage.setItem('spoiler_auth_session_active', 'true');
+      localStorage.setItem('ind_spoiler_auth_session_active', 'true');
 
       this.notifyListeners();
       return user;
@@ -167,7 +167,7 @@ class FirebaseAuthService {
     this.mockToken = null;
     localStorage.removeItem(MOCK_USER_STORAGE_KEY);
     localStorage.removeItem(MOCK_TOKEN_STORAGE_KEY);
-    localStorage.removeItem('spoiler_auth_session_active');
+    localStorage.removeItem('ind_spoiler_auth_session_active');
     this.notifyListeners();
   }
 

@@ -829,7 +829,7 @@ const STARTER_TEMPLATES: Record<string, { label: string; blocks: EmailBlock[] }>
       { id: genId(), type: 'header', content: 'URGENT SHORT-DATED CLEARANCE OFFER', align: 'center' },
       { id: genId(), type: 'text', content: 'Dear {{buyer_name}},\n\nWe have distress inventory expiring soon with up to {{discount_percent}} markdown. Please review the inventory table below for immediate allocation within {{offer_expiry_hours}} hours.', align: 'left' },
       { id: genId(), type: 'inventory_table', content: '{{inventory_table}}', columnConfig: { sku: true, description: true, cases: true, expirationDate: true, msrp: true, discountPrice: true }, align: 'left' },
-      { id: genId(), type: 'cta', content: 'Place Bid / Claim Inventory', url: 'https://spoileralert.com/deals', align: 'center' },
+      { id: genId(), type: 'cta', content: 'Place Bid / Claim Inventory', url: 'https://indspoileralert.com/deals', align: 'center' },
       { id: genId(), type: 'footer', content: 'Logistics & Compliance Verified — Express Freight Delivery Available.', align: 'center' },
     ],
   },
@@ -839,8 +839,8 @@ const STARTER_TEMPLATES: Record<string, { label: string; blocks: EmailBlock[] }>
       { id: genId(), type: 'header', content: 'CATEGORY FEFO LIQUIDATION NOTICE', align: 'center' },
       { id: genId(), type: 'text', content: 'Dear {{buyer_name}},\n\nSpecial category liquidation notice for active buyers. The following fresh inventory lots are fast-tracked for immediate FEFO release.', align: 'left' },
       { id: genId(), type: 'inventory_table', content: '{{inventory_table}}', columnConfig: { sku: true, description: true, cases: true, expirationDate: true, msrp: true, discountPrice: true }, align: 'left' },
-      { id: genId(), type: 'cta', content: 'Review FEFO Lots', url: 'https://spoileralert.com/fefo', align: 'center' },
-      { id: genId(), type: 'signature', content: '', signatureName: 'SpoilerAlert Operations', signatureTitle: 'Surplus Recovery Team', align: 'left' },
+      { id: genId(), type: 'cta', content: 'Review FEFO Lots', url: 'https://indspoileralert.com/fefo', align: 'center' },
+      { id: genId(), type: 'signature', content: '', signatureName: 'IndSpoilerAlert Operations', signatureTitle: 'Surplus Recovery Team', align: 'left' },
     ],
   },
   fda_coa: {
@@ -849,7 +849,7 @@ const STARTER_TEMPLATES: Record<string, { label: string; blocks: EmailBlock[] }>
       { id: genId(), type: 'header', content: 'FDA COA VERIFIED SURPLUS OFFER', align: 'center' },
       { id: genId(), type: 'text', content: 'Dear {{buyer_name}},\n\n100% FDA COA Verified surplus inventory available exclusively for qualified B2B buyers. Full compliance documentation available upon request.', align: 'left' },
       { id: genId(), type: 'inventory_table', content: '{{inventory_table}}', columnConfig: { sku: true, description: true, cases: true, expirationDate: true, msrp: true, discountPrice: true }, align: 'left' },
-      { id: genId(), type: 'cta', content: 'Request Certificate & Order', url: 'https://spoileralert.com/coa', align: 'center' },
+      { id: genId(), type: 'cta', content: 'Request Certificate & Order', url: 'https://indspoileralert.com/coa', align: 'center' },
       { id: genId(), type: 'footer', content: 'All lots include verified Certificate of Analysis compliance documentation.', align: 'center' },
     ],
   },
@@ -1693,7 +1693,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     }
 
     // 6. Quick Bid Link
-    const quickBidLink = 'https://spoileralert.com/bid?token=demo-token-123';
+    const quickBidLink = 'https://indspoileralert.com/bid?token=demo-token-123';
 
     // 7. Inventory Table HTML
     let inventoryTable = '<div style="padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; text-align: center; color: #64748b; font-size: 13px; background: #f8fafc;">[No Inventory Selected - Select lots in Step 1]</div>';
@@ -3457,7 +3457,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 <div style={{ background: '#f8fafc', padding: '12px', borderLeft: '4px solid #3b82f6', borderRadius: '4px', margin: '16px 0' }}>
                   <strong>Dock Instructions:</strong> {donationEmailCustomNotes}
                 </div>
-                <p style={{ marginTop: '20px', color: '#64748b', fontSize: '0.8rem' }}>Spoiler Alert Surplus Recovery Division</p>
+                <p style={{ marginTop: '20px', color: '#64748b', fontSize: '0.8rem' }}>IndSpoiler Alert Surplus Recovery Division</p>
               </div>
             </div>
           </div>

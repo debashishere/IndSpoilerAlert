@@ -9,7 +9,7 @@ const credentialsPath = path.join(__dirname, '../../../test_files/buyers_100_eth
 function createEtherealAccount() {
   return new Promise((resolve, reject) => {
     const postData = JSON.stringify({
-      requestor: 'spoiler-alert-' + Math.random().toString(36).substring(2),
+      requestor: 'ind-spoiler-alert-' + Math.random().toString(36).substring(2),
       version: '1.0'
     });
     const req = https.request('https://api.nodemailer.com/user', {

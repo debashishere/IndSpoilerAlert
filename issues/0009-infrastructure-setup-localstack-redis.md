@@ -15,7 +15,7 @@ Set up LocalStack (mocking S3 and SQS) and Redis as services inside `docker-comp
 ## Acceptance criteria
 
 - [ ] `docker-compose.yml` includes configured services for `localstack` (with S3 and SQS enabled) and `redis` (alpine image).
-- [ ] On startup, the LocalStack container automatically initializes the S3 bucket `spoiler-alert-surplus` and the SQS queue `spoiler-alert-ingestion-jobs`.
+- [ ] On startup, the LocalStack container automatically initializes the S3 bucket `ind-spoiler-alert-surplus` and the SQS queue `ind-spoiler-alert-ingestion-jobs`.
 - [ ] Express backend successfully instantiates the AWS S3 and SQS clients, pointing them to the local LocalStack endpoints, and instantiates the Redis client.
 - [ ] Python sidecar successfully instantiates the `boto3` clients for S3 and SQS pointing to LocalStack.
 - [ ] API integration tests run successfully, confirming connection availability.

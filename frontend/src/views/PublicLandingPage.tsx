@@ -40,7 +40,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({ onAuthenti
             </div>
             <div>
               <span className="text-xl font-bold tracking-tight text-white">
-                Spoiler<span className="text-emerald-400">Alert</span>
+                IndSpoiler<span className="text-emerald-400">Alert</span>
               </span>
               <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 Enterprise
@@ -52,8 +52,8 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({ onAuthenti
             <a href="#inventory-flow" className="hover:text-emerald-400 transition-colors">
               InventoryFlow
             </a>
-            <a href="#spoiler-alert" className="hover:text-emerald-400 transition-colors">
-              SpoilerAlert
+            <a href="#ind-spoiler-alert" className="hover:text-emerald-400 transition-colors">
+              IndSpoilerAlert
             </a>
             <a href="#social-proof" className="hover:text-emerald-400 transition-colors">
               Customers & Impact
@@ -181,8 +181,8 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({ onAuthenti
               </div>
             </div>
 
-            {/* SpoilerAlert Showcase Card */}
-            <div id="spoiler-alert" className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 backdrop-blur-xl hover:border-teal-500/40 transition-all flex flex-col justify-between group">
+            {/* IndSpoilerAlert Showcase Card */}
+            <div id="ind-spoiler-alert" className="bg-slate-900/60 border border-slate-800 rounded-2xl p-8 backdrop-blur-xl hover:border-teal-500/40 transition-all flex flex-col justify-between group">
               <div>
                 <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <TrendingUp className="w-6 h-6" />
@@ -190,7 +190,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({ onAuthenti
                 <div className="inline-block text-xs font-bold uppercase tracking-wider text-teal-400 mb-2">
                   Downstream Liquidation & Impact
                 </div>
-                <h3 className="text-2xl font-bold text-white mb-3">SpoilerAlert</h3>
+                <h3 className="text-2xl font-bold text-white mb-3">IndSpoilerAlert</h3>
                 <p className="text-slate-400 text-sm mb-6 leading-relaxed">
                   Liquidate surplus food inventory directly to verified buyers or orchestrate automated food bank donations for full tax write-offs.
                 </p>
@@ -263,7 +263,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({ onAuthenti
                     ))}
                   </div>
                   <p className="text-slate-300 text-sm italic mb-6">
-                    &ldquo;SpoilerAlert's liquidation automations helped us recover over $4.2M in short-dated inventory value in our first two quarters.&rdquo;
+                    &ldquo;IndSpoilerAlert's liquidation automations helped us recover over $4.2M in short-dated inventory value in our first two quarters.&rdquo;
                   </p>
                 </div>
                 <div className="border-t border-slate-800/80 pt-4">
@@ -315,7 +315,7 @@ export const PublicLandingPage: React.FC<PublicLandingPageProps> = ({ onAuthenti
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950 py-8 px-6">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <div>&copy; {new Date().getFullYear()} SpoilerAlert Inc. All rights reserved.</div>
+          <div>&copy; {new Date().getFullYear()} IndSpoilerAlert Inc. All rights reserved.</div>
           <div className="flex items-center space-x-6">
             <span>FSMA 204 Compliant</span>
             <span>Enterprise Security</span>

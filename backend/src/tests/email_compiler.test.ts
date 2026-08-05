@@ -23,7 +23,7 @@ describe('Slice 2: Handlebars Compiler & Juice CSS Inliner Engine', () => {
 
     if (mongoose.connection.readyState === 0) {
       try {
-        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/spoileralert_test', { serverSelectionTimeoutMS: 1000 });
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/indspoileralert_test', { serverSelectionTimeoutMS: 1000 });
       } catch (err) {}
     }
   });
@@ -75,10 +75,10 @@ describe('Slice 2: Handlebars Compiler & Juice CSS Inliner Engine', () => {
 
     it('should correctly handle {{quick_bid_link}} in template hyperlinks', () => {
       const template = '<a href="{{quick_bid_link}}">Submit Bid Now</a>';
-      const context = { quick_bid_link: 'https://spoileralert.com/bid?token=signed_jwt_token_123' };
+      const context = { quick_bid_link: 'https://indspoileralert.com/bid?token=signed_jwt_token_123' };
 
       const compiled = compileTemplate(template, context);
-      expect(compiled).toContain('href="https://spoileralert.com/bid?token=signed_jwt_token_123"');
+      expect(compiled).toContain('href="https://indspoileralert.com/bid?token=signed_jwt_token_123"');
     });
   });
 
@@ -98,7 +98,7 @@ describe('Slice 2: Handlebars Compiler & Juice CSS Inliner Engine', () => {
           </body>
         </html>
       `;
-      const context = { quick_bid_link: 'https://spoileralert.com/bid' };
+      const context = { quick_bid_link: 'https://indspoileralert.com/bid' };
 
       const compiled = compileTemplate(rawHtml, context);
       
@@ -112,7 +112,7 @@ describe('Slice 2: Handlebars Compiler & Juice CSS Inliner Engine', () => {
     it('should preserve MSO conditional comments for Outlook rendering compatibility', () => {
       const outlookHtml = `
         <!--[if mso]>
-          <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="https://spoileralert.com/bid" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="10%" stroke="f" fillcolor="#4f46e5">
+          <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="https://indspoileralert.com/bid" style="height:40px;v-text-anchor:middle;width:200px;" arcsize="10%" stroke="f" fillcolor="#4f46e5">
             <w:anchorlock/>
             <center>
           </v:roundrect>

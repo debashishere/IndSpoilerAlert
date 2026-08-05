@@ -6,7 +6,7 @@
 
 ## Parent
 
-- [Issue #1: Implement Spoiler Alert Surplus Inventory Platform (PRD)](file:///Users/debashisroy/Documents/inventory/issues/0001-prd-spoiler-alert.md)
+- [Issue #1: Implement IndSpoiler Alert Surplus Inventory Platform (PRD)](file:///Users/debashisroy/Documents/inventory/issues/0001-prd-ind-spoiler-alert.md)
 
 ## What to build
 

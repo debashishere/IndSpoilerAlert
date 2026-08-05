@@ -1,7 +1,7 @@
 # 0027: Product Rebranding to InventoryFlowing
 
 ## Context
-The platform was initially titled "Spoiler Alert Inventory Platform". However, the brand name "Spoiler Alert" is a registered entity name in the food waste and inventory liquidation industry. 
+The platform was initially titled "IndSpoiler Alert Inventory Platform". However, the brand name "IndSpoiler Alert" is a registered entity name in the food waste and inventory liquidation industry. 
 
 To establish an independent, distinct product identity focused on seamless automated liquidation of short-dated CPG goods, dynamic yield optimization, and frictionless buyer marketplaces, the product requires a complete rename.
 
@@ -10,7 +10,7 @@ To establish an independent, distinct product identity focused on seamless autom
 2. **Domain & Brand Identity Updates**:
    - Update canonical domain context in `docs/CONTEXT.md` to reference **InventoryFlowing Platform**.
    - Update application headers, UI sidebar branding (`Sidebar.tsx`), tour components (`InteractiveTour.tsx`), and automated email dispatch footers to display **InventoryFlowing**.
-   - Target domain routing references shift from `spoileralert.com` to `inventoryflowing.com` (`app.inventoryflowing.com` for supplier platform, `marketplace.inventoryflowing.com` for buyer marketplace).
+   - Target domain routing references shift from `indspoileralert.com` to `inventoryflowing.com` (`app.inventoryflowing.com` for supplier platform, `marketplace.inventoryflowing.com` for buyer marketplace).
 
 ## Consequences
 - **Brand Independence**: Eliminates trademark collision risks with third-party entities.

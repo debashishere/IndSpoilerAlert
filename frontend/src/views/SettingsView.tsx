@@ -128,7 +128,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <p className="font-semibold text-slate-300 flex items-center gap-1.5">
                 <Shield className="w-4 h-4 text-indigo-400" /> Security Info
               </p>
-              <p>SpoilerAlert Platform Subsystem v2.4. OAuth & Access Control Active.</p>
+              <p>IndSpoilerAlert Platform Subsystem v2.4. OAuth & Access Control Active.</p>
             </div>
           </div>
         </div>

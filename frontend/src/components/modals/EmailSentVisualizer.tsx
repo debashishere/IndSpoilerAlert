@@ -64,7 +64,7 @@ export const EmailSentVisualizer: React.FC = () => {
           <div className="email-visualizer-envelope">
             <div className="email-visualizer-header">
               <div>
-                <strong>From:</strong> Spoiler Alert Platform &lt;eveline94@ethereal.email&gt;
+                <strong>From:</strong> IndSpoiler Alert Platform &lt;eveline94@ethereal.email&gt;
               </div>
               <div>
                 <strong>To:</strong> Logistics Operations &lt;ops@

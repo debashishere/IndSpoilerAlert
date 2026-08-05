@@ -1,7 +1,7 @@
 # 0025: Deferring Distressed Analytics and Freight Logistics Sections for Base Version Release
 
 ## Context
-The Spoiler Alert platform has developed vertical modules for "Distressed Analytics" (COGS recovery, waste diversion, landfill savings dashboards) and "Freight Logistics" (carrier assignment, dock appointment confirmation, cold chain temperature logging, and BOL generation).
+The IndSpoiler Alert platform has developed vertical modules for "Distressed Analytics" (COGS recovery, waste diversion, landfill savings dashboards) and "Freight Logistics" (carrier assignment, dock appointment confirmation, cold chain temperature logging, and BOL generation).
 
 While backend models, Redux slices (`analyticsSlice`, `logisticsSlice`), and API endpoints (`/analytics/summary`, `/shipments`) are fully operational and tested, presenting these specialized views in the initial user interface adds secondary operational surface area for suppliers who require a streamlined base version release focused on core inventory ingestion, stage-gate liquidation workflows, and B2B marketplace execution.
 

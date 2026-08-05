@@ -286,7 +286,7 @@ export async function placeBid(listingId: string, bidData: any) {
     // Create Shipment
     const shipment = new Shipment({
       awardId: award._id,
-      carrier: 'Spoiler Alert Logistics Partner',
+      carrier: 'IndSpoiler Alert Logistics Partner',
       pickupLocation,
       deliveryLocation: `${buyer.companyName} Warehouse`,
       status: 'scheduled',

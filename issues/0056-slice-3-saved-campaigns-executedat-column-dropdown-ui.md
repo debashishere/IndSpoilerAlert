@@ -15,4 +15,4 @@ Add an `ExecutedAt` column to the Saved Campaigns table in `WorkflowsView.tsx`. 
 
 ## Blocked by
 
-- [Issue 0055](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0055-slice-2-execution-summary-and-run-snapshot-api-endpoints.md)
+- [Issue 0055](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0055-slice-2-execution-summary-and-run-snapshot-api-endpoints.md)

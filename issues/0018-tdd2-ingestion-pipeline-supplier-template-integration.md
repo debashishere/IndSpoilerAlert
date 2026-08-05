@@ -20,4 +20,4 @@ Specifically:
 
 ## Blocked by
 
-- [Issue 0017](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0017-tdd1-core-dynamic-data-translator-engine.md)
+- [Issue 0017](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0017-tdd1-core-dynamic-data-translator-engine.md)

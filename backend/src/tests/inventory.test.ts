@@ -34,7 +34,7 @@ describe('Inventory, Bidding, and Diversion API Endpoints', () => {
     // Seed Buyer
     const buyer = await Buyer.create({
       companyName: 'Test Buyer Inventory',
-      email: 'testbuyer_inv@spoileralert.com',
+      email: 'testbuyer_inv@indspoileralert.com',
       acceptsShortDated: true,
       minShelfLife: 5,
       categories: ['Dry Goods'],

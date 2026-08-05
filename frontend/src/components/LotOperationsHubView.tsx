@@ -1139,7 +1139,7 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
                       }}
                     >
                       <div style={{ fontSize: '0.7rem', fontWeight: 700, color: item.sender === 'Supplier' ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))', marginBottom: '2px' }}>
-                        {item.sender === 'Supplier' ? 'You (SpoilerAlert Account)' : selectedBidForNegotiation.buyerId?.companyName}
+                        {item.sender === 'Supplier' ? 'You (IndSpoilerAlert Account)' : selectedBidForNegotiation.buyerId?.companyName}
                       </div>
                       <div style={{ fontSize: '0.85rem', lineHeight: 1.4 }}>{item.message || `Counter offer placed at $${item.price}/cs`}</div>
                       <div style={{ fontSize: '0.65rem', color: 'hsl(var(--text-muted))', marginTop: '4px', textAlign: 'right' }}>

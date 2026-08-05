@@ -31,7 +31,7 @@ app.use('/api', (req, res, next) => {
 });
 
 // Connect to MongoDB
-const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/spoiler-alert';
+const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
 mongoose.connect(mongoUri)
   .then(async () => {
     await startAgenda();

@@ -14,7 +14,7 @@ Previously, campaigns (`LiquidationCycle`) and automations (`LiquidationAutomati
 We unify campaign details and workflow configuration into a single multi-step wizard. Creating a campaign now automatically provisions its execution strategy, ensuring that campaigns are always backed by clear business rules (e.g., auto-negotiating auctions, flash sales, or donation backstops) from day one.
 
 #### 2. Right-Side Slide-Out Panel (Drawer)
-*(Note: Superseded by [ADR 0015](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0015-merge-campaign-setup-into-automation-studio-and-tour-isolation.md): Campaign Cycle setup was merged directly into Section 1 of the full-page **Liquidation Automation Studio** (`LiquidationAutomationStudio.tsx`), eliminating the redundant side drawer.)*
+*(Note: Superseded by [ADR 0015](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0015-merge-campaign-setup-into-automation-studio-and-tour-isolation.md): Campaign Cycle setup was merged directly into Section 1 of the full-page **Liquidation Automation Studio** (`LiquidationAutomationStudio.tsx`), eliminating the redundant side drawer.)*
 
 #### 3. Extended Database Schema: `stages` Array in `LiquidationAutomation`
 To support the custom stage-gate workflow template, we extend the `LiquidationAutomation` model to store an ordered sequence of stages. Each stage is defined by:

@@ -9,7 +9,7 @@ Consumer Packaged Goods (CPG) suppliers generate billions of dollars in surplus 
 
 ## Solution
 
-Build the **Spoiler Alert Inventory Platform**—a B2B surplus liquidation portal containing:
+Build the **IndSpoiler Alert Inventory Platform**—a B2B surplus liquidation portal containing:
 
 ### 1. Core Product-Grade Features (AI-Driven)
 - **Hybrid Ingestion Engine**: Extracts tabular data from PDFs using IBM Docling, applies fuzzy matching on headers, and provides a B2B self-serve column mapping wizard to define layout templates.
@@ -48,7 +48,7 @@ Build the **Spoiler Alert Inventory Platform**—a B2B surplus liquidation porta
 16. As a CPG Supplier, I want to toggle "Accept Bids" on an inventory item to list it as a competitive offer sheet, so that I can collect and compare buyer offers.
 17. As a CPG Supplier, I want to view active bids for a listing and click "Award" to complete the sale, automatically updating inventory status and writing transaction logs.
 18. As a CPG Supplier, I want to divert short-dated stock to "Donation" or "Recycling" via embedded actions, so that I can coordinate transport with a food bank or recycler and verify cost savings on landfill fees.
-19. As a Sales Operations Manager, I want to access a "Distressed Analytics" dashboard tab to view key metrics such as COGS Recovery, Waste Diverted (tons), Leftover rate, and Remaining Shelf Life trends. *(Note: Deferring UI navigation section for base release via `SHOW_DISTRESSED_ANALYTICS = false` feature flag per [ADR 0025](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).*
+19. As a Sales Operations Manager, I want to access a "Distressed Analytics" dashboard tab to view key metrics such as COGS Recovery, Waste Diverted (tons), Leftover rate, and Remaining Shelf Life trends. *(Note: Deferring UI navigation section for base release via `SHOW_DISTRESSED_ANALYTICS = false` feature flag per [ADR 0025](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).*
 
 ---
 
@@ -192,7 +192,7 @@ The **Node.js Express** app acts as the orchestrator and database client, while 
 - OCR extraction from image files (e.g. JPG invoices are not supported; strictly PDF and CSV).
 - Real payment processing (all transactions are simulated).
 - Live email/SMS notification dispatch (notifications are simulated as dashboard logs/alerts).
-- Real-time third-party logistics (3PL) carrier integrations (donation/recycling freight is simulated as a static log timeline; Freight Logistics and Distressed Analytics UI sections are deferred for base release via feature flags `SHOW_FREIGHT_LOGISTICS = false` and `SHOW_DISTRESSED_ANALYTICS = false`, see [ADR 0025](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).
+- Real-time third-party logistics (3PL) carrier integrations (donation/recycling freight is simulated as a static log timeline; Freight Logistics and Distressed Analytics UI sections are deferred for base release via feature flags `SHOW_FREIGHT_LOGISTICS = false` and `SHOW_DISTRESSED_ANALYTICS = false`, see [ADR 0025](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).
 
 ---
 

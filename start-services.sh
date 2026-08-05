@@ -12,7 +12,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 echo "========================================="
-echo "  SPOILER ALERT SURPLUS PLATFORM RUNNER  "
+echo "  IND IND_SPOILER ALERT SURPLUS PLATFORM RUNNER  "
 echo "========================================="
 
 # 1. Verify MongoDB is running

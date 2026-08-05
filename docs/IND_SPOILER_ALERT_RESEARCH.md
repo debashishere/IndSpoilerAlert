@@ -1,17 +1,17 @@
-# Spoiler Alert Platform: Research & Demonstration Recommendation Report
+# IndSpoiler Alert Platform: Research & Demonstration Recommendation Report
 
-This document compiles the research on the real-world **Spoiler Alert** surplus inventory liquidation platform, details its key case studies and YouTube demonstrations, and recommends how to showcase these features using our B2B Surplus Liquidation Platform.
+This document compiles the research on the real-world **IndSpoiler Alert** surplus inventory liquidation platform, details its key case studies and YouTube demonstrations, and recommends how to showcase these features using our B2B Surplus Liquidation Platform.
 
 ---
 
-## 1. Feature Analysis of the Real Spoiler Alert Platform
+## 1. Feature Analysis of the Real IndSpoiler Alert Platform
 
-Spoiler Alert is a B2B surplus food marketplace and waste diversion software tailored for CPG (Consumer Packaged Goods) manufacturers.
+IndSpoiler Alert is a B2B surplus food marketplace and waste diversion software tailored for CPG (Consumer Packaged Goods) manufacturers.
 
 | Feature Area | Description & Problem Solved | Real-World Impact (Reports/YT) |
 | :--- | :--- | :--- |
-| **Intelligent Ingestion** | CPG manufacturers manage excess/short-dated inventory using inconsistent, fragmented spreadsheets and PDFs. Spoiler Alert digitizes and standardizes raw sheets. | Reduces manual sales operations overhead by **300+ hours annually per user**. |
-| **Dynamic Markdown Pricing** | Operators rely on "gut feeling" to price closeouts. Under-discounting leads to disposal; over-discounting burns margin. Spoiler Alert recommends tiered discounts based on Remaining Shelf Life (RSL). | Digitized markdowns for **Danone** and **Hormel**, improving recovery rates by **35%+**. |
+| **Intelligent Ingestion** | CPG manufacturers manage excess/short-dated inventory using inconsistent, fragmented spreadsheets and PDFs. IndSpoiler Alert digitizes and standardizes raw sheets. | Reduces manual sales operations overhead by **300+ hours annually per user**. |
+| **Dynamic Markdown Pricing** | Operators rely on "gut feeling" to price closeouts. Under-discounting leads to disposal; over-discounting burns margin. IndSpoiler Alert recommends tiered discounts based on Remaining Shelf Life (RSL). | Digitized markdowns for **Danone** and **Hormel**, improving recovery rates by **35%+**. |
 | **Smart Buyer Matching** | Avoids spamming a broad mailing list. Matches listings with brokers, discount retailers, and food banks based on category preferences and location. | Boosts buyer response rates by **46%**. Vets a marketplace network of **100+ buyers** (e.g. Grocery Outlet, Big Lots). |
 | **Bidding & Awarding** | Support closeout bids, messaging/negotiation chains, and partial awards (splitting a lot across multiple buyers). | Drives optimal inventory clearing and high recovery rates. |
 | **Alternative Disposal** | Diverts remaining distressed food to charities (food banks) or organic recycling centers to avoid landfill fees. | Double donation rates (33% to 61%) and achieved a **65% reduction in landfill waste** for **HelloFresh**. |
@@ -36,7 +36,7 @@ Spoiler Alert is a B2B surplus food marketplace and waste diversion software tai
 
 ## 3. How to Demonstrate these Features in Our Platform
 
-Our platform mirrors these capabilities. To run a full demonstration, follow the instructions in the [Walkthrough Guide (docs/DEMO_GUIDE.md)](file:///Users/debashisroy/Documents/SpoilerAlert/docs/DEMO_GUIDE.md) using the messy mock data in [test_files/danone_messy_invoice.csv](file:///Users/debashisroy/Documents/SpoilerAlert/test_files/danone_messy_invoice.csv).
+Our platform mirrors these capabilities. To run a full demonstration, follow the instructions in the [Walkthrough Guide (docs/DEMO_GUIDE.md)](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/DEMO_GUIDE.md) using the messy mock data in [test_files/danone_messy_invoice.csv](file:///Users/debashisroy/Documents/IndSpoilerAlert/test_files/danone_messy_invoice.csv).
 
 ### Demonstration Sequence:
 1.  **Ingestion Tab**: Upload a messy invoice sheet to show the column mapping wizard and Gemini AI cleaning up abbreviated item descriptions.

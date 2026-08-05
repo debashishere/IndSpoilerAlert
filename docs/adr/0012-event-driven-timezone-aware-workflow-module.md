@@ -1,6 +1,6 @@
 # Event-Driven, Timezone-Aware Workflow Module Architecture
 
-We decided to implement a timezone-aware, event-driven, and highly optimized stage-gate **Workflow Module** that separates template definitions from execution runs. This design expands upon and refines the initial automation concepts from [ADR-0011](file:///Users/debashisroy/Documents/SpoilerAlert/docs/adr/0011-liquidation-workflow-automation-engine.md).
+We decided to implement a timezone-aware, event-driven, and highly optimized stage-gate **Workflow Module** that separates template definitions from execution runs. This design expands upon and refines the initial automation concepts from [ADR-0011](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0011-liquidation-workflow-automation-engine.md).
 
 ### Context
 Our initial design combined the workflow rules and execution state in a single document and suggested a simple cron polling interval. In production, this approach fails because:

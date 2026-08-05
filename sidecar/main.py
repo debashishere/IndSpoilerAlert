@@ -44,7 +44,7 @@ sqs_client = boto3.client(
     aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY", "test"),
 )
 
-app = FastAPI(title="Spoiler Alert Sidecar Service")
+app = FastAPI(title="IndSpoiler Alert Sidecar Service")
 
 
 app.add_middleware(
@@ -151,7 +151,7 @@ def sqs_worker_loop():
         else:
             backend_url = "http://localhost:5001"
 
-    queue_name = "spoiler-alert-ingestion-jobs"
+    queue_name = "ind-spoiler-alert-ingestion-jobs"
     while True:
         try:
             try:

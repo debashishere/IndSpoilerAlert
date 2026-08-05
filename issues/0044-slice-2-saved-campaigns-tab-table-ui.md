@@ -17,4 +17,4 @@ Implement a dedicated **Saved Campaigns** tab within `WorkflowsView.tsx` as the 
 
 ## Blocked by
 
-- [0043 - Backend Campaign Status & Persistence REST Endpoints](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0043-slice-1-backend-campaign-status-persistence-api.md)
+- [0043 - Backend Campaign Status & Persistence REST Endpoints](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0043-slice-1-backend-campaign-status-persistence-api.md)

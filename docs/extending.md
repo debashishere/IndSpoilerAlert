@@ -1,6 +1,6 @@
 # Extending the Inventory Platform
 
-This document describes the workflows, current feature set, and plans for AI integration on the Spoiler Alert Surplus Platform.
+This document describes the workflows, current feature set, and plans for AI integration on the IndSpoiler Alert Surplus Platform.
 
 ## Current Feature Workflows
 

@@ -27,7 +27,7 @@ describe('Slice 2: Handlebars Token Compiler & Live Device Preview Pane', () => 
     expect(compiledBody).toContain('Surplus Dairy Lot #99');
     expect(compiledBody).toContain('<table');
     expect(compiledBody).toContain('SKU-9901');
-    expect(compiledBody).toContain('https://spoileralert.com/bid?token=demo-token-123');
+    expect(compiledBody).toContain('https://indspoileralert.com/bid?token=demo-token-123');
   });
 
   it('renders LiveDevicePreview component with Desktop and Mobile toggle', () => {

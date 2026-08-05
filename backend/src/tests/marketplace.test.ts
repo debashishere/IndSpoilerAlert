@@ -32,7 +32,7 @@ describe('Marketplace API Endpoints', () => {
     // Seed Buyer
     const buyer = await Buyer.create({
       companyName: 'Test Buyer Marketplace',
-      email: 'testbuyer_mkt@spoileralert.com',
+      email: 'testbuyer_mkt@indspoileralert.com',
       acceptsShortDated: true,
       minShelfLife: 5,
       categories: ['Dry Goods'],

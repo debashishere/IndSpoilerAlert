@@ -10,4 +10,4 @@ Implement a cryptographically signed Quick-Bid single-use token mechanism and re
 
 ## Blocked by
 
-- [Issue #0067](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0067-slice-3-dynamic-server-rendered-email-assets.md)
+- [Issue #0067](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0067-slice-3-dynamic-server-rendered-email-assets.md)

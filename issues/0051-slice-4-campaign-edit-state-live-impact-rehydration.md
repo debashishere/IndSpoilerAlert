@@ -13,4 +13,4 @@ Ensure full bidirectional state re-hydration when editing saved campaigns from t
 
 ## Blocked by
 
-- [Issue 0048](file:///Users/debashisroy/Documents/SpoilerAlert/issues/0048-slice-1-campaign-inventory-case-save-validation-invariants.md)
+- [Issue 0048](file:///Users/debashisroy/Documents/IndSpoilerAlert/issues/0048-slice-1-campaign-inventory-case-save-validation-invariants.md)
