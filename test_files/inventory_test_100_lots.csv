@@ -1,0 +1,49 @@
+SKU,Lot Number,Description,Qty Cases,Exp Date,MFG Date,Cost,List Price,Category,Warehouse,Comments
+ULVR-YOG-01,LOT-ULVR-2026-009,Creamery Organic Vanilla Yogurt 32oz,900,2026-08-15,2026-06-20,18.00,32.00,Dairy,Unilever Midwest DC,Active lot RSL 39%
+ULVR-BUT-02,LOT-ULVR-2026-010,Plant-Based Butter with Olive Oil 16oz,600,2026-08-20,2026-05-15,22.00,45.00,Dairy,Unilever Midwest DC,Pending bidding review
+KHC-KET-01,LOT-KHC-2026-011,Tomato Ketchup Squeeze Bottle 64oz,1800,2026-09-20,2026-04-01,12.00,24.00,Dry Goods,Kraft Heinz Midwest DC,Active seasonal surplus
+MDLZ-CHO-02,LOT-MDLZ-2026-012,Royal Dark Chocolate Bar 3.5oz,2000,2026-08-12,2026-04-15,10.00,20.00,Dry Goods,Mondelez Midwest DC,Pending COA verification
+DANN-MLK-02,LOT-DANN-2026-013,Oat Milk Barista Blend 32oz,750,2026-08-25,2026-06-01,16.00,32.00,Beverages,Danone Midwest DC,Active lot RSL 52%
+CAG-MEAT-01,LOT-CAG-2026-014,Frozen Boneless Poultry Breasts 5lb,1200,2026-09-10,2026-05-15,35.00,60.00,Meat,Conagra Midwest DC,Active frozen lot
+ULVR-YOG-01,LOT-ULVR-2026-015,Creamery Organic Vanilla Yogurt 32oz,400,2026-08-08,2026-07-01,18.00,32.00,Dairy,Unilever Midwest DC,Short-dated RSL 29%
+KHC-DRS-02,LOT-KHC-2026-016,Zesty Italian Salad Dressing 16oz,500,2026-08-30,2026-05-01,10.00,20.00,Dry Goods,Kraft Heinz Midwest DC,Active RSL 53%
+MDLZ-CRK-01,LOT-MDLZ-2026-017,Whole Wheat Original Crackers 12oz,1500,2026-08-20,2026-06-01,8.00,16.00,Dry Goods,Mondelez Midwest DC,Active RSL 47%
+DANN-YOG-01,LOT-DANN-2026-018,Greek Yogurt Variety 6-Pack,600,2026-08-10,2026-07-05,15.00,30.00,Dairy,Danone Midwest DC,Pending bidding
+CAG-MEAT-01,LOT-CAG-2026-019,Frozen Boneless Poultry Breasts 5lb,2000,2026-09-30,2026-06-01,35.00,60.00,Meat,Conagra Midwest DC,Active RSL 74%
+ULVR-MLK-03,LOT-ULVR-2026-020,Almond Milk Vanilla Infusion 64oz,800,2026-08-20,2026-07-01,14.00,28.00,Beverages,Unilever Midwest DC,Active Tree Nut allergen
+KHC-KET-01,LOT-KHC-2026-021,Tomato Ketchup Squeeze Bottle 64oz,3000,2026-10-15,2026-07-01,12.00,24.00,Dry Goods,Kraft Heinz Midwest DC,Active RSL 81%
+MDLZ-CHO-02,LOT-MDLZ-2026-022,Royal Dark Chocolate Bar 3.5oz,1200,2026-08-08,2026-05-20,10.00,20.00,Dry Goods,Mondelez Midwest DC,Active RSL 29%
+DANN-MLK-02,LOT-DANN-2026-023,Oat Milk Barista Blend 32oz,1000,2026-09-15,2026-07-10,16.00,32.00,Beverages,Danone Midwest DC,Active RSL 67%
+CAG-MEAT-01,LOT-CAG-2026-029,Frozen Boneless Poultry Breasts 5lb,1000,2026-10-20,2026-07-01,35.00,60.00,Meat,Conagra Midwest DC,Active RSL 84%
+ULVR-BUT-02,LOT-ULVR-2026-030,Plant-Based Butter with Olive Oil 16oz,500,2026-08-07,2026-06-15,22.00,45.00,Dairy,Unilever Midwest DC,Short-dated RSL 28%
+KHC-KET-01,LOT-KHC-2026-031,Tomato Ketchup Squeeze Bottle 64oz,2200,2026-09-28,2026-06-01,12.00,24.00,Dry Goods,Kraft Heinz Midwest DC,Active RSL 71%
+DANN-MLK-02,LOT-DANN-2026-043,Oat Milk Barista Blend 32oz,850,2026-09-15,2026-07-15,16.00,32.00,Beverages,Danone Midwest DC,Active RSL 67%
+CAG-MEAT-01,LOT-CAG-2026-034,Frozen Boneless Poultry Breasts 5lb,600,2026-09-01,2026-07-10,35.00,60.00,Meat,Conagra Midwest DC,Active RSL 57%
+ULVR-YOG-01,LOT-ULVR-2026-035,Creamery Organic Vanilla Yogurt 32oz,1100,2026-08-03,2026-06-25,18.00,32.00,Dairy,Unilever Midwest DC,CRITICAL RSL 23%
+KHC-DRS-02,LOT-KHC-2026-036,Zesty Italian Salad Dressing 16oz,800,2026-10-01,2026-07-01,10.00,20.00,Dry Goods,Kraft Heinz Midwest DC,Active RSL 76%
+MDLZ-CRK-01,LOT-MDLZ-2026-037,Whole Wheat Original Crackers 12oz,2500,2026-08-30,2026-06-10,8.00,16.00,Dry Goods,Mondelez Midwest DC,Active RSL 63%
+DANN-YOG-01,LOT-DANN-2026-038,Greek Yogurt Variety 6-Pack,500,2026-08-14,2026-07-20,15.00,30.00,Dairy,Danone Midwest DC,Pending RSL 43%
+CAG-MEAT-01,LOT-CAG-2026-039,Frozen Boneless Poultry Breasts 5lb,1500,2026-10-30,2026-07-15,35.00,60.00,Meat,Conagra Midwest DC,Active RSL 88%
+ULVR-MLK-03,LOT-ULVR-2026-040,Almond Milk Vanilla Infusion 64oz,900,2026-08-10,2026-06-15,14.00,28.00,Beverages,Unilever Midwest DC,Active RSL 33%
+KHC-KET-01,LOT-KHC-2026-041,Tomato Ketchup Squeeze Bottle 64oz,1600,2026-10-15,2026-07-01,12.00,24.00,Dry Goods,Kraft Heinz Midwest DC,Active RSL 81%
+MDLZ-CHO-02,LOT-MDLZ-2026-042,Royal Dark Chocolate Bar 3.5oz,1000,2026-09-20,2026-07-01,10.00,20.00,Dry Goods,Mondelez Midwest DC,Active RSL 71%
+DANN-YOG-01,LOT-DANN-2026-048,Greek Yogurt Variety 6-Pack,300,2026-08-18,2026-07-25,15.00,30.00,Dairy,Danone Midwest DC,Active RSL 52%
+CAG-MEAT-01,LOT-CAG-2026-049,Frozen Boneless Poultry Breasts 5lb,2000,2026-11-15,2026-07-20,35.00,60.00,Meat,Conagra Midwest DC,Active RSL 92%
+ULVR-BUT-02,LOT-ULVR-2026-050,Plant-Based Butter with Olive Oil 16oz,700,2026-09-01,2026-07-01,22.00,45.00,Dairy,Unilever Midwest DC,Active RSL 57%
+KHC-KET-01,LOT-KHC-2026-051,Tomato Ketchup Squeeze Bottle 64oz,2000,2026-11-01,2026-07-15,12.00,24.00,Dry Goods,Kraft Heinz Midwest DC,Active RSL 89%
+MDLZ-CHO-02,LOT-MDLZ-2026-052,Royal Dark Chocolate Bar 3.5oz,1500,2026-10-08,2026-07-10,10.00,20.00,Dry Goods,Mondelez Midwest DC,Active RSL 80%
+DANN-MLK-02,LOT-DANN-2026-053,Oat Milk Barista Blend 32oz,900,2026-09-20,2026-07-20,16.00,32.00,Beverages,Danone Midwest DC,Active RSL 71%
+CAG-MEAT-01,LOT-CAG-2026-054,Frozen Boneless Poultry Breasts 5lb,1800,2026-11-25,2026-07-25,35.00,60.00,Meat,Conagra Midwest DC,Active RSL 95%
+ULVR-YOG-01,LOT-ULVR-2026-055,Creamery Organic Vanilla Yogurt 32oz,1000,2026-09-01,2026-07-20,18.00,32.00,Dairy,Unilever Midwest DC,Active RSL 64%
+KHC-DRS-02,LOT-KHC-2026-056,Zesty Italian Salad Dressing 16oz,750,2026-10-20,2026-07-20,10.00,20.00,Dry Goods,Kraft Heinz Midwest DC,Active RSL 83%
+MDLZ-CRK-01,LOT-MDLZ-2026-057,Whole Wheat Original Crackers 12oz,1800,2026-09-28,2026-07-15,8.00,16.00,Dry Goods,Mondelez Midwest DC,Active RSL 73%
+DANN-YOG-01,LOT-DANN-2026-058,Greek Yogurt Variety 6-Pack,400,2026-08-20,2026-07-28,15.00,30.00,Dairy,Danone Midwest DC,Active RSL 53%
+CAG-MEAT-01,LOT-CAG-2026-059,Frozen Boneless Poultry Breasts 5lb,1000,2026-12-01,2026-07-28,35.00,60.00,Meat,Conagra Midwest DC,Active RSL 97%
+ULVR-MLK-03,LOT-ULVR-2026-060,Almond Milk Vanilla Infusion 64oz,700,2026-08-28,2026-07-25,14.00,28.00,Beverages,Unilever Midwest DC,Active RSL 67%
+DANN-YOG-01,LOT-DANN-2026-028,Greek Yogurt Variety 6-Pack,350,2026-08-05,2026-07-15,15.00,30.00,Dairy,Danone Midwest DC,CRITICAL RSL 22%
+ULVR-YOG-01,LOT-ULVR-2026-025,Creamery Organic Vanilla Yogurt 32oz,700,2026-08-22,2026-07-10,18.00,32.00,Dairy,Unilever Midwest DC,Active RSL 56%
+KHC-DRS-02,LOT-KHC-2026-026,Zesty Italian Salad Dressing 16oz,600,2026-09-15,2026-06-01,10.00,20.00,Dry Goods,Kraft Heinz Midwest DC,Active RSL 62%
+MDLZ-CRK-01,LOT-MDLZ-2026-027,Whole Wheat Original Crackers 12oz,2000,2026-08-28,2026-07-01,8.00,16.00,Dry Goods,Mondelez Midwest DC,Active RSL 62%
+ULVR-YOG-01,LOT-ULVR-2026-045,Creamery Organic Vanilla Yogurt 32oz,650,2026-08-25,2026-07-15,18.00,32.00,Dairy,Unilever Midwest DC,Active RSL 58%
+KHC-DRS-02,LOT-KHC-2026-046,Zesty Italian Salad Dressing 16oz,1000,2026-10-10,2026-07-10,10.00,20.00,Dry Goods,Kraft Heinz Midwest DC,Active RSL 79%
+MDLZ-CRK-01,LOT-MDLZ-2026-047,Whole Wheat Original Crackers 12oz,1200,2026-09-15,2026-07-05,8.00,16.00,Dry Goods,Mondelez Midwest DC,Active RSL 67%
