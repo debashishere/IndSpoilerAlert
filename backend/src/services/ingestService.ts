@@ -569,6 +569,18 @@ export async function confirmIngestion(
       }
     }
 
+    // Category defaults for product shelf life when not explicitly set
+    const categoryDefaults: Record<string, number> = {
+      'Dairy': 45,
+      'Produce': 30,
+      'Meat': 90,
+      'Meat & Poultry': 90,
+      'Beverages': 120,
+      'Dry Goods': 180,
+      'Frozen Foods': 180
+    };
+    const defaultCategoryShelfLife = categoryDefaults[category] || 90;
+
     // Find or create ProductMaster
     let product = await ProductMaster.findOne({ supplierId, sku: finalSku });
     if (!product) {
@@ -577,13 +589,16 @@ export async function confirmIngestion(
         sku: finalSku,
         category,
         description: clean_name,
-        shelfLifeDays: 30
+        shelfLifeDays: defaultCategoryShelfLife
       });
       await product.save();
     } else {
       // update description/category if they have changed or to make sure it's up to date
       product.description = clean_name;
       product.category = category;
+      if (!product.shelfLifeDays || product.shelfLifeDays === 30) {
+        product.shelfLifeDays = defaultCategoryShelfLife;
+      }
       await product.save();
     }
 
@@ -591,8 +606,13 @@ export async function confirmIngestion(
     const today = new Date();
     const diffTime = expirationDate.getTime() - today.getTime();
     const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-    const shelfLifeDays = product.shelfLifeDays || 30;
-    const remainingShelfLife = Math.min(1.0, Math.max(0.0, daysRemaining / shelfLifeDays));
+    let totalShelfDays = product.shelfLifeDays || defaultCategoryShelfLife;
+    if (productionDate) {
+      const totalDiff = expirationDate.getTime() - productionDate.getTime();
+      const calcDays = Math.ceil(totalDiff / (1000 * 60 * 60 * 24));
+      if (calcDays > 0) totalShelfDays = calcDays;
+    }
+    const remainingShelfLife = Math.min(1.0, Math.max(0.0, Number((daysRemaining / totalShelfDays).toFixed(4))));
 
     // Determine lot number (custom or generated)
     const lotNumber = rawLotNumber || `LOT-${finalSku}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;

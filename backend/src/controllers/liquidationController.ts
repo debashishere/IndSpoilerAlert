@@ -290,7 +290,12 @@ export async function triggerLiquidationAutomation(req: Request, res: Response) 
       if (filters.category && lot.productId && lot.productId.category !== filters.category) {
         return false;
       }
-      if (filters.maxRsl && lot.remainingShelfLife > filters.maxRsl) {
+      const lotRsl = typeof lot.remainingShelfLife === 'number' ? (lot.remainingShelfLife > 1 ? lot.remainingShelfLife / 100 : lot.remainingShelfLife) : 1;
+      const maxRslVal = filters.maxRsl;
+      const normalizedMaxRsl = (maxRslVal !== undefined && maxRslVal !== null && maxRslVal !== 0)
+        ? (maxRslVal >= 100 ? 1.0 : (maxRslVal >= 1 ? (maxRslVal === 1 ? 1.0 : maxRslVal / 100) : maxRslVal))
+        : null;
+      if (normalizedMaxRsl !== null && normalizedMaxRsl < 1 && lotRsl > normalizedMaxRsl) {
         return false;
       }
       return true;
@@ -391,7 +396,12 @@ export async function previewEmail(req: Request, res: Response) {
       if (filters.category && lot.productId && lot.productId.category !== filters.category) {
         return false;
       }
-      if (filters.maxRsl && lot.remainingShelfLife > filters.maxRsl) {
+      const lotRsl = typeof lot.remainingShelfLife === 'number' ? (lot.remainingShelfLife > 1 ? lot.remainingShelfLife / 100 : lot.remainingShelfLife) : 1;
+      const maxRslVal = filters.maxRsl;
+      const normalizedMaxRsl = (maxRslVal !== undefined && maxRslVal !== null && maxRslVal !== 0)
+        ? (maxRslVal >= 100 ? 1.0 : (maxRslVal >= 1 ? (maxRslVal === 1 ? 1.0 : maxRslVal / 100) : maxRslVal))
+        : null;
+      if (normalizedMaxRsl !== null && normalizedMaxRsl < 1 && lotRsl > normalizedMaxRsl) {
         return false;
       }
       return true;

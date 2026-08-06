@@ -6,7 +6,8 @@ import {
   setWorkflowSubTab,
   setRunsFilter,
   setShowRunDetailsModal,
-  setEditingCampaignId
+  setEditingCampaignId,
+  calculateLotRsl
 } from '../store/slices/workflowSlice';
 import {
   fetchAutomationRunsThunk,
@@ -21,11 +22,21 @@ import { MailboxConnectionCanvas } from './MailboxConnectionCanvas';
 import { TipTapTemplateEditor } from './TipTapTemplateEditor';
 import { SendBroadcastView } from './SendBroadcastView';
 import { useOAuthMailbox } from '../hooks/useOAuthMailbox';
-import { selectBuyerLists } from '../store/slices/coreSlice';
+import { selectBuyerLists, selectBuyers, fetchBuyerLists, fetchCoreReferenceData } from '../store/slices/coreSlice';
 
 export const formatDurationHours = (hours: number): string => {
   if (hours == null || isNaN(hours) || hours <= 0) return '0 Mins';
   const totalMins = Math.round(hours * 60);
+  if (totalMins > 1440) {
+    const d = Math.floor(totalMins / 1440);
+    const remMins = totalMins % 1440;
+    if (remMins === 0) return `${d} ${d === 1 ? 'Day' : 'Days'}`;
+    const h = Math.floor(remMins / 60);
+    const m = remMins % 60;
+    if (h > 0 && m > 0) return `${d} ${d === 1 ? 'Day' : 'Days'} ${h} ${h === 1 ? 'Hour' : 'Hours'} ${m} Mins`;
+    if (h > 0) return `${d} ${d === 1 ? 'Day' : 'Days'} ${h} ${h === 1 ? 'Hour' : 'Hours'}`;
+    return `${d} ${d === 1 ? 'Day' : 'Days'} ${m} Mins`;
+  }
   if (totalMins < 60) {
     return `${totalMins} Mins`;
   }
@@ -40,6 +51,16 @@ export const formatDurationHours = (hours: number): string => {
 export const formatDurationShort = (hours: number): string => {
   if (hours == null || isNaN(hours) || hours <= 0) return '0m';
   const totalMins = Math.round(hours * 60);
+  if (totalMins >= 1440) {
+    const d = Math.floor(totalMins / 1440);
+    const remMins = totalMins % 1440;
+    if (remMins === 0) return `${d}d`;
+    const h = Math.floor(remMins / 60);
+    const m = remMins % 60;
+    if (h > 0 && m > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${d}d ${h}h`;
+    return `${d}d ${m}m`;
+  }
   if (totalMins < 60) {
     return `${totalMins}m`;
   }
@@ -81,6 +102,30 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
   const inventoryList = useSelector((state: RootState) => state.inventory?.inventoryList || inventoryLots);
   const allBids = useSelector((state: RootState) => state.inventory?.lotHubData?.bidsList || []);
   const buyerLists = useSelector(selectBuyerLists) || [];
+  const allBuyers = useSelector(selectBuyers) || [];
+
+  const getMatchedBuyerCount = (matched: any) => {
+    if (!matched) return 0;
+    if (Array.isArray(matched.buyerIds)) return matched.buyerIds.length;
+    if (Array.isArray(allBuyers) && allBuyers.length > 0) {
+      const isSec = matched.type === 'secondary' || matched._id === 'list-secondary' || (matched.name || '').toLowerCase().includes('secondary');
+      const isPrim = matched.type === 'primary' || matched._id === 'list-primary' || (matched.name || '').toLowerCase().includes('primary');
+      if (isSec) {
+        const count = allBuyers.filter((b: any) => {
+          const t = (b.tier || '').toLowerCase();
+          return t === 'tier2' || t === 'secondary' || t === 'liquidator' || t === 'all_liquidators';
+        }).length;
+        if (count > 0) return count;
+      } else if (isPrim) {
+        const count = allBuyers.filter((b: any) => {
+          const t = (b.tier || '').toLowerCase();
+          return !t || t === 'tier1' || t === 'primary' || t === 'tier1_retailers';
+        }).length;
+        if (count > 0) return count;
+      }
+    }
+    return 0;
+  };
 
   const oauth = useOAuthMailbox(supplierId || '');
 
@@ -123,8 +168,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
         setInspectingRun(localRun || null);
       }
     } catch (err) {
-      const localRun = automationRuns.find((r: any) => r._id === runId);
-      setInspectingRun(localRun || null);
+      console.error(err);
     }
   };
 
@@ -134,6 +178,8 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
   }, []);
 
   useEffect(() => {
+    dispatch(fetchBuyerLists());
+    dispatch(fetchCoreReferenceData());
     if (supplierId) {
       dispatch(fetchLiquidationCyclesThunk(supplierId));
       dispatch(fetchLiquidationAutomationsThunk(supplierId));
@@ -205,7 +251,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
       const excludedLotIds = (filters.excludedLotIds || []).map((e: any) => e?.toString() || e);
       const selectorMode = filters.selectorMode || (explicitLotIds.length > 0 ? 'explicit' : 'automatic');
 
-      if (selectorMode === 'explicit') {
+      if (selectorMode === 'explicit' && explicitLotIds.length > 0) {
         return explicitLotIds.includes(id);
       }
       if (selectorMode === 'hybrid') {
@@ -215,9 +261,16 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
 
       if (excludedLotIds.includes(id)) return false;
       if (explicitLotIds.includes(id)) return true;
-      if (filters.category && lot.productId?.category !== filters.category) return false;
-      if (filters.maxRsl > 0 && (lot.remainingShelfLife ?? 1) > filters.maxRsl) return false;
-      if (filters.minCases > 0 && (lot.availableQty ?? lot.quantityCases ?? 0) < filters.minCases) return false;
+      const lotCat = (typeof lot.productId === 'object' ? lot.productId?.category : '') || lot.category || lot.productCategory || '';
+      if (filters.category && lotCat && lotCat.toLowerCase() !== filters.category.toLowerCase()) return false;
+      const lotRsl = calculateLotRsl(lot);
+      const maxRslVal = filters.maxRsl ?? filters.maxRslFilter;
+      const normalizedMaxRsl = (maxRslVal !== undefined && maxRslVal !== null && maxRslVal !== 0)
+        ? (maxRslVal >= 100 ? 1.0 : (maxRslVal >= 1 ? (maxRslVal === 1 ? 1.0 : maxRslVal / 100) : maxRslVal))
+        : null;
+      if (normalizedMaxRsl !== null && normalizedMaxRsl < 1 && lotRsl > normalizedMaxRsl) return false;
+      const lotCases = lot.availableQty ?? lot.quantityCases ?? lot.quantity ?? 0;
+      if (filters.minCases > 0 && lotCases < filters.minCases) return false;
       return true;
     });
 
@@ -1116,7 +1169,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                                   const targetId = stg.buyerListId || stg.buyerSegment;
                                   const matched = buyerLists.find((l: any) => l._id === targetId || l.type === targetId);
                                   if (matched) {
-                                    const count = Array.isArray(matched.buyerIds) ? matched.buyerIds.length : 0;
+                                    const count = getMatchedBuyerCount(matched);
                                     return `${matched.name} (${count} buyer${count !== 1 ? 's' : ''})`;
                                   }
                                   if (stg.buyerListName) return stg.buyerListName;
@@ -2259,7 +2312,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                           const targetId = stg.buyerListId || stg.buyerSegment;
                           const matched = buyerLists.find((l: any) => l._id === targetId || l.type === targetId);
                           if (matched) {
-                            const count = Array.isArray(matched.buyerIds) ? matched.buyerIds.length : 0;
+                            const count = getMatchedBuyerCount(matched);
                             return `${matched.name} (${count} buyer${count !== 1 ? 's' : ''})`;
                           }
                           if (stg.buyerListName) return stg.buyerListName;

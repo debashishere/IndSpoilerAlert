@@ -44,6 +44,7 @@ describe('SalesRegistryPanel Component', () => {
           _id: 's-101',
           productName: 'Organic Almond Milk 32oz',
           sku: 'SKU-ALM-01',
+          lotNumber: 'LOT-ALM-2026-001',
           buyerEmail: 'buyer@costco.com',
           warehouse: 'Dallas DC',
           quantitySold: 120,
@@ -63,6 +64,7 @@ describe('SalesRegistryPanel Component', () => {
 
     expect(screen.getByText('1 Sales Records')).toBeDefined();
     expect(screen.getByText('Organic Almond Milk 32oz')).toBeDefined();
+    expect(screen.getByText('LOT-ALM-2026-001')).toBeDefined();
     expect(screen.getByText('INV-9001')).toBeDefined();
     expect(screen.getByText('$2,940.00')).toBeDefined();
   });
@@ -91,7 +93,7 @@ describe('SalesRegistryPanel Component', () => {
     expect(screen.getByRole('button', { name: /Confirm & Reconcile Sales/i })).toBeDefined();
   });
 
-  it('should render the sales-tailored collapsible-filters-panel with all filter controls', () => {
+  it('should render the sales-tailored collapsible-filters-panel with all filter controls including Lot Number', () => {
     render(
       <Provider store={store}>
         <SalesRegistryPanel />
@@ -99,11 +101,61 @@ describe('SalesRegistryPanel Component', () => {
     );
 
     expect(screen.getByText('Search Sales')).toBeDefined();
-    expect(screen.getByPlaceholderText('Search SKU, product, buyer name, email...')).toBeDefined();
+    expect(screen.getByPlaceholderText('Search SKU, product, lot #, buyer name, email...')).toBeDefined();
+    expect(screen.getByText('Lot Number')).toBeDefined();
+    expect(screen.getByPlaceholderText('Search by Lot Number...')).toBeDefined();
     expect(screen.getByText('Buyer')).toBeDefined();
     expect(screen.getByText('Distribution Center')).toBeDefined();
     expect(screen.getByText('Create Date')).toBeDefined();
     expect(screen.getByText('Price Range')).toBeDefined();
     expect(screen.getByText('Sales Status')).toBeDefined();
+  });
+
+  it('should filter sales records when searching by Lot Number', () => {
+    store.dispatch(
+      setSalesRecords([
+        {
+          _id: 's-101',
+          productName: 'Organic Almond Milk 32oz',
+          sku: 'SKU-ALM-01',
+          lotNumber: 'LOT-ALM-2026-001',
+          buyerEmail: 'buyer@costco.com',
+          warehouse: 'Dallas DC',
+          quantitySold: 120,
+          pricePerCase: 24.5,
+          totalValue: 2940,
+          invoiceNumber: 'INV-9001',
+          createdAt: new Date().toISOString(),
+        },
+        {
+          _id: 's-102',
+          productName: 'Greek Yogurt Oat',
+          sku: 'SKU-YOG-02',
+          lotNumber: 'LOT-YOG-999',
+          buyerEmail: 'buyer@walmart.com',
+          warehouse: 'Chicago DC',
+          quantitySold: 50,
+          pricePerCase: 18.0,
+          totalValue: 900,
+          invoiceNumber: 'INV-9002',
+          createdAt: new Date().toISOString(),
+        },
+      ])
+    );
+
+    render(
+      <Provider store={store}>
+        <SalesRegistryPanel />
+      </Provider>
+    );
+
+    expect(screen.getByText('LOT-ALM-2026-001')).toBeDefined();
+    expect(screen.getByText('LOT-YOG-999')).toBeDefined();
+
+    const lotInput = screen.getByPlaceholderText('Search by Lot Number...');
+    fireEvent.change(lotInput, { target: { value: 'ALM-2026' } });
+
+    expect(screen.getByText('LOT-ALM-2026-001')).toBeDefined();
+    expect(screen.queryByText('LOT-YOG-999')).toBeNull();
   });
 });

@@ -179,7 +179,7 @@ export async function seedDatabase(forceClean: boolean = false) {
         lotNumber: 'LOT-ULVR-2026-001',
         productionDate: new Date('2026-06-15'),
         expirationDate: new Date('2026-08-02'), // 10 days left
-        remainingShelfLife: 0.22,
+        remainingShelfLife: 0.15,
         quantityCases: 1200,
         availableQty: 1200,
         costPerCase: 18.00,
@@ -199,12 +199,12 @@ export async function seedDatabase(forceClean: boolean = false) {
         lotNumber: 'LOT-ULVR-2026-002',
         productionDate: new Date('2026-06-01'),
         expirationDate: new Date('2026-08-10'), // 18 days left
-        remainingShelfLife: 0.30,
+        remainingShelfLife: 0.18,
         quantityCases: 800,
         availableQty: 800,
         costPerCase: 22.00,
         standardSellPrice: 45.00,
-        status: 'pending',
+        status: 'active',
         comment: 'Plant-Based Butter closeout lot ready for stage-gate bidding.',
         fdaRegulated: false,
         temperatureMin: 34,
@@ -236,7 +236,7 @@ export async function seedDatabase(forceClean: boolean = false) {
         lotNumber: 'LOT-MDLZ-2026-004',
         productionDate: new Date('2026-05-10'),
         expirationDate: new Date('2026-08-06'), // 14 days left
-        remainingShelfLife: 0.23,
+        remainingShelfLife: 0.20,
         quantityCases: 3000,
         availableQty: 3000,
         costPerCase: 8.00,
@@ -253,13 +253,13 @@ export async function seedDatabase(forceClean: boolean = false) {
         lotNumber: 'LOT-DANN-2026-005',
         productionDate: new Date('2026-06-25'),
         expirationDate: new Date('2026-07-26'), // 3 days left
-        remainingShelfLife: 0.10,
+        remainingShelfLife: 0.08,
         quantityCases: 500,
-        availableQty: 0,
+        availableQty: 500,
         costPerCase: 15.00,
         standardSellPrice: 30.00,
-        status: 'donated',
-        comment: 'Diverted to Greater Chicago Food Depository to prevent landfill waste.',
+        status: 'active',
+        comment: 'Greek Yogurt short-dated lot needing urgent liquidation or rescue.',
         fdaRegulated: true,
         temperatureMin: 34,
         temperatureMax: 38
@@ -273,11 +273,11 @@ export async function seedDatabase(forceClean: boolean = false) {
         expirationDate: new Date('2026-08-20'), // 28 days left
         remainingShelfLife: 0.35,
         quantityCases: 1500,
-        availableQty: 0,
+        availableQty: 1500,
         costPerCase: 35.00,
         standardSellPrice: 60.00,
-        status: 'sold',
-        comment: 'Fully awarded to Big Lots at $38.00/case.',
+        status: 'active',
+        comment: 'Frozen Boneless Poultry Breasts excess lot.',
         fdaRegulated: true,
         temperatureMin: 0,
         temperatureMax: 10
@@ -290,7 +290,7 @@ export async function seedDatabase(forceClean: boolean = false) {
         lotNumber: 'LOT-ULVR-2026-007',
         productionDate: new Date('2026-06-10'),
         expirationDate: new Date('2026-08-04'), // 12 days left
-        remainingShelfLife: 0.21,
+        remainingShelfLife: 0.12,
         quantityCases: 1000,
         availableQty: 1000,
         costPerCase: 14.00,
@@ -315,6 +315,38 @@ export async function seedDatabase(forceClean: boolean = false) {
         standardSellPrice: 20.00,
         status: 'recycled',
         comment: 'Expired lot sent to organic composting facility.',
+        fdaRegulated: false
+      },
+      {
+        supplierId: mondelez._id,
+        distributionCenterId: dcs[2]._id,
+        productId: products[5]._id, // MDLZ-CHO-02
+        lotNumber: 'LOT-MDLZ-2026-009',
+        productionDate: new Date('2026-05-15'),
+        expirationDate: new Date('2026-08-12'),
+        remainingShelfLife: 0.10,
+        quantityCases: 600,
+        availableQty: 600,
+        costPerCase: 12.00,
+        standardSellPrice: 22.00,
+        status: 'active',
+        comment: 'Dark Chocolate Bar short-dated lot.',
+        fdaRegulated: false
+      },
+      {
+        supplierId: danone._id,
+        distributionCenterId: dcs[3]._id,
+        productId: products[7]._id, // DANN-MLK-02
+        lotNumber: 'LOT-DANN-2026-010',
+        productionDate: new Date('2026-06-20'),
+        expirationDate: new Date('2026-09-15'),
+        remainingShelfLife: 0.65,
+        quantityCases: 1200,
+        availableQty: 1200,
+        costPerCase: 16.00,
+        standardSellPrice: 32.00,
+        status: 'active',
+        comment: 'Oat Milk Barista Blend surplus lot.',
         fdaRegulated: false
       }
     ];

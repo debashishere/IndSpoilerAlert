@@ -38,7 +38,7 @@ const LogisticsView = React.lazy(() => import('./views/LogisticsView').then(m =>
 const InventoryListView = React.lazy(() => import('./views/InventoryListView').then(m => ({ default: m.InventoryListView })));
 const IngestionView = React.lazy(() => import('./views/IngestionView').then(m => ({ default: m.IngestionView || m.default })));
 import { useDispatch } from 'react-redux';
-import { setActiveTab as setActiveTabRedux, setReturnTab as setReturnTabRedux } from './store/slices/coreSlice';
+import { setActiveTab as setActiveTabRedux, setReturnTab as setReturnTabRedux, fetchCoreReferenceData, fetchBuyerLists } from './store/slices/coreSlice';
 import { setBuyerAuth } from './store/slices/authSlice';
 import { fetchShipmentsThunk } from './store/slices/logisticsSlice';
 import { fetchInventoryLotsThunk } from './services/inventoryService';
@@ -100,6 +100,11 @@ export default function App() {
   const [forceLanding, setForceLanding] = useState<boolean>(isLandingMode);
   const { isAuthenticated, isLoading, user, token, logout } = useAuth();
   const isSupplier = Boolean(user?.profiles?.supplier);
+
+  useEffect(() => {
+    dispatch(fetchCoreReferenceData() as any);
+    dispatch(fetchBuyerLists() as any);
+  }, [dispatch]);
 
   useEffect(() => {
     if (user) {
@@ -602,11 +607,11 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (activeTab === 'inventory' || activeTab === 'marketplace' || activeTab === 'lot-hub') {
+    if (activeTab === 'inventory' || activeTab === 'marketplace' || activeTab === 'lot-hub' || activeTab === 'workflows') {
       fetchInventory(selectedCycleId);
       fetchSalesRecords();
     }
-  }, [selectedCycleId]);
+  }, [activeTab, selectedCycleId]);
 
   const openLotOperationsHub = async (lot: any, navigate = true, targetSubTab: 'details' | 'bids' | 'activities' = 'details') => {
     setSelectedLot(lot);

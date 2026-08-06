@@ -65,6 +65,7 @@ export const SalesRegistryPanel = () => {
   const salesRecordsLoading = useAppSelector((state) => state.ingestion.salesRecordsLoading);
 
   const [search, setSearch] = useState('');
+  const [lotNumberFilter, setLotNumberFilter] = useState('');
   const [buyerFilter, setBuyerFilter] = useState('');
   const [dcFilter, setDcFilter] = useState('');
   const [createDateFilter, setCreateDateFilter] = useState('');
@@ -149,21 +150,27 @@ export const SalesRegistryPanel = () => {
     const term = search.toLowerCase();
     const prod = (r.productName || r.description || r.product || '').toLowerCase();
     const sku = (r.sku || r.productId || '').toLowerCase();
+    const lotNum = (r.lotNumber || r['Lot Number'] || r.lot || r.lotNo || r.lotCode || '').toLowerCase();
     const buyerName = (r.buyerName || r.buyerId?.companyName || r.customer || '').toLowerCase();
     const buyerEmail = (r.buyerEmail || r.buyerId?.email || '').toLowerCase();
     const inv = (r.invoiceNumber || r.invoice || '').toLowerCase();
     const dc = (r.warehouse || r.dc || r.location || '').toLowerCase();
     const status = (r.status || 'reconciled').toLowerCase();
 
-    // Match Search (product description, sku, buyer name, buyer email, invoice #)
+    // Match Search (product description, sku, lot #, buyer name, buyer email, invoice #)
     const matchesSearch =
       !search ||
       prod.includes(term) ||
       sku.includes(term) ||
+      lotNum.includes(term) ||
       buyerName.includes(term) ||
       buyerEmail.includes(term) ||
       inv.includes(term) ||
       dc.includes(term);
+
+    // Match Lot Number Filter
+    const matchesLotNumber =
+      !lotNumberFilter || lotNum.includes(lotNumberFilter.toLowerCase().trim());
 
     // Match Buyer Filter
     const matchesBuyer =
@@ -201,6 +208,7 @@ export const SalesRegistryPanel = () => {
 
     return (
       matchesSearch &&
+      matchesLotNumber &&
       matchesBuyer &&
       matchesDc &&
       matchesCreateDate &&
@@ -754,10 +762,21 @@ export const SalesRegistryPanel = () => {
             <label>Search Sales</label>
             <input
               className="filter-search"
-              placeholder="Search SKU, product, buyer name, email..."
+              placeholder="Search SKU, product, lot #, buyer name, email..."
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="filter-input-group">
+            <label>Lot Number</label>
+            <input
+              className="filter-search"
+              placeholder="Search by Lot Number..."
+              type="text"
+              value={lotNumberFilter}
+              onChange={(e) => setLotNumberFilter(e.target.value)}
             />
           </div>
 
@@ -836,11 +855,12 @@ export const SalesRegistryPanel = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', justifyContent: 'flex-end' }}>
-            {(search || buyerFilter || dcFilter || createDateFilter || priceFilter || statusFilter) && (
+            {(search || lotNumberFilter || buyerFilter || dcFilter || createDateFilter || priceFilter || statusFilter) && (
               <button
                 className="btn btn-sm btn-secondary"
                 onClick={() => {
                   setSearch('');
+                  setLotNumberFilter('');
                   setBuyerFilter('');
                   setDcFilter('');
                   setCreateDateFilter('');

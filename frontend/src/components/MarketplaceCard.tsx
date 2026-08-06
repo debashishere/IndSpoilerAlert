@@ -65,7 +65,20 @@ export const MarketplaceCard: React.FC<MarketplaceCardProps> = ({
 
   const daysRem = calculateDaysRemaining(lot.expirationDate);
   const pricingInfo = getPricingForDay(daysRem, lot.availableQty, lot.costPerCase, lot.productId?.category || 'Dry Goods');
-  const rslRatio = Math.max(0, Math.min(100, Math.round((daysRem / (lot.productId?.shelfLifeDays || 30)) * 100)));
+  let totalShelfDays = lot.productId?.shelfLifeDays || lot.shelfLifeDays;
+  if (!totalShelfDays && lot.productionDate) {
+    const totalDiff = new Date(lot.expirationDate).getTime() - new Date(lot.productionDate).getTime();
+    totalShelfDays = Math.max(1, Math.ceil(totalDiff / (1000 * 60 * 60 * 24)));
+  }
+  if (!totalShelfDays) {
+    const categoryDefaults: Record<string, number> = {
+      'Dairy': 45, 'Produce': 30, 'Meat': 90, 'Beverages': 120, 'Dry Goods': 180
+    };
+    totalShelfDays = categoryDefaults[lot.productId?.category || lot.category || 'Dry Goods'] || 120;
+  }
+  const rslRatio = typeof lot.remainingShelfLife === 'number'
+    ? Math.round(lot.remainingShelfLife <= 1 ? lot.remainingShelfLife * 100 : lot.remainingShelfLife)
+    : Math.max(0, Math.min(100, Math.round((daysRem / totalShelfDays) * 100)));
 
   // Check buyer match recommendation
   const matchesCategory = activeBuyer ? activeBuyer.categories.includes(lot.productId?.category) : true;

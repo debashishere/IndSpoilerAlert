@@ -389,7 +389,11 @@ export const {
   setBuyerLists,
 } = coreSlice.actions;
 
-export const selectBuyerLists = (state: RootState) => ensureDefaultBuyerLists(state.core.buyerLists);
+const selectRawBuyerLists = (state: RootState) => state.core.buyerLists;
+export const selectBuyerLists = createSelector(
+  [selectRawBuyerLists],
+  (buyerLists) => ensureDefaultBuyerLists(buyerLists)
+);
 export const selectBuyers = (state: RootState) => state.core.buyers;
 
 export const selectAnalyticsSummary = (state: RootState) => state.core.analyticsSummary;

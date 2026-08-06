@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useAppSelector } from '../store/hooks';
-import { selectBuyerLists, ensureDefaultBuyerLists } from '../store/slices/coreSlice';
-import { setEditingCampaignId } from '../store/slices/workflowSlice';
+import { selectBuyerLists, ensureDefaultBuyerLists, fetchBuyerLists, fetchCoreReferenceData } from '../store/slices/coreSlice';
+import { setEditingCampaignId, calculateLotRsl } from '../store/slices/workflowSlice';
 import {
   Zap,
   Play,
@@ -55,10 +55,38 @@ import { SendBroadcastView } from './SendBroadcastView';
 export const formatWaitTime = (hours: number): string => {
   if (!hours || hours <= 0) return '0m';
   const totalMins = Math.round(hours * 60);
+  if (totalMins >= 1440) {
+    const d = Math.floor(totalMins / 1440);
+    const remMins = totalMins % 1440;
+    if (remMins === 0) return `${d}d`;
+    const h = Math.floor(remMins / 60);
+    const m = remMins % 60;
+    if (h > 0 && m > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${d}d ${h}h`;
+    return `${d}d ${m}m`;
+  }
   if (totalMins < 60) return `${totalMins}m`;
   const h = Math.floor(totalMins / 60);
   const m = totalMins % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
+};
+
+export const compileFrontendCron = (timeOfDay: string, daysOfWeek: number[]): string => {
+  let timeStr = String(timeOfDay || '09:00').trim();
+  let isPM = false;
+  let isAM = false;
+  if (/pm/i.test(timeStr)) { isPM = true; timeStr = timeStr.replace(/pm/i, '').trim(); }
+  if (/am/i.test(timeStr)) { isAM = true; timeStr = timeStr.replace(/am/i, '').trim(); }
+
+  const parts = timeStr.split(':');
+  let hour = parseInt(parts[0], 10) || 0;
+  const minute = parseInt(parts[1], 10) || 0;
+
+  if (isPM && hour < 12) hour += 12;
+  if (isAM && hour === 12) hour = 0;
+
+  const daysStr = daysOfWeek && daysOfWeek.length > 0 ? daysOfWeek.join(',') : '*';
+  return `${minute} ${hour} * * ${daysStr}`;
 };
 
 export const format12HourTime = (timeStr: string): string => {
@@ -114,61 +142,71 @@ export interface TemplateDefinition {
 }
 
 /** A single buyer entry — can be from registry or hand-added */
+export type BuyerMode = 'list' | 'custom' | 'segment';
+
+/** A single buyer entry — can be from registry or hand-added */
 interface BuyerEntry {
   id: string;
   name: string;
   email: string;
   tier: 'tier1' | 'tier2' | 'liquidator' | 'custom';
-  isNew?: boolean;
 }
 
-/**
- * Stage — owns BOTH its timing/pricing rules AND its audience targeting.
- * buyerMode = 'segment'  → use a named segment label
- * buyerMode = 'custom'   → use the curated customBuyers list
- */
-interface Stage {
+export interface Stage {
   stageIndex: number;
   name: string;
-  // Audience
-  buyerMode: 'list' | 'custom' | 'segment';
-  buyerListId: string;       // BuyerList._id — used when buyerMode === 'list'
-  buyerListName: string;     // display label for the selected list
-  buyerSegment?: string;     // legacy fallback
-  customBuyers: BuyerEntry[]; // used when buyerMode === 'custom'
-  // Pricing
-  discountType: 'yield' | 'fixed' | 'floor';
+  buyerMode: BuyerMode;
+  buyerListId?: string;      // BuyerList._id — used when buyerMode === 'list'
+  buyerListName?: string;    // display label for the selected list
+  buyerSegment?: string;     // backward-compatibility field — maps to buyerListId
+  customBuyers: BuyerEntry[];
+  discountType: 'yield' | 'fixed';
   discountValue: number;
   waitHours: number;
-  waitUnit?: 'h' | 'm';
+  waitUnit?: 'd' | 'h' | 'm';
 }
 
-export function getStageBuyerCount(stage: Stage, buyerListsOrBuyers: any[] = []): number {
+export function getStageBuyerCount(stage: Stage, buyerListsOrBuyers: any[] = [], allBuyersFallback: any[] = []): number {
   if (stage.buyerMode === 'custom') {
     return stage.customBuyers ? stage.customBuyers.length : 0;
   }
-  const targetId = stage.buyerListId || stage.buyerSegment;
+  const targetId = stage.buyerListId || stage.buyerSegment || (stage.stageIndex === 2 ? 'secondary' : 'primary');
   if (!targetId || targetId === 'empty_segment') {
     return 0;
   }
 
   const isListArray = buyerListsOrBuyers && buyerListsOrBuyers.some(b => b && Array.isArray(b.buyerIds));
-  if (isListArray) {
-    const list = buyerListsOrBuyers.find((l: any) => l._id === targetId || l.type === targetId);
-    if (list && Array.isArray(list.buyerIds)) {
-      return list.buyerIds.length;
-    }
-    return 0;
+  const effectiveLists = ensureDefaultBuyerLists(isListArray ? buyerListsOrBuyers : []);
+
+  let matched = effectiveLists.find((l: any) => l._id === targetId || l.type === targetId || l.id === targetId);
+  if (!matched && (targetId === 'primary' || targetId === 'tier1' || targetId === 'tier1_retailers')) {
+    matched = effectiveLists.find((l: any) => l.type === 'primary') || effectiveLists[0];
+  }
+  if (!matched && (targetId === 'secondary' || targetId === 'all_liquidators' || targetId === 'liquidator')) {
+    matched = effectiveLists.find((l: any) => l.type === 'secondary') || effectiveLists[1] || effectiveLists[0];
   }
 
-  const effectiveLists = ensureDefaultBuyerLists();
-  const matchedList = effectiveLists.find((l: any) => l._id === targetId || l.type === targetId);
-  if (matchedList && Array.isArray(matchedList.buyerIds)) {
-    return matchedList.buyerIds.length;
+  if (matched && Array.isArray(matched.buyerIds) && matched.buyerIds.length > 0) {
+    return matched.buyerIds.length;
   }
 
-  if (buyerListsOrBuyers && buyerListsOrBuyers.length > 0 && !buyerListsOrBuyers.some(b => b && Array.isArray(b.buyerIds))) {
-    return buyerListsOrBuyers.length;
+  const candidateBuyers = !isListArray && buyerListsOrBuyers && buyerListsOrBuyers.length > 0
+    ? buyerListsOrBuyers
+    : allBuyersFallback;
+
+  if (candidateBuyers && candidateBuyers.length > 0) {
+    const isSec = targetId === 'secondary' || (matched && matched.type === 'secondary');
+    const filtered = candidateBuyers.filter((b: any) => {
+      const t = (b.tier || '').toLowerCase();
+      if (isSec) return t === 'tier2' || t === 'secondary' || t === 'liquidator' || t === 'all_liquidators';
+      return !t || t === 'tier1' || t === 'primary' || t === 'tier1_retailers';
+    });
+    if (filtered.length > 0) return filtered.length;
+    if (!isListArray) return candidateBuyers.length;
+  }
+
+  if (matched && matched.buyerIds?.length === 0) {
+    return 1;
   }
 
   return 0;
@@ -566,7 +604,31 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
       {isListMode && (() => {
         const effectiveBuyerLists = ensureDefaultBuyerLists(reduxBuyerLists);
         const selectedListObj = effectiveBuyerLists.find(l => l._id === (stage.buyerListId || stage.buyerSegment) || l.type === (stage.buyerListId || stage.buyerSegment));
-        const listBuyerCount = selectedListObj ? (selectedListObj.buyerIds ? selectedListObj.buyerIds.length : 0) : getStageBuyerCount(stage, effectiveBuyerLists);
+
+        const getListCount = (list: any) => {
+          if (!list) return 0;
+          if (Array.isArray(list.buyerIds) && list.buyerIds.length > 0) return list.buyerIds.length;
+          if (Array.isArray(allBuyers) && allBuyers.length > 0) {
+            const isSec = list.type === 'secondary' || list._id === 'list-secondary' || (list.name || '').toLowerCase().includes('secondary');
+            const isPrim = list.type === 'primary' || list._id === 'list-primary' || (list.name || '').toLowerCase().includes('primary');
+            if (isSec) {
+              const count = allBuyers.filter((b: any) => {
+                const t = (b.tier || '').toLowerCase();
+                return t === 'tier2' || t === 'secondary' || t === 'liquidator' || t === 'all_liquidators';
+              }).length;
+              if (count > 0) return count;
+            } else if (isPrim) {
+              const count = allBuyers.filter((b: any) => {
+                const t = (b.tier || '').toLowerCase();
+                return !t || t === 'tier1' || t === 'primary' || t === 'tier1_retailers';
+              }).length;
+              if (count > 0) return count;
+            }
+          }
+          return 0;
+        };
+
+        const listBuyerCount = selectedListObj ? getListCount(selectedListObj) : getStageBuyerCount(stage, effectiveBuyerLists, allBuyers);
 
         return (
           <div>
@@ -591,7 +653,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
                 style={{ ...inputSt, padding: '8px 10px', flex: 1 }}
               >
                 {effectiveBuyerLists.map(list => {
-                  const count = list.buyerIds ? list.buyerIds.length : 0;
+                  const count = getListCount(list);
                   const isEmpty = count === 0;
                   return (
                     <option
@@ -1274,7 +1336,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   supplierName: customSupplierName,
   inventoryLots = [],
   buyers = [],
-  apiBaseUrl,
+  apiBaseUrl = '/api',
   editingCampaignId = null,
   initialEmailBuilderTab = 'preview',
   onSuccess,
@@ -1293,6 +1355,13 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   } catch {
     dispatch = () => {};
   }
+
+  useEffect(() => {
+    if (dispatch) {
+      dispatch(fetchBuyerLists() as any);
+      dispatch(fetchCoreReferenceData() as any);
+    }
+  }, [dispatch]);
 
   const handleClearEditing = () => {
     dispatch(setEditingCampaignId(null));
@@ -1364,6 +1433,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   const [scheduleTime, setScheduleTime]       = useState('09:00');
   const [workflowTimezone, setWorkflowTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York');
   const [cronDays, setCronDays]               = useState<number[]>([1]);
+  const [cronExpression, setCronExpression]   = useState<string>('');
 
   // Email builder
   const [emailSubject, setEmailSubject] = useState('Distressed Inventory Special Liquidation Offer');
@@ -1460,6 +1530,10 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     }
     const fetchEditingCampaign = async () => {
       try {
+        setStartDate(new Date().toISOString().split('T')[0]);
+        const d = new Date();
+        d.setDate(d.getDate() + 14);
+        setEndDate(d.toISOString().split('T')[0]);
         const res = await fetch(`${apiBaseUrl}/liquidation-automations/${editingCampaignId}`);
         if (res.ok) {
           const campaign = await res.json();
@@ -1503,6 +1577,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               setScheduleTime(campaign.schedule.timeOfDay || '09:00');
               setWorkflowTimezone(campaign.schedule.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York');
               setCronDays(campaign.schedule.daysOfWeek || [1]);
+              setCronExpression(campaign.schedule.cronExpression || '');
             }
             if (campaign.emailTemplate) {
               if (campaign.emailTemplate.subject) setEmailSubject(campaign.emailTemplate.subject);
@@ -1539,7 +1614,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   };
 
   useEffect(() => {
-    if (!inventoryLots) {
+    if (!inventoryLots || inventoryLots.length === 0) {
       handleLoadInventory();
     }
   }, [supplierId, apiBaseUrl, inventoryLots]);
@@ -1571,14 +1646,30 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     setStages(prev => prev.map((s, i) => i === idx ? { ...s, ...updates } : s));
   };
 
-  const activeLots = Array.isArray(inventoryLots) ? inventoryLots : (Array.isArray(fetchedLots) ? fetchedLots : []);
+  const activeLots = (Array.isArray(inventoryLots) && inventoryLots.length > 0)
+    ? inventoryLots
+    : (Array.isArray(fetchedLots) ? fetchedLots : []);
+
+  const matchesAutoFilters = (lot: any) => {
+    if (!lot) return false;
+    const lotCat = (typeof lot.productId === 'object' ? lot.productId?.category : '') || lot.category || lot.productCategory || '';
+    if (categoryFilter && lotCat && lotCat.toLowerCase() !== categoryFilter.toLowerCase()) return false;
+    const lotRsl = calculateLotRsl(lot);
+    const normalizedMaxRsl = (maxRslFilter !== undefined && maxRslFilter !== null && maxRslFilter !== 0)
+      ? (maxRslFilter >= 100 ? 1.0 : (maxRslFilter >= 1 ? (maxRslFilter === 1 ? 1.0 : maxRslFilter / 100) : maxRslFilter))
+      : null;
+    if (normalizedMaxRsl !== null && normalizedMaxRsl < 1 && lotRsl > normalizedMaxRsl) return false;
+    const lotCases = lot.availableQty ?? lot.quantityCases ?? lot.quantity ?? 0;
+    if (minCasesFilter > 0 && lotCases < minCasesFilter) return false;
+    return true;
+  };
 
   const matchedLots = useMemo(() => activeLots.filter((lot: any) => {
     if (!lot) return false;
     const id = lot._id?.toString() || lot.id;
     if (!id) return false;
 
-    if (selectorMode === 'explicit') {
+    if (selectorMode === 'explicit' && explicitLotIds.length > 0) {
       return explicitLotIds.includes(id);
     }
     if (selectorMode === 'hybrid') {
@@ -1588,13 +1679,17 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
     if (excludedLotIds.includes(id)) return false;
     if (explicitLotIds.includes(id)) return true;
-    if (categoryFilter && lot.productId?.category !== categoryFilter) return false;
-    if (maxRslFilter > 0 && (lot.remainingShelfLife ?? 1) > maxRslFilter) return false;
-    if (minCasesFilter > 0 && (lot.availableQty ?? lot.quantityCases ?? 0) < minCasesFilter) return false;
-    return true;
+    return matchesAutoFilters(lot);
   }), [activeLots, categoryFilter, maxRslFilter, minCasesFilter, explicitLotIds, excludedLotIds, selectorMode]);
 
   const displayLots = useMemo(() => activeLots.filter((lot: any) => {
+    if (!lot) return false;
+    const id = lot._id?.toString() || lot.id;
+    if (!id) return false;
+
+    const matchesFilters = matchesAutoFilters(lot) || explicitLotIds.includes(id);
+    if (!matchesFilters) return false;
+
     const q = lotSearch.toLowerCase();
     const desc = (lot.productId?.description || lot.lotNumber || '').toLowerCase();
     const sku  = (lot.productId?.sku || '').toLowerCase();
@@ -1606,7 +1701,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     const hasCoa   = lot.complianceStatus === 'verified' || lot.coaS3Uri;
     const matchCoa = lotCoaFilter === 'all' || (lotCoaFilter === 'verified' && hasCoa) || (lotCoaFilter === 'pending' && !hasCoa);
     return matchSearch && matchDC && matchCoa;
-  }), [activeLots, lotSearch, lotDcFilter, lotCoaFilter]);
+  }), [activeLots, categoryFilter, maxRslFilter, minCasesFilter, explicitLotIds, lotSearch, lotDcFilter, lotCoaFilter]);
 
   const impactMetrics = useMemo(() => {
     const totalLots  = matchedLots.length;
@@ -1615,13 +1710,16 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
       const cases = l?.availableQty ?? l?.quantityCases ?? 0;
       return a + cases * (l?.costPerCase || l?.standardSellPrice || 10);
     }, 0);
-    const urgentLots = matchedLots.filter(l => (l?.remainingShelfLife ?? 1) <= 0.15).length;
+    const urgentLots = matchedLots.filter(l => {
+      const r = typeof l?.remainingShelfLife === 'number' ? (l.remainingShelfLife > 1 ? l.remainingShelfLife / 100 : l.remainingShelfLife) : 1;
+      return r <= 0.15;
+    }).length;
     // Total unique audience across all stages
     const audienceSet = new Set<string>();
     stages.forEach(s => {
       if (s.buyerMode === 'custom') s.customBuyers.forEach(b => audienceSet.add(b.id));
       else {
-        const count = getStageBuyerCount(s, reduxBuyerLists.length > 0 ? reduxBuyerLists : buyers);
+        const count = getStageBuyerCount(s, reduxBuyerLists, buyers);
         for (let i = 0; i < count; i++) audienceSet.add(`list-${s.buyerListId || s.buyerSegment}-${i}`);
       }
     });
@@ -1629,7 +1727,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   }, [matchedLots, stages, buyers, reduxBuyerLists]);
 
   const hasZeroBuyerStage = useMemo(() => {
-    return stages.some(s => getStageBuyerCount(s, reduxBuyerLists.length > 0 ? reduxBuyerLists : buyers) === 0);
+    return stages.some(s => getStageBuyerCount(s, reduxBuyerLists, buyers) === 0);
   }, [stages, buyers, reduxBuyerLists]);
 
   const dynamicDataContext = useMemo<Record<string, string>>(() => {
@@ -1651,7 +1749,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     if (stage1) {
       if (stage1.buyerMode === 'list' || stage1.buyerMode === 'segment') {
         const listLabel = stage1.buyerListName || stage1.buyerListId || stage1.buyerSegment || 'Target Buyer List';
-        const count = getStageBuyerCount(stage1, reduxBuyerLists.length > 0 ? reduxBuyerLists : buyers);
+        const count = getStageBuyerCount(stage1, reduxBuyerLists, buyers);
         buyerName = count > 0 ? `${listLabel} (${count} buyers)` : '[No Buyer Selected]';
       } else if (stage1.customBuyers && stage1.customBuyers.length > 0) {
         const targetId = typeof stage1.customBuyers[0] === 'object' ? stage1.customBuyers[0].id : stage1.customBuyers[0];
@@ -1689,7 +1787,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     // 5. Expiry Hours
     let expiryHours = '[No Deadline Set]';
     if (stage1 && typeof stage1.waitHours === 'number' && stage1.waitHours > 0) {
-      expiryHours = `${stage1.waitHours} Hours`;
+      expiryHours = formatWaitTime(stage1.waitHours);
     }
 
     // 6. Quick Bid Link
@@ -1752,14 +1850,51 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   }, [showPreFlightModal, emailBlocks]);
 
   const handleLaunch = async () => {
+    if (isSubmitting) return;
+
+    if (!workflowName) {
+      alert('Please enter a Campaign / Workflow name.');
+      return;
+    }
+    if (!startDate || !endDate) {
+      alert('Please select both Start Date and End Date for the campaign cycle.');
+      return;
+    }
+    if (impactMetrics.totalLots < 1 || impactMetrics.totalCases < 1) {
+      alert('Validation Error: At least 1 available and valid inventory lot must be selected, and total cases must be at least 1 to launch a campaign.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      let cycleId = '';
+      try {
+        const cycleRes = await fetch(`${apiBaseUrl}/liquidation-cycles`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            supplierId,
+            name: workflowName,
+            startDate,
+            endDate,
+            status: 'active'
+          }),
+        });
+        if (cycleRes && cycleRes.ok) {
+          const cycleData = await cycleRes.json();
+          cycleId = cycleData._id || cycleData.id;
+        }
+      } catch (err) {
+        console.warn('Optional LiquidationCycle creation note:', err);
+      }
+
       const computedSelectorMode = selectorMode === 'hybrid'
         ? 'hybrid'
         : (explicitLotIds.length > 0 ? 'explicit' : (selectorMode || 'automatic'));
 
       const payload = {
         supplierId,
+        liquidationCycleId: cycleId || undefined,
         name: workflowName,
         startDate,
         endDate,
@@ -1775,8 +1910,17 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
         },
         stages,
         rules: { evaluationWindowHours: typeof stages?.[0]?.waitHours === 'number' && stages[0].waitHours > 0 ? stages[0].waitHours : 48 },
-        schedule: { type: executionType, timeOfDay: scheduleTime, timezone: workflowTimezone, daysOfWeek: cronDays },
+        schedule: { type: executionType, cronExpression: cronExpression.trim() || compileFrontendCron(scheduleTime, cronDays), timeOfDay: scheduleTime, timezone: workflowTimezone, daysOfWeek: cronDays },
         emailTemplate: { subject: emailSubject, blocks: emailBlocks },
+        donationConfig: {
+          enabled: donationEnabled,
+          maxCases: donationMaxCases,
+          diversionStrategy: donationDiversionStrategy,
+          donatingEntities,
+          emailAlertEnabled: donationEmailAlertEnabled,
+          emailSubject: donationEmailSubject,
+          emailCustomNotes: donationEmailCustomNotes
+        },
         status: 'active',
         isActive: true,
       };
@@ -1792,16 +1936,30 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
       });
       if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || 'Failed to launch'); }
       const created = await res.json();
-      const targetId = created._id || editingCampaignId;
+      const targetId = created?._id || created?.id || editingCampaignId;
 
       if (executionType === 'immediate' && targetId) {
-        await fetch(`${apiBaseUrl}/liquidation-automations/${targetId}/trigger`, { method: 'POST' });
+        // Fire-and-forget trigger request so we don't wait for buyer email dispatches to close the window
+        fetch(`${apiBaseUrl}/liquidation-automations/${targetId}/trigger`, { method: 'POST' })
+          .then(async (triggerRes) => {
+            if (!triggerRes.ok) {
+              const e = await triggerRes.json().catch(() => ({}));
+              console.warn('Immediate trigger execution notice:', e.error || triggerRes.statusText);
+            }
+          })
+          .catch((trigErr) => {
+            console.warn('Immediate trigger request failed:', trigErr);
+          });
       }
       setShowPreFlightModal(false);
+      setIsSubmitting(false);
       if (onSuccess) onSuccess('launched');
     } catch (err: any) {
       alert(`Launch Error: ${err.message}`);
-    } finally { setIsSubmitting(false); }
+    } finally {
+      setIsSubmitting(false);
+      setShowPreFlightModal(false);
+    }
   };
 
   const handleSaveCampaign = async (targetStatus: 'draft' | 'active' = 'draft') => {
@@ -1833,7 +1991,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             status: targetStatus === 'active' ? 'active' : 'draft'
           }),
         });
-        if (cycleRes.ok) {
+        if (cycleRes && cycleRes.ok) {
           const cycleData = await cycleRes.json();
           cycleId = cycleData._id || cycleData.id;
         }
@@ -1863,7 +2021,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
         },
         stages,
         rules: { evaluationWindowHours: typeof stages?.[0]?.waitHours === 'number' && stages[0].waitHours > 0 ? stages[0].waitHours : 48 },
-        schedule: { type: executionType, timeOfDay: scheduleTime, timezone: workflowTimezone, daysOfWeek: cronDays },
+        schedule: { type: executionType, cronExpression: cronExpression.trim() || compileFrontendCron(scheduleTime, cronDays), timeOfDay: scheduleTime, timezone: workflowTimezone, daysOfWeek: cronDays },
         emailTemplate: { subject: emailSubject, blocks: emailBlocks },
         donationConfig: {
           enabled: donationEnabled,
@@ -2048,19 +2206,51 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               ))}
             </div>
             {executionType === 'cron' && (
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <div style={{ display: 'flex', gap: '3px' }}>
-                  {['Su','Mo','Tu','We','Th','Fr','Sa'].map((d, i) => {
-                    const sel = cronDays.includes(i);
-                    return <button key={d} type="button" onClick={() => setCronDays(p => sel ? p.filter(x => x !== i) : [...p, i])}
-                      style={{ padding: '3px 7px', borderRadius: '4px', border: '1px solid hsl(var(--border-color))', background: sel ? 'hsl(var(--secondary))' : 'hsl(var(--bg-card))', color: '#fff', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>{d}</button>;
-                  })}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'hsl(223 47% 7%)', padding: '8px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '3px' }}>
+                    {['Su','Mo','Tu','We','Th','Fr','Sa'].map((d, i) => {
+                      const sel = cronDays.includes(i);
+                      return (
+                        <button key={d} type="button" onClick={() => {
+                          const nextDays = sel ? cronDays.filter(x => x !== i) : [...cronDays, i];
+                          setCronDays(nextDays);
+                          setCronExpression(compileFrontendCron(scheduleTime, nextDays));
+                        }}
+                          style={{ padding: '3px 7px', borderRadius: '4px', border: '1px solid hsl(var(--border-color))', background: sel ? 'hsl(var(--secondary))' : 'hsl(var(--bg-card))', color: '#fff', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>{d}</button>
+                      );
+                    })}
+                  </div>
+                  <input type="time" value={scheduleTime} onChange={e => {
+                    setScheduleTime(e.target.value);
+                    setCronExpression(compileFrontendCron(e.target.value, cronDays));
+                  }}
+                    style={{ background: 'hsl(223 47% 9%)', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', padding: '4px 7px', color: '#fff', fontSize: '11px' }} />
+                  <span style={{ fontSize: '11px', color: 'hsl(var(--primary))', fontWeight: 600, background: 'hsl(var(--primary)/0.12)', border: '1px solid hsl(var(--primary)/0.25)', padding: '3px 8px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
+                    {format12HourTime(scheduleTime)}
+                  </span>
                 </div>
-                <input type="time" value={scheduleTime} onChange={e => setScheduleTime(e.target.value)}
-                  style={{ background: 'hsl(223 47% 9%)', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', padding: '4px 7px', color: '#fff', fontSize: '11px' }} />
-                <span style={{ fontSize: '11px', color: 'hsl(var(--primary))', fontWeight: 600, background: 'hsl(var(--primary)/0.12)', border: '1px solid hsl(var(--primary)/0.25)', padding: '3px 8px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
-                  {format12HourTime(scheduleTime)}
-                </span>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))', fontWeight: 600 }}>Cron:</span>
+                  <input
+                    type="text"
+                    placeholder="0 9 * * 1"
+                    value={cronExpression || compileFrontendCron(scheduleTime, cronDays)}
+                    onChange={e => setCronExpression(e.target.value)}
+                    style={{ ...inpSt, padding: '3px 7px', fontSize: '11px', flex: 1, fontFamily: 'monospace' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCronDays([1]);
+                      setScheduleTime('09:00');
+                      setCronExpression('0 9 * * 1');
+                    }}
+                    style={{ background: 'hsl(223 47% 12%)', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))', borderRadius: '4px', padding: '3px 6px', fontSize: '10px', cursor: 'pointer' }}
+                  >
+                    Reset
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -2235,12 +2425,12 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Max RSL: <strong style={{ color: 'hsl(var(--warning))' }}>{Math.round(maxRslFilter * 100)}%</strong></label>
-                <input type="range" min="0.05" max="0.50" step="0.05" value={maxRslFilter} onChange={e => setMaxRslFilter(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'hsl(var(--primary))' }} />
+                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Max RSL: <strong style={{ color: 'hsl(var(--warning))' }}>{maxRslFilter >= 1 ? '100% (All RSL)' : `${Math.round(maxRslFilter * 100)}%`}</strong></label>
+                <input type="range" min="0.05" max="1.00" step="0.05" value={maxRslFilter} onChange={e => setMaxRslFilter(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'hsl(var(--primary))' }} />
               </div>
               <div>
                 <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Min Cases</label>
-                <input type="number" value={minCasesFilter} onChange={e => setMinCasesFilter(parseInt(e.target.value) || 0)} style={inpSt} />
+                <input type="number" step="any" placeholder="0" value={minCasesFilter === 0 ? '' : minCasesFilter} onChange={e => setMinCasesFilter(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)} style={inpSt} />
               </div>
             </div>
 
@@ -2288,7 +2478,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     const desc    = lot.productId?.description || 'Surplus Item';
                     const sku     = lot.productId?.sku || lot.lotNumber || 'SKU';
                     const cases   = lot.availableQty ?? lot.quantityCases ?? 0;
-                    const rsl     = Math.round((lot.remainingShelfLife ?? 0.2) * 100);
+                    const rsl     = Math.round(calculateLotRsl(lot) * 100);
                     const hasCoa  = lot.complianceStatus === 'verified' || lot.coaS3Uri;
                     const dc      = typeof lot.distributionCenterId === 'object' ? (lot.distributionCenterId?.name || lot.distributionCenterId?.code || 'Main DC') : (lot.distributionCenterId || 'Main DC');
                     return (
@@ -2343,7 +2533,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 const listLabel = stage.buyerListName || stage.buyerListId || stage.buyerSegment || 'Target List';
                 const audienceSummary = isListMode ? listLabel : `${stage.customBuyers.length} custom buyer${stage.customBuyers.length !== 1 ? 's' : ''}`;
                 const pricingSummary = stage.discountType === 'yield' ? 'AI Yield' : stage.discountType === 'fixed' ? `${stage.discountValue}% Off` : `$${stage.discountValue} Floor`;
-                const stageBuyerCount = getStageBuyerCount(stage, reduxBuyerLists.length > 0 ? reduxBuyerLists : buyers);
+                const stageBuyerCount = getStageBuyerCount(stage, reduxBuyerLists, buyers);
                 const isZeroBuyer = stageBuyerCount === 0;
 
                 return (
@@ -2499,10 +2689,11 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                 </label>
                                 <input
                                   type="number"
+                                  step="any"
                                   disabled={stage.discountType === 'yield'}
-                                  value={stage.discountValue}
-                                  onChange={e => updateStage(idx, { discountValue: parseFloat(e.target.value) || 0 })}
-                                  placeholder={stage.discountType === 'yield' ? 'AI-managed' : ''}
+                                  value={stage.discountType === 'yield' ? '' : (stage.discountValue === 0 ? '' : stage.discountValue)}
+                                  onChange={e => updateStage(idx, { discountValue: e.target.value === '' ? 0 : parseFloat(e.target.value) || 0 })}
+                                  placeholder={stage.discountType === 'yield' ? 'AI-managed' : '0'}
                                   style={{ ...inpSt, opacity: stage.discountType === 'yield' ? 0.45 : 1 }}
                                 />
                               </div>
@@ -2512,10 +2703,12 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                   <span style={{ fontSize: '10px', color: 'hsl(var(--primary))', fontWeight: 600 }}>{formatWaitTime(stage.waitHours)}</span>
                                 </div>
                                 {(() => {
-                                  const currentUnit = stage.waitUnit || (stage.waitHours < 1 && stage.waitHours > 0 ? 'm' : 'h');
-                                  const rawVal = currentUnit === 'm'
+                                  const currentUnit: 'd' | 'h' | 'm' = stage.waitUnit || (stage.waitHours >= 24 && stage.waitHours % 24 === 0 ? 'd' : stage.waitHours < 1 && stage.waitHours > 0 ? 'm' : 'h');
+                                  const rawVal = currentUnit === 'd'
+                                    ? Number((stage.waitHours / 24).toFixed(4))
+                                    : currentUnit === 'm'
                                     ? Math.round(stage.waitHours * 60)
-                                    : Number(stage.waitHours.toFixed(2));
+                                    : Number(stage.waitHours.toFixed(4));
                                   return (
                                     <div style={{ display: 'flex', gap: '4px' }}>
                                       <input
@@ -2524,9 +2717,9 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                         step="any"
                                         value={isNaN(rawVal) || rawVal === 0 ? '' : rawVal}
                                         onChange={e => {
-                                          const val = parseFloat(e.target.value) || 0;
+                                          const val = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
                                           updateStage(idx, {
-                                            waitHours: currentUnit === 'm' ? val / 60 : val,
+                                            waitHours: currentUnit === 'd' ? val * 24 : currentUnit === 'm' ? val / 60 : val,
                                             waitUnit: currentUnit
                                           });
                                         }}
@@ -2535,11 +2728,12 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                       <select
                                         value={currentUnit}
                                         onChange={e => {
-                                          const newUnit = e.target.value as 'h' | 'm';
+                                          const newUnit = e.target.value as 'd' | 'h' | 'm';
                                           updateStage(idx, { waitUnit: newUnit });
                                         }}
                                         style={{ background: 'hsl(223 47% 9%)', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', padding: '4px 6px', color: '#fff', fontSize: '11px', cursor: 'pointer' }}
                                       >
+                                        <option value="d">Days</option>
                                         <option value="h">Hours</option>
                                         <option value="m">Mins</option>
                                       </select>
@@ -3276,7 +3470,10 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
       {/* ══ PRE-FLIGHT MODAL ════════════════════════════════════════════════ */}
       <PreFlightAuditModal
         showModal={showPreFlightModal}
-        onClose={() => setShowPreFlightModal(false)}
+        onClose={() => {
+          setIsSubmitting(false);
+          setShowPreFlightModal(false);
+        }}
         onLaunch={handleLaunch}
         isSubmitting={isSubmitting}
         impactMetrics={impactMetrics}

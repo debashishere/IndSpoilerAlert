@@ -1,0 +1,11 @@
+SKU,Lot Number,Description,Qty Cases,Exp Date,Cost,List Price,Category,Warehouse,Comments
+ULVR-YOG-01,LOT-2026-INV-001,"Creamery Organic Vanilla Yogurt 32oz",500,2026-09-15,18.00,32.00,Dairy,Unilever Midwest DC,"Fresh batch 10 sample test lot"
+ULVR-BUT-02,LOT-2026-INV-002,"Plant-Based Butter with Olive Oil 16oz",400,2026-09-20,22.00,45.00,Dairy,Unilever Midwest DC,"Fresh batch 10 sample test lot"
+KHC-KET-01,LOT-2026-INV-003,"Tomato Ketchup Squeeze Bottle 64oz",1200,2026-10-30,12.00,24.00,Dry Goods,Kraft Heinz Midwest DC,"Fresh batch 10 sample test lot"
+MDLZ-CHO-02,LOT-2026-INV-004,"Royal Dark Chocolate Bar 3.5oz",850,2026-09-10,10.00,20.00,Dry Goods,Mondelez Midwest DC,"Fresh batch 10 sample test lot"
+DANN-MLK-02,LOT-2026-INV-005,"Oat Milk Barista Blend 32oz",600,2026-09-25,16.00,32.00,Beverages,Danone Midwest DC,"Fresh batch 10 sample test lot"
+CAG-MEAT-01,LOT-2026-INV-006,"Frozen Boneless Poultry Breasts 5lb",900,2026-11-15,35.00,60.00,Meat,Conagra Midwest DC,"Fresh batch 10 sample test lot"
+KHC-DRS-02,LOT-2026-INV-007,"Zesty Italian Salad Dressing 16oz",750,2026-10-10,10.00,20.00,Dry Goods,Kraft Heinz Midwest DC,"Fresh batch 10 sample test lot"
+MDLZ-CRK-01,LOT-2026-INV-008,"Whole Wheat Original Crackers 12oz",1000,2026-09-30,8.00,16.00,Dry Goods,Mondelez Midwest DC,"Fresh batch 10 sample test lot"
+DANN-YOG-01,LOT-2026-INV-009,"Greek Yogurt Variety 6-Pack",450,2026-08-30,15.00,30.00,Dairy,Danone Midwest DC,"Fresh batch 10 sample test lot"
+ULVR-MLK-03,LOT-2026-INV-010,"Almond Milk Vanilla Infusion 64oz",650,2026-09-18,14.00,28.00,Beverages,Unilever Midwest DC,"Fresh batch 10 sample test lot"

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DollarSign } from 'lucide-react';
 
-export type SalesSortField = 'sku' | 'buyer' | 'dc' | 'quantity' | 'price' | 'revenue' | 'date' | 'status';
+export type SalesSortField = 'sku' | 'lotNumber' | 'buyer' | 'dc' | 'quantity' | 'price' | 'revenue' | 'date' | 'status';
 
 interface SalesTableProps {
   filteredRecords: any[];
@@ -36,6 +36,9 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
     if (sortField === 'sku') {
       aVal = (a.description || a.productName || a.product || '').toLowerCase();
       bVal = (b.description || b.productName || b.product || '').toLowerCase();
+    } else if (sortField === 'lotNumber') {
+      aVal = (a.lotNumber || a['Lot Number'] || a.lot || a.lotNo || '').toLowerCase();
+      bVal = (b.lotNumber || b['Lot Number'] || b.lot || b.lotNo || '').toLowerCase();
     } else if (sortField === 'buyer') {
       aVal = (a.buyerId?.companyName || a.buyerName || a.buyerEmail || a.customer || a.channel || '').toLowerCase();
       bVal = (b.buyerId?.companyName || b.buyerName || b.buyerEmail || b.customer || b.channel || '').toLowerCase();
@@ -100,7 +103,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
           }}
         >
           <span>Sales Data Pipeline ({sortedRecords.length})</span>
-          <span style={{ color: 'hsl(142, 76%, 46%)' }}>Product · Customer · Revenue</span>
+          <span style={{ color: 'hsl(142, 76%, 46%)' }}>Product · Lot Number · Customer · Revenue</span>
         </div>
         <div className="premium-table-container">
           <table className="premium-table">
@@ -108,6 +111,9 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
             <tr>
               <th onClick={() => handleSort('sku')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                 Product / SKU {renderSortIcon('sku')}
+              </th>
+              <th onClick={() => handleSort('lotNumber')} style={{ cursor: 'pointer', userSelect: 'none' }}>
+                Lot Number {renderSortIcon('lotNumber')}
               </th>
               <th onClick={() => handleSort('buyer')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                 Buyer / Customer {renderSortIcon('buyer')}
@@ -147,6 +153,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
               const inv = record.invoiceNumber || record.invoice || `INV-${1000 + idx}`;
               const prod = record.description || record.productName || record.product || 'Surplus Item';
               const sku = record.sku || record.productId || 'N/A';
+              const lotNum = record.lotNumber || record['Lot Number'] || record.lot || record.lotNo || 'N/A';
               const buyer = record.buyerId?.companyName || record.buyerName || record.buyerEmail || record.customer || record.channel || 'Direct Buyer';
               const dc = record.warehouse || record.dc || record.location || 'Central DC';
               const dateStr = record.saleDate || record.date || record.createdAt 
@@ -187,6 +194,23 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
                         )}
                       </div>
                     </div>
+                  </td>
+                  <td>
+                    <span
+                      className="badge"
+                      style={{
+                        fontSize: '0.75rem',
+                        padding: '3px 8px',
+                        backgroundColor: 'hsl(217 91% 60% / 12%)',
+                        color: 'hsl(217 91% 75%)',
+                        border: '1px solid hsl(217 91% 60% / 30%)',
+                        fontFamily: 'monospace',
+                        fontWeight: 600,
+                        letterSpacing: '0.02em',
+                      }}
+                    >
+                      {lotNum}
+                    </span>
                   </td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>

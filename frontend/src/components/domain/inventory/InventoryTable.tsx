@@ -93,10 +93,23 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
           <tbody>
             {paginatedLots.map((lot) => {
               const daysRemaining = calculateDaysRemaining(lot.expirationDate);
-              const rslRatio = Math.max(
-                0,
-                Math.min(100, Math.round((daysRemaining / (lot.productId?.shelfLifeDays || 30)) * 100))
-              );
+              
+              let totalShelfDays = lot.productId?.shelfLifeDays || lot.shelfLifeDays;
+              if (!totalShelfDays && lot.productionDate) {
+                const totalDiff = new Date(lot.expirationDate).getTime() - new Date(lot.productionDate).getTime();
+                totalShelfDays = Math.max(1, Math.ceil(totalDiff / (1000 * 60 * 60 * 24)));
+              }
+              if (!totalShelfDays) {
+                const categoryDefaults: Record<string, number> = {
+                  'Dairy': 45, 'Produce': 30, 'Meat': 90, 'Beverages': 120, 'Dry Goods': 180
+                };
+                totalShelfDays = categoryDefaults[lot.productId?.category || lot.category || 'Dry Goods'] || 120;
+              }
+
+              const rslRatio = typeof lot.remainingShelfLife === 'number'
+                ? Math.round(lot.remainingShelfLife <= 1 ? lot.remainingShelfLife * 100 : lot.remainingShelfLife)
+                : Math.max(0, Math.min(100, Math.round((daysRemaining / totalShelfDays) * 100)));
+              
               const totalValue = lot.availableQty * (lot.costPerCase ?? 0);
 
               let statusColor = 'hsl(var(--warning))';

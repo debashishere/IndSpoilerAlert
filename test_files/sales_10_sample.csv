@@ -1,0 +1,11 @@
+Invoice,SKU,Lot Number,Brand,Buyer Email,Sold Cases,Price,Sale Date,Warehouse,Revenue
+INV-2026-1001,ULVR-YOG-01,LOT-2026-INV-001,ULVR,v2buyer@retail.com,150,28.00,2026-08-01,Unilever Midwest DC,4200.00
+INV-2026-1002,ULVR-BUT-02,LOT-2026-INV-002,ULVR,autoreg@buyercompany.com,100,40.00,2026-08-02,Unilever Midwest DC,4000.00
+INV-2026-1003,KHC-KET-01,LOT-2026-INV-003,KHC,buyer.auth.test@example.com,300,20.00,2026-08-02,Kraft Heinz Midwest DC,6000.00
+INV-2026-1004,MDLZ-CHO-02,LOT-2026-INV-004,MDLZ,buyer@cheetahwholesalers.com,250,18.00,2026-08-03,Mondelez Midwest DC,4500.00
+INV-2026-1005,DANN-MLK-02,LOT-2026-INV-005,DANN,eveline94@ethereal.email,200,28.00,2026-08-03,Danone Midwest DC,5600.00
+INV-2026-1006,CAG-MEAT-01,LOT-2026-INV-006,CAG,buyer@secondharvest.org,200,52.00,2026-08-04,Conagra Midwest DC,10400.00
+INV-2026-1007,KHC-DRS-02,LOT-2026-INV-007,KHC,buyer@ollies.com,250,16.00,2026-08-04,Kraft Heinz Midwest DC,4000.00
+INV-2026-1008,MDLZ-CRK-01,LOT-2026-INV-008,MDLZ,buyer@imperfectionfoods.com,400,14.00,2026-08-05,Mondelez Midwest DC,5600.00
+INV-2026-1009,DANN-YOG-01,LOT-2026-INV-009,DANN,buyer@dollargeneral.com,150,25.00,2026-08-05,Danone Midwest DC,3750.00
+INV-2026-1010,ULVR-MLK-03,LOT-2026-INV-010,ULVR,buyer@misfitsmarket.com,200,24.00,2026-08-06,Unilever Midwest DC,4800.00

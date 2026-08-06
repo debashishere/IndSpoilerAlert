@@ -372,6 +372,47 @@ const selectCategoryFilter = (state: RootState) => state.workflow?.categoryFilte
 const selectMaxRslFilter = (state: RootState) => state.workflow?.maxRslFilter || 0;
 const selectMinCasesFilter = (state: RootState) => state.workflow?.minCasesFilter || 0;
 const selectExplicitLotIds = (state: RootState) => state.workflow?.explicitLotIds || [];
+export function calculateLotRsl(lot: any): number {
+  if (!lot) return 1.0;
+  
+  let computedRsl: number | null = null;
+  if (lot.expirationDate) {
+    const expTime = new Date(lot.expirationDate).getTime();
+    if (!isNaN(expTime)) {
+      const nowTime = new Date().getTime();
+      const daysRemaining = Math.max(0, Math.ceil((expTime - nowTime) / (1000 * 60 * 60 * 24)));
+      
+      let totalShelfDays = (typeof lot.productId === 'object' ? lot.productId?.shelfLifeDays : undefined) || lot.shelfLifeDays;
+      if (!totalShelfDays && lot.productionDate) {
+        const totalDiff = expTime - new Date(lot.productionDate).getTime();
+        totalShelfDays = Math.max(1, Math.ceil(totalDiff / (1000 * 60 * 60 * 24)));
+      }
+      if (!totalShelfDays) {
+        const lotCat = (typeof lot.productId === 'object' ? lot.productId?.category : '') || lot.category || lot.productCategory || '';
+        const categoryDefaults: Record<string, number> = {
+          'Dairy': 45, 'Produce': 30, 'Meat': 90, 'Meat & Poultry': 90, 'Beverages': 120, 'Dry Goods': 180, 'Frozen Foods': 180
+        };
+        totalShelfDays = categoryDefaults[lotCat] || 90;
+      }
+      
+      const r = daysRemaining / totalShelfDays;
+      if (!isNaN(r)) {
+        computedRsl = Math.min(1.0, Math.max(0.0, r));
+      }
+    }
+  }
+
+  const dbRsl = typeof lot.remainingShelfLife === 'number'
+    ? (lot.remainingShelfLife > 1 ? lot.remainingShelfLife / 100 : lot.remainingShelfLife)
+    : (typeof lot.rsl === 'number' ? (lot.rsl > 1 ? lot.rsl / 100 : lot.rsl) : null);
+
+  if (dbRsl !== null && dbRsl < 1.0) return dbRsl;
+  if (computedRsl !== null && dbRsl !== null) return Math.min(dbRsl, computedRsl);
+  if (computedRsl !== null) return computedRsl;
+  if (dbRsl !== null) return dbRsl;
+  return 1.0;
+}
+
 const selectExcludedLotIds = (state: RootState) => state.workflow?.excludedLotIds || [];
 const selectSelectorMode = (state: RootState) => state.workflow?.selectorMode || 'automatic';
 
@@ -394,7 +435,11 @@ export const selectMatchedLots = createSelector(
       if (excludedLotIds.includes(id)) return false;
       if (explicitLotIds.includes(id)) return true;
       if (categoryFilter && lot.productId?.category !== categoryFilter) return false;
-      if (maxRslFilter > 0 && (lot.remainingShelfLife ?? 1) > maxRslFilter) return false;
+      const lotRsl = calculateLotRsl(lot);
+      const normalizedMaxRsl = (maxRslFilter !== undefined && maxRslFilter !== null && maxRslFilter !== 0)
+        ? (maxRslFilter >= 100 ? 1.0 : (maxRslFilter >= 1 ? (maxRslFilter === 1 ? 1.0 : maxRslFilter / 100) : maxRslFilter))
+        : null;
+      if (normalizedMaxRsl !== null && normalizedMaxRsl < 1 && lotRsl > normalizedMaxRsl) return false;
       if (minCasesFilter > 0 && (lot.availableQty ?? lot.quantityCases ?? 0) < minCasesFilter) return false;
       return true;
     });

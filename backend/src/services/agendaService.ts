@@ -19,7 +19,10 @@ export const agenda = new Agenda({
 
 // 2. Helper to compile cron expression from timezone schedule
 export function compileCron(schedule: any): string {
-  if (schedule.cronExpression) return schedule.cronExpression;
+  if (!schedule) return '0 9 * * 1';
+  if (schedule.cronExpression && String(schedule.cronExpression).trim()) {
+    return String(schedule.cronExpression).trim();
+  }
   if (schedule.timeOfDay) {
     let timeStr = String(schedule.timeOfDay).trim();
     let isPM = false;
@@ -81,7 +84,12 @@ agenda.define('trigger-liquidation-workflow', async (job: any) => {
       if (filters.category && lot.productId && lot.productId.category !== filters.category) {
         return false;
       }
-      if (filters.maxRsl && lot.remainingShelfLife > filters.maxRsl) {
+      const lotRsl = typeof lot.remainingShelfLife === 'number' ? (lot.remainingShelfLife > 1 ? lot.remainingShelfLife / 100 : lot.remainingShelfLife) : 1;
+      const maxRslVal = filters.maxRsl;
+      const normalizedMaxRsl = (maxRslVal !== undefined && maxRslVal !== null && maxRslVal !== 0)
+        ? (maxRslVal >= 100 ? 1.0 : (maxRslVal >= 1 ? (maxRslVal === 1 ? 1.0 : maxRslVal / 100) : maxRslVal))
+        : null;
+      if (normalizedMaxRsl !== null && normalizedMaxRsl < 1 && lotRsl > normalizedMaxRsl) {
         return false;
       }
       return true;
@@ -290,7 +298,7 @@ export async function createAutomationRun(
 
   const EmailDispatchLog = mongoose.model('EmailDispatchLog');
 
-  for (const email of buyerEmails.slice(0, 15)) {
+  for (const email of buyerEmails) {
     try {
       let buyerObj = allBuyers.find((b: any) => b.email === email);
       if (!buyerObj && Array.isArray(automation.stages)) {
@@ -449,7 +457,7 @@ export async function scheduleWorkflow(automation: any): Promise<void> {
   // Cancel existing jobs first to prevent double triggers
   await agenda.cancel({ 'data.automationId': automation._id } as any);
 
-  if (!automation.isActive) {
+  if (!automation.isActive || automation.schedule?.type === 'immediate') {
     await LiquidationAutomation.findByIdAndUpdate(automation._id, { $unset: { nextRunAt: '' } });
     return;
   }

@@ -160,6 +160,7 @@ describe('Issue #46 / PRD 47: Studio Persistence & Dual Launch Execution', () =>
     });
 
     const saveDraftBtn = screen.getAllByRole('button', { name: /Save as Draft/i })[0];
+    await waitFor(() => expect(saveDraftBtn).not.toBeDisabled());
     fireEvent.click(saveDraftBtn);
 
     await waitFor(() => {
