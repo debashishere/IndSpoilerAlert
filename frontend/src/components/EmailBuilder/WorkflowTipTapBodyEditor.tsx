@@ -626,8 +626,8 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
       </div>
 
       {/* ─── TipTap Canvas ─────────────────────────────────────────────── */}
-      <div className="p-4 min-h-[320px] max-h-[600px] overflow-y-auto font-sans" style={{ padding: '16px', minHeight: '320px' }}>
-        <EditorContent editor={editor} className="prose max-w-none focus:outline-none min-h-[280px]" />
+      <div className="p-4 min-h-[320px] max-h-[600px] overflow-y-auto font-sans text-slate-900" style={{ padding: '16px', minHeight: '320px', color: '#0f172a' }}>
+        <EditorContent editor={editor} className="prose max-w-none focus:outline-none min-h-[280px] text-slate-900" style={{ color: '#0f172a' }} />
       </div>
 
       {/* Hidden File Input for Image Upload */}
