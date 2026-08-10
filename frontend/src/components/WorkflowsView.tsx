@@ -521,6 +521,44 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
           <span>Saved Campaigns</span>
         </button>
         <button
+          className={`btn ${workflowSubTab === 'templates' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => dispatch(setWorkflowSubTab('templates'))}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            fontSize: '0.85rem',
+            fontWeight: 700,
+            borderRadius: '8px',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <LayoutTemplate size={16} />
+          <span>Email Builder</span>
+        </button>
+        <button
+          className={`btn ${workflowSubTab === 'broadcast' ? 'btn-primary' : 'btn-secondary'}`}
+          onClick={() => dispatch(setWorkflowSubTab('broadcast'))}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            fontSize: '0.85rem',
+            fontWeight: 700,
+            borderRadius: '8px',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <Send size={16} />
+          <span>Send Broadcast</span>
+        </button>
+        <button
           className={`btn ${workflowSubTab === 'runs' ? 'btn-primary' : 'btn-secondary'}`}
           onClick={() => {
             dispatch(setWorkflowSubTab('runs'));
@@ -868,6 +906,29 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ======== EMAIL BUILDER SUB-TAB ======== */}
+      {workflowSubTab === 'templates' && (
+        <div style={{ marginTop: '8px' }}>
+          <TipTapTemplateEditor
+            supplierId={supplierId}
+            inventoryLots={inventoryList}
+            apiBaseUrl={apiBaseUrl}
+          />
+        </div>
+      )}
+
+      {/* ======== SEND BROADCAST SUB-TAB ======== */}
+      {workflowSubTab === 'broadcast' && (
+        <div style={{ marginTop: '8px' }}>
+          <SendBroadcastView
+            supplierId={supplierId}
+            inventoryLots={inventoryList}
+            buyers={buyers}
+            apiBaseUrl={apiBaseUrl}
+          />
         </div>
       )}
 

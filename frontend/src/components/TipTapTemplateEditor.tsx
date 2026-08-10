@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { LiveDevicePreview } from './LiveDevicePreview';
+import { B2B_TEMPLATE_PRESETS, getB2BPresetById } from '../utils/b2bTemplatePresets';
 import {
   Sparkles,
   Bold,
@@ -152,7 +153,53 @@ export function TipTapTemplateEditor({
   const [deviceView, setDeviceView] = useState<'desktop' | 'mobile'>('desktop');
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const editorRef = useRef<HTMLDivElement>(null);
+
+  const applyPresetTemplate = (presetId: string) => {
+    const preset = getB2BPresetById(presetId) || B2B_TEMPLATE_PRESETS.find(p => p.templateId === presetId);
+    if (preset) {
+      setTemplateId(preset.templateId);
+      setName(preset.name);
+      setSubject(preset.subject);
+      setCategory(preset.category);
+      setBodyHtml(hydrateRawTokensInHtml(preset.bodyHtml));
+      if (preset.availableTokens && preset.availableTokens.length > 0) {
+        setAvailableTokens(preset.availableTokens);
+      }
+    } else if (presetId === 'short-dated-flash-sale') {
+      setTemplateId('short-dated-flash-sale');
+      setName('Short-Dated Flash Sale');
+      setSubject('⚡ Flash Sale: Short-Dated {{lot_title}} Available Now');
+      setBodyHtml(hydrateRawTokensInHtml(`<h2 style="color: #dc2626;">Time-Sensitive Clearance Opportunity</h2><p>Dear {{buyer_name}},</p><p>We have loaded a high-priority short-dated inventory lot: <strong>{{lot_title}}</strong>.</p>{{inventory_table}}<p style="text-align: center; margin: 20px 0;"><a href="{{quick_bid_link}}" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Review & Place Instant Bid</a></p><p style="font-size: 12px; color: #64748b;">Dispatched by {{supplier_name}}</p>`));
+    }
+    setPendingTemplateId(null);
+    setShowOverwriteModal(false);
+  };
+
+  const handleTemplatePickerChange = (newId: string) => {
+    const cleanBodyText = bodyHtml ? bodyHtml.replace(/<[^>]*>/g, '').trim() : '';
+    const hasContent = cleanBodyText.length > 0 && bodyHtml !== '<p></p>' && bodyHtml !== '<p></p>\n';
+
+    if (hasContent) {
+      setPendingTemplateId(newId);
+      setShowOverwriteModal(true);
+    } else {
+      applyPresetTemplate(newId);
+    }
+  };
+
+  const confirmOverwrite = () => {
+    if (pendingTemplateId) {
+      applyPresetTemplate(pendingTemplateId);
+    }
+  };
+
+  const cancelOverwrite = () => {
+    setPendingTemplateId(null);
+    setShowOverwriteModal(false);
+  };
 
   const [availableTokens, setAvailableTokens] = useState<string[]>(
     initialTemplate?.availableTokens && initialTemplate.availableTokens.length > 0
@@ -470,6 +517,18 @@ export function TipTapTemplateEditor({
         </div>
 
         <div className="flex items-center gap-3">
+          <select
+            data-testid="template-picker-select"
+            value={templateId}
+            onChange={(e) => handleTemplatePickerChange(e.target.value)}
+            className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-semibold focus:outline-none focus:border-indigo-500 cursor-pointer"
+          >
+            <option value="b2b-inventory-offer-sheet">B2B Inventory Offer Sheet</option>
+            <option value="short-dated-flash-sale">Short-Dated Flash Sale</option>
+            <option value="bulk-clearance-announcement">Bulk Clearance Announcement</option>
+            <option value="blank-slate">Blank Slate</option>
+          </select>
+
           <button
             type="button"
             onClick={loadStarterPreset}
@@ -500,6 +559,35 @@ export function TipTapTemplateEditor({
           </button>
         </div>
       </div>
+
+      {showOverwriteModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-white">Replace editor content with selected template?</h3>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Selecting a new preset will replace your existing editor body text and subject line with the preset defaults. Any unsaved edits in the editor canvas will be overwritten.
+            </p>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                data-testid="cancel-overwrite-template-button"
+                onClick={cancelOverwrite}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                data-testid="confirm-overwrite-template-button"
+                onClick={confirmOverwrite}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition-all"
+              >
+                Confirm & Overwrite
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Grid: Editor Settings & Body */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

@@ -34,7 +34,7 @@ export const SendBroadcastView: React.FC<SendBroadcastViewProps> = ({
   const [previewing, setPreviewing] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<any | null>(null);
 
-  const isConnected = oauth.status === 'connected';
+  const isConnected = oauth.status === 'connected' || (oauth as any)?.mailbox?.status === 'connected';
 
   const handleFetchPreview = async () => {
     setPreviewing(true);

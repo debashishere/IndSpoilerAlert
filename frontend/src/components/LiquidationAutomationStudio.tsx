@@ -45,6 +45,7 @@ import {
 import { PreFlightAuditModal } from './domain/workflows/PreFlightAuditModal';
 import { useOAuthMailbox } from '../hooks/useOAuthMailbox';
 import { TipTapTemplateEditor } from './TipTapTemplateEditor';
+import { WorkflowTipTapBodyEditor } from './EmailBuilder/WorkflowTipTapBodyEditor';
 import { SmartAudienceLotSelector } from './SmartAudienceLotSelector';
 import { LiveDevicePreview } from './LiveDevicePreview';
 import { SendBroadcastView } from './SendBroadcastView';
@@ -164,6 +165,9 @@ export interface Stage {
   discountValue: number;
   waitHours: number;
   waitUnit?: 'd' | 'h' | 'm';
+  emailTemplateId?: string;
+  emailSubject?: string;
+  emailBodyHtml?: string;
 }
 
 export function getStageBuyerCount(stage: Stage, buyerListsOrBuyers: any[] = [], allBuyersFallback: any[] = []): number {
@@ -276,6 +280,15 @@ export function resolveStagesWithBuyerLists(stages: Stage[], buyerLists: any[]):
   });
 }
 
+export const DEFAULT_EMAIL_BODY_HTML = `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+<h2 style="color: #4f46e5; margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
+<p>Hello <strong>{{buyer_name}}</strong>,</p>
+<p>We have immediate surplus inventory available for liquidation. Stage offer: <strong>{{current_stage_discount}}</strong> (Response window: {{expiry_hours}}). Please review the itemized offer sheet below:</p>
+<div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
+<br/>
+<p style="text-align: center;"><a href="{{quick_bid_link}}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Submit 1-Click Bid</a></p>
+</div>`;
+
 const DEFAULT_STAGES: Stage[] = [
   {
     stageIndex: 1,
@@ -287,6 +300,8 @@ const DEFAULT_STAGES: Stage[] = [
     discountType: 'fixed',
     discountValue: 20,
     waitHours: 24,
+    emailSubject: 'Stage 1 Priority Clearance Offer',
+    emailBodyHtml: DEFAULT_EMAIL_BODY_HTML
   },
   {
     stageIndex: 2,
@@ -298,6 +313,8 @@ const DEFAULT_STAGES: Stage[] = [
     discountType: 'fixed',
     discountValue: 40,
     waitHours: 48,
+    emailSubject: 'Stage 2 Secondary Clearance Blast',
+    emailBodyHtml: DEFAULT_EMAIL_BODY_HTML
   },
 ];
 
@@ -1437,6 +1454,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
   // Email builder
   const [emailSubject, setEmailSubject] = useState('Distressed Inventory Special Liquidation Offer');
+  const [emailBodyHtml, setEmailBodyHtml] = useState<string>(DEFAULT_EMAIL_BODY_HTML);
+  const [activeStageEmailEditorIdx, setActiveStageEmailEditorIdx] = useState<number | null>(null);
   const [emailBlocks, setEmailBlocks]   = useState<EmailBlock[]>(DEFAULT_EMAIL_BLOCKS);
 
   // Target Buyer Segment Inspection state
@@ -1581,6 +1600,9 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             }
             if (campaign.emailTemplate) {
               if (campaign.emailTemplate.subject) setEmailSubject(campaign.emailTemplate.subject);
+              if (campaign.emailTemplate.body || campaign.emailTemplate.bodyHtml) {
+                setEmailBodyHtml(campaign.emailTemplate.body || campaign.emailTemplate.bodyHtml);
+              }
               if (Array.isArray(campaign.emailTemplate.blocks)) setEmailBlocks(campaign.emailTemplate.blocks);
             }
           }
@@ -1911,7 +1933,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
         stages,
         rules: { evaluationWindowHours: typeof stages?.[0]?.waitHours === 'number' && stages[0].waitHours > 0 ? stages[0].waitHours : 48 },
         schedule: { type: executionType, cronExpression: cronExpression.trim() || compileFrontendCron(scheduleTime, cronDays), timeOfDay: scheduleTime, timezone: workflowTimezone, daysOfWeek: cronDays },
-        emailTemplate: { subject: emailSubject, blocks: emailBlocks },
+        emailTemplate: { subject: emailSubject, body: emailBodyHtml, bodyHtml: emailBodyHtml, blocks: emailBlocks },
         donationConfig: {
           enabled: donationEnabled,
           maxCases: donationMaxCases,
@@ -2022,7 +2044,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
         stages,
         rules: { evaluationWindowHours: typeof stages?.[0]?.waitHours === 'number' && stages[0].waitHours > 0 ? stages[0].waitHours : 48 },
         schedule: { type: executionType, cronExpression: cronExpression.trim() || compileFrontendCron(scheduleTime, cronDays), timeOfDay: scheduleTime, timezone: workflowTimezone, daysOfWeek: cronDays },
-        emailTemplate: { subject: emailSubject, blocks: emailBlocks },
+        emailTemplate: { subject: emailSubject, body: emailBodyHtml, bodyHtml: emailBodyHtml, blocks: emailBlocks },
         donationConfig: {
           enabled: donationEnabled,
           maxCases: donationMaxCases,
@@ -2749,6 +2771,93 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                               }
                             </p>
                           </div>
+
+                          {/* Divider */}
+                          <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
+
+                          {/* Stage Email Template & Body Data Editor */}
+                          <div data-testid={`stage-${stage.stageIndex}-email-editor-section`}>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                              <Mail size={13} /> Stage Email Template & Body Data
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '12px' }}>
+                              <div>
+                                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '5px' }}>
+                                  Stage Email Subject
+                                </label>
+                                <input
+                                  type="text"
+                                  data-testid={`stage-${stage.stageIndex}-subject-input`}
+                                  value={stage.emailSubject || emailSubject || ''}
+                                  onChange={e => updateStage(idx, { emailSubject: e.target.value })}
+                                  placeholder="Enter stage-specific subject line..."
+                                  style={{ ...inpSt, fontSize: '12px' }}
+                                />
+                              </div>
+
+                              <div>
+                                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '5px' }}>
+                                  Stage Template Preset
+                                </label>
+                                <select
+                                  data-testid={`stage-${stage.stageIndex}-template-select`}
+                                  value={stage.emailTemplateId || selectedTemplateKey}
+                                  onChange={e => {
+                                    const tId = e.target.value;
+                                    const matchedTpl = centralTemplates.find((t: any) => t.templateId === tId || t._id === tId);
+                                    const newBody = matchedTpl ? matchedTpl.bodyHtml : DEFAULT_EMAIL_BODY_HTML;
+                                    updateStage(idx, { emailTemplateId: tId, emailBodyHtml: newBody });
+                                  }}
+                                  style={{ ...inpSt, fontSize: '12px' }}
+                                >
+                                  <option value="default">Standard Liquidation Offer Sheet</option>
+                                  <option value="short-dated-auction">Urgent Short-Dated Surplus Alert</option>
+                                  <option value="direct-donation-notice">Food Bank Direct Transfer Notice</option>
+                                  {centralTemplates.map((t: any) => (
+                                    <option key={t.templateId || t._id} value={t.templateId}>
+                                      {t.name} ({t.category || 'Custom'})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>
+                                Stage Email Body Content (TipTap WYSIWYG Editor)
+                              </span>
+                              <div style={{ display: 'flex', gap: '8px' }}>
+                                {stage.emailBodyHtml && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateStage(idx, { emailBodyHtml: undefined, emailSubject: undefined, emailTemplateId: undefined })}
+                                    style={{ background: 'none', border: 'none', color: '#f59e0b', fontSize: '11px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                  >
+                                    ↺ Reset to Campaign Default Body
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  data-testid={`edit-stage-${stage.stageIndex}-body-btn`}
+                                  onClick={() => setActiveStageEmailEditorIdx(activeStageEmailEditorIdx === idx ? null : idx)}
+                                  style={{ background: 'hsl(var(--primary)/0.15)', border: '1px solid hsl(var(--primary)/0.3)', color: 'hsl(var(--primary))', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                                >
+                                  {activeStageEmailEditorIdx === idx ? 'Close Editor ^' : '✏️ Edit Stage Email Body Data'}
+                                </button>
+                              </div>
+                            </div>
+
+                            {activeStageEmailEditorIdx === idx && (
+                              <div style={{ marginTop: '8px', background: '#ffffff', borderRadius: '8px', padding: '8px', border: '1px solid hsl(var(--border-color))' }}>
+                                <WorkflowTipTapBodyEditor
+                                  contentHtml={stage.emailBodyHtml || emailBodyHtml}
+                                  onChange={(html) => updateStage(idx, { emailBodyHtml: html })}
+                                  disabled={false}
+                                />
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -2791,7 +2900,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
           </div>
 
           {/* SECTION 4: Email Builder & Live Preview — Concept C Minimal Productivity Layout */}
-          <div style={card}>
+          <div style={card} data-testid="workflow-email-builder-container">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2816,14 +2925,15 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               </div>
             </div>
 
-            {/* Progressive 3-Step Email Template Stepper */}
+            {/* Progressive 4-Step Email Template Stepper */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Header Step Pills Navigation */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'hsl(223 47% 8%)', border: '1px solid hsl(var(--border-color))', borderRadius: '12px', padding: '10px 14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'hsl(223 47% 8%)', border: '1px solid hsl(var(--border-color))', borderRadius: '12px', padding: '10px 14px', flexWrap: 'wrap' }}>
                 {[
                   { id: 1, label: '1. Template', icon: LayoutTemplate },
                   { id: 2, label: '2. Subject', icon: PenLine },
-                  { id: 3, label: '3. Preview & Override', icon: Eye }
+                  { id: 3, label: '3. Edit Email Body', icon: Edit3 },
+                  { id: 4, label: '4. Preview & Overrides', icon: Eye }
                 ].map((st) => {
                   const StepIcon = st.icon;
                   const isActive = stepperStep === st.id;
@@ -2886,7 +2996,20 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     </label>
                     <select
                       value={selectedTemplateKey}
-                      onChange={(e) => setSelectedTemplateKey(e.target.value)}
+                      onChange={(e) => {
+                        const key = e.target.value;
+                        setSelectedTemplateKey(key);
+                        const matched = centralTemplates.find((t: any) => t.templateId === key || t._id === key);
+                        if (matched && matched.bodyHtml) {
+                          setEmailBodyHtml(matched.bodyHtml);
+                        } else if (key === 'short-dated-auction') {
+                          setEmailBodyHtml(`<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #fecaca; border-radius: 8px; background: #fff5f5;"><div style="background-color: #dc2626; color: #ffffff; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; text-align: center; margin-bottom: 16px;">⚡ LIMITED TIME LIQUIDATION AUCTION</div><p>Hi <strong>{{buyer_name}}</strong>,</p><p>The following short-dated inventory has been scheduled for priority liquidation. Special offer: <strong>{{current_stage_discount}}</strong>. Response deadline: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><div style="text-align: center; margin-top: 24px;"><a href="{{quick_bid_link}}" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Place Auction Bid Now</a></div></div>`);
+                        } else if (key === 'direct-donation-notice') {
+                          setEmailBodyHtml(`<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #bbf7d0; border-radius: 8px; background: #f0fdf4;"><h2 style="color: #166534; margin-top: 0;">🌱 Community Surplus Donation | {{supplier_name}}</h2><p>Dear <strong>{{buyer_name}}</strong> partner,</p><p>We are pleased to allocate the following fresh surplus products for zero-cost donation transfer. Response window: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><p style="font-size: 13px; color: #15803d; text-align: center; margin-top: 20px; font-weight: 600;">Thank you for helping divert quality food from landfill to families in need.</p></div>`);
+                        } else {
+                          setEmailBodyHtml(DEFAULT_EMAIL_BODY_HTML);
+                        }
+                      }}
                       style={{ ...inpSt, fontWeight: 600, fontSize: '12px', width: '100%', maxWidth: '500px' }}
                       data-testid="attach-email-template-select"
                     >
@@ -3004,6 +3127,80 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           boxShadow: '0 2px 8px hsl(var(--primary)/0.3)'
                         }}
                       >
+                        <span>Next: Edit Email Body</span>
+                        <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* STEP 3: Edit Workflow Email Body HTML (Rich Text TipTap Editor) */}
+                <div
+                  id="sec-concept-body-editor"
+                  style={{
+                    background: 'hsl(223 47% 8%)',
+                    border: stepperStep === 3 ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border-color))',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    opacity: 1,
+                    pointerEvents: 'auto'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <Edit3 size={16} color="hsl(var(--primary))" />
+                      <span style={{ fontSize: '13px', fontWeight: 700 }}>Step 3: Edit Workflow Email Body HTML</span>
+                    </div>
+                    {completedSteps.includes(3) && (
+                      <span style={{ fontSize: '11px', color: 'hsl(var(--success))', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <CheckCircle size={13} /> Body Content Configured
+                      </span>
+                    )}
+                  </div>
+
+                  <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginBottom: '12px' }}>
+                    Customize rich text body content, formatting, images, and insert dynamic token pills (e.g. &#123;&#123;buyer_name&#125;&#125;, &#123;&#123;inventory_table&#125;&#125;).
+                  </p>
+
+                  <div style={{ background: '#ffffff', borderRadius: '8px', padding: '4px', border: '1px solid hsl(var(--border-color))' }}>
+                    <WorkflowTipTapBodyEditor
+                      contentHtml={emailBodyHtml}
+                      onChange={(html) => setEmailBodyHtml(html)}
+                      disabled={false}
+                    />
+                  </div>
+
+                  {stepperStep === 3 && (
+                    <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setStepperStep(2)}
+                        className="btn btn-secondary"
+                        style={{ fontSize: '12px', padding: '8px 14px' }}
+                      >
+                        ← Back to Subject
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCompletedSteps((prev) => Array.from(new Set([...prev, 1, 2, 3])));
+                          setStepperStep(4);
+                        }}
+                        style={{
+                          background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '8px 16px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 2px 8px hsl(var(--primary)/0.3)'
+                        }}
+                      >
                         <span>Next: Preview & Overrides</span>
                         <ArrowRight size={14} />
                       </button>
@@ -3011,12 +3208,12 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   )}
                 </div>
 
-                {/* STEP 3: Dynamic Data Context & Live Preview */}
+                {/* STEP 4: Dynamic Data Context & Live Preview */}
                 <div
                   id="sec-concept-preview"
                   style={{
                     background: 'hsl(223 47% 7%)',
-                    border: stepperStep === 3 ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border-color))',
+                    border: stepperStep === 4 ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border-color))',
                     borderRadius: '12px',
                     padding: '16px',
                     opacity: 1,
@@ -3210,13 +3407,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   <div style={{ marginTop: '12px' }}>
                     <LiveDevicePreview
                       subject={emailSubject || 'Distressed Stock Clearance Notice'}
-                      bodyHtml={
-                        selectedTemplateKey === 'short-dated-auction'
-                          ? `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #fecaca; border-radius: 8px; background: #fff5f5;"><div style="background-color: #dc2626; color: #ffffff; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; text-align: center; margin-bottom: 16px;">⚡ LIMITED TIME LIQUIDATION AUCTION</div><p>Hi <strong>{{buyer_name}}</strong>,</p><p>The following short-dated inventory has been scheduled for priority liquidation. Special offer: <strong>{{current_stage_discount}}</strong>. Response deadline: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><div style="text-align: center; margin-top: 24px;"><a href="{{quick_bid_link}}" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Place Auction Bid Now</a></div></div>`
-                          : selectedTemplateKey === 'direct-donation-notice'
-                          ? `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #bbf7d0; border-radius: 8px; background: #f0fdf4;"><h2 style="color: #166534; margin-top: 0;">🌱 Community Surplus Donation | {{supplier_name}}</h2><p>Dear <strong>{{buyer_name}}</strong> partner,</p><p>We are pleased to allocate the following fresh surplus products for zero-cost donation transfer. Response window: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><p style="font-size: 13px; color: #15803d; text-align: center; margin-top: 20px; font-weight: 600;">Thank you for helping divert quality food from landfill to families in need.</p></div>`
-                          : (centralTemplates.find((t: any) => t.templateId === selectedTemplateKey)?.bodyHtml || `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;"><h2 style="color: #4f46e5; margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2><p>Hello <strong>{{buyer_name}}</strong>,</p><p>We have immediate surplus inventory available for liquidation. Stage offer: <strong>{{current_stage_discount}}</strong> (Response window: {{expiry_hours}}). Please review the itemized offer sheet below:</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><br/><p style="text-align: center;"><a href="{{quick_bid_link}}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Submit 1-Click Bid</a></p></div>`)
-                      }
+                      bodyHtml={emailBodyHtml}
                       context={dynamicDataContext}
                     />
                   </div>
