@@ -4,3 +4,4 @@ export * from './ErrorBoundary';
 export * from './AppShell';
 export * from './MarketplaceLayout';
 export * from './SupplierLayout';
+export * from './ThemeToggle';

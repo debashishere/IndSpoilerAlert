@@ -36,8 +36,7 @@ class FirebaseAuthService {
     try {
       const storedUser = localStorage.getItem(MOCK_USER_STORAGE_KEY);
       const storedToken = localStorage.getItem(MOCK_TOKEN_STORAGE_KEY);
-      const sessionActive = localStorage.getItem('ind_spoiler_auth_session_active');
-      if (storedUser && storedToken && sessionActive === 'true') {
+      if (storedUser && storedToken) {
         this.mockUser = JSON.parse(storedUser);
         this.mockToken = storedToken;
       } else {

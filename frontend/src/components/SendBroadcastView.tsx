@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Send, AlertTriangle, CheckCircle2, RefreshCw, Mail, Users, Box, Eye, Sparkles } from 'lucide-react';
+import { Send, AlertTriangle, CheckCircle2, RefreshCw, Mail, Users, Eye } from 'lucide-react';
 import { useOAuthMailbox } from '../hooks/useOAuthMailbox';
 
 interface SendBroadcastViewProps {
@@ -12,13 +12,13 @@ interface SendBroadcastViewProps {
 export const SendBroadcastView: React.FC<SendBroadcastViewProps> = ({
   supplierId,
   apiBaseUrl = '/api',
-  inventoryLots = [],
+  inventoryLots: _inventoryLots = [],
   buyers = []
 }) => {
   const oauth = useOAuthMailbox(supplierId);
   const [buyerSegment, setBuyerSegment] = useState<string>('all_buyers');
-  const [selectedBuyerIds, setSelectedBuyerIds] = useState<string[]>([]);
-  const [selectedLotIds, setSelectedLotIds] = useState<string[]>([]);
+  const [selectedBuyerIds] = useState<string[]>([]);
+  const [selectedLotIds] = useState<string[]>([]);
   const [subject, setSubject] = useState<string>('Distressed Stock Clearance Offer for {{buyer_name}}');
   const [bodyHtml, setBodyHtml] = useState<string>(
     '<div style="font-family: sans-serif; padding: 20px;">' +
@@ -31,7 +31,7 @@ export const SendBroadcastView: React.FC<SendBroadcastViewProps> = ({
   );
   const [dispatching, setDispatching] = useState<boolean>(false);
   const [dispatchStatus, setDispatchStatus] = useState<{ success: boolean; message: string; count?: number } | null>(null);
-  const [previewing, setPreviewing] = useState<boolean>(false);
+  const [, setPreviewing] = useState<boolean>(false);
   const [previewData, setPreviewData] = useState<any | null>(null);
 
   const isConnected = oauth.status === 'connected' || (oauth as any)?.mailbox?.status === 'connected';

@@ -62,10 +62,10 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
       data-testid="email-metadata-form"
       className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 shadow-xs mb-6 text-slate-800 font-sans"
       style={{
-        backgroundColor: '#f8fafc',
+        backgroundColor: 'var(--surface-elevated, #f8fafc)',
         padding: '20px',
         borderRadius: '12px',
-        border: '1px solid #e2e8f0',
+        border: '1px solid var(--border, #e2e8f0)',
         marginBottom: '24px',
         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
@@ -90,7 +90,7 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               gap: '6px',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#334155',
+              color: 'var(--text-secondary, #334155)',
               marginBottom: '4px'
             }}
           >
@@ -108,9 +108,9 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               padding: '8px 12px',
               fontSize: '13px',
               fontWeight: 500,
-              color: '#1e293b',
-              backgroundColor: '#ffffff',
-              border: '1px solid #cbd5e1',
+              color: 'var(--text-on-surface, #1e293b)',
+              backgroundColor: 'var(--surface-card, #ffffff)',
+              border: '1px solid var(--border, #cbd5e1)',
               borderRadius: '8px',
               outline: 'none',
               cursor: 'pointer'
@@ -135,7 +135,7 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               gap: '6px',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#334155',
+              color: 'var(--text-secondary, #334155)',
               marginBottom: '4px'
             }}
           >
@@ -154,9 +154,9 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               padding: '8px 12px',
               fontSize: '13px',
               fontWeight: 500,
-              color: '#1e293b',
-              backgroundColor: '#ffffff',
-              border: '1px solid #cbd5e1',
+              color: 'var(--text-on-surface, #1e293b)',
+              backgroundColor: 'var(--surface-card, #ffffff)',
+              border: '1px solid var(--border, #cbd5e1)',
               borderRadius: '8px',
               outline: 'none',
               cursor: 'pointer'
@@ -181,7 +181,7 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               gap: '6px',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#334155',
+              color: 'var(--text-secondary, #334155)',
               marginBottom: '4px'
             }}
           >
@@ -204,9 +204,9 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               padding: '8px 12px',
               fontSize: '13px',
               fontWeight: 500,
-              color: '#1e293b',
-              backgroundColor: '#ffffff',
-              border: '1px solid #cbd5e1',
+              color: 'var(--text-on-surface, #1e293b)',
+              backgroundColor: 'var(--surface-card, #ffffff)',
+              border: '1px solid var(--border, #cbd5e1)',
               borderRadius: '8px',
               outline: 'none'
             }}
@@ -224,7 +224,7 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               gap: '6px',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#334155',
+              color: 'var(--text-secondary, #334155)',
               marginBottom: '4px'
             }}
           >
@@ -242,9 +242,9 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               padding: '8px 12px',
               fontSize: '13px',
               fontWeight: 500,
-              color: '#1e293b',
-              backgroundColor: '#ffffff',
-              border: '1px solid #cbd5e1',
+              color: 'var(--text-on-surface, #1e293b)',
+              backgroundColor: 'var(--surface-card, #ffffff)',
+              border: '1px solid var(--border, #cbd5e1)',
               borderRadius: '8px',
               outline: 'none',
               cursor: 'pointer'

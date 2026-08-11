@@ -9,8 +9,6 @@ import {
   Heading2,
   Link,
   Code,
-  Smartphone,
-  Monitor,
   Save,
   CheckCircle2,
   RefreshCw,
@@ -20,9 +18,6 @@ import {
   LayoutTemplate,
   Plus,
   X,
-  Sliders,
-  ChevronDown,
-  ChevronUp,
   Database,
   Box
 } from 'lucide-react';
@@ -150,7 +145,9 @@ export function TipTapTemplateEditor({
     return hydrateRawTokensInHtml(raw);
   });
 
-  const [deviceView, setDeviceView] = useState<'desktop' | 'mobile'>('desktop');
+  const [deviceView, _setDeviceView] = useState<'desktop' | 'mobile'>('desktop');
+  const [activeModeTab, setActiveModeTab] = useState<'authoring' | 'preview'>('authoring');
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [pendingTemplateId, setPendingTemplateId] = useState<string | null>(null);
@@ -493,24 +490,24 @@ export function TipTapTemplateEditor({
     return { compiledSubject, compiledBody };
   };
 
-  const { compiledSubject, compiledBody } = getCompiledPreview();
+  getCompiledPreview();
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-slate-950/80 border border-slate-800 rounded-2xl shadow-xl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-400">
+          <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-600 dark:text-indigo-400">
             <LayoutTemplate className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
               TipTap WYSIWYG Email Template Editor
-              <span className="px-2.5 py-0.5 text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full font-mono">
+              <span className="px-2.5 py-0.5 text-xs bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 rounded-full font-mono">
                 {templateId}
               </span>
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Author bulletproof HTML email templates with 1-click token insertion and live device preview.
             </p>
           </div>
@@ -521,7 +518,7 @@ export function TipTapTemplateEditor({
             data-testid="template-picker-select"
             value={templateId}
             onChange={(e) => handleTemplatePickerChange(e.target.value)}
-            className="px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white font-semibold focus:outline-none focus:border-indigo-500 cursor-pointer"
+            className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white font-semibold focus:outline-none focus:border-indigo-500 cursor-pointer"
           >
             <option value="b2b-inventory-offer-sheet">B2B Inventory Offer Sheet</option>
             <option value="short-dated-flash-sale">Short-Dated Flash Sale</option>
@@ -532,9 +529,9 @@ export function TipTapTemplateEditor({
           <button
             type="button"
             onClick={loadStarterPreset}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
-            <Sparkles className="w-4 h-4 text-amber-400" /> Load Starter Clearance Preset
+            <Sparkles className="w-4 h-4 text-amber-500 dark:text-amber-400" /> Load Starter Clearance Preset
           </button>
 
           <button
@@ -562,9 +559,9 @@ export function TipTapTemplateEditor({
 
       {showOverwriteModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-white">Replace editor content with selected template?</h3>
-            <p className="text-xs text-slate-400 leading-relaxed">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Replace editor content with selected template?</h3>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
               Selecting a new preset will replace your existing editor body text and subject line with the preset defaults. Any unsaved edits in the editor canvas will be overwritten.
             </p>
             <div className="flex justify-end gap-3 pt-2">
@@ -572,7 +569,7 @@ export function TipTapTemplateEditor({
                 type="button"
                 data-testid="cancel-overwrite-template-button"
                 onClick={cancelOverwrite}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-colors"
+                className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold transition-colors"
               >
                 Cancel
               </button>
@@ -589,46 +586,87 @@ export function TipTapTemplateEditor({
         </div>
       )}
 
-      {/* Main Grid: Editor Settings & Body */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Mode Toggles */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl">
+        <button
+          type="button"
+          data-testid="tab-authoring-mode"
+          onClick={() => setActiveModeTab('authoring')}
+          className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            activeModeTab === 'authoring'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          Authoring Mode
+        </button>
+        <button
+          type="button"
+          data-testid="tab-preview-mode"
+          onClick={() => setActiveModeTab('preview')}
+          className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            activeModeTab === 'preview'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          Live Email Preview
+        </button>
+      </div>
+
+      {activeModeTab === 'preview' ? (
+        <div data-testid="full-width-live-preview" className="p-6 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl">
+          <LiveDevicePreview
+            subject={subject}
+            bodyHtml={bodyHtml}
+            initialDeviceView={deviceView}
+            context={{
+              ...sampleData,
+              lot_title: sampleData.lot_title || name || 'Surplus Inventory Lot #880'
+            }}
+          />
+        </div>
+      ) : (
+        /* Main Grid: Editor Settings & Body */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Form & WYSIWYG Editor (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="p-5 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-4 shadow-lg">
+          <div className="p-5 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4 shadow-lg">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1 flex items-center gap-1">
-                  <Tag className="w-3.5 h-3.5 text-indigo-400" /> Template Name
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1 flex items-center gap-1">
+                  <Tag className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> Template Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Template Name"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1 flex items-center gap-1">
-                  <FileCode className="w-3.5 h-3.5 text-emerald-400" /> templateId Ref
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1 flex items-center gap-1">
+                  <FileCode className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> templateId Ref
                 </label>
                 <input
                   type="text"
                   value={templateId}
                   onChange={(e) => setTemplateId(e.target.value)}
                   placeholder="templateId"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-emerald-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 font-mono focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-400 mb-1 flex items-center gap-1">
-                  <Layers className="w-3.5 h-3.5 text-amber-400" /> Category
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1 flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Category
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as any)}
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-amber-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-800 dark:text-white focus:outline-none focus:border-amber-500"
                 >
                   <option value="clearance">Clearance</option>
                   <option value="auction">Auction</option>
@@ -639,7 +677,7 @@ export function TipTapTemplateEditor({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-400 mb-1">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-400 mb-1">
                 Subject Line (Supports Handlebars Tokens)
               </label>
               <input
@@ -647,18 +685,18 @@ export function TipTapTemplateEditor({
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Email subject line"
-                className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
 
           {/* Dynamic Token Palette & Data Configuration */}
-          <div className="p-4 bg-indigo-950/30 border border-indigo-500/20 rounded-2xl space-y-3">
+          <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-500/20 rounded-2xl space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Dynamic Variable Token Chips (Click to Insert)
+              <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" /> Dynamic Variable Token Chips (Click to Insert)
               </span>
-              <span className="text-[11px] text-slate-400 font-mono">
+              <span className="text-[11px] text-slate-600 dark:text-slate-400 font-mono">
                 {availableTokens.length} token{availableTokens.length !== 1 ? 's' : ''} configured
               </span>
             </div>
@@ -671,7 +709,7 @@ export function TipTapTemplateEditor({
                 onChange={(e) => setNewTokenInput(e.target.value)}
                 placeholder="Add custom variable token (e.g. discount_percent)..."
                 data-testid="add-token-input"
-                className="flex-1 px-3 py-1.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+                className="flex-1 px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
               />
               <button
                 type="submit"
@@ -695,15 +733,15 @@ export function TipTapTemplateEditor({
                   return (
                     <div
                       key={token}
-                      className="inline-flex items-center bg-indigo-600/20 border border-indigo-500/40 rounded-xl text-xs font-semibold overflow-hidden transition-all hover:border-indigo-400"
+                      className="inline-flex items-center bg-indigo-50 dark:bg-indigo-600/20 border border-indigo-200 dark:border-indigo-500/40 rounded-xl text-xs font-semibold overflow-hidden transition-all hover:border-indigo-400"
                     >
                       <button
                         type="button"
                         onClick={() => insertToken(token)}
                         title={`Click to insert ${info.label}`}
-                        className="px-3 py-1.5 text-indigo-200 hover:bg-indigo-600/30 hover:text-white transition-colors flex items-center gap-1.5"
+                        className="px-3 py-1.5 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-600/30 hover:text-indigo-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
                       >
-                        <Plus className="w-3 h-3 text-indigo-400" />
+                        <Plus className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
                         <span>{info.label}</span>
                       </button>
                       <button
@@ -713,7 +751,7 @@ export function TipTapTemplateEditor({
                           setActiveTokenInfoModal(info);
                         }}
                         title="View Dynamic Workflow Data Schema"
-                        className="px-2 py-1.5 text-indigo-300 hover:text-indigo-100 hover:bg-indigo-500/30 border-l border-indigo-500/30 transition-colors"
+                        className="px-2 py-1.5 text-indigo-600 dark:text-indigo-300 hover:text-indigo-900 dark:hover:text-indigo-100 hover:bg-indigo-100 dark:hover:bg-indigo-500/30 border-l border-indigo-200 dark:border-indigo-500/30 transition-colors"
                       >
                         ℹ️
                       </button>
@@ -726,7 +764,7 @@ export function TipTapTemplateEditor({
                         title={`Remove ${token}`}
                         aria-label={`Remove token ${token}`}
                         data-testid={`remove-token-${token}`}
-                        className="px-1.5 py-1.5 text-indigo-400/60 hover:text-rose-400 hover:bg-rose-500/20 border-l border-indigo-500/30 transition-colors"
+                        className="px-1.5 py-1.5 text-indigo-500 dark:text-indigo-400/60 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border-l border-indigo-200 dark:border-indigo-500/30 transition-colors"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -737,20 +775,20 @@ export function TipTapTemplateEditor({
             </div>
 
             {/* Variable Sample Data / System Data Mapping */}
-            <div className="pt-3 border-t border-indigo-500/20 space-y-2.5">
+            <div className="pt-3 border-t border-indigo-200 dark:border-indigo-500/20 space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
-                  <Database className="w-3.5 h-3.5 text-indigo-400" />
+                <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                  <Database className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                   Dynamic Variable Data Sources & Sample Preview Mapping
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                   Live Preview Controls
                 </span>
               </div>
 
-              <div className="p-3.5 bg-slate-900/90 border border-slate-800 rounded-xl space-y-3">
-                <p className="text-[11px] text-slate-400 leading-relaxed">
-                  <strong className="text-slate-200">How dynamic data works:</strong> System tokens (<code className="text-indigo-300">inventory_table</code>, <code className="text-indigo-300">lot_title</code>) are automatically populated from real <strong>Inventory Lots</strong> attached during campaign dispatch. Configure sample preview values below to test live rendering:
+              <div className="p-3.5 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-xl space-y-3">
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                  <strong className="text-slate-800 dark:text-slate-200">How dynamic data works:</strong> System tokens (<code className="text-indigo-700 dark:text-indigo-300">inventory_table</code>, <code className="text-indigo-700 dark:text-indigo-300">lot_title</code>) are automatically populated from real <strong>Inventory Lots</strong> attached during campaign dispatch. Configure sample preview values below to test live rendering:
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -759,17 +797,17 @@ export function TipTapTemplateEditor({
 
                     if (token === 'inventory_table') {
                       return (
-                        <div key={token} className="p-3 bg-slate-950/90 border border-indigo-500/40 rounded-xl space-y-2 sm:col-span-2">
+                        <div key={token} className="p-3 bg-slate-50 dark:bg-slate-950/90 border border-indigo-200 dark:border-indigo-500/40 rounded-xl space-y-2 sm:col-span-2">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                            <label className="text-[11px] font-mono font-bold text-indigo-300 flex items-center gap-1.5">
-                              <Box className="w-3.5 h-3.5 text-indigo-400" />
+                            <label className="text-[11px] font-mono font-bold text-indigo-700 dark:text-indigo-300 flex items-center gap-1.5">
+                              <Box className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
                               &#123;&#123;inventory_table&#125;&#125; & &#123;&#123;lot_title&#125;&#125; Data Source Picker
                             </label>
-                            <span className="px-2.5 py-0.5 text-[10px] font-mono bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full font-bold">
+                            <span className="px-2.5 py-0.5 text-[10px] font-mono bg-indigo-50 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 rounded-full font-bold">
                               ⚡ Live Rendered Table Preview
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400">
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400">
                             Select an Inventory Lot from your catalog to visually preview how its real items, SKUs, and case counts render inside the template:
                           </p>
                           <div className="flex items-center gap-2 pt-0.5">
@@ -777,7 +815,7 @@ export function TipTapTemplateEditor({
                               value={selectedLotId}
                               onChange={(e) => setSelectedLotId(e.target.value)}
                               data-testid="inventory-lot-picker"
-                              className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-indigo-500 font-sans font-semibold"
+                              className="w-full px-3 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-white focus:outline-none focus:border-indigo-500 font-sans font-semibold"
                             >
                               {availableLots.map((lot: any) => (
                                 <option key={lot._id || lot.id} value={lot._id || lot.id}>
@@ -791,13 +829,13 @@ export function TipTapTemplateEditor({
                     }
 
                     return (
-                      <div key={token} className="p-2 bg-slate-950/60 border border-slate-800 rounded-xl space-y-1">
+                      <div key={token} className="p-2 bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl space-y-1">
                         <div className="flex items-center justify-between">
-                          <label className="text-[11px] font-mono font-bold text-indigo-300">
+                          <label className="text-[11px] font-mono font-bold text-indigo-700 dark:text-indigo-300">
                             &#123;&#123;{token}&#125;&#125;
                           </label>
                           {isSystemToken && (
-                            <span className="text-[9px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded font-mono">
+                            <span className="text-[9px] text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono">
                               System Data
                             </span>
                           )}
@@ -818,7 +856,7 @@ export function TipTapTemplateEditor({
                               : `Sample value for ${token}...`
                           }
                           data-testid={`sample-data-input-${token}`}
-                          className="w-full px-2.5 py-1 bg-slate-900 border border-slate-700/80 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+                          className="w-full px-2.5 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-lg text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
                         />
                       </div>
                     );
@@ -829,16 +867,16 @@ export function TipTapTemplateEditor({
           </div>
 
           {/* TipTap Editor Toolbar & Content */}
-          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div className="bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-xl">
             {/* Toolbar */}
             <div
               data-testid="tiptap-editor-toolbar"
-              className="flex items-center gap-1.5 p-3 bg-slate-900 border-b border-slate-800 flex-wrap"
+              className="flex items-center gap-1.5 p-3 bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex-wrap"
             >
               <button
                 type="button"
                 onClick={() => applyFormatting('bold')}
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
+                className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold"
                 title="Bold"
               >
                 <Bold className="w-4 h-4" />
@@ -846,7 +884,7 @@ export function TipTapTemplateEditor({
               <button
                 type="button"
                 onClick={() => applyFormatting('italic')}
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
+                className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold"
                 title="Italic"
               >
                 <Italic className="w-4 h-4" />
@@ -854,7 +892,7 @@ export function TipTapTemplateEditor({
               <button
                 type="button"
                 onClick={() => applyFormatting('formatBlock', '<h2>')}
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
+                className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold"
                 title="Header 2"
               >
                 <Heading2 className="w-4 h-4" />
@@ -862,7 +900,7 @@ export function TipTapTemplateEditor({
               <button
                 type="button"
                 onClick={() => applyFormatting('insertUnorderedList')}
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
+                className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold"
                 title="Bullet List"
               >
                 <List className="w-4 h-4" />
@@ -873,27 +911,28 @@ export function TipTapTemplateEditor({
                   const url = prompt('Enter link URL:');
                   if (url) applyFormatting('createLink', url);
                 }}
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-bold"
+                className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold"
                 title="Insert Link"
               >
                 <Link className="w-4 h-4" />
               </button>
               <button
                 type="button"
-                onClick={() => applyFormatting('removeFormat')}
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-lg text-xs"
-                title="Clear Formatting"
+                data-testid={showCodeEditor ? 'toggle-visual-editor' : 'toggle-code-editor'}
+                onClick={() => setShowCodeEditor(!showCodeEditor)}
+                className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 rounded-lg text-xs"
+                title={showCodeEditor ? 'Switch to Visual Editor' : 'Switch to Raw HTML Code Mode'}
               >
                 <Code className="w-4 h-4" />
               </button>
 
-              <div className="h-4 w-px bg-slate-800 mx-1" />
+              <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
 
               {/* Quick Insertion Controls */}
               <button
                 type="button"
                 onClick={() => insertToken('header')}
-                className="px-2.5 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                className="px-2.5 py-1 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
                 title="Insert Dynamic Header Component"
               >
                 <span>🏷️</span> Insert Dynamic Header
@@ -902,7 +941,7 @@ export function TipTapTemplateEditor({
               <button
                 type="button"
                 onClick={() => insertToken('inventory_table')}
-                className="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
+                className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors"
                 title="Insert Dynamic Inventory Table Component"
               >
                 <span>📊</span> Insert Dynamic Inventory Table
@@ -911,7 +950,7 @@ export function TipTapTemplateEditor({
               <button
                 type="button"
                 onClick={() => setActiveTokenInfoModal(getFriendlyTokenInfo('inventory_table'))}
-                className="p-1.5 bg-slate-800 hover:bg-slate-700 text-indigo-400 rounded-lg text-xs"
+                className="p-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 rounded-lg text-xs"
                 title="Dynamic Token Info"
                 aria-label="Toolbar Dynamic Token Info"
                 data-testid="toolbar-token-info-button"
@@ -921,14 +960,23 @@ export function TipTapTemplateEditor({
             </div>
 
             {/* Editable Content */}
-            <div
-              ref={editorRef}
-              data-testid="tiptap-editable-content"
-              contentEditable
-              onInput={handleEditorInput}
-              dangerouslySetInnerHTML={{ __html: bodyHtml }}
-              className="p-5 min-h-[280px] max-h-[420px] overflow-y-auto text-sm text-slate-200 font-sans focus:outline-none custom-scrollbar"
-            />
+            {showCodeEditor ? (
+              <textarea
+                data-testid="raw-html-editor-textarea"
+                value={bodyHtml}
+                onChange={(e) => setBodyHtml(e.target.value)}
+                className="w-full p-5 min-h-[280px] max-h-[420px] font-mono text-xs text-slate-100 bg-slate-900 focus:outline-none custom-scrollbar border-0"
+              />
+            ) : (
+              <div
+                ref={editorRef}
+                data-testid="tiptap-editable-content"
+                contentEditable
+                onInput={handleEditorInput}
+                dangerouslySetInnerHTML={{ __html: bodyHtml }}
+                className="p-5 min-h-[280px] max-h-[420px] overflow-y-auto text-sm text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-950 font-sans focus:outline-none custom-scrollbar"
+              />
+            )}
           </div>
         </div>
 
@@ -945,47 +993,48 @@ export function TipTapTemplateEditor({
           />
         </div>
       </div>
+      )}
 
       {/* Dynamic Token Info Modal */}
       {activeTokenInfoModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-xl">ℹ️</span>
                 <div>
-                  <h4 className="text-sm font-bold text-white">{activeTokenInfoModal.label}</h4>
-                  <span className="text-[10px] font-mono text-indigo-400">data-token="{activeTokenInfoModal.token}"</span>
+                  <h4 data-testid="active-token-info-title" className="text-sm font-bold text-slate-900 dark:text-white">{activeTokenInfoModal.label}</h4>
+                  <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400">data-token="{activeTokenInfoModal.token}"</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveTokenInfoModal(null)}
                 data-testid="close-token-info-modal"
-                className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+                className="p-1 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <p className="text-xs text-slate-300 leading-relaxed bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
               {activeTokenInfoModal.description}
             </p>
 
             <div className="space-y-2">
-              <span className="text-xs font-bold text-indigo-300">Dynamically Injected Fields:</span>
+              <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300">Dynamically Injected Fields:</span>
               <div className="flex flex-wrap gap-1.5">
                 {activeTokenInfoModal.fields.map((f) => (
-                  <span key={f} className="px-2.5 py-1 text-[11px] bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-lg font-medium">
+                  <span key={f} className="px-2.5 py-1 text-[11px] bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/20 rounded-lg font-medium">
                     ✓ {f}
                   </span>
                 ))}
               </div>
             </div>
 
-            <div className="space-y-1 pt-2 border-t border-slate-800">
-              <span className="text-[11px] font-bold text-slate-400">Sample Runtime Output:</span>
-              <div className="p-2.5 bg-slate-950 rounded-xl text-xs text-slate-300 font-mono border border-slate-800/80">
+            <div className="space-y-1 pt-2 border-t border-slate-200 dark:border-slate-800">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">Sample Runtime Output:</span>
+              <div className="p-2.5 bg-slate-50 dark:bg-slate-950 rounded-xl text-xs text-slate-800 dark:text-slate-300 font-mono border border-slate-200 dark:border-slate-800/80">
                 {activeTokenInfoModal.sampleValue}
               </div>
             </div>

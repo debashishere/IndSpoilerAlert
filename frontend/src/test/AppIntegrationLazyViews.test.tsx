@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { store } from '../store';
+import { AuthProvider } from '../context/AuthContext';
 import App from '../App';
 
 describe('App Integration & Lazy Views (Logistics & Analytics)', () => {
@@ -83,7 +84,9 @@ describe('App Integration & Lazy Views (Logistics & Analytics)', () => {
   it('should defer Distressed Analytics and Freight Logistics nav links for base version release', async () => {
     render(
       <Provider store={store}>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </Provider>
     );
 

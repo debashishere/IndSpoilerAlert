@@ -568,33 +568,11 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
 
   return (
     <div 
-      style={{
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        width: '380px',
-        maxHeight: 'calc(100vh - 40px)',
-        zIndex: 9999,
-        background: 'linear-gradient(135deg, #18181b 95%, #09090b 98%)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(80, 70, 229, 0.3)',
-        borderRadius: '16px',
-        boxShadow: '0 12px 40px rgba(0,0,0,0.6), 0 0 30px rgba(80, 70, 229, 0.1)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}
+      className="fixed bottom-5 right-5 w-[380px] max-h-[calc(100vh-40px)] z-[9999] bg-white dark:bg-slate-900 border border-slate-200 dark:border-indigo-500/30 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-900 dark:text-slate-100"
     >
       {/* Header */}
       <div 
-        style={{
-          padding: '16px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          background: 'rgba(80, 70, 229, 0.08)'
-        }}
+        className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between bg-indigo-50 dark:bg-indigo-500/10"
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{
@@ -610,26 +588,20 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
             fontWeight: 800
           }}>⚡</div>
           <div>
-            <h3 style={{ fontSize: '0.95rem', fontWeight: 800, margin: 0, color: 'white' }}>Surplus Liquidation Loop</h3>
-            <span style={{ fontSize: '0.72rem', color: '#a1a1aa' }}>V1 Walkthrough Assistant</span>
+            <h3 className="text-sm font-extrabold m-0 text-slate-900 dark:text-white">Surplus Liquidation Loop</h3>
+            <span className="text-xs text-slate-600 dark:text-slate-400">V1 Walkthrough Assistant</span>
           </div>
         </div>
         <button 
           onClick={() => setIsOpen(false)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#71717a',
-            cursor: 'pointer',
-            padding: '4px'
-          }}
+          className="bg-transparent border-0 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer p-1"
         >
           <X size={18} />
         </button>
       </div>
 
       {/* Progress Bar */}
-      <div style={{ height: '3px', width: '100%', backgroundColor: '#27272a' }}>
+      <div className="h-[3px] w-full bg-slate-200 dark:bg-slate-800">
         <div 
           style={{ 
             height: '100%', 
@@ -657,17 +629,17 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
           }}>
             Step {currentStep} of {steps.length}
           </span>
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b' }}>
+          <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
             {activeStepObj.role}
           </span>
         </div>
 
         {/* Step Title & Desc */}
         <div>
-          <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'white', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h4 className="text-base font-extrabold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
             {activeStepObj.title}
           </h4>
-          <p style={{ fontSize: '0.85rem', color: '#e4e4e7', lineHeight: '1.45', margin: 0 }}>
+          <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed m-0">
             {activeStepObj.description}
           </p>
         </div>
@@ -692,18 +664,7 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
         {/* Status Area */}
         {statusMessage && (
           <div 
-            style={{
-              padding: '10px 14px',
-              borderRadius: '8px',
-              backgroundColor: '#09090b',
-              borderLeft: '3px solid rgb(80, 70, 229)',
-              fontSize: '0.78rem',
-              color: '#d4d4d8',
-              fontFamily: 'monospace',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
+            className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-950 border-l-2 border-indigo-600 text-xs text-slate-800 dark:text-slate-200 font-mono flex items-center gap-2"
           >
             {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} style={{ color: '#10b981' }} />}
             <span>{statusMessage}</span>
@@ -741,34 +702,14 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
             <button
               onClick={() => setCurrentStep(prev => Math.max(1, prev - 1))}
               disabled={currentStep === 1 || isProcessing}
-              style={{
-                flex: 1,
-                backgroundColor: 'transparent',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#71717a',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: (currentStep === 1 || isProcessing) ? 'not-allowed' : 'pointer'
-              }}
+              className="flex-1 bg-transparent border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 py-2 px-3 rounded-md text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Back
             </button>
             <button
               onClick={() => setCurrentStep(prev => Math.min(steps.length, prev + 1))}
               disabled={currentStep === steps.length || isProcessing}
-              style={{
-                flex: 1,
-                backgroundColor: 'transparent',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#d4d4d8',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: (currentStep === steps.length || isProcessing) ? 'not-allowed' : 'pointer'
-              }}
+              className="flex-1 bg-transparent border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 py-2 px-3 rounded-md text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Skip Step
             </button>
@@ -778,7 +719,7 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
         {/* Tip / Hint */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '4px' }}>
           <HelpCircle size={14} style={{ color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
-          <span style={{ fontSize: '0.75rem', color: '#71717a', fontStyle: 'italic' }}>
+          <span className="text-xs text-slate-600 dark:text-slate-400 italic">
             {activeStepObj.hint}
           </span>
         </div>
@@ -787,14 +728,7 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
 
       {/* Footer Info */}
       <div 
-        style={{
-          padding: '12px 20px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-          backgroundColor: '#09090b',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}
+        className="p-3 px-5 border-t border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-950 flex justify-between items-center"
       >
         <button 
           onClick={resetTour}
@@ -810,7 +744,7 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
         >
           Reset Walkthrough
         </button>
-        <span style={{ fontSize: '0.72rem', color: '#71717a' }}>
+        <span className="text-xs text-slate-500 dark:text-slate-400">
           v1.0.0 Stable
         </span>
       </div>

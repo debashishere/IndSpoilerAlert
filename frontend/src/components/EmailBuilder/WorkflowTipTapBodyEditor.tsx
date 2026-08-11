@@ -12,12 +12,8 @@ import {
   Italic,
   List,
   ListOrdered,
-  Heading1,
-  Heading2,
-  Heading3,
   Link as LinkIcon,
   ImageIcon,
-  Code,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -28,9 +24,7 @@ import {
   Tag,
   Upload,
   X,
-  Check,
-  Quote,
-  Type
+  Sliders
 } from 'lucide-react';
 
 // ─── Custom Font Style Extension ──────────────────────────────────
@@ -164,6 +158,7 @@ export interface WorkflowTipTapBodyEditorProps {
   onSelectTag?: (token: string) => void;
   disabled?: boolean;
   availableTokens?: string[];
+  onOpenDynamicTokenConfig?: () => void;
 }
 
 const DEFAULT_AVAILABLE_TOKENS = [
@@ -193,48 +188,55 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
   onChange,
   onSelectTag,
   disabled = false,
-  availableTokens = DEFAULT_AVAILABLE_TOKENS
+  availableTokens = DEFAULT_AVAILABLE_TOKENS,
+  onOpenDynamicTokenConfig
 }) => {
   const [selectedFont, setSelectedFont] = useState('Verdana');
   const [selectedSize, setSelectedSize] = useState('11pt');
   const [selectedFormat, setSelectedFormat] = useState('Paragraph');
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
-  const [linkText, setLinkText] = useState('');
+  const [_linkText, _setLinkText] = useState('');
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
-  const [imageAlt, setImageAlt] = useState('');
+  const [imageAlt, _setImageAlt] = useState('');
   const [textColor, setTextColor] = useState('#1e293b');
   const [bgColor, setBgColor] = useState('#ffffff');
   const [showTokenDropdown, setShowTokenDropdown] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const resolveExt = (target: any) => {
+    if (!target) return target;
+    if (target.default) return target.default;
+    return target;
+  };
+
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({
+      resolveExt(StarterKit).configure({
         heading: { levels: [1, 2, 3] },
       }),
-      ((Image as any)?.configure ? Image : (Image as any)?.default || Image).configure({
+      resolveExt(Image).configure({
         inline: true,
         allowBase64: true,
         HTMLAttributes: {
           style: 'max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0;',
         },
       }),
-      ((Table as any)?.configure ? Table : (Table as any)?.default || Table).configure({
+      resolveExt(Table).configure({
         resizable: true,
         HTMLAttributes: {
           style: 'width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #cbd5e1;',
         },
       }),
-      (TableRow as any)?.default || TableRow,
-      ((TableHeader as any)?.configure ? TableHeader : (TableHeader as any)?.default || TableHeader).configure({
+      resolveExt(TableRow),
+      resolveExt(TableHeader).configure({
         HTMLAttributes: {
           style: 'background-color: #f1f5f9; font-weight: 600; text-align: left; padding: 8px 12px; border: 1px solid #cbd5e1;',
         },
       }),
-      ((TableCell as any)?.configure ? TableCell : (TableCell as any)?.default || TableCell).configure({
+      resolveExt(TableCell).configure({
         HTMLAttributes: {
           style: 'padding: 8px 12px; border: 1px solid #e2e8f0;',
         },
@@ -247,22 +249,35 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
     content: contentHtml || `<p style="font-family: Verdana, sans-serif; font-size: 11pt;">Dear {{buyer_name}},</p><p style="font-family: Verdana, sans-serif; font-size: 11pt;">We have an urgent inventory offer available for review. Please see details below:</p>`,
     editable: !disabled,
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      onChange?.(html);
+      if (!editor || editor.isDestroyed || !editor.schema) return;
+      try {
+        const html = editor.getHTML();
+        onChange?.(html);
+      } catch (err) {
+        console.warn('TipTap onUpdate warning:', err);
+      }
     },
   });
 
   // Sync content if controlled contentHtml changes externally
   useEffect(() => {
-    if (editor && contentHtml !== undefined && editor.getHTML() !== contentHtml) {
-      editor.commands.setContent(contentHtml, false);
+    if (!editor || editor.isDestroyed || !editor.schema) return;
+    if (contentHtml !== undefined) {
+      try {
+        const currentHtml = editor.getHTML();
+        if (currentHtml !== contentHtml) {
+          editor.commands.setContent(contentHtml, false as any);
+        }
+      } catch (err) {
+        console.warn('TipTap setContent error:', err);
+      }
     }
   }, [contentHtml, editor]);
 
   // Handle Token Insertion
   const handleInsertToken = useCallback(
     (token: string) => {
-      if (!editor) return;
+      if (!editor || editor.isDestroyed || !editor.schema) return;
       editor.chain().focus().insertContent({ type: 'tokenBadge', attrs: { token } }).run();
       onSelectTag?.(`{{${token}}}`);
       setShowTokenDropdown(false);
@@ -273,7 +288,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
   // Handle Local File Upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !editor) return;
+    if (!file || !editor || editor.isDestroyed || !editor.schema) return;
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -287,7 +302,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
 
   // Handle Drag & Drop Images into Editor
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    if (!editor) return;
+    if (!editor || editor.isDestroyed || !editor.schema) return;
     const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
     if (files.length > 0) {
       e.preventDefault();
@@ -300,7 +315,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
     }
   };
 
-  if (!editor) {
+  if (!editor || editor.isDestroyed || !editor.schema) {
     return <div className="p-4 text-slate-400 text-sm">Initializing TipTap Body Editor...</div>;
   }
 
@@ -308,7 +323,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
     <div
       data-testid="workflow-tiptap-editor"
       className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-xs"
-      style={{ border: '1px solid #cbd5e1', borderRadius: '8px', backgroundColor: '#ffffff' }}
+      style={{ border: '1px solid var(--border, #cbd5e1)', borderRadius: '8px', backgroundColor: 'var(--surface-card, #ffffff)' }}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
@@ -321,9 +336,9 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
           alignItems: 'center',
           gap: '6px',
           padding: '8px 12px',
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
-          color: '#334155'
+          borderBottom: '1px solid var(--border, #e2e8f0)',
+          backgroundColor: 'var(--surface-elevated, #f8fafc)',
+          color: 'var(--text-secondary, #334155)'
         }}
       >
         {/* Font Family Selector */}
@@ -403,8 +418,8 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                 left: 0,
                 marginTop: '4px',
                 width: '192px',
-                backgroundColor: '#ffffff',
-                border: '1px solid #e2e8f0',
+                backgroundColor: 'var(--surface-card, #ffffff)',
+                border: '1px solid var(--border, #e2e8f0)',
                 borderRadius: '6px',
                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                 zIndex: 50
@@ -437,6 +452,33 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
             </div>
           )}
         </div>
+
+        {/* Token Config Button beside token */}
+        {onOpenDynamicTokenConfig && (
+          <button
+            type="button"
+            data-testid="editor-dynamic-token-config-button"
+            onClick={onOpenDynamicTokenConfig}
+            className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 text-amber-900 rounded text-xs font-semibold hover:bg-amber-100 cursor-pointer shadow-xs"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '4px 10px',
+              backgroundColor: '#fffbeb',
+              border: '1px solid #fcd34d',
+              color: '#78350f',
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+            title="Open Token Config"
+          >
+            <Sliders size={13} style={{ color: '#d97706' }} />
+            <span>Token Config</span>
+          </button>
+        )}
 
         {/* Named Styles / Formats Dropdown */}
         <select

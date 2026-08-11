@@ -15,6 +15,13 @@ const createTestStore = () =>
       workflow: workflowReducer,
       inventory: inventoryReducer,
     },
+    preloadedState: {
+      core: {
+        ...coreReducer(undefined, { type: '@@INIT' }),
+        buyerLists: [{ _id: 'primary', name: 'Primary Buyers', type: 'primary', buyerIds: ['b1'] }],
+        buyers: [{ _id: 'b1', name: 'Buyer 1', email: 'b1@ex.com', tier: 'tier1' }]
+      }
+    }
   });
 
 describe('Issue #74: Mailbox Authentication Soft Lock UI', () => {
@@ -75,7 +82,7 @@ describe('Issue #74: Mailbox Authentication Soft Lock UI', () => {
     const store = createTestStore();
     render(
       <Provider store={store}>
-        <LiquidationAutomationStudio supplierId="sup-101" apiBaseUrl="http://localhost" />
+        <LiquidationAutomationStudio supplierId="sup-101" buyerLists={[{ _id: 'primary', name: 'Primary Buyers', type: 'primary', buyerIds: ['b1'] }, { _id: 'secondary', name: 'Secondary Buyers', type: 'secondary', buyerIds: ['b2'] }]} buyers={[{ _id: 'b1', id: 'b1', name: 'Buyer 1', email: 'b1@ex.com', tier: 'tier1' }, { _id: 'b2', id: 'b2', name: 'Buyer 2', email: 'b2@ex.com', tier: 'liquidator' }]} inventoryLots={[{ _id: 'l1', title: 'Lot 1' }]} apiBaseUrl="http://localhost" />
       </Provider>
     );
 

@@ -114,11 +114,11 @@ const SendEmailModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-lg w-full p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)] relative text-slate-100 animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-card bg-[hsl(var(--bg-card))] border border-[hsl(var(--border-color))] rounded-2xl max-w-lg w-full p-6 shadow-[0_0_40px_rgba(0,0,0,0.2)] relative text-[hsl(var(--text-primary))] animate-in zoom-in-95 duration-200">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors"
+          className="absolute top-4 right-4 p-2 text-[hsl(var(--text-muted))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-card-hover))] rounded-xl transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -543,8 +543,8 @@ export const EmailCommunicationsView: React.FC<EmailCommunicationsViewProps> = (
 
       {/* Split-Pane Workspace (Max Utilization of Space) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 flex-1 min-h-0">
-        {/* Left Thread List Sidebar */}
-        <div className="lg:col-span-4 bg-slate-900/90 border border-slate-800/80 rounded-xl flex flex-col overflow-hidden shadow-xl">
+        {/* Thread Sidebar Column */}
+        <div className="lg:col-span-4 bg-card bg-[hsl(var(--bg-card))] border border-[hsl(var(--border-color))] rounded-xl flex flex-col overflow-hidden shadow-xl">
           {/* Active Mailbox Banner */}
           <div className="px-3.5 py-2 bg-slate-950/80 border-b border-slate-800/80 flex items-center justify-between text-xs">
             <span className="font-semibold text-slate-300 flex items-center gap-1.5">

@@ -12,7 +12,6 @@ import {
   Bell,
   Clock,
   Shield,
-  Info,
   ChevronRight,
   Save,
   CheckCircle2,
@@ -76,9 +75,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6 text-slate-100 font-sans h-[calc(100vh-64px)] flex flex-col">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 text-[hsl(var(--text-primary))] font-sans h-[calc(100vh-64px)] flex flex-col settings-view-container">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 border border-slate-700/80 rounded-2xl p-6 shadow-xl relative overflow-hidden flex-shrink-0">
+      <div className="bg-[hsl(var(--bg-card))] border border-[hsl(var(--border-color))] rounded-2xl p-6 shadow-xl relative overflow-hidden flex-shrink-0">
         <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
           <div className="flex items-center gap-4">
@@ -86,26 +85,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <SettingsIcon className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight text-[hsl(var(--text-primary))] flex items-center gap-2">
                 Central Platform Settings
               </h1>
-              <p className="text-slate-400 text-sm mt-1">
+              <p className="text-[hsl(var(--text-muted))] text-sm mt-1">
                 Manage platform configurations, supplier profile identity, operational defaults, and access security.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-slate-900/80 backdrop-blur px-4 py-2 rounded-xl border border-slate-700/60 text-xs shadow-inner">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span className="text-slate-300">Active Supplier:</span>
-            <span className="font-semibold text-indigo-400">{supplierId}</span>
+          <div className="flex items-center gap-2 bg-[hsl(var(--bg-card-hover))] backdrop-blur px-4 py-2 rounded-xl border border-[hsl(var(--border-color))] text-xs shadow-inner">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <span className="text-[hsl(var(--text-secondary))]">Active Supplier:</span>
+            <span className="font-semibold text-indigo-500">{supplierId}</span>
           </div>
         </div>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 flex-1 min-h-0">
         {/* Sidebar Navigation */}
-        <div className="w-full lg:w-64 flex-shrink-0 flex flex-col gap-2 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 shadow-xl overflow-y-auto">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-3">Configuration</div>
+        <div className="w-full lg:w-64 flex-shrink-0 flex flex-col gap-2 bg-card bg-[hsl(var(--bg-card))] border border-[hsl(var(--border-color))] rounded-2xl p-4 shadow-xl overflow-y-auto">
+          <div className="text-xs font-bold text-[hsl(var(--text-muted))] uppercase tracking-wider mb-2 px-3">Configuration</div>
           {navTabs.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -113,20 +112,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                 activeTab === id
                   ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                  : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-card-hover))]'
               }`}
             >
               <div className="flex items-center gap-3">
-                <Icon className={`w-5 h-5 ${activeTab === id ? 'text-white' : 'text-slate-500'}`} />
+                <Icon className={`w-5 h-5 ${activeTab === id ? 'text-white' : 'text-[hsl(var(--text-muted))]'}`} />
                 <span>{label}</span>
               </div>
             </button>
           ))}
 
           <div className="mt-auto pt-6 px-3">
-            <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2 text-xs text-slate-400">
-              <p className="font-semibold text-slate-300 flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-indigo-400" /> Security Info
+            <div className="p-4 bg-[hsl(var(--bg-card-hover))] border border-[hsl(var(--border-color))] rounded-xl space-y-2 text-xs text-[hsl(var(--text-muted))]">
+              <p className="font-semibold text-[hsl(var(--text-primary))] flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-indigo-500" /> Security Info
               </p>
               <p>IndSpoilerAlert Platform Subsystem v2.4. OAuth & Access Control Active.</p>
             </div>
@@ -134,7 +133,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-xl overflow-y-auto custom-scrollbar">
+        <div className="flex-1 bg-card bg-[hsl(var(--bg-card))] border border-[hsl(var(--border-color))] rounded-2xl p-6 shadow-xl overflow-y-auto custom-scrollbar">
           {/* ===== Section: Supplier Profile & Identity ===== */}
           {activeTab === 'profile' && (
             <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -254,13 +253,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Bid & Offer Defaults */}
                 <div className="space-y-5">
-                  <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2 uppercase tracking-wide">
-                    <Clock className="w-4 h-4 text-indigo-400" />
+                  <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] flex items-center gap-2 uppercase tracking-wide">
+                    <Clock className="w-4 h-4 text-indigo-500" />
                     Bid Window Defaults
                   </h3>
                   <div className="space-y-4">
-                    <div className="p-5 bg-slate-950/60 rounded-2xl border border-slate-800 space-y-3">
-                      <label htmlFor="default-token-expiry" className="text-sm font-bold text-slate-300 block">Default Token Expiry (hours)</label>
+                    <div className="p-5 bg-[hsl(var(--bg-card-hover))] rounded-2xl border border-[hsl(var(--border-color))] space-y-3">
+                      <label htmlFor="default-token-expiry" className="text-sm font-bold text-[hsl(var(--text-primary))] block">Default Token Expiry (hours)</label>
                       <input
                         id="default-token-expiry"
                         type="number"
@@ -268,9 +267,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         onChange={(e) => setDefaultExpiryHours(Number(e.target.value))}
                         min={1}
                         max={720}
-                        className="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-sm text-slate-100 outline-none transition-all shadow-inner"
+                        className="w-full bg-[hsl(var(--bg-card))] border border-[hsl(var(--border-color))] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-sm text-[hsl(var(--text-primary))] outline-none transition-all shadow-inner"
                       />
-                      <p className="text-xs text-slate-500">Token links in buyer emails expire after this window.</p>
+                      <p className="text-xs text-[hsl(var(--text-muted))]">Token links in buyer emails expire after this window.</p>
                     </div>
 
                     <div className="p-5 bg-slate-950/60 rounded-2xl border border-slate-800 flex items-center justify-between group hover:border-slate-700 transition-colors">

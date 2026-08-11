@@ -39,8 +39,11 @@ describe('Client-Facing Simple Email Builder & Dynamic Data Management', () => {
       />
     );
 
-    // Dynamic Data Context panel header exists
-    expect(screen.getByText('Dynamic Data Context & Preview Overrides')).toBeInTheDocument();
+    // Token Config button exists
+    expect(screen.getAllByText('Token Config')[0]).toBeInTheDocument();
+
+    // Open Token Config modal
+    fireEvent.click(screen.getAllByRole('button', { name: /Token Config/i })[0]);
 
     // When 0 inventory/buyers are selected, explicit empty placeholders are rendered
     expect(screen.getByDisplayValue('[No Inventory Selected]')).toBeInTheDocument();
@@ -68,6 +71,9 @@ describe('Client-Facing Simple Email Builder & Dynamic Data Management', () => {
       />
     );
 
+    // Open Token Config modal
+    fireEvent.click(screen.getAllByRole('button', { name: /Token Config/i })[0]);
+
     // Multi-lot title formatting
     const lotTitleInput = screen.getByDisplayValue(/Organic Whole Milk \(\+1 additional lot\)/i);
     expect(lotTitleInput).toBeInTheDocument();
@@ -76,7 +82,7 @@ describe('Client-Facing Simple Email Builder & Dynamic Data Management', () => {
     fireEvent.change(lotTitleInput, { target: { value: 'Custom Surplus Lot Title' } });
     expect(lotTitleInput).toHaveValue('Custom Surplus Lot Title');
 
-    // Reset button appears when override is active
+    // Reset button appears when override is active inside modal
     const resetButton = screen.getByRole('button', { name: /Reset to Workflow Values/i });
     expect(resetButton).toBeInTheDocument();
 
@@ -95,10 +101,32 @@ describe('Client-Facing Simple Email Builder & Dynamic Data Management', () => {
       />
     );
 
+    // Open Token Config modal
+    fireEvent.click(screen.getAllByRole('button', { name: /Token Config/i })[0]);
+
     // Verify raw hex ID is NOT rendered as Supplier Org
     expect(screen.queryByDisplayValue('6a61abe7b15358bc3')).not.toBeInTheDocument();
     // Verify fallback human-readable Supplier Org is rendered instead
     expect(screen.getByDisplayValue('Unilever Supply Operations')).toBeInTheDocument();
+  });
+
+  it('renders Token Config button beside token Tags button inside Edit Workflow Email Body HTML', () => {
+    render(
+      <LiquidationAutomationStudio
+        supplierId="sup-101"
+        inventoryLots={[]}
+        buyers={[]}
+        apiBaseUrl="http://localhost:3000/api"
+      />
+    );
+
+    // Verify editor toolbar has Token Config button beside token Tags button
+    const editorTokenConfigBtn = screen.getByTestId('editor-dynamic-token-config-button');
+    expect(editorTokenConfigBtn).toBeInTheDocument();
+
+    // Click button from inside email body toolbar
+    fireEvent.click(editorTokenConfigBtn);
+    expect(screen.getByText('Dynamic Token Config', { selector: 'h3' })).toBeInTheDocument();
   });
 });
 

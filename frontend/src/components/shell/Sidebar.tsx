@@ -119,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onTabChange }) => {
                 onClick={(e) => handleTabClick(e, 'inventory')}
               >
                 <List size={18} />
-                <span>Insight</span>
+                <span>Inventory</span>
               </li>
               <li
                 className={`nav-link ${effectiveTab === 'workflows' ? 'active' : ''}`}

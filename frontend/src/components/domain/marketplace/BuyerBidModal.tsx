@@ -16,7 +16,6 @@ import {
   selectIsAuthenticated,
   selectBuyer,
   selectAuthLoading,
-  selectAuthError,
   sendBuyerVerificationThunk,
   verifyBuyerTokenThunk,
 } from '../../../store/slices/authSlice';
@@ -42,7 +41,6 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const currentBuyer = useSelector(selectBuyer);
   const authLoading = useSelector(selectAuthLoading);
-  const authError = useSelector(selectAuthError);
 
   const [quantity, setQuantity] = useState<number>(10);
   const [price, setPrice] = useState<number>(0);
@@ -162,18 +160,18 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-100">
+      <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-800/80 bg-slate-900/80 flex items-center justify-between">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-900/80 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-base font-bold text-slate-100 tracking-tight">
+            <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">
               Submit Marketplace Bid
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-200 transition p-1 rounded-lg hover:bg-slate-800"
+            className="text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <X className="w-5 h-5" />
           </button>
@@ -182,35 +180,35 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
         {/* Modal Content */}
         <div className="p-6 space-y-5">
           {/* Target Product Summary Box */}
-          <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/90 space-y-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400 block">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800/90 space-y-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
               Marketplace Lot Listing
             </span>
-            <h4 className="text-sm font-bold text-white line-clamp-1">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">
               {listing.publicTitle}
             </h4>
-            <div className="flex items-center justify-between text-xs text-slate-400 pt-1">
+            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 pt-1">
               <span className="flex items-center gap-1">
-                <Package className="w-3.5 h-3.5 text-slate-500" />
-                Available Stock: <strong className="text-slate-200">{listing.availableQuantity} cases</strong>
+                <Package className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                Available Stock: <strong className="text-slate-900 dark:text-slate-200">{listing.availableQuantity} cases</strong>
               </span>
               <span>
-                Floor Price: <strong className="text-emerald-400">${listing.publicPrice.toFixed(2)}/cs</strong>
+                Floor Price: <strong className="text-emerald-600 dark:text-emerald-400">${listing.publicPrice.toFixed(2)}/cs</strong>
               </span>
             </div>
           </div>
 
           {/* Feedback Messages */}
           {errorMsg && (
-            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-300 text-xs flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 shrink-0" />
               <span>{successMsg}</span>
             </div>
           )}
@@ -218,7 +216,7 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
           {/* Quantity and Price Inputs */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="case-quantity-input" className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label htmlFor="case-quantity-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Case Quantity
               </label>
               <input
@@ -228,12 +226,12 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
                 max={listing.availableQuantity}
                 value={quantity}
                 onChange={(e) => setQuantity(Math.max(1, Math.min(listing.availableQuantity, parseInt(e.target.value) || 1)))}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition font-medium"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 transition font-medium"
               />
             </div>
 
             <div>
-              <label htmlFor="bid-price-input" className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label htmlFor="bid-price-input" className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                 Bid Price Per Case ($)
               </label>
               <input
@@ -243,18 +241,18 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
                 min={0.1}
                 value={price}
                 onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
-                className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-emerald-500 transition font-medium"
+                className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:border-emerald-500 transition font-medium"
               />
             </div>
           </div>
 
           {/* Dynamic Total Bid Display Box */}
-          <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 to-cyan-950/40 border border-emerald-500/30 flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-gradient-to-r from-emerald-50 dark:from-emerald-950/40 to-cyan-50 dark:to-cyan-950/40 border border-emerald-500/30 flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-400 block font-medium">Calculated Total Bid Offer</span>
+              <span className="text-xs text-slate-600 dark:text-slate-400 block font-medium">Calculated Total Bid Offer</span>
               <span className="text-[11px] text-slate-500">({quantity} cases × ${price.toFixed(2)}/cs)</span>
             </div>
-            <div data-testid="total-bid-amount" className="text-xl font-black text-emerald-400 tracking-tight">
+            <div data-testid="total-bid-amount" className="text-xl font-black text-emerald-600 dark:text-emerald-400 tracking-tight">
               ${totalAmount.toFixed(2)}
             </div>
           </div>
@@ -263,22 +261,22 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
           {isAuthenticated && currentBuyer ? (
             /* Logged-In Verified Buyer State */
             <form onSubmit={handleDirectSubmitBid} className="space-y-4 pt-1">
-              <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 font-bold text-xs">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-xs">
                     {currentBuyer.companyName.charAt(0)}
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                       {currentBuyer.companyName}
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px]">
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px]">
                         Verified Buyer
                       </span>
                     </div>
-                    <div className="text-[11px] text-slate-400">{currentBuyer.email}</div>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400">{currentBuyer.email}</div>
                   </div>
                 </div>
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
 
               <button
@@ -292,16 +290,16 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
             </form>
           ) : (
             /* Unauthenticated Visitor Bidding Verification Flow */
-            <div className="space-y-4 pt-1 border-t border-slate-800/80">
-              <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
-                <Lock className="w-4 h-4 text-cyan-400" />
+            <div className="space-y-4 pt-1 border-t border-slate-200 dark:border-slate-800/80">
+              <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <Lock className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
                 <span>Buyer Verification & ADR 0006 Auto-Registration</span>
               </div>
 
               {!verificationSent ? (
                 <form onSubmit={handleSendVerificationCode} className="space-y-3">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
                       Business Email Address *
                     </label>
                     <div className="relative">
@@ -311,14 +309,14 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="buyer@company.com"
-                        className="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition"
+                        className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition"
                       />
-                      <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                      <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400 dark:text-slate-500" />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
                       Company / Retailer Name (Optional)
                     </label>
                     <div className="relative">
@@ -327,9 +325,9 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder="e.g. Metro Fresh Foods"
-                        className="w-full pl-9 pr-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition"
+                        className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition"
                       />
-                      <Building2 className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
+                      <Building2 className="w-4 h-4 absolute left-3 top-3 text-slate-400 dark:text-slate-500" />
                     </div>
                   </div>
 
@@ -345,13 +343,13 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
               ) : (
                 <form onSubmit={handleVerifyAndSubmitBid} className="space-y-3">
                   {devOtp && (
-                    <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono">
+                    <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs font-mono">
                       [Dev Mode OTP]: {devOtp}
                     </div>
                   )}
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
                       Enter 6-Digit OTP / Verification Code *
                     </label>
                     <input
@@ -361,7 +359,7 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
                       value={otpToken}
                       onChange={(e) => setOtpToken(e.target.value)}
                       placeholder="123456"
-                      className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-center text-base tracking-widest font-mono text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+                      className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-center text-base tracking-widest font-mono text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-emerald-500"
                     />
                   </div>
 

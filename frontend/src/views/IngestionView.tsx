@@ -2,8 +2,6 @@ import { Database, DollarSign, Users } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPipelineTab } from '../store/slices/ingestionSlice';
 import { 
-  UploadDropzone, 
-  GridMapperTable, 
   BuyerRegistryPanel,
   SalesRegistryPanel,
   InventoryRegistryPanel 

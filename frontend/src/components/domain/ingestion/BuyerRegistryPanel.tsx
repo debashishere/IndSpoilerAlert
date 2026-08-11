@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Users, Mail, ShieldAlert, CheckCircle2, AlertTriangle, UploadCloud, Check, X, Maximize2, Minimize2, ListFilter } from 'lucide-react';
+import { Users, CheckCircle2, AlertTriangle, UploadCloud, Check, X, Maximize2, Minimize2, ListFilter } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { 
   setBuyerSearch,
@@ -62,8 +62,7 @@ export const BuyerRegistryPanel = () => {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isAddBuyerModalOpen, setIsAddBuyerModalOpen] = useState(false);
   const [isBuyerListModalOpen, setIsBuyerListModalOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+
   const fileRef = useRef<HTMLInputElement>(null);
 
   const getMappedField = (headerName: string): string => {
@@ -103,12 +102,9 @@ export const BuyerRegistryPanel = () => {
     return matchSearch && matchTier && matchStatus;
   });
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, tierFilter, showInactive]);
 
-  const totalPages = Math.ceil(filteredBuyers.length / itemsPerPage);
-  const paginatedBuyers = filteredBuyers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+
 
   const handleAddBuyer = async () => {
     if (!newName || !newEmail) return;

@@ -25,4 +25,7 @@ All major architectural designs are documented under [docs/adr/](adr/):
 - **[ADR 0026: Separation of Buyer Marketplace and Inventory Platform](adr/0026-separation-of-buyer-marketplace-and-inventory-platform.md)**: Decoupling public-facing buyer marketplace portal from internal supplier inventory platform.
 - **[ADR 0027: Rename Product to InventoryFlowing](adr/0027-rename-product-to-inventoryflowing.md)**: Product branding update for InventoryFlowing.
 - **[ADR 0028: Relocate Inventory & Buyer Data Lists to Ingestion Pipeline & Transition Inventory Tab to Charts](adr/0028-relocate-inventory-and-buyer-lists-to-ingestion-pipeline-and-transition-inventory-tab-to-charts.md)**: Moving raw inventory and buyer data lists to Ingestion Pipeline and replacing Inventory tab table with visual placeholder charts marked Coming Soon.
+- **[ADR 0029: Unified TipTap Email Builder Engine & Progressive Stepper](adr/0029-unified-tiptap-email-builder-and-progressive-stepper.md)**: Unified rich WYSIWYG email builder engine, legacy client XHTML transformer pipeline, and 3-step progressive stepper accordion.
+- **[ADR 0030: Light Theme Support & Top-Right Moon Icon Theme Switcher System](adr/0030-light-theme-support-and-top-right-moon-icon-theme-switcher.md)**: High-contrast light mode design system, centralized React theme context with localStorage persistence, and floating top-right moon/sun icon theme switcher.
+
 

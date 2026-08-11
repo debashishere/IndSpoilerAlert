@@ -24,13 +24,15 @@ describe('Issue #46 / PRD 47: Studio Persistence & Dual Launch Execution', () =>
     }));
   });
 
+  const mockBuyers = [{ _id: 'b-1', id: 'b-1', name: 'Acme Buyer', email: 'buyer@acme.com', tier: 'tier1' }];
+
   it('Slice 1 (Tracer Bullet): should render dual CTA buttons and persist draft campaign with status draft', async () => {
     const onSuccess = vi.fn();
     render(
       <LiquidationAutomationStudio
         supplierId="sup-101"
         inventoryLots={mockInventoryLots}
-        buyers={[]}
+        buyers={mockBuyers}
         apiBaseUrl="http://localhost:3000/api"
         onSuccess={onSuccess}
       />
@@ -65,7 +67,7 @@ describe('Issue #46 / PRD 47: Studio Persistence & Dual Launch Execution', () =>
       <LiquidationAutomationStudio
         supplierId="sup-101"
         inventoryLots={mockInventoryLots}
-        buyers={[]}
+        buyers={mockBuyers}
         apiBaseUrl="http://localhost:3000/api"
         onSuccess={onSuccess}
       />
@@ -119,7 +121,7 @@ describe('Issue #46 / PRD 47: Studio Persistence & Dual Launch Execution', () =>
         supplierId="sup-101"
         editingCampaignId="camp-99"
         inventoryLots={mockInventoryLots}
-        buyers={[]}
+        buyers={mockBuyers}
         apiBaseUrl="http://localhost:3000/api"
       />
     );
@@ -149,7 +151,7 @@ describe('Issue #46 / PRD 47: Studio Persistence & Dual Launch Execution', () =>
         supplierId="sup-101"
         editingCampaignId="camp-99"
         inventoryLots={mockInventoryLots}
-        buyers={[]}
+        buyers={mockBuyers}
         apiBaseUrl="http://localhost:3000/api"
         onSuccess={onSuccess}
       />

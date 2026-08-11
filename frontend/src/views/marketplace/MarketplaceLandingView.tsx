@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, ShieldCheck, Clock, Package, AlertCircle, ArrowRight, Tag, MapPin, X } from 'lucide-react';
+import { Search, Filter, ShieldCheck, Clock, Package, ArrowRight, MapPin, X } from 'lucide-react';
 import BuyerBidModal from '../../components/domain/marketplace/BuyerBidModal';
 
 export interface ListingItem {
@@ -54,7 +54,6 @@ export const MarketplaceLandingView: React.FC<MarketplaceLandingViewProps> = ({
 
   const categories = ['All', 'Dairy', 'Beverages', 'Produce', 'Dry Goods', 'Frozen', 'Bakery'];
   const regions = ['All', 'Midwest', 'East Coast', 'West Coast', 'South', 'Central'];
-  const discountTiers = ['All', 'steep', 'moderate', 'standard'];
 
   useEffect(() => {
     fetchListings();

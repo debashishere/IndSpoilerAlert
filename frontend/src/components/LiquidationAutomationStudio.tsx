@@ -25,7 +25,6 @@ import {
   PenLine,
   Eye,
   Edit3,
-  Tag,
   Trash2,
   GripVertical,
   Plus,
@@ -39,19 +38,25 @@ import {
   Smartphone,
   Monitor,
   Table,
-  Send,
   Info
 } from 'lucide-react';
 import { PreFlightAuditModal } from './domain/workflows/PreFlightAuditModal';
 import { useOAuthMailbox } from '../hooks/useOAuthMailbox';
-import { TipTapTemplateEditor } from './TipTapTemplateEditor';
 import { WorkflowTipTapBodyEditor } from './EmailBuilder/WorkflowTipTapBodyEditor';
-import { SmartAudienceLotSelector } from './SmartAudienceLotSelector';
 import { LiveDevicePreview } from './LiveDevicePreview';
-import { SendBroadcastView } from './SendBroadcastView';
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
+
+export const DYNAMIC_TOKENS_LIST = [
+  { key: 'buyer_name', label: 'Buyer Name', icon: Users, description: 'Target buyer company/account name' },
+  { key: 'supplier_name', label: 'Supplier Name', icon: LayoutTemplate, description: 'Your organization name' },
+  { key: 'lot_title', label: 'Lot Title', icon: Sparkles, description: 'Title or description of matched inventory' },
+  { key: 'inventory_table', label: 'Inventory Table', icon: Table, description: 'Itemized HTML table of matched lots' },
+  { key: 'quick_bid_link', label: 'Quick Bid Link', icon: Link, description: 'Direct 1-Click bidding URL' },
+  { key: 'current_stage_discount', label: 'Stage Markdown', icon: Sliders, description: 'Current stage discount value or floor bid' },
+  { key: 'expiry_hours', label: 'Response Deadline', icon: Clock, description: 'Time window before next escalation stage' }
+];
 
 export const formatWaitTime = (hours: number): string => {
   if (!hours || hours <= 0) return '0m';
@@ -151,6 +156,7 @@ interface BuyerEntry {
   name: string;
   email: string;
   tier: 'tier1' | 'tier2' | 'liquidator' | 'custom';
+  isNew?: boolean;
 }
 
 export interface Stage {
@@ -161,7 +167,7 @@ export interface Stage {
   buyerListName?: string;    // display label for the selected list
   buyerSegment?: string;     // backward-compatibility field — maps to buyerListId
   customBuyers: BuyerEntry[];
-  discountType: 'yield' | 'fixed';
+  discountType: 'yield' | 'fixed' | 'floor';
   discountValue: number;
   waitHours: number;
   waitUnit?: 'd' | 'h' | 'm';
@@ -210,7 +216,7 @@ export function getStageBuyerCount(stage: Stage, buyerListsOrBuyers: any[] = [],
   }
 
   if (matched && matched.buyerIds?.length === 0) {
-    return 1;
+    return 0;
   }
 
   return 0;
@@ -1015,7 +1021,7 @@ function buildBlockHtml(blocks: EmailBlock[], isPreview: boolean = false): strin
 
 interface EmailBuilderProps { blocks: EmailBlock[]; onChange: (b: EmailBlock[]) => void; }
 
-const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) => {
+export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) => {
   const [editId, setEditId] = useState<string | null>(null);
   const [preview, setPreview] = useState(false);
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
@@ -1489,34 +1495,17 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   const [showPreFlightModal, setShowPreFlightModal] = useState(false);
   const [isSubmitting, setIsSubmitting]             = useState(false);
   const [previewHtml, setPreviewHtml]               = useState('');
-  const [emailEditorMode, setEmailEditorMode]       = useState<'standard' | 'tiptap'>('standard');
-  const [emailBuilderSubTab, setEmailBuilderSubTab] = useState<'preview' | 'editor' | 'broadcast'>(initialEmailBuilderTab);
+  const [_emailEditorMode, _setEmailEditorMode]       = useState<'standard' | 'tiptap'>('standard');
+  const [_emailBuilderSubTab, setEmailBuilderSubTab] = useState<'preview' | 'editor' | 'broadcast'>(initialEmailBuilderTab);
 
   const [manualOverrides, setManualOverrides] = useState<Record<string, string>>({});
-  const [copiedToken, setCopiedToken] = useState<string | null>(null);
-  const [showDynamicDataPanel, setShowDynamicDataPanel] = useState<boolean>(true);
-  const [activeConceptStep, setActiveConceptStep]       = useState<number>(1);
+  const [_copiedToken, _setCopiedToken] = useState<string | null>(null);
+  const [showDynamicDataPanel, setShowDynamicDataPanel] = useState<boolean>(false);
+  const [_activeConceptStep, _setActiveConceptStep]       = useState<number>(1);
   const [stepperStep, setStepperStep]                   = useState<number>(1);
   const [completedSteps, setCompletedSteps]             = useState<number[]>([1]);
 
-  const handleInsertTokenToSubject = (tokenKey: string) => {
-    const tokenTag = `{{${tokenKey}}}`;
-    if (!emailSubject.includes(tokenTag)) {
-      setEmailSubject((prev) => (prev ? `${prev} ${tokenTag}` : tokenTag));
-    }
-    setCopiedToken(tokenKey);
-    setTimeout(() => setCopiedToken(null), 2000);
-  };
 
-  const dynamicTokensList = [
-    { key: 'buyer_name', label: 'Buyer Name', icon: Users, description: 'Target buyer company/account name' },
-    { key: 'supplier_name', label: 'Supplier Name', icon: LayoutTemplate, description: 'Your organization name' },
-    { key: 'lot_title', label: 'Lot Title', icon: Sparkles, description: 'Title or description of matched inventory' },
-    { key: 'inventory_table', label: 'Inventory Table', icon: Table, description: 'Itemized HTML table of matched lots' },
-    { key: 'quick_bid_link', label: 'Quick Bid Link', icon: Link, description: 'Direct 1-Click bidding URL' },
-    { key: 'current_stage_discount', label: 'Stage Markdown', icon: Sliders, description: 'Current stage discount value or floor bid' },
-    { key: 'expiry_hours', label: 'Response Deadline', icon: Clock, description: 'Time window before next escalation stage' }
-  ];
 
   useEffect(() => {
     if (initialEmailBuilderTab) {
@@ -2853,6 +2842,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                 <WorkflowTipTapBodyEditor
                                   contentHtml={stage.emailBodyHtml || emailBodyHtml}
                                   onChange={(html) => updateStage(idx, { emailBodyHtml: html })}
+                                  onOpenDynamicTokenConfig={() => setShowDynamicDataPanel(true)}
                                   disabled={false}
                                 />
                               </div>
@@ -2981,7 +2971,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <LayoutTemplate size={16} color="hsl(var(--primary))" />
-                      <span style={{ fontSize: '13px', fontWeight: 700 }}>Step 1: Select Central Email Template</span>
+                      <span style={{ fontSize: '13px', fontWeight: 700 }}>Step 1: Email Template</span>
                     </div>
                     {completedSteps.includes(1) && (
                       <span style={{ fontSize: '11px', color: 'hsl(var(--success))', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -3029,38 +3019,9 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                       )}
                     </select>
                   </div>
-
-                  {stepperStep === 1 && (
-                    <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'flex-end' }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCompletedSteps((prev) => Array.from(new Set([...prev, 1])));
-                          setStepperStep(2);
-                        }}
-                        style={{
-                          background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '8px',
-                          padding: '8px 16px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          boxShadow: '0 2px 8px hsl(var(--primary)/0.3)'
-                        }}
-                      >
-                        <span>Next: Configure Subject Line</span>
-                        <ArrowRight size={14} />
-                      </button>
-                    </div>
-                  )}
                 </div>
 
-                {/* STEP 2: Email Subject Line */}
+                {/* STEP 2: Email Subject */}
                 <div
                   style={{
                     background: 'hsl(223 47% 8%)',
@@ -3074,7 +3035,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <PenLine size={16} color="hsl(var(--primary))" />
-                      <span style={{ fontSize: '13px', fontWeight: 700 }}>Step 2: Subject Line</span>
+                      <span style={{ fontSize: '13px', fontWeight: 700 }}>Step 2: Email Subject</span>
                     </div>
                     {completedSteps.includes(2) && (
                       <span style={{ fontSize: '11px', color: 'hsl(var(--success))', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -3085,7 +3046,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
                   <div>
                     <label style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px' }}>
-                      Subject Line
+                      Email Subject
                     </label>
                     <input
                       type="text"
@@ -3146,16 +3107,39 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     pointerEvents: 'auto'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <Edit3 size={16} color="hsl(var(--primary))" />
                       <span style={{ fontSize: '13px', fontWeight: 700 }}>Step 3: Edit Workflow Email Body HTML</span>
                     </div>
-                    {completedSteps.includes(3) && (
-                      <span style={{ fontSize: '11px', color: 'hsl(var(--success))', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <CheckCircle size={13} /> Body Content Configured
-                      </span>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {completedSteps.includes(3) && (
+                        <span style={{ fontSize: '11px', color: 'hsl(var(--success))', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <CheckCircle size={13} /> Body Content Configured
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowDynamicDataPanel(true)}
+                        style={{
+                          background: 'linear-gradient(135deg, hsl(var(--primary)/0.2), hsl(var(--primary)/0.1))',
+                          border: '1px solid hsl(var(--primary)/0.4)',
+                          color: 'hsl(var(--primary))',
+                          borderRadius: '8px',
+                          padding: '6px 14px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+                        }}
+                      >
+                        <Sliders size={13} />
+                        <span>Token Config</span>
+                      </button>
+                    </div>
                   </div>
 
                   <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginBottom: '12px' }}>
@@ -3166,6 +3150,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     <WorkflowTipTapBodyEditor
                       contentHtml={emailBodyHtml}
                       onChange={(html) => setEmailBodyHtml(html)}
+                      onOpenDynamicTokenConfig={() => setShowDynamicDataPanel(true)}
                       disabled={false}
                     />
                   </div>
@@ -3208,7 +3193,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   )}
                 </div>
 
-                {/* STEP 4: Dynamic Data Context & Live Preview */}
+                {/* STEP 4: Live Device Preview & Dynamic Token Config Modal */}
                 <div
                   id="sec-concept-preview"
                   style={{
@@ -3220,191 +3205,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     pointerEvents: 'auto'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Sliders size={15} color="hsl(var(--primary))" />
-                      <span style={{ background: 'hsl(var(--primary)/0.15)', color: 'hsl(var(--primary))', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 800 }}>Step 3</span>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
-                        Dynamic Data Context & Preview Overrides
-                      </span>
-                      <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', background: 'hsl(217 91% 60% / 0.15)', color: 'hsl(217 91% 60%)', border: '1px solid hsl(217 91% 60% / 0.3)' }}>
-                        {matchedLots.length} Matched Lots Active
-                      </span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {Object.keys(manualOverrides).length > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setManualOverrides({})}
-                          style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
-                        >
-                          Reset to Workflow Values ↺
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => setShowDynamicDataPanel(!showDynamicDataPanel)}
-                        style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', cursor: 'pointer', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        {showDynamicDataPanel ? 'Hide Controls ^' : 'Manage Values v'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '-2px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Info size={13} color="hsl(var(--primary))" /> Dynamic data will be automatically loaded from selected data in the current workflow.
-                  </p>
-
-                  {/* Summary Context Cards (Mock UI Strip) */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
-                    gap: '10px',
-                    padding: '12px',
-                    background: 'hsl(223 47% 9%)',
-                    borderRadius: '10px',
-                    border: '1px solid hsl(var(--border-color))',
-                    marginBottom: showDynamicDataPanel ? '12px' : '0'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid hsl(var(--border-color))', paddingRight: '8px' }}>
-                      <Users size={16} color="hsl(var(--primary))" />
-                      <div>
-                        <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Buyer</div>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '110px' }} title={dynamicDataContext.buyer_name}>
-                          {dynamicDataContext.buyer_name}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid hsl(var(--border-color))', paddingRight: '8px' }}>
-                      <LayoutTemplate size={16} color="hsl(var(--primary))" />
-                      <div>
-                        <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Supplier</div>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '110px' }} title={dynamicDataContext.supplier_name}>
-                          {dynamicDataContext.supplier_name}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid hsl(var(--border-color))', paddingRight: '8px' }}>
-                      <Sparkles size={16} color="hsl(var(--primary))" />
-                      <div>
-                        <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Lot Title</div>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '110px' }} title={dynamicDataContext.lot_title}>
-                          {dynamicDataContext.lot_title}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid hsl(var(--border-color))', paddingRight: '8px' }}>
-                      <Sliders size={16} color="hsl(var(--primary))" />
-                      <div>
-                        <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Stage Discount</div>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
-                          {dynamicDataContext.current_stage_discount}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid hsl(var(--border-color))', paddingRight: '8px' }}>
-                      <Clock size={16} color="hsl(var(--primary))" />
-                      <div>
-                        <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Deadline</div>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
-                          {dynamicDataContext.expiry_hours}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Link size={16} color="hsl(var(--primary))" />
-                      <div>
-                        <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Quick Bid Link</div>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '110px' }} title={dynamicDataContext.quick_bid_link}>
-                          {dynamicDataContext.quick_bid_link}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {showDynamicDataPanel && (
-                    <div style={{ paddingTop: '12px', borderTop: '1px solid hsl(var(--border-color))', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-                      <div>
-                        <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
-                          Target Buyer Name
-                        </label>
-                        <input
-                          type="text"
-                          value={dynamicDataContext.buyer_name || ''}
-                          onChange={(e) => setManualOverrides((prev) => ({ ...prev, buyer_name: e.target.value }))}
-                          style={{ ...inpSt, fontSize: '11px' }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
-                          Supplier Org
-                        </label>
-                        <input
-                          type="text"
-                          value={dynamicDataContext.supplier_name || ''}
-                          onChange={(e) => setManualOverrides((prev) => ({ ...prev, supplier_name: e.target.value }))}
-                          style={{ ...inpSt, fontSize: '11px' }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
-                          Lot Title
-                        </label>
-                        <input
-                          type="text"
-                          value={dynamicDataContext.lot_title || ''}
-                          onChange={(e) => setManualOverrides((prev) => ({ ...prev, lot_title: e.target.value }))}
-                          style={{ ...inpSt, fontSize: '11px' }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
-                          Stage Discount
-                        </label>
-                        <input
-                          type="text"
-                          value={dynamicDataContext.current_stage_discount || ''}
-                          onChange={(e) => setManualOverrides((prev) => ({ ...prev, current_stage_discount: e.target.value }))}
-                          style={{ ...inpSt, fontSize: '11px' }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
-                          Response Deadline
-                        </label>
-                        <input
-                          type="text"
-                          value={dynamicDataContext.expiry_hours || ''}
-                          onChange={(e) => setManualOverrides((prev) => ({ ...prev, expiry_hours: e.target.value }))}
-                          style={{ ...inpSt, fontSize: '11px' }}
-                        />
-                      </div>
-
-                      <div>
-                        <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
-                          Quick Bid Link
-                        </label>
-                        <input
-                          type="text"
-                          value={dynamicDataContext.quick_bid_link || ''}
-                          onChange={(e) => setManualOverrides((prev) => ({ ...prev, quick_bid_link: e.target.value }))}
-                          style={{ ...inpSt, fontSize: '11px' }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
                   {/* Live Device Viewport Preview */}
-                  <div style={{ marginTop: '12px' }}>
+                  <div>
                     <LiveDevicePreview
                       subject={emailSubject || 'Distressed Stock Clearance Notice'}
                       bodyHtml={emailBodyHtml}
@@ -3412,6 +3214,249 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     />
                   </div>
                 </div>
+
+                {/* Dynamic Token Config Modal Window */}
+                {showDynamicDataPanel && (
+                  <div
+                    style={{
+                      position: 'fixed',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                      backdropFilter: 'blur(5px)',
+                      zIndex: 9999,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '20px'
+                    }}
+                    onClick={() => setShowDynamicDataPanel(false)}
+                  >
+                    <div
+                      style={{
+                        background: 'hsl(223 47% 9%)',
+                        border: '1px solid hsl(var(--border-color))',
+                        borderRadius: '16px',
+                        width: '100%',
+                        maxWidth: '680px',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        padding: '24px',
+                        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '16px'
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Sliders size={18} color="hsl(var(--primary))" />
+                          <h3 style={{ fontSize: '16px', fontWeight: 700, margin: 0, color: 'hsl(var(--text-primary))' }}>
+                            Dynamic Token Config
+                          </h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowDynamicDataPanel(false)}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: 'hsl(var(--text-muted))',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'flex',
+                            alignItems: 'center'
+                          }}
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+
+                      <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', margin: 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <Info size={13} color="hsl(var(--primary))" /> Inspect resolved dynamic template tokens or enter temporary custom override values for testing preview outputs.
+                      </p>
+
+                      {/* Summary Context Cards */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+                        gap: '10px',
+                        padding: '12px',
+                        background: 'hsl(223 47% 7%)',
+                        borderRadius: '10px',
+                        border: '1px solid hsl(var(--border-color))'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid hsl(var(--border-color))', paddingRight: '8px' }}>
+                          <Users size={16} color="hsl(var(--primary))" />
+                          <div>
+                            <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Buyer</div>
+                            <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '110px' }} title={dynamicDataContext.buyer_name}>
+                              {dynamicDataContext.buyer_name}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid hsl(var(--border-color))', paddingRight: '8px' }}>
+                          <LayoutTemplate size={16} color="hsl(var(--primary))" />
+                          <div>
+                            <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Supplier</div>
+                            <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '110px' }} title={dynamicDataContext.supplier_name}>
+                              {dynamicDataContext.supplier_name}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid hsl(var(--border-color))', paddingRight: '8px' }}>
+                          <Sparkles size={16} color="hsl(var(--primary))" />
+                          <div>
+                            <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Lot Title</div>
+                            <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '110px' }} title={dynamicDataContext.lot_title}>
+                              {dynamicDataContext.lot_title}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid hsl(var(--border-color))', paddingRight: '8px' }}>
+                          <Sliders size={16} color="hsl(var(--primary))" />
+                          <div>
+                            <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Stage Discount</div>
+                            <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
+                              {dynamicDataContext.current_stage_discount}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderRight: '1px solid hsl(var(--border-color))', paddingRight: '8px' }}>
+                          <Clock size={16} color="hsl(var(--primary))" />
+                          <div>
+                            <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Deadline</div>
+                            <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
+                              {dynamicDataContext.expiry_hours}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Link size={16} color="hsl(var(--primary))" />
+                          <div>
+                            <div style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>Quick Bid Link</div>
+                            <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--primary))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '110px' }} title={dynamicDataContext.quick_bid_link}>
+                              {dynamicDataContext.quick_bid_link}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Input fields grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                        <div>
+                          <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
+                            Target Buyer Name
+                          </label>
+                          <input
+                            type="text"
+                            value={dynamicDataContext.buyer_name || ''}
+                            onChange={(e) => setManualOverrides((prev) => ({ ...prev, buyer_name: e.target.value }))}
+                            style={{ ...inpSt, fontSize: '11px' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
+                            Supplier Org
+                          </label>
+                          <input
+                            type="text"
+                            value={dynamicDataContext.supplier_name || ''}
+                            onChange={(e) => setManualOverrides((prev) => ({ ...prev, supplier_name: e.target.value }))}
+                            style={{ ...inpSt, fontSize: '11px' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
+                            Lot Title
+                          </label>
+                          <input
+                            type="text"
+                            value={dynamicDataContext.lot_title || ''}
+                            onChange={(e) => setManualOverrides((prev) => ({ ...prev, lot_title: e.target.value }))}
+                            style={{ ...inpSt, fontSize: '11px' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
+                            Stage Discount
+                          </label>
+                          <input
+                            type="text"
+                            value={dynamicDataContext.current_stage_discount || ''}
+                            onChange={(e) => setManualOverrides((prev) => ({ ...prev, current_stage_discount: e.target.value }))}
+                            style={{ ...inpSt, fontSize: '11px' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
+                            Response Deadline
+                          </label>
+                          <input
+                            type="text"
+                            value={dynamicDataContext.expiry_hours || ''}
+                            onChange={(e) => setManualOverrides((prev) => ({ ...prev, expiry_hours: e.target.value }))}
+                            style={{ ...inpSt, fontSize: '11px' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: '10px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
+                            Quick Bid Link
+                          </label>
+                          <input
+                            type="text"
+                            value={dynamicDataContext.quick_bid_link || ''}
+                            onChange={(e) => setManualOverrides((prev) => ({ ...prev, quick_bid_link: e.target.value }))}
+                            style={{ ...inpSt, fontSize: '11px' }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Modal Footer Controls */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '12px', borderTop: '1px solid hsl(var(--border-color))', marginTop: '8px' }}>
+                        {Object.keys(manualOverrides).length > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => setManualOverrides({})}
+                            style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            Reset to Workflow Values ↺
+                          </button>
+                        ) : <div />}
+
+                        <button
+                          type="button"
+                          onClick={() => setShowDynamicDataPanel(false)}
+                          style={{
+                            background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '8px 18px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Apply & Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -3627,7 +3672,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             <button
               type="button"
               onClick={() => handleSaveCampaign('draft')}
-              disabled={isSubmitting || oauth.status === 'expired' || hasZeroBuyerStage}
+              disabled={isSubmitting || oauth.status === 'expired'}
               style={{
                 flex: 1,
                 background: 'hsl(223 47% 12%)',
@@ -3637,8 +3682,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 padding: '13px',
                 fontWeight: 700,
                 fontSize: '13px',
-                cursor: (isSubmitting || oauth.status === 'expired' || hasZeroBuyerStage) ? 'not-allowed' : 'pointer',
-                opacity: (oauth.status === 'expired' || hasZeroBuyerStage) ? 0.5 : 1,
+                cursor: (isSubmitting || oauth.status === 'expired') ? 'not-allowed' : 'pointer',
+                opacity: (oauth.status === 'expired') ? 0.5 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

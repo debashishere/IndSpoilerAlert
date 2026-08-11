@@ -41,7 +41,7 @@ describe('Cycle 4: AppShell, Sidebar & Header Integration', () => {
     const navLinks = container.querySelectorAll('.nav-link');
     expect(navLinks.length).toBe(6);
     expect(screen.getByText('Ingestion Engine')).toBeInTheDocument();
-    expect(screen.getByText('Insight')).toBeInTheDocument();
+    expect(screen.getByText('Inventory')).toBeInTheDocument();
     expect(screen.getByText('Workflow Setup')).toBeInTheDocument();
     expect(screen.getByText('Buyer Marketplace')).toBeInTheDocument();
     expect(screen.getByText('Inbox')).toBeInTheDocument();
@@ -72,7 +72,7 @@ describe('Cycle 4: AppShell, Sidebar & Header Integration', () => {
       </Provider>
     );
 
-    const inventoryLink = screen.getByText('Insight').closest('.nav-link');
+    const inventoryLink = screen.getAllByText('Inventory')[0].closest('.nav-link');
     expect(inventoryLink).not.toBeNull();
     fireEvent.click(inventoryLink!);
 

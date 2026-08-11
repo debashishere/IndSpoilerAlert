@@ -194,7 +194,7 @@ export const SalesDataView: React.FC = () => {
               background: 'linear-gradient(135deg, hsl(142, 76%, 46%), hsl(var(--primary)))',
               display: 'flex',
               alignItems: 'center',
-              justify: 'center',
+              justifyContent: 'center',
               color: '#fff',
               boxShadow: '0 4px 16px hsl(142, 76%, 46% / 40%)',
               flexShrink: 0,
@@ -314,7 +314,7 @@ export const SalesDataView: React.FC = () => {
       <div
         style={{
           display: 'flex',
-          justify: 'space-between',
+          justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '16px',
@@ -458,7 +458,7 @@ export const SalesDataView: React.FC = () => {
               <path d="M 0,130 Q 100,90 200,105 T 400,70 L 500,85" fill="none" stroke="hsl(217, 91%, 60%)" strokeWidth="2.5" strokeDasharray="5 3" />
 
               {/* Interactive Point Nodes */}
-              {trajectoryData.map((d, i) => {
+              {trajectoryData.map((_d, i) => {
                 const x = (i / (trajectoryData.length - 1)) * 500;
                 return (
                   <g key={i}>

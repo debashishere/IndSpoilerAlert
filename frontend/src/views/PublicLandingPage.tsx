@@ -2,17 +2,10 @@ import React, { useState } from 'react';
 import {
   ArrowRight,
   Boxes,
-  ShieldCheck,
-  Flame,
-  Building2,
   Sparkles,
   CheckCircle2,
   TrendingUp,
-  HeartHandshake,
-  Clock,
-  ShieldAlert,
   Star,
-  Layers,
 } from 'lucide-react';
 import CentralAuthModal from '../components/auth/CentralAuthModal';
 

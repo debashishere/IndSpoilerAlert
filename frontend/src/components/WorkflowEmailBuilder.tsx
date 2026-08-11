@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { ChevronRight, Save, ArrowLeft, ArrowRight, Tag, AlertTriangle, Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronRight, Save, ArrowLeft, ArrowRight, Tag, AlertTriangle } from 'lucide-react';
 import { EmailMetadataForm, type TemplateOption } from './EmailMetadataForm';
 import { TagsDrawer } from './TagsDrawer';
 import { WorkflowTipTapBodyEditor } from './EmailBuilder/WorkflowTipTapBodyEditor';
-import { B2B_TEMPLATE_PRESETS, getB2BPresetById } from '../utils/b2bTemplatePresets';
+import { getB2BPresetById } from '../utils/b2bTemplatePresets';
 
 export interface WorkflowEmailMetadata {
   template: string;
@@ -130,9 +130,9 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
       data-testid="workflow-email-builder-container"
       className="bg-white rounded-xl border border-slate-200 shadow-sm text-slate-800 font-sans overflow-hidden relative"
       style={{
-        backgroundColor: '#ffffff',
-        borderColor: '#e2e8f0',
-        color: '#1e293b',
+        backgroundColor: 'var(--surface-card, #ffffff)',
+        borderColor: 'var(--border, #e2e8f0)',
+        color: 'var(--text-on-surface, #1e293b)',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         position: 'relative'
       }}
@@ -141,16 +141,16 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
       <header
         className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/50"
         style={{
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc',
+          borderBottom: '1px solid var(--border, #e2e8f0)',
+          backgroundColor: 'var(--surface-elevated, #f8fafc)',
           padding: '16px 24px'
         }}
       >
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm text-slate-500 font-medium">
-          <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Campaigns</span>
+          <span style={{ color: 'var(--text-muted, #64748b)', fontSize: '13px', fontWeight: 500 }}>Campaigns</span>
           <ChevronRight size={14} style={{ color: '#94a3b8' }} />
-          <span style={{ color: '#64748b', fontSize: '13px', fontWeight: 500 }}>Liquidation Workflow</span>
+          <span style={{ color: 'var(--text-muted, #64748b)', fontSize: '13px', fontWeight: 500 }}>Liquidation Workflow</span>
           <ChevronRight size={14} style={{ color: '#94a3b8' }} />
           <span
             style={{
@@ -206,9 +206,9 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
               padding: '8px 16px',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#475569',
-              backgroundColor: '#ffffff',
-              border: '1px solid #cbd5e1',
+              color: 'var(--text-secondary, #475569)',
+              backgroundColor: 'var(--surface-card, #ffffff)',
+              border: '1px solid var(--border, #cbd5e1)',
               borderRadius: '8px',
               cursor: 'pointer',
               boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
@@ -232,9 +232,9 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
               padding: '8px 16px',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#334155',
-              backgroundColor: '#f1f5f9',
-              border: '1px solid #cbd5e1',
+              color: 'var(--text-secondary, #334155)',
+              backgroundColor: 'var(--surface-elevated, #f1f5f9)',
+              border: '1px solid var(--border, #cbd5e1)',
               borderRadius: '8px',
               cursor: disabled ? 'not-allowed' : 'pointer',
               opacity: disabled ? 0.5 : 1,

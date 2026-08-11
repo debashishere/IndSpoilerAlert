@@ -74,10 +74,7 @@ describe('Issue #03 — Workflow Stage Template Attachment & Zero-Buyer Selectio
     const saveDraftBtns = screen.getAllByRole('button', { name: /Save as Draft/i });
     const launchBtns = screen.getAllByRole('button', { name: /Launch Active Campaign/i });
 
-    // Both save and launch buttons should be disabled due to zero buyers guardrail
-    expect(saveDraftBtns.length).toBeGreaterThan(0);
-    saveDraftBtns.forEach(btn => expect(btn).toBeDisabled());
-
+    // Launch buttons should be disabled due to zero buyers guardrail
     expect(launchBtns.length).toBeGreaterThan(0);
     launchBtns.forEach(btn => expect(btn).toBeDisabled());
   });

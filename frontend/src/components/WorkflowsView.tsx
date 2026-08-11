@@ -284,7 +284,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
     switch (currentStatus) {
       case 'active':
         return (
-          <span style={{
+          <span className="badge status-badge-active" style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
@@ -302,7 +302,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
         );
       case 'stopped':
         return (
-          <span style={{
+          <span className="badge status-badge-stopped" style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
@@ -319,7 +319,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
         );
       case 'completed':
         return (
-          <span style={{
+          <span className="badge status-badge-completed" style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
@@ -337,14 +337,15 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
       case 'draft':
       default:
         return (
-          <span style={{
+          <span className="badge status-badge-draft" style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '6px',
             padding: '4px 10px',
             borderRadius: '12px',
-            backgroundColor: 'hsl(var(--warning) / 15%)',
-            color: 'hsl(var(--warning))',
+            backgroundColor: 'hsl(var(--bg-card-hover))',
+            color: 'hsl(var(--text-muted))',
+            border: '1px solid hsl(var(--border-color))',
             fontWeight: 700,
             fontSize: '0.72rem',
             textTransform: 'uppercase'

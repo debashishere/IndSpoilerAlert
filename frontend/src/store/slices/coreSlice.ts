@@ -32,6 +32,7 @@ export interface Buyer {
 
 export interface BuyerList {
   _id: string;
+  id?: string;
   name: string;
   type: 'primary' | 'secondary' | 'custom';
   buyerIds: any[]; // populated Buyer objects or raw ObjectId strings

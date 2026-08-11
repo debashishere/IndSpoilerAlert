@@ -3,11 +3,11 @@ import React, { useMemo, useCallback, useRef, useEffect } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import Table from '@tiptap/extension-table';
-import TableRow from '@tiptap/extension-table-row';
-import TableCell from '@tiptap/extension-table-cell';
-import TableHeader from '@tiptap/extension-table-header';
-import { useSelector, useDispatch } from 'react-redux';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { useSelector } from 'react-redux';
 import { InventoryTableToken } from './extensions/InventoryTableToken';
 import { Figure, Figcaption } from './extensions/Figure';
 import { debounce } from '../../utils/debounce';
@@ -38,17 +38,13 @@ export interface EmailBuilderEngineProps {
 }
 
 export const EmailBuilderEngine: React.FC<EmailBuilderEngineProps> = ({
-  campaignId,
+  campaignId: _campaignId,
   initialContent,
   inventoryLots,
   onHtmlChange,
   disabled = false,
 }) => {
-  const dispatch = useDispatch();
-
-  // Read inventory lots from Redux store if not passed directly via props
   const reduxInventory = useSelector((state: any) => state.inventory?.inventoryList || state.inventory?.lots || []);
-  const reduxStatus = useSelector((state: any) => state.inventory?.status || 'succeeded');
   const reduxError = useSelector((state: any) => state.inventory?.error || null);
 
   const lots: SurplusLot[] = useMemo(() => {
@@ -70,29 +66,35 @@ export const EmailBuilderEngine: React.FC<EmailBuilderEngineProps> = ({
   }, []);
 
   // ─── Extensions: memoized to prevent re-instantiation ─────────
-  const extensions = useMemo(
-    () => [
-      StarterKit.configure({
+  const extensions = useMemo(() => {
+    const resolveExt = (target: any) => {
+      if (!target) return target;
+      if (target.default) return target.default;
+      return target;
+    };
+
+    return [
+      resolveExt(StarterKit).configure({
         // Disable heading levels that don't render well in email clients
         heading: { levels: [1, 2, 3] },
       }),
-      Image.configure({
+      resolveExt(Image).configure({
         inline: false,
         allowBase64: false, // Explicitly disabled to prevent XSS via data URIs
       }),
-      Table.configure({
+      resolveExt(Table).configure({
         resizable: true,
         HTMLAttributes: {
           style: 'width: 100%; border-collapse: collapse;',
         },
       }),
-      TableRow,
-      TableHeader.configure({
+      resolveExt(TableRow),
+      resolveExt(TableHeader).configure({
         HTMLAttributes: {
           style: 'background-color: #f3f4f6; font-weight: 600; text-align: left; padding: 8px; border: 1px solid #d1d5db;',
         },
       }),
-      TableCell.configure({
+      resolveExt(TableCell).configure({
         HTMLAttributes: {
           style: 'padding: 8px; border: 1px solid #d1d5db;',
         },
@@ -100,9 +102,8 @@ export const EmailBuilderEngine: React.FC<EmailBuilderEngineProps> = ({
       InventoryTableToken,
       Figure,
       Figcaption,
-    ],
-    []
-  );
+    ];
+  }, []);
 
   // Default initial content
   const defaultContent = initialContent || `
@@ -126,15 +127,28 @@ export const EmailBuilderEngine: React.FC<EmailBuilderEngineProps> = ({
       },
     },
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      debouncedSaveRef.current(html);
+      if (!editor || editor.isDestroyed || !editor.schema) return;
+      try {
+        const html = editor.getHTML();
+        debouncedSaveRef.current(html);
+      } catch (err) {
+        console.warn('TipTap onUpdate warning:', err);
+      }
     },
   });
 
   // Keep content in sync if initialContent prop changes externally
   useEffect(() => {
-    if (editor && initialContent && editor.getHTML() !== initialContent) {
-      editor.commands.setContent(initialContent);
+    if (!editor || editor.isDestroyed || !editor.schema) return;
+    if (initialContent) {
+      try {
+        const currentHtml = editor.getHTML();
+        if (currentHtml !== initialContent) {
+          editor.commands.setContent(initialContent);
+        }
+      } catch (err) {
+        console.warn('TipTap setContent error:', err);
+      }
     }
   }, [initialContent, editor]);
 
@@ -222,7 +236,7 @@ export const EmailBuilderEngine: React.FC<EmailBuilderEngineProps> = ({
   );
 
   // ─── Render: Null Safety Guard ───────────────────────────────
-  if (!editor) {
+  if (!editor || editor.isDestroyed || !editor.schema) {
     return (
       <div className="email-builder-container border rounded-xl shadow-sm bg-white p-8 text-center text-slate-500">
         <span className="inline-block w-4 h-4 border-2 border-slate-300 border-t-orange-500 rounded-full animate-spin mr-2" />

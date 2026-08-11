@@ -16,7 +16,7 @@ export const InventoryChartsDashboard: React.FC = () => {
           borderRadius: '16px',
           padding: '24px 28px',
           display: 'flex',
-          justify: 'space-between',
+          justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '20px',
@@ -34,7 +34,7 @@ export const InventoryChartsDashboard: React.FC = () => {
               background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
               display: 'flex',
               alignItems: 'center',
-              justify: 'center',
+              justifyContent: 'center',
               color: '#fff',
               boxShadow: '0 4px 16px hsl(var(--primary) / 40%)',
               flexShrink: 0,
@@ -96,7 +96,7 @@ export const InventoryChartsDashboard: React.FC = () => {
       <div
         style={{
           display: 'flex',
-          justify: 'space-between',
+          justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '16px',

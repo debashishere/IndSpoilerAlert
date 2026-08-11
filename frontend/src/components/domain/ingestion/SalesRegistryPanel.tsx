@@ -6,16 +6,10 @@ import {
   X, 
   Maximize2, 
   Minimize2, 
-  Search, 
   CheckCircle2, 
   AlertTriangle, 
   FileSpreadsheet, 
-  FileText,
-  ShoppingBag,
-  TrendingUp,
-  Building2,
-  Calendar,
-  Layers
+  FileText
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { DEFAULT_SUPPLIERS } from '../../../services/coreService';

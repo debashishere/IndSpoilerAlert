@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Users, Filter, Package, Check, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, Package, Check, Sparkles } from 'lucide-react';
 
 export interface BuyerSegmentOption {
   key: string;
@@ -31,10 +31,10 @@ export function SmartAudienceLotSelector({
   apiBaseUrl = '/api'
 }: SmartAudienceLotSelectorProps) {
   const [buyerSegment, setBuyerSegment] = useState<string>(initialSegment);
-  const [explicitBuyerIds, setExplicitBuyerIds] = useState<string[]>([]);
+  const [explicitBuyerIds] = useState<string[]>([]);
   const [selectedLotIds, setSelectedLotIds] = useState<string[]>(initialLotIds);
 
-  const [availableLots, setAvailableLots] = useState<any[]>([
+  const [availableLots] = useState<any[]>([
     { _id: 'lot-880', lotNumber: 'LOT-880', description: 'Organic Milk 1L', quantityCases: 240, remainingShelfLife: 0.15 },
     { _id: 'lot-881', lotNumber: 'LOT-881', description: 'Greek Yogurt 500g', quantityCases: 150, remainingShelfLife: 0.22 },
     { _id: 'lot-882', lotNumber: 'LOT-882', description: 'Cheddar Cheese 200g', quantityCases: 300, remainingShelfLife: 0.18 }
@@ -102,14 +102,14 @@ export function SmartAudienceLotSelector({
   return (
     <div className="space-y-6" data-testid="smart-audience-lot-selector">
       {/* Target Buyer Segment Controls */}
-      <div className="p-5 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-4">
+      <div className="p-5 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-bold text-white flex items-center gap-2">
-            <Users className="w-4 h-4 text-indigo-400" />
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Users className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
             Smart Audience Targeting
           </h4>
-          <span className="px-2.5 py-1 bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 rounded-full text-xs font-semibold flex items-center gap-1.5" data-testid="recipient-count-badge">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+          <span className="px-2.5 py-1 bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-500/20 rounded-full text-xs font-semibold flex items-center gap-1.5" data-testid="recipient-count-badge">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
             {isLoadingPreview ? 'Calculating...' : `${previewMetrics.recipientCount} Matched Buyer Accounts`}
           </span>
         </div>
@@ -124,19 +124,19 @@ export function SmartAudienceLotSelector({
                 onClick={() => setBuyerSegment(seg.key)}
                 className={`p-3.5 rounded-xl border text-left transition-all ${
                   isSelected
-                    ? 'bg-indigo-600/10 border-indigo-500 text-white shadow-lg shadow-indigo-600/10'
-                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                    ? 'bg-indigo-600/10 border-indigo-500 text-slate-900 dark:text-white shadow-lg shadow-indigo-600/10'
+                    : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 hover:text-slate-900 dark:hover:text-slate-200'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
                     {seg.name}
                   </span>
-                  <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-md">
+                  <span className="px-2 py-0.5 text-[10px] font-bold bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30 rounded-md">
                     {seg.badge}
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-snug">{seg.description}</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">{seg.description}</p>
               </button>
             );
           })}
@@ -144,13 +144,13 @@ export function SmartAudienceLotSelector({
       </div>
 
       {/* Surplus Inventory Lot Picker */}
-      <div className="p-5 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-4">
+      <div className="p-5 bg-white dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-4">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-bold text-white flex items-center gap-2">
-            <Package className="w-4 h-4 text-emerald-400" />
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Package className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
             Surplus Inventory Lot Picker
           </h4>
-          <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 rounded-full text-xs font-semibold" data-testid="total-cases-badge">
+          <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/20 rounded-full text-xs font-semibold" data-testid="total-cases-badge">
             {previewMetrics.totalCases} Total Targeted Cases
           </span>
         </div>
@@ -164,28 +164,28 @@ export function SmartAudienceLotSelector({
                 onClick={() => toggleLotSelection(lot._id)}
                 className={`p-3.5 rounded-xl border cursor-pointer flex items-center justify-between transition-all ${
                   isChecked
-                    ? 'bg-emerald-950/20 border-emerald-500/50 text-white'
-                    : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-500/50 text-slate-900 dark:text-white'
+                    : 'bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                    isChecked ? 'bg-emerald-500 border-emerald-400 text-slate-950' : 'border-slate-700 bg-slate-900'
+                    isChecked ? 'bg-emerald-500 border-emerald-400 text-slate-950' : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900'
                   }`}>
                     {isChecked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                    <div className="text-xs font-bold text-slate-900 dark:text-slate-200 flex items-center gap-2">
                       {lot.lotNumber} — {lot.description}
                     </div>
-                    <div className="text-[11px] text-slate-400">
-                      RSL: <span className="text-amber-400 font-mono">{(lot.remainingShelfLife * 100).toFixed(0)}%</span>
+                    <div className="text-[11px] text-slate-600 dark:text-slate-400">
+                      RSL: <span className="text-amber-600 dark:text-amber-400 font-mono">{(lot.remainingShelfLife * 100).toFixed(0)}%</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="text-right">
-                  <span className="px-2.5 py-1 bg-slate-800 text-slate-200 rounded-lg text-xs font-mono font-bold">
+                  <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-mono font-bold">
                     {lot.quantityCases} Cases
                   </span>
                 </div>
