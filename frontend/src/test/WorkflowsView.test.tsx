@@ -60,7 +60,7 @@ describe('Issue #40 Integration: WorkflowsView & Campaign Studio', () => {
       </Provider>
     );
 
-    expect(screen.getByText('1. Stage-Gate Workflow Template & Campaign Setup')).toBeInTheDocument();
+    expect(screen.getByText('1. Sales Cycle & Workflow Template')).toBeInTheDocument();
     expect(screen.getByText('Campaign Cycle Name')).toBeInTheDocument();
     expect(screen.getByText('Cycle Start Date')).toBeInTheDocument();
     expect(screen.getByText('Cycle End Date')).toBeInTheDocument();

@@ -156,8 +156,8 @@ describe('Issue #78 / Slice 3: TipTap WYSIWYG Template Editor & Dynamic Token Pa
       <LiquidationAutomationStudio supplierId="sup-101" />
     );
 
-    // Verify Centralized Email Template Attachment section exists
-    expect(screen.getByText(/Attach Centralized Email Template/i)).toBeInTheDocument();
+    // Verify Email Template Attachment section exists
+    expect(screen.getByText(/4\. Email Template/i)).toBeInTheDocument();
     expect(screen.getByTestId('attach-email-template-select')).toBeInTheDocument();
   });
 

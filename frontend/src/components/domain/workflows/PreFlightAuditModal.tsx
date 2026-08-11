@@ -85,7 +85,7 @@ export const PreFlightAuditModal: React.FC<PreFlightAuditModalProps> = ({
                   {s.buyerMode === 'custom' && s.customBuyers && s.customBuyers.length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                       {s.customBuyers.map((b: any) => (
-                        <span key={b.id} style={{ fontSize: '10px', background: `${TIER_COLOR[b.tier || 1] || 'hsl(var(--primary))'}18`, border: `1px solid ${TIER_COLOR[b.tier || 1] || 'hsl(var(--primary))'}44`, color: 'hsl(var(--border-color))', borderRadius: '10px', padding: '2px 8px' }}>{b.name}</span>
+                        <span key={b.id} style={{ fontSize: '10px', background: `${TIER_COLOR[b.tier || 1] || 'hsl(var(--primary))'}18`, border: `1px solid ${TIER_COLOR[b.tier || 1] || 'hsl(var(--primary))'}44`, color: 'hsl(var(--text-primary))', borderRadius: '10px', padding: '2px 8px' }}>{b.name}</span>
                       ))}
                     </div>
                   )}

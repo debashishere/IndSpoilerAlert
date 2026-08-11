@@ -60,7 +60,7 @@ describe('TDD Suite: Issues 0048-0051 (Campaign Validations, Buyer Segment Roste
       />
     );
 
-    const saveDraftBtn = screen.getAllByRole('button', { name: /Save as Draft/i })[0];
+    const saveDraftBtn = screen.getAllByRole('button', { name: /Save as Draft|Save/i })[0];
     fireEvent.click(saveDraftBtn);
 
     // Validation alert must be triggered and save API call blocked

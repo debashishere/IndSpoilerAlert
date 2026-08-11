@@ -64,10 +64,10 @@ describe('Issue #74: Mailbox Authentication Soft Lock UI', () => {
       </Provider>
     );
 
-    const saveBtns = screen.getAllByRole('button', { name: /Save as Draft/i });
+    const saveBtns = screen.getAllByRole('button', { name: /Save as Draft|Save/i });
     saveBtns.forEach(btn => expect(btn).toBeDisabled());
 
-    const launchBtns = screen.getAllByRole('button', { name: /Launch Active Campaign/i });
+    const launchBtns = screen.getAllByRole('button', { name: /Launch Active Campaign|^Run$/i });
     launchBtns.forEach(btn => expect(btn).toBeDisabled());
   });
 
@@ -88,7 +88,7 @@ describe('Issue #74: Mailbox Authentication Soft Lock UI', () => {
 
     expect(screen.queryByText(/Your Mailbox Connection has Expired/i)).not.toBeInTheDocument();
 
-    const saveBtns = screen.getAllByRole('button', { name: /Save as Draft/i });
+    const saveBtns = screen.getAllByRole('button', { name: /Save as Draft|Save/i });
     saveBtns.forEach(btn => expect(btn).not.toBeDisabled());
     // Launch button remains disabled if totalLots === 0, but we can verify it's not disabled due to oauth status.
   });

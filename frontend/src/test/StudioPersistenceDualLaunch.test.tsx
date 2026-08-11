@@ -39,8 +39,8 @@ describe('Issue #46 / PRD 47: Studio Persistence & Dual Launch Execution', () =>
     );
 
     // Verify dual CTA buttons exist in UI
-    const saveDraftBtns = screen.getAllByRole('button', { name: /Save as Draft/i });
-    const launchActiveBtns = screen.getAllByRole('button', { name: /Launch Active Campaign/i });
+    const saveDraftBtns = screen.getAllByRole('button', { name: /Save as Draft|Save/i });
+    const launchActiveBtns = screen.getAllByRole('button', { name: /Launch Active Campaign|^Run$/i });
 
     expect(saveDraftBtns.length).toBeGreaterThan(0);
     expect(launchActiveBtns.length).toBeGreaterThan(0);
@@ -74,7 +74,7 @@ describe('Issue #46 / PRD 47: Studio Persistence & Dual Launch Execution', () =>
     );
 
     // Wait for inventory load so launch button is enabled
-    const launchActiveBtns = await screen.findAllByRole('button', { name: /Launch Active Campaign/i });
+    const launchActiveBtns = await screen.findAllByRole('button', { name: /Launch Active Campaign|^Run$/i });
     await waitFor(() => expect(launchActiveBtns[0]).not.toBeDisabled());
 
     fireEvent.click(launchActiveBtns[0]);
@@ -161,7 +161,7 @@ describe('Issue #46 / PRD 47: Studio Persistence & Dual Launch Execution', () =>
       expect(screen.getAllByDisplayValue('Updated Holiday Strategy').length).toBeGreaterThan(0);
     });
 
-    const saveDraftBtn = screen.getAllByRole('button', { name: /Save as Draft/i })[0];
+    const saveDraftBtn = screen.getAllByRole('button', { name: /Save as Draft|Save/i })[0];
     await waitFor(() => expect(saveDraftBtn).not.toBeDisabled());
     fireEvent.click(saveDraftBtn);
 

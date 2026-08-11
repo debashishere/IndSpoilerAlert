@@ -13,12 +13,12 @@ describe('01 — Semantic Token Layer Refactor (CSS Foundation)', () => {
       const rootBlock = rootMatch![1];
 
       expect(rootBlock).toContain('color-scheme: light');
-      expect(rootBlock).toContain('--bg-main: 210 40% 98%');
+      expect(rootBlock).toContain('--bg-main: 205 87% 94%');
       expect(rootBlock).toContain('--bg-card: 0 0% 100%');
-      expect(rootBlock).toContain('--text-primary: 222 47% 11%');
+      expect(rootBlock).toContain('--text-primary: 216 85% 18%');
 
       // Must NOT contain old dark values in :root
-      expect(rootBlock).not.toContain('--bg-main: 222 47% 7%');
+      expect(rootBlock).not.toContain('--bg-main: 216 85% 7%');
     });
 
     it('defines new semantic surface tokens in :root for light mode', () => {
@@ -41,9 +41,9 @@ describe('01 — Semantic Token Layer Refactor (CSS Foundation)', () => {
       const darkBlock = darkMatch![1];
 
       expect(darkBlock).toContain('color-scheme: dark');
-      expect(darkBlock).toContain('--bg-main: 222 47% 7%');
-      expect(darkBlock).toContain('--bg-card: 223 47% 11%');
-      expect(darkBlock).toContain('--text-primary: 210 40% 98%');
+      expect(darkBlock).toContain('--bg-main: 216 85% 7%');
+      expect(darkBlock).toContain('--bg-card: 216 75% 12%');
+      expect(darkBlock).toContain('--text-primary: 205 87% 95%');
 
       // Semantic tokens in dark theme
       expect(darkBlock).toContain('--surface-page: hsl(var(--bg-main))');
@@ -77,12 +77,12 @@ describe('01 — Semantic Token Layer Refactor (CSS Foundation)', () => {
 
       // Default (no data-theme)
       const defaultBgMain = getComputedStyle(document.documentElement).getPropertyValue('--bg-main').trim();
-      expect(defaultBgMain).toBe('210 40% 98%');
+      expect(defaultBgMain).toBe('205 87% 94%');
 
       // Dark mode
       document.documentElement.setAttribute('data-theme', 'dark');
       const darkBgMain = getComputedStyle(document.documentElement).getPropertyValue('--bg-main').trim();
-      expect(darkBgMain).toBe('222 47% 7%');
+      expect(darkBgMain).toBe('216 85% 7%');
 
       // Clean up
       document.documentElement.removeAttribute('data-theme');

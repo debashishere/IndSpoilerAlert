@@ -44,6 +44,7 @@ import { PreFlightAuditModal } from './domain/workflows/PreFlightAuditModal';
 import { useOAuthMailbox } from '../hooks/useOAuthMailbox';
 import { WorkflowTipTapBodyEditor } from './EmailBuilder/WorkflowTipTapBodyEditor';
 import { LiveDevicePreview } from './LiveDevicePreview';
+import { StageEmailModal } from './domain/workflows/StageEmailModal';
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -286,7 +287,7 @@ export function resolveStagesWithBuyerLists(stages: Stage[], buyerLists: any[]):
   });
 }
 
-export const DEFAULT_EMAIL_BODY_HTML = `<div style="font-family: sans-serif; padding: 20px; color: hsl(var(--bg-card)); max-width: 600px; margin: 0 auto; border: 1px solid hsl(var(--border-color)); border-radius: 8px; background: white;">
+export const DEFAULT_EMAIL_BODY_HTML = `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid hsl(var(--border-color)); border-radius: 8px; background: white;">
 <h2 style="color: hsl(var(--primary)); margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
 <p>Hello <strong>{{buyer_name}}</strong>,</p>
 <p>We have immediate surplus inventory available for liquidation. Stage offer: <strong>{{current_stage_discount}}</strong> (Response window: {{expiry_hours}}). Please review the itemized offer sheet below:</p>
@@ -577,7 +578,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
     border: '1px solid hsl(var(--border-color))',
     borderRadius: '6px',
     padding: '7px 9px',
-    color: 'white',
+    color: 'hsl(var(--text-primary))',
     fontSize: '12px',
     width: '100%',
     boxSizing: 'border-box',
@@ -806,7 +807,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
               </select>
               <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
                 <button type="button" onClick={() => setShowAddForm(false)} style={{ background: 'transparent', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-secondary))', borderRadius: '5px', padding: '5px 10px', fontSize: '11px', cursor: 'pointer' }}>Cancel</button>
-                <button type="button" onClick={addNewBuyer} disabled={!newName || !newEmail} style={{ background: newName && newEmail ? 'hsl(var(--primary))' : 'hsl(var(--border-color))', border: 'none', color: 'white', borderRadius: '5px', padding: '5px 12px', fontSize: '11px', fontWeight: 700, cursor: newName && newEmail ? 'pointer' : 'not-allowed' }}>
+                <button type="button" onClick={addNewBuyer} disabled={!newName || !newEmail} style={{ background: newName && newEmail ? 'hsl(var(--primary))' : 'hsl(var(--border-color))', border: 'none', color: newName && newEmail ? 'white' : 'hsl(var(--text-muted))', borderRadius: '5px', padding: '5px 12px', fontSize: '11px', fontWeight: 700, cursor: newName && newEmail ? 'pointer' : 'not-allowed' }}>
                   + Add
                 </button>
               </div>
@@ -861,7 +862,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
                           {(b.companyName || b.name || 'B').charAt(0)}
                         </div>
                         <div>
-                          <div style={{ fontSize: '12px', fontWeight: 600, color: 'white' }}>{b.companyName || b.name || b.email}</div>
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>{b.companyName || b.name || b.email}</div>
                           <div style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>{b.email}</div>
                         </div>
                       </div>
@@ -1086,7 +1087,7 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
 
   const inputSt: React.CSSProperties = {
     width: '100%', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))',
-    borderRadius: '6px', padding: '8px 10px', color: 'white', fontSize: '12px', boxSizing: 'border-box',
+    borderRadius: '6px', padding: '8px 10px', color: 'hsl(var(--text-primary))', fontSize: '12px', boxSizing: 'border-box',
   };
 
   return (
@@ -1389,7 +1390,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   const handleClearEditing = () => {
     dispatch(setEditingCampaignId(null));
     setSelectedTemplateKey('short_dated_clearance');
-    setWorkflowName('Short-Dated Clearance Campaign');
+    setWorkflowName('Untitled Workflow');
     setStartDate(new Date().toISOString().split('T')[0]);
     const d = new Date();
     d.setDate(d.getDate() + 14);
@@ -1409,7 +1410,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   // Template & Campaign Cycle Metadata
   const [selectedTemplateKey, setSelectedTemplateKey] = useState('default');
   const [centralTemplates, setCentralTemplates]       = useState<any[]>([]);
-  const [workflowName, setWorkflowName]               = useState('Short-Dated Clearance Campaign');
+  const [workflowName, setWorkflowName]               = useState('Untitled Workflow');
   const [startDate, setStartDate]                     = useState(() => new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate]                         = useState(() => {
     const d = new Date();
@@ -1457,16 +1458,44 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   const [workflowTimezone, setWorkflowTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York');
   const [cronDays, setCronDays]               = useState<number[]>([1]);
   const [cronExpression, setCronExpression]   = useState<string>('');
+  const [isSchedulePopoverOpen, setIsSchedulePopoverOpen] = useState<boolean>(false);
+  const scheduleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isSchedulePopoverOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (scheduleRef.current && !scheduleRef.current.contains(event.target as Node)) {
+        setIsSchedulePopoverOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSchedulePopoverOpen]);
 
   // Email builder
   const [emailSubject, setEmailSubject] = useState('Distressed Inventory Special Liquidation Offer');
   const [emailBodyHtml, setEmailBodyHtml] = useState<string>(DEFAULT_EMAIL_BODY_HTML);
   const [activeStageEmailEditorIdx, setActiveStageEmailEditorIdx] = useState<number | null>(null);
+  const [openStageEmailModalIdx, setOpenStageEmailModalIdx] = useState<number | null>(null);
   const [emailBlocks, setEmailBlocks]   = useState<EmailBlock[]>(DEFAULT_EMAIL_BLOCKS);
 
   // Target Buyer Segment Inspection state
   const [inspectingSegment, setInspectingSegment] = useState<string | null>(null);
   const [inspectSearch, setInspectSearch]           = useState<string>('');
+
+  // Lock document body scroll when Target Buyer Segment Inspection modal is open
+  useEffect(() => {
+    if (!inspectingSegment) return;
+    const origOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = origOverflow;
+    };
+  }, [inspectingSegment]);
 
   // Feature flag to hide Section 5 (Dynamic Donation & Multi-Entity Diversion) for base release.
   // Set to true to re-enable Section 5 in future phases.
@@ -1517,7 +1546,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   useEffect(() => {
     if (!editingCampaignId) {
       setSelectedTemplateKey('short_dated_clearance');
-      setWorkflowName('Short-Dated Clearance Campaign');
+      setWorkflowName('Untitled Workflow');
       setStartDate(new Date().toISOString().split('T')[0]);
       const d = new Date();
       d.setDate(d.getDate() + 14);
@@ -2076,10 +2105,12 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
   const selectedDef = TEMPLATE_DEFINITIONS.find(t => t.key === selectedTemplateKey) || TEMPLATE_DEFINITIONS[0];
 
-  // ── Shared styles ──────────────────────────────────────────────────────────
-  const card: React.CSSProperties = { background: 'hsl(var(--bg-card))', padding: '20px 24px', borderRadius: '14px', border: '1px solid hsl(var(--border-color))' };
+  // ── Shared styles & Control Hierarchy Shadow System ────────────────────────
+  const card: React.CSSProperties = { background: 'hsl(var(--bg-card))', padding: '20px 24px', borderRadius: '14px', border: '1px solid hsl(var(--border-color))', boxShadow: '0 4px 20px -2px rgba(13, 71, 161, 0.06)' };
   const h3st: React.CSSProperties = { fontSize: '15px', fontWeight: 700, margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' };
-  const inpSt: React.CSSProperties = { background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '8px', padding: '9px 10px', color: 'white', fontSize: '13px', width: '100%', boxSizing: 'border-box' };
+  const inpSt: React.CSSProperties = { background: 'hsl(var(--bg-card))', border: '1.5px solid hsl(var(--border-color))', borderRadius: '8px', padding: '9px 12px', color: 'hsl(var(--text-primary))', fontSize: '13px', width: '100%', boxSizing: 'border-box', boxShadow: 'inset 0 2px 4px rgba(13, 71, 161, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)', transition: 'all 0.2s ease' };
+  const dropSt: React.CSSProperties = { background: 'linear-gradient(180deg, hsl(var(--bg-card)) 0%, hsl(var(--bg-card-hover)) 100%)', border: '1.5px solid rgba(33, 150, 243, 0.4)', borderRadius: '8px', padding: '9px 12px', color: 'hsl(var(--text-primary))', fontSize: '13px', fontWeight: 600, width: '100%', boxSizing: 'border-box', boxShadow: '0 4px 12px rgba(13, 71, 161, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06)', cursor: 'pointer', transition: 'all 0.2s ease' };
+  const btnSt: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '9px 16px', borderRadius: '8px', fontWeight: 700, fontSize: '13px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 14px rgba(33, 150, 243, 0.35), 0 2px 4px rgba(13, 71, 161, 0.2)', transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)' };
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -2157,7 +2188,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 </span>
               </div>
               <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-muted))', marginTop: '3px' }}>
-                Currently editing parameters for <strong style={{ color: 'white' }}>"{workflowName}"</strong>. Save will update this saved strategy.
+                Currently editing parameters for <strong style={{ color: 'hsl(var(--text-primary))' }}>"{workflowName}"</strong>. Save will update this saved strategy.
               </div>
             </div>
           </div>
@@ -2188,7 +2219,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
       {/* ══ TOP BAR: Name + Execution + Launch ══════════════════════════════ */}
       <div style={{ ...card }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
 
           {/* Left: branding + name */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '260px' }}>
@@ -2197,27 +2228,94 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>Liquidation Automation Studio</h2>
-                <span style={{ background: 'hsl(var(--primary)/0.15)', color: 'hsl(var(--primary))', border: '1px solid hsl(var(--primary)/0.3)', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '12px' }}>Production Grade</span>
+                <h2 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>New Workflow</h2>
+                <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '16px', lineHeight: 1 }} title="Required">*</span>
               </div>
               <input type="text" value={workflowName} onChange={e => setWorkflowName(e.target.value)} placeholder="Enter workflow name…"
-                style={{ marginTop: '6px', ...inpSt, maxWidth: '320px', fontWeight: 500, fontSize: '13px' }} />
+                style={{ marginTop: '6px', ...inpSt, maxWidth: '200px', fontWeight: 500, fontSize: '13px' }} />
             </div>
           </div>
 
           {/* Centre: Execution mode */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '290px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '5px' }}><Zap size={12} /> Execution Mode</div>
-            <div style={{ display: 'flex', gap: '7px' }}>
-              {(['immediate', 'cron'] as const).map(mode => (
-                <button key={mode} type="button" onClick={() => setExecutionType(mode)}
-                  style={{ flex: 1, padding: '7px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', border: executionType === mode ? `1px solid hsl(var(--${mode === 'immediate' ? 'primary' : 'secondary'}))` : '1px solid hsl(var(--border-color))', background: executionType === mode ? `hsl(var(--${mode === 'immediate' ? 'primary' : 'secondary'})/0.15)` : 'transparent', color: 'white' }}>
-                  {mode === 'immediate' ? '⚡ Run Now' : '🕐 Scheduled'}
-                </button>
-              ))}
+          <div ref={scheduleRef} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px', position: 'relative' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}><Zap size={12} /> Execution Mode</div>
+            <div style={{ display: 'flex', gap: '7px', justifyContent: 'center', width: '100%', maxWidth: '260px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setExecutionType('immediate');
+                  setIsSchedulePopoverOpen(false);
+                }}
+                style={{
+                  flex: 1,
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: executionType === 'immediate' ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border-color))',
+                  background: executionType === 'immediate' ? 'hsl(var(--primary)/0.15)' : 'hsl(var(--bg-card))',
+                  color: executionType === 'immediate' ? 'hsl(var(--primary))' : 'hsl(var(--text-primary))'
+                }}
+              >
+                ⚡ Run Now
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (executionType !== 'cron') {
+                    setExecutionType('cron');
+                    setIsSchedulePopoverOpen(true);
+                  } else {
+                    setIsSchedulePopoverOpen(prev => !prev);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  padding: '7px 10px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  border: executionType === 'cron' ? '1px solid hsl(var(--secondary))' : '1px solid hsl(var(--border-color))',
+                  background: executionType === 'cron' ? 'hsl(var(--secondary)/0.15)' : 'hsl(var(--bg-card))',
+                  color: executionType === 'cron' ? 'hsl(var(--primary))' : 'hsl(var(--text-primary))'
+                }}
+              >
+                🕐 Scheduled {executionType === 'cron' ? (isSchedulePopoverOpen ? '▲' : '▼') : ''}
+              </button>
             </div>
-            {executionType === 'cron' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'hsl(var(--bg-card))', padding: '8px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
+            {executionType === 'cron' && isSchedulePopoverOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                marginTop: '6px',
+                zIndex: 100,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                background: 'hsl(var(--bg-card))',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                border: '1px solid hsl(var(--border-color))',
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+                minWidth: '285px'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid hsl(var(--border-color)/0.5)', paddingBottom: '4px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Clock size={12} /> Configure Schedule
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsSchedulePopoverOpen(false)}
+                    style={{ background: 'transparent', border: 'none', color: 'hsl(var(--text-muted))', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                    title="Close schedule picker"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <div style={{ display: 'flex', gap: '3px' }}>
                     {['Su','Mo','Tu','We','Th','Fr','Sa'].map((d, i) => {
@@ -2228,7 +2326,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           setCronDays(nextDays);
                           setCronExpression(compileFrontendCron(scheduleTime, nextDays));
                         }}
-                          style={{ padding: '3px 7px', borderRadius: '4px', border: '1px solid hsl(var(--border-color))', background: sel ? 'hsl(var(--secondary))' : 'hsl(var(--bg-card))', color: 'white', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>{d}</button>
+                          style={{ padding: '3px 7px', borderRadius: '4px', border: '1px solid hsl(var(--border-color))', background: sel ? 'hsl(var(--primary))' : 'hsl(var(--bg-card))', color: sel ? 'white' : 'hsl(var(--text-primary))', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>{d}</button>
                       );
                     })}
                   </div>
@@ -2236,30 +2334,30 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     setScheduleTime(e.target.value);
                     setCronExpression(compileFrontendCron(e.target.value, cronDays));
                   }}
-                    style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', padding: '4px 7px', color: 'white', fontSize: '11px' }} />
+                    style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', padding: '4px 7px', color: 'hsl(var(--text-primary))', fontSize: '11px' }} />
                   <span style={{ fontSize: '11px', color: 'hsl(var(--primary))', fontWeight: 600, background: 'hsl(var(--primary)/0.12)', border: '1px solid hsl(var(--primary)/0.25)', padding: '3px 8px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
                     {format12HourTime(scheduleTime)}
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))', fontWeight: 600 }}>Cron:</span>
-                  <input
-                    type="text"
-                    placeholder="0 9 * * 1"
-                    value={cronExpression || compileFrontendCron(scheduleTime, cronDays)}
-                    onChange={e => setCronExpression(e.target.value)}
-                    style={{ ...inpSt, padding: '3px 7px', fontSize: '11px', flex: 1, fontFamily: 'monospace' }}
-                  />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '2px' }}>
                   <button
                     type="button"
-                    onClick={() => {
-                      setCronDays([1]);
-                      setScheduleTime('09:00');
-                      setCronExpression('0 9 * * 1');
+                    onClick={() => setIsSchedulePopoverOpen(false)}
+                    style={{
+                      background: 'hsl(var(--primary))',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '5px',
+                      padding: '3px 9px',
+                      fontSize: '10px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px'
                     }}
-                    style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))', borderRadius: '4px', padding: '3px 6px', fontSize: '10px', cursor: 'pointer' }}
                   >
-                    Reset
+                    <Check size={11} /> Apply Schedule
                   </button>
                 </div>
               </div>
@@ -2267,7 +2365,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
           </div>
 
           {/* Right: action buttons */}
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'flex-end', flex: 1, minWidth: '260px', flexWrap: 'wrap' }}>
             {onCancel && <button type="button" onClick={onCancel} style={{ background: 'transparent', color: 'hsl(var(--text-secondary))', border: '1px solid hsl(var(--border-color))', borderRadius: '8px', padding: '10px 16px', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}>← Back</button>}
             <button
               type="button"
@@ -2275,7 +2373,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               disabled={isSubmitting || oauth.status === 'expired' || hasZeroBuyerStage}
               style={{
                 background: 'hsl(var(--bg-card))',
-                color: 'white',
+                color: 'hsl(var(--text-primary))',
                 border: '1px solid hsl(var(--primary))',
                 borderRadius: '8px',
                 padding: '10px 16px',
@@ -2291,11 +2389,11 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               }}
             >
               <Save size={15} color="hsl(var(--primary))" />
-              <span>{isSubmitting ? 'Saving...' : 'Save as Draft'}</span>
+              <span>{isSubmitting ? 'Saving...' : 'Save'}</span>
             </button>
             <button type="button" onClick={() => !hasZeroBuyerStage && setShowPreFlightModal(true)} disabled={impactMetrics.totalLots === 0 || oauth.status === 'expired' || hasZeroBuyerStage}
               style={{ background: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: (oauth.status === 'expired' || hasZeroBuyerStage) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? '0 4px 14px hsl(var(--primary)/0.35)' : 'none' }}>
-              <Play size={15} /> Launch Active Campaign
+              <Play size={15} /> Run
             </button>
           </div>
         </div>
@@ -2303,20 +2401,20 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
       {/* ══ SECTION 1: Campaign Setup & Strategy Template ════════════════════ */}
       <div id="campaign-template-section" style={card}>
-        <h3 style={h3st}><LayoutTemplate size={17} color="hsl(var(--primary))" /> 1. Stage-Gate Workflow Template & Campaign Setup</h3>
+        <h3 style={h3st}><LayoutTemplate size={17} color="hsl(var(--primary))" /> 1. Sales Cycle & Workflow Template</h3>
 
         {/* Campaign Cycle Metadata Fields */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '20px' }}>
           <div>
             <label style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>
-              Campaign Cycle Name
+              Campaign Cycle Name <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
             </label>
             <input
               type="text"
               value={workflowName}
               onChange={e => setWorkflowName(e.target.value)}
               placeholder="e.g. Q3 Surplus Liquidation Campaign"
-              style={inpSt}
+              style={{ ...inpSt, maxWidth: '220px' }}
             />
           </div>
           <div>
@@ -2343,31 +2441,31 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
           </div>
         </div>
 
-        <label style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '6px' }}>
+        <label style={{ fontSize: '12px', fontWeight: 800, color: '#0d47a1', display: 'block', marginBottom: '6px', letterSpacing: '0.01em' }}>
           Sales Strategy Template
         </label>
         <div ref={templateRef} style={{ position: 'relative', maxWidth: '480px', marginBottom: '16px' }}>
           <button type="button" onClick={() => setShowTemplateDrop(p => !p)}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))', border: `1px solid ${showTemplateDrop ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`, borderRadius: '10px', padding: '12px 16px', color: 'white', cursor: 'pointer', transition: 'border-color 0.15s' }}>
+            style={{ ...dropSt, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px', border: `1.5px solid ${showTemplateDrop ? 'hsl(var(--primary))' : 'rgba(33, 150, 243, 0.4)'}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ background: 'hsl(var(--secondary)/0.15)', color: 'hsl(var(--secondary))', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', border: '1px solid hsl(var(--secondary)/0.2)' }}>{selectedDef.badge}</span>
-              <span style={{ fontSize: '14px', fontWeight: 700 }}>{selectedDef.name}</span>
+              <span style={{ background: 'rgba(13, 71, 161, 0.12)', color: '#0d47a1', fontSize: '11px', fontWeight: 800, padding: '3px 9px', borderRadius: '8px', border: '1.5px solid rgba(13, 71, 161, 0.3)', boxShadow: '0 1px 3px rgba(13, 71, 161, 0.12)' }}>{selectedDef.badge}</span>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{selectedDef.name}</span>
             </div>
             {showTemplateDrop ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
           {showTemplateDrop && (
-            <div style={{ position: 'absolute', top: 'calc(100% + 5px)', left: 0, right: 0, zIndex: 50, background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' }}>
+            <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 50, background: 'hsl(var(--bg-card))', border: '1.5px solid rgba(144, 202, 249, 0.5)', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 14px 40px -4px rgba(13, 71, 161, 0.28), 0 6px 18px rgba(0,0,0,0.12)' }}>
               {TEMPLATE_DEFINITIONS.map(t => {
                 const sel = selectedTemplateKey === t.key;
                 return (
                   <div key={t.key} onClick={() => handleSelectTemplate(t.key)}
-                    style={{ padding: '13px 16px', cursor: 'pointer', background: sel ? 'hsl(var(--primary)/0.08)' : 'transparent', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background 0.12s' }}
-                    onMouseEnter={e => { if (!sel) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card))'; }}
+                    style={{ padding: '13px 16px', cursor: 'pointer', background: sel ? 'rgba(33, 150, 243, 0.08)' : 'transparent', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background 0.12s' }}
+                    onMouseEnter={e => { if (!sel) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card-hover))'; }}
                     onMouseLeave={e => { if (!sel) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
-                        <span style={{ background: 'hsl(var(--secondary)/0.15)', color: 'hsl(var(--secondary))', fontSize: '10px', fontWeight: 600, padding: '1px 7px', borderRadius: '8px' }}>{t.badge}</span>
-                        <span style={{ fontSize: '13px', fontWeight: 700 }}>{t.name}</span>
+                        <span style={{ background: 'rgba(13, 71, 161, 0.12)', color: '#0d47a1', fontSize: '10px', fontWeight: 800, padding: '2px 8px', borderRadius: '8px', border: '1px solid rgba(13, 71, 161, 0.25)' }}>{t.badge}</span>
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{t.name}</span>
                       </div>
                       <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', margin: 0, maxWidth: '380px' }}>{t.description}</p>
                     </div>
@@ -2423,10 +2521,10 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             </div>
 
             {/* Filter row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '12px' }}>
-              <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '12px' }}>
+              <div style={{ width: '160px' }}>
                 <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Category</label>
-                <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={inpSt}>
+                <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ ...dropSt, padding: '6px 10px', fontSize: '12px' }}>
                   <option value="">All Categories</option>
                   <option value="Dairy">Dairy</option>
                   <option value="Produce">Produce</option>
@@ -2435,13 +2533,13 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   <option value="Frozen Foods">Frozen Foods</option>
                 </select>
               </div>
-              <div>
+              <div style={{ width: '170px' }}>
                 <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Max RSL: <strong style={{ color: 'hsl(var(--warning))' }}>{maxRslFilter >= 1 ? '100% (All RSL)' : `${Math.round(maxRslFilter * 100)}%`}</strong></label>
                 <input type="range" min="0.05" max="1.00" step="0.05" value={maxRslFilter} onChange={e => setMaxRslFilter(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'hsl(var(--primary))' }} />
               </div>
-              <div>
+              <div style={{ width: '100px' }}>
                 <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Min Cases</label>
-                <input type="number" step="any" placeholder="0" value={minCasesFilter === 0 ? '' : minCasesFilter} onChange={e => setMinCasesFilter(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)} style={inpSt} />
+                <input type="number" step="any" placeholder="0" value={minCasesFilter === 0 ? '' : minCasesFilter} onChange={e => setMinCasesFilter(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)} style={{ ...inpSt, padding: '6px 10px', fontSize: '12px', width: '100%' }} />
               </div>
             </div>
 
@@ -2452,13 +2550,13 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   <div style={{ position: 'relative', flex: 1, minWidth: '140px' }}>
                     <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--text-muted))' }} />
                     <input type="text" placeholder="Search lots…" value={lotSearch} onChange={e => setLotSearch(e.target.value)}
-                      style={{ ...inpSt, paddingLeft: '26px', padding: '6px 6px 6px 26px', fontSize: '12px', borderRadius: '6px', background: 'hsl(var(--bg-card))' }} />
+                      style={{ ...inpSt, paddingLeft: '26px', padding: '6px 6px 6px 26px', fontSize: '12px', borderRadius: '6px' }} />
                   </div>
-                  <select value={lotDcFilter} onChange={e => setLotDcFilter(e.target.value)} style={{ ...inpSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px', background: 'hsl(var(--bg-card))' }}>
+                  <select value={lotDcFilter} onChange={e => setLotDcFilter(e.target.value)} style={{ ...dropSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px' }}>
                     <option value="">All DCs</option>
                     {[...new Set(activeLots.map((l: any) => typeof l.distributionCenterId === 'object' ? (l.distributionCenterId?.name || '') : (l.distributionCenterId || '')).filter(Boolean))].map(dc => <option key={dc} value={dc}>{dc}</option>)}
                   </select>
-                  <select value={lotCoaFilter} onChange={e => setLotCoaFilter(e.target.value)} style={{ ...inpSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px', background: 'hsl(var(--bg-card))' }}>
+                  <select value={lotCoaFilter} onChange={e => setLotCoaFilter(e.target.value)} style={{ ...dropSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px' }}>
                     <option value="all">All Compliance</option>
                     <option value="verified">COA Verified</option>
                     <option value="pending">COA Pending</option>
@@ -2687,7 +2785,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                 <select
                                   value={stage.discountType}
                                   onChange={e => updateStage(idx, { discountType: e.target.value as Stage['discountType'] })}
-                                  style={inpSt}
+                                  style={dropSt}
                                 >
                                   <option value="yield">AI Yield Optimizer</option>
                                   <option value="fixed">Fixed Markdown (% Off)</option>
@@ -2742,7 +2840,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                           const newUnit = e.target.value as 'd' | 'h' | 'm';
                                           updateStage(idx, { waitUnit: newUnit });
                                         }}
-                                        style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', padding: '4px 6px', color: 'white', fontSize: '11px', cursor: 'pointer' }}
+                                        style={{ ...dropSt, width: 'auto', padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }}
                                       >
                                         <option value="d">Days</option>
                                         <option value="h">Hours</option>
@@ -2764,89 +2862,61 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           {/* Divider */}
                           <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
 
-                          {/* Stage Email Template & Body Data Editor */}
+                          {/* Stage Email — Configure button + badge + modal */}
                           <div data-testid={`stage-${stage.stageIndex}-email-editor-section`}>
                             <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                              <Mail size={13} /> Stage Email Template & Body Data
+                              <Mail size={13} /> Stage Email
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '12px' }}>
-                              <div>
-                                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '5px' }}>
-                                  Stage Email Subject
-                                </label>
-                                <input
-                                  type="text"
-                                  data-testid={`stage-${stage.stageIndex}-subject-input`}
-                                  value={stage.emailSubject || emailSubject || ''}
-                                  onChange={e => updateStage(idx, { emailSubject: e.target.value })}
-                                  placeholder="Enter stage-specific subject line..."
-                                  style={{ ...inpSt, fontSize: '12px' }}
-                                />
-                              </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                              <button
+                                type="button"
+                                data-testid={`configure-stage-email-btn-${stage.stageIndex}`}
+                                onClick={() => setOpenStageEmailModalIdx(idx)}
+                                style={{ background: 'hsl(var(--primary)/0.12)', border: '1px solid hsl(var(--primary)/0.4)', color: 'hsl(var(--primary))', borderRadius: '8px', padding: '7px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                              >
+                                <Mail size={13} /> Configure Stage Email
+                              </button>
 
-                              <div>
-                                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '5px' }}>
-                                  Stage Template Preset
-                                </label>
-                                <select
-                                  data-testid={`stage-${stage.stageIndex}-template-select`}
-                                  value={stage.emailTemplateId || selectedTemplateKey}
-                                  onChange={e => {
-                                    const tId = e.target.value;
-                                    const matchedTpl = centralTemplates.find((t: any) => t.templateId === tId || t._id === tId);
-                                    const newBody = matchedTpl ? matchedTpl.bodyHtml : DEFAULT_EMAIL_BODY_HTML;
-                                    updateStage(idx, { emailTemplateId: tId, emailBodyHtml: newBody });
-                                  }}
-                                  style={{ ...inpSt, fontSize: '12px' }}
+                              {(stage.emailSubject || stage.emailBodyHtml) && (
+                                <span
+                                  data-testid={`email-configured-badge-${stage.stageIndex}`}
+                                  style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--success))', background: 'hsl(var(--success)/0.12)', border: '1px solid hsl(var(--success)/0.3)', borderRadius: '12px', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 >
-                                  <option value="default">Standard Liquidation Offer Sheet</option>
-                                  <option value="short-dated-auction">Urgent Short-Dated Surplus Alert</option>
-                                  <option value="direct-donation-notice">Food Bank Direct Transfer Notice</option>
-                                  {centralTemplates.map((t: any) => (
-                                    <option key={t.templateId || t._id} value={t.templateId}>
-                                      {t.name} ({t.category || 'Custom'})
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-                            </div>
+                                  <CheckCircle size={12} /> Email Configured ✓
+                                </span>
+                              )}
 
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                              <span style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>
-                                Stage Email Body Content (TipTap WYSIWYG Editor)
-                              </span>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                {stage.emailBodyHtml && (
-                                  <button
-                                    type="button"
-                                    onClick={() => updateStage(idx, { emailBodyHtml: undefined, emailSubject: undefined, emailTemplateId: undefined })}
-                                    style={{ background: 'none', border: 'none', color: 'hsl(var(--warning))', fontSize: '11px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                                  >
-                                    ↺ Reset to Campaign Default Body
-                                  </button>
-                                )}
+                              {(stage.emailSubject || stage.emailBodyHtml) && (
                                 <button
                                   type="button"
-                                  data-testid={`edit-stage-${stage.stageIndex}-body-btn`}
-                                  onClick={() => setActiveStageEmailEditorIdx(activeStageEmailEditorIdx === idx ? null : idx)}
-                                  style={{ background: 'hsl(var(--primary)/0.15)', border: '1px solid hsl(var(--primary)/0.3)', color: 'hsl(var(--primary))', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                                  onClick={() => updateStage(idx, { emailBodyHtml: undefined, emailSubject: undefined, emailTemplateId: undefined })}
+                                  style={{ background: 'none', border: 'none', color: 'hsl(var(--text-muted))', fontSize: '11px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
                                 >
-                                  {activeStageEmailEditorIdx === idx ? 'Close Editor ^' : '✏️ Edit Stage Email Body Data'}
+                                  Clear
                                 </button>
-                              </div>
+                              )}
                             </div>
 
-                            {activeStageEmailEditorIdx === idx && (
-                              <div style={{ marginTop: '8px', background: 'white', borderRadius: '8px', padding: '8px', border: '1px solid hsl(var(--border-color))' }}>
-                                <WorkflowTipTapBodyEditor
-                                  contentHtml={stage.emailBodyHtml || emailBodyHtml}
-                                  onChange={(html) => updateStage(idx, { emailBodyHtml: html })}
-                                  onOpenDynamicTokenConfig={() => setShowDynamicDataPanel(true)}
-                                  disabled={false}
-                                />
-                              </div>
-                            )}
+                            {/* Per-stage email modal */}
+                            <StageEmailModal
+                              open={openStageEmailModalIdx === idx}
+                              stageIndex={stage.stageIndex}
+                              initialData={{
+                                emailSubject: stage.emailSubject || '',
+                                emailBodyHtml: stage.emailBodyHtml || '',
+                                emailTemplateId: stage.emailTemplateId || 'default',
+                              }}
+                              onSave={(data) => {
+                                updateStage(idx, {
+                                  emailSubject: data.emailSubject,
+                                  emailBodyHtml: data.emailBodyHtml,
+                                  emailTemplateId: data.emailTemplateId,
+                                });
+                                setOpenStageEmailModalIdx(null);
+                              }}
+                              onClose={() => setOpenStageEmailModalIdx(null)}
+                            />
                           </div>
                         </div>
                       )}
@@ -2897,11 +2967,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   <h3 style={{ ...h3st, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Mail size={17} color="hsl(var(--primary))" />
                     <span>4. Email Template</span>
-                    <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))', fontWeight: 500 }}>(Attach Centralized Email Template)</span>
                   </h3>
-                  <span style={{ fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '6px', background: 'hsl(var(--primary)/0.12)', color: 'hsl(var(--primary))', border: '1px solid hsl(var(--primary)/0.3)' }}>
-                    CONCEPT C – Minimal Productivity Layout (Streamlined)
-                  </span>
                 </div>
                 <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '4px' }}>
                   Select centralized templates, customize dynamic preview context, and inspect responsive desktop & mobile rendering.
@@ -2993,14 +3059,14 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                         if (matched && matched.bodyHtml) {
                           setEmailBodyHtml(matched.bodyHtml);
                         } else if (key === 'short-dated-auction') {
-                          setEmailBodyHtml(`<div style="font-family: sans-serif; padding: 20px; color: hsl(var(--bg-card)); max-width: 600px; margin: 0 auto; border: 1px solid hsl(var(--error) / 0.3); border-radius: 8px; background: hsl(var(--bg-card));"><div style="background-color: hsl(var(--error)); color: white; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; text-align: center; margin-bottom: 16px;">⚡ LIMITED TIME LIQUIDATION AUCTION</div><p>Hi <strong>{{buyer_name}}</strong>,</p><p>The following short-dated inventory has been scheduled for priority liquidation. Special offer: <strong>{{current_stage_discount}}</strong>. Response deadline: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><div style="text-align: center; margin-top: 24px;"><a href="{{quick_bid_link}}" style="background-color: hsl(var(--error)); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Place Auction Bid Now</a></div></div>`);
+                          setEmailBodyHtml(`<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid hsl(var(--error) / 0.3); border-radius: 8px; background: hsl(var(--bg-card));"><div style="background-color: hsl(var(--error)); color: white; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; text-align: center; margin-bottom: 16px;">⚡ LIMITED TIME LIQUIDATION AUCTION</div><p>Hi <strong>{{buyer_name}}</strong>,</p><p>The following short-dated inventory has been scheduled for priority liquidation. Special offer: <strong>{{current_stage_discount}}</strong>. Response deadline: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><div style="text-align: center; margin-top: 24px;"><a href="{{quick_bid_link}}" style="background-color: hsl(var(--error)); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Place Auction Bid Now</a></div></div>`);
                         } else if (key === 'direct-donation-notice') {
-                          setEmailBodyHtml(`<div style="font-family: sans-serif; padding: 20px; color: hsl(var(--bg-card)); max-width: 600px; margin: 0 auto; border: 1px solid hsl(var(--success) / 0.3); border-radius: 8px; background: hsl(var(--bg-card-hover));"><h2 style="color: hsl(var(--success)); margin-top: 0;">🌱 Community Surplus Donation | {{supplier_name}}</h2><p>Dear <strong>{{buyer_name}}</strong> partner,</p><p>We are pleased to allocate the following fresh surplus products for zero-cost donation transfer. Response window: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><p style="font-size: 13px; color: hsl(var(--success)); text-align: center; margin-top: 20px; font-weight: 600;">Thank you for helping divert quality food from landfill to families in need.</p></div>`);
+                          setEmailBodyHtml(`<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid hsl(var(--success) / 0.3); border-radius: 8px; background: hsl(var(--bg-card-hover));"><h2 style="color: hsl(var(--success)); margin-top: 0;">🌱 Community Surplus Donation | {{supplier_name}}</h2><p>Dear <strong>{{buyer_name}}</strong> partner,</p><p>We are pleased to allocate the following fresh surplus products for zero-cost donation transfer. Response window: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><p style="font-size: 13px; color: hsl(var(--success)); text-align: center; margin-top: 20px; font-weight: 600;">Thank you for helping divert quality food from landfill to families in need.</p></div>`);
                         } else {
                           setEmailBodyHtml(DEFAULT_EMAIL_BODY_HTML);
                         }
                       }}
-                      style={{ ...inpSt, fontWeight: 600, fontSize: '12px', width: '100%', maxWidth: '500px' }}
+                      style={{ ...dropSt, fontWeight: 600, fontSize: '12px', width: '100%', maxWidth: '500px' }}
                       data-testid="attach-email-template-select"
                     >
                       <optgroup label="System Default Email Templates">
@@ -3693,12 +3759,12 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               }}
             >
               <Save size={15} color="hsl(var(--primary))" />
-              <span>{isSubmitting ? 'Saving...' : 'Save as Draft'}</span>
+              <span>{isSubmitting ? 'Saving...' : 'Save'}</span>
             </button>
 
             <button type="button" onClick={() => !hasZeroBuyerStage && setShowPreFlightModal(true)} disabled={impactMetrics.totalLots === 0 || oauth.status === 'expired' || hasZeroBuyerStage}
               style={{ flex: 1, background: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: 'white', border: 'none', borderRadius: '10px', padding: '13px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: (oauth.status === 'expired' || hasZeroBuyerStage) ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? '0 6px 20px hsl(var(--primary)/0.3)' : 'none' }}>
-              <Play size={15} /> Launch Active Campaign
+              <Play size={15} /> Run
             </button>
           </div>
         </div>
@@ -3723,118 +3789,201 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
       {/* ══ BUYER SEGMENT ROSTER INSPECTION MODAL ════════════════════════════ */}
       {inspectingSegment && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 9999,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: 'hsl(var(--bg-card))',
-            border: '1px solid hsl(var(--border-color))',
-            borderRadius: '12px',
-            width: '600px',
-            maxWidth: '90vw',
-            maxHeight: '85vh',
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Buyer Segment Data"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: `
+              radial-gradient(ellipse at 12% 18%, rgba(227, 242, 253, 0.75) 0%, transparent 50%),
+              radial-gradient(ellipse at 88% 22%, rgba(144, 202, 249, 0.65) 0%, transparent 52%),
+              radial-gradient(ellipse at 50% 50%, rgba(33, 150, 243, 0.22) 0%, transparent 70%),
+              radial-gradient(ellipse at 20% 82%, rgba(13, 71, 161, 0.08) 0%, transparent 50%),
+              rgba(255, 255, 255, 0.75)
+            `,
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
             display: 'flex',
-            flexDirection: 'column',
-            boxShadow: '0 12px 32px rgba(0,0,0,0.5)',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              padding: '16px 20px',
-              borderBottom: '1px solid hsl(var(--border-color))',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            overflow: 'hidden',
+          }}
+          onClick={(e) => { if (e.target === e.currentTarget) setInspectingSegment(null); }}
+        >
+          <div
+            style={{
+              backgroundColor: '#F4F8FC',
+              border: '2px solid #2196F3',
+              borderRadius: '16px',
+              width: '680px',
+              maxWidth: '92vw',
+              maxHeight: '85vh',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Eye size={18} color="hsl(var(--primary))" />
-                <h3 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>
-                  Buyer Segment Data: {reduxBuyerLists.find(s => s._id === inspectingSegment || s.type === inspectingSegment)?.name || inspectingSegment}
-                </h3>
+              flexDirection: 'column',
+              boxShadow: '0 24px 60px rgba(13, 71, 161, 0.25), 0 0 35px rgba(33, 150, 243, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Radiant Blue Top Accent Bar */}
+            <div
+              style={{
+                height: '5px',
+                width: '100%',
+                background: 'linear-gradient(90deg, #E3F2FD 0%, #90CAF9 25%, #2196F3 65%, #0D47A1 100%)',
+              }}
+            />
+
+            {/* ── Blue Theme Header ── */}
+            <div
+              style={{
+                padding: '16px 24px',
+                background: 'linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #1E88E5 100%)',
+                borderBottom: '1px solid rgba(33, 150, 243, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                color: '#FFFFFF',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '8px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    border: '1px solid rgba(255, 255, 255, 0.35)',
+                  }}
+                >
+                  <Eye size={18} color="#FFFFFF" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#FFFFFF', letterSpacing: '-0.01em' }}>
+                    Buyer Segment Data: {reduxBuyerLists.find(s => s._id === inspectingSegment || s.type === inspectingSegment)?.name || inspectingSegment}
+                  </h3>
+                  <span style={{ fontSize: '11px', color: '#E3F2FD', fontWeight: 500 }}>
+                    Target Buyer List Roster Inspection
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
+                aria-label="Close modal"
                 onClick={() => setInspectingSegment(null)}
-                style={{ background: 'none', border: 'none', color: 'hsl(var(--text-muted))', cursor: 'pointer' }}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  border: '1px solid rgba(255, 255, 255, 0.35)',
+                  borderRadius: '8px',
+                  padding: '6px 8px',
+                  cursor: 'pointer',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
               >
-                <X size={18} />
+                <X size={16} />
               </button>
             </div>
 
-            <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '14px', flex: 1, overflowY: 'auto' }}>
+            {/* ── Modal Body Content ── */}
+            <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px', flex: 1, overflowY: 'auto' }}>
               <input
                 type="text"
                 placeholder="Search buyers by name or email..."
                 value={inspectSearch}
                 onChange={e => setInspectSearch(e.target.value)}
                 style={{
-                  padding: '8px 12px',
-                  borderRadius: '6px',
-                  border: '1px solid hsl(var(--border-color))',
-                  backgroundColor: 'hsl(var(--bg-card))',
-                  color: 'white',
-                  fontSize: '0.85rem'
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(33, 150, 243, 0.35)',
+                  backgroundColor: '#FFFFFF',
+                  color: '#0F172A',
+                  fontSize: '0.85rem',
+                  outline: 'none',
+                  boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)',
                 }}
               />
 
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))', textAlign: 'left' }}>
-                    <th style={{ padding: '8px' }}>Name / Company</th>
-                    <th style={{ padding: '8px' }}>Email Address</th>
-                    <th style={{ padding: '8px' }}>Registration Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(() => {
-                    const matchedList = reduxBuyerLists.find(s => s._id === inspectingSegment || s.type === inspectingSegment);
-                    
-                    const targetList = matchedList
-                      ? (matchedList.buyerIds || []).map((b: any) => {
-                          if (typeof b === 'object' && b !== null) return b;
-                          const bId = b?.toString();
-                          return buyers.find(ub => (ub._id || ub.id)?.toString() === bId) || { _id: bId, name: 'Registered Buyer', email: bId };
-                        })
-                      : buyers;
+              <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(33, 150, 243, 0.25)', boxShadow: '0 2px 8px rgba(13, 71, 161, 0.05)' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem', background: '#FFFFFF' }}>
+                  <thead>
+                    <tr style={{ background: '#F0F7FF', borderBottom: '2px solid rgba(33, 150, 243, 0.3)', color: '#0D47A1', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <th style={{ padding: '10px 12px', fontWeight: 700 }}>Name / Company</th>
+                      <th style={{ padding: '10px 12px', fontWeight: 700 }}>Email Address</th>
+                      <th style={{ padding: '10px 12px', fontWeight: 700 }}>Registration Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const matchedList = reduxBuyerLists.find(s => s._id === inspectingSegment || s.type === inspectingSegment);
+                      
+                      const targetList = matchedList
+                        ? (matchedList.buyerIds || []).map((b: any) => {
+                            if (typeof b === 'object' && b !== null) return b;
+                            const bId = b?.toString();
+                            return buyers.find(ub => (ub._id || ub.id)?.toString() === bId) || { _id: bId, name: 'Registered Buyer', email: bId };
+                          })
+                        : buyers;
 
-                    const filtered = targetList.filter((b: any) => {
-                      if (!inspectSearch) return true;
-                      const q = inspectSearch.toLowerCase();
-                      return (b.companyName || b.name || '').toLowerCase().includes(q) || (b.email || '').toLowerCase().includes(q);
-                    });
+                      const filtered = targetList.filter((b: any) => {
+                        if (!inspectSearch) return true;
+                        const q = inspectSearch.toLowerCase();
+                        return (b.companyName || b.name || '').toLowerCase().includes(q) || (b.email || '').toLowerCase().includes(q);
+                      });
 
-                    if (filtered.length === 0) {
-                      return (
-                        <tr>
-                          <td colSpan={3} style={{ padding: '24px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '0.85rem' }}>
-                            {matchedList ? `No buyers assigned to ${matchedList.name} (0 members configured).` : 'No buyers found.'}
+                      if (filtered.length === 0) {
+                        return (
+                          <tr>
+                            <td colSpan={3} style={{ padding: '24px', textAlign: 'center', color: '#64748B', fontSize: '0.85rem' }}>
+                              {matchedList ? `No buyers assigned to ${matchedList.name} (0 members configured).` : 'No buyers found.'}
+                            </td>
+                          </tr>
+                        );
+                      }
+
+                      return filtered.map((b: any, idx: number) => (
+                        <tr key={b._id || idx} style={{ borderBottom: '1px solid rgba(33, 150, 243, 0.15)', background: idx % 2 === 0 ? '#FFFFFF' : '#FAFCFF' }}>
+                          <td style={{ padding: '10px 12px', fontWeight: 600, color: '#0F172A' }}>{b.companyName || b.name || 'Retail Partner'}</td>
+                          <td style={{ padding: '10px 12px', color: '#1E88E5', fontWeight: 500 }}>{b.email || 'n/a'}</td>
+                          <td style={{ padding: '10px 12px', color: '#64748B' }}>
+                            {b.createdAt ? new Date(b.createdAt).toLocaleDateString() : 'Jul 15, 2026'}
                           </td>
                         </tr>
-                      );
-                    }
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
-                    return filtered.map((b: any, idx: number) => (
-                      <tr key={b._id || idx} style={{ borderBottom: '1px solid hsl(var(--border-color)/30%)' }}>
-                        <td style={{ padding: '10px 8px', fontWeight: 600 }}>{b.companyName || b.name || 'Retail Partner'}</td>
-                        <td style={{ padding: '10px 8px', color: 'hsl(var(--primary))' }}>{b.email || 'n/a'}</td>
-                        <td style={{ padding: '10px 8px', color: 'hsl(var(--text-muted))' }}>
-                          {b.createdAt ? new Date(b.createdAt).toLocaleDateString() : 'Jul 15, 2026'}
-                        </td>
-                      </tr>
-                    ));
-                  })()}
-                </tbody>
-              </table>
+            {/* ── Footer ── */}
+            <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(33, 150, 243, 0.2)', background: '#F0F7FF', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setInspectingSegment(null)}
+                style={{
+                  background: 'linear-gradient(135deg, #2196F3 0%, #0D47A1 100%)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '7px 18px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(33, 150, 243, 0.4)',
+                }}
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
@@ -3862,7 +4011,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 <X size={18} />
               </button>
             </div>
-            <div style={{ padding: '20px', overflowY: 'auto', flex: 1, backgroundColor: 'hsl(var(--bg-card))', color: 'white', fontSize: '0.85rem', fontFamily: 'sans-serif' }}>
+            <div style={{ padding: '20px', overflowY: 'auto', flex: 1, backgroundColor: 'hsl(var(--bg-card))', color: 'hsl(var(--text-primary))', fontSize: '0.85rem', fontFamily: 'sans-serif' }}>
               <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', padding: '14px', borderRadius: '8px', marginBottom: '16px' }}>
                 <div><strong>To:</strong> {donatingEntities[0]?.email || 'donations@feedingamerica.org'}</div>
                 <div><strong>Subject:</strong> {donationEmailSubject.replace(/\{\{lot_number\}\}/g, 'LOT-9921').replace(/\{\{cases\}\}/g, '300')}</div>

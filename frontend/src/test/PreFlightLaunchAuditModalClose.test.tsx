@@ -38,7 +38,7 @@ describe('Pre-Flight Automation Launch Audit Modal Closing', () => {
       />
     );
 
-    const launchBtns = await screen.findAllByRole('button', { name: /Launch Active Campaign/i });
+    const launchBtns = await screen.findAllByRole('button', { name: /Launch Active Campaign|^Run$/i });
     await waitFor(() => expect(launchBtns[0]).not.toBeDisabled());
 
     fireEvent.click(launchBtns[0]);
@@ -76,7 +76,7 @@ describe('Pre-Flight Automation Launch Audit Modal Closing', () => {
       />
     );
 
-    const launchBtns = await screen.findAllByRole('button', { name: /Launch Active Campaign/i });
+    const launchBtns = await screen.findAllByRole('button', { name: /Launch Active Campaign|^Run$/i });
     await waitFor(() => expect(launchBtns[0]).not.toBeDisabled());
 
     fireEvent.click(launchBtns[0]);

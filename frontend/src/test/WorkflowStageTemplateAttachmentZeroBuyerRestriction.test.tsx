@@ -71,8 +71,8 @@ describe('Issue #03 — Workflow Stage Template Attachment & Zero-Buyer Selectio
     const customListModeBtn = screen.getAllByRole('button', { name: /Custom List/i })[0];
     fireEvent.click(customListModeBtn);
 
-    const saveDraftBtns = screen.getAllByRole('button', { name: /Save as Draft/i });
-    const launchBtns = screen.getAllByRole('button', { name: /Launch Active Campaign/i });
+    const saveDraftBtns = screen.getAllByRole('button', { name: /Save as Draft|Save/i });
+    const launchBtns = screen.getAllByRole('button', { name: /Launch Active Campaign|^Run$/i });
 
     // Launch buttons should be disabled due to zero buyers guardrail
     expect(launchBtns.length).toBeGreaterThan(0);

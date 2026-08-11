@@ -128,11 +128,11 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
   return (
     <div
       data-testid="workflow-email-builder-container"
-      className="bg-white rounded-xl border shadow-sm text-[hsl(var(--text-secondary))] font-sans overflow-hidden relative" style={{ borderColor: 'hsl(var(--border-color))' }}
+      className="bg-white rounded-xl border border-slate-200 shadow-sm text-[hsl(var(--text-secondary))] font-sans overflow-hidden relative" style={{ borderColor: 'hsl(var(--border-color))' }}
       style={{
         backgroundColor: 'var(--surface-card, white)',
         borderColor: 'var(--border, hsl(var(--border-color)))',
-        color: 'var(--text-on-surface, hsl(var(--bg-card)))',
+        color: 'var(--text-on-surface, hsl(var(--text-primary)))',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         position: 'relative'
       }}
@@ -289,7 +289,7 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
 
         {/* TipTap Text Editor for Email Body */}
         <div className="space-y-2">
-          <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--text-secondary))' }}>
+          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700" style={{ color: 'hsl(var(--text-secondary))' }}>
             Email Body (Rich Text TipTap Editor)
           </label>
 

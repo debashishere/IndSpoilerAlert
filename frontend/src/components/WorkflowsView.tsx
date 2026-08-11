@@ -1279,7 +1279,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                                       </span>
                                     </div>
 
-                                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'white' }}>
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                                       {stg.name || `Stage ${sIdx + 1}`}
                                     </div>
 
@@ -1365,7 +1365,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                                     UP NEXT
                                   </span>
                                 </div>
-                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'white' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                                   {donationConfig?.enabled !== false ? 'Auto-Donate / Markdown' : 'Escalate Review'}
                                 </div>
                                 <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))', marginTop: 'auto' }}>
@@ -2017,7 +2017,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Clock size={20} color="hsl(var(--primary))" />
                 <div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'white' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'hsl(var(--text-primary))' }}>
                     Workflow Execution Timeline Data Snapshot
                   </h3>
                   <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
@@ -2150,7 +2150,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                   <div>Status: <span style={{ fontWeight: 700, textTransform: 'uppercase', color: inspectingRun.status === 'awarded' ? 'hsl(var(--success))' : 'hsl(var(--warning))' }}>{inspectingRun.status || 'evaluating'}</span></div>
                   {inspectingRun.resolution?.action && (
                     <div style={{ marginTop: '4px', color: 'hsl(var(--text-secondary))' }}>
-                      Resolution Action: <strong style={{ color: 'white' }}>{inspectingRun.resolution.action}</strong>
+                      Resolution Action: <strong style={{ color: 'hsl(var(--text-primary))' }}>{inspectingRun.resolution.action}</strong>
                     </div>
                   )}
                 </div>
@@ -2187,11 +2187,11 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Box size={20} color="hsl(var(--primary))" />
                   <div>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'white' }}>
-                      Matched Inventory Scope
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'hsl(var(--text-primary))' }}>
+                      Matched Inventory Scope & Bidding Audit
                     </h3>
                     <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                      Strategy: <strong style={{ color: 'hsl(var(--primary))' }}>{inspectingMatchedCampaign.name || 'Saved Campaign'}</strong> • Category Filter: <span style={{ textTransform: 'capitalize', color: 'white' }}>{inspectingMatchedCampaign.inventoryFilters?.category || 'All Categories'}</span>
+                      Strategy: <strong style={{ color: 'hsl(var(--primary))' }}>{inspectingMatchedCampaign.name || 'Saved Campaign'}</strong> • Category Filter: <span style={{ textTransform: 'capitalize', color: 'hsl(var(--text-primary))' }}>{inspectingMatchedCampaign.inventoryFilters?.category || 'All Categories'}</span>
                     </div>
                   </div>
                 </div>
@@ -2211,7 +2211,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                   <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))' }}>Total Cases</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white' }}>${totalValue.toLocaleString()}</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'hsl(var(--text-primary))' }}>${totalValue.toLocaleString()}</div>
                   <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))' }}>Est. COGS Value</div>
                 </div>
               </div>
@@ -2301,11 +2301,11 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <Layers size={22} color="hsl(var(--primary))" />
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'white' }}>
-                      Workflow Strategy Stage & Action Timeline
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'hsl(var(--text-primary))' }}>
+                      Strategy Action Breakdown & Stage Pipeline
                     </h3>
                     <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                      Strategy: <strong style={{ color: 'hsl(var(--primary))' }}>{c.name || c.templateName}</strong> • Template: <span style={{ textTransform: 'capitalize', color: 'white' }}>{(c.templateName || 'custom').replace(/_/g, ' ')}</span>
+                      Strategy: <strong style={{ color: 'hsl(var(--primary))' }}>{c.name || c.templateName}</strong> • Template: <span style={{ textTransform: 'capitalize', color: 'hsl(var(--text-primary))' }}>{(c.templateName || 'custom').replace(/_/g, ' ')}</span>
                     </div>
                   </div>
                 </div>
@@ -2322,7 +2322,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                 </div>
                 <div>
                   <div style={{ fontSize: '0.68rem', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', fontWeight: 700 }}>Timezone / Timing</div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'white', marginTop: '2px' }}>{sched.timezone || 'UTC'} {sched.timeOfDay ? `@ ${sched.timeOfDay}` : ''}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'hsl(var(--text-primary))', marginTop: '2px' }}>{sched.timezone || 'UTC'} {sched.timeOfDay ? `@ ${sched.timeOfDay}` : ''}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '0.68rem', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', fontWeight: 700 }}>Evaluation Window</div>
@@ -2397,7 +2397,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                                 Duration: {formatDurationHours(stg.waitHours || 24)}
                               </span>
                             </div>
-                            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'hsl(var(--text-primary))', display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <Zap size={16} style={{ color: 'hsl(var(--warning))' }} /> {stg.name || `Stage ${sIdx + 1}`}
                             </div>
                             <div style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', lineHeight: 1.4 }}>
@@ -2414,7 +2414,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                               </div>
                               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span style={{ color: 'hsl(var(--text-muted))' }}>Evaluation Window:</span>
-                                <strong style={{ color: 'white' }}>{formatDurationHours(stg.waitHours || 24)}</strong>
+                                <strong style={{ color: 'hsl(var(--text-primary))' }}>{formatDurationHours(stg.waitHours || 24)}</strong>
                               </div>
                             </div>
                           </div>
@@ -2429,7 +2429,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                           </span>
                           <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', fontWeight: 600 }}>Final Resolution</span>
                         </div>
-                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'hsl(var(--text-primary))', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <CheckCircle2 size={16} style={{ color: 'hsl(var(--error))' }} /> Resolution & Fallback Diversion
                         </div>
                         <div style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', lineHeight: 1.4 }}>
@@ -2459,7 +2459,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Mail size={14} /> Stage 1 Email Template & Message Payload
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'white', fontWeight: 600, marginBottom: '6px' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-primary))', fontWeight: 600, marginBottom: '6px' }}>
                     Subject: {email.subject || 'Liquidation Opportunity Notification'}
                   </div>
                   <div style={{
@@ -2478,17 +2478,17 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
 
                 {/* Strategy Inventory Filters Box */}
                 <div style={{ background: 'hsl(var(--bg-card))', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color))' }}>
-                  <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Sliders size={14} /> Matched Inventory Filter Criteria
+                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-primary))', fontWeight: 600, marginBottom: '6px' }}>
+                    Strategy Filter Parameters:
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '0.78rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.78rem' }}>
                     <div>
-                      <span style={{ color: 'hsl(var(--text-muted))' }}>Category Filter: </span>
-                      <strong style={{ color: 'white', textTransform: 'capitalize' }}>{c.inventoryFilters?.category || 'All Categories'}</strong>
+                      <span style={{ color: 'hsl(var(--text-muted))' }}>Category: </span>
+                      <strong style={{ color: 'hsl(var(--text-primary))', textTransform: 'capitalize' }}>{c.inventoryFilters?.category || 'All Categories'}</strong>
                     </div>
                     <div>
-                      <span style={{ color: 'hsl(var(--text-muted))' }}>Max Expiration (RSL): </span>
-                      <strong style={{ color: 'white' }}>{c.inventoryFilters?.maxDaysUntilExpiration ? `${c.inventoryFilters.maxDaysUntilExpiration} Days` : 'Any RSL'}</strong>
+                      <span style={{ color: 'hsl(var(--text-muted))' }}>Expiration Cutoff: </span>
+                      <strong style={{ color: 'hsl(var(--text-primary))' }}>{c.inventoryFilters?.maxDaysUntilExpiration ? `${c.inventoryFilters.maxDaysUntilExpiration} Days` : 'Any RSL'}</strong>
                     </div>
                     <div>
                       <span style={{ color: 'hsl(var(--text-muted))' }}>Minimum Yield Target: </span>
