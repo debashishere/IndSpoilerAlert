@@ -31,27 +31,27 @@ export function compileClientPreview(
 
   if (!mergedContext.inventory_table) {
     mergedContext.inventory_table =
-      `<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; text-align: left; border: 1px solid #cbd5e1; background-color: #ffffff;">
+      `<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; text-align: left; border: 1px solid hsl(var(--border-color)); background-color: white;">
         <thead>
-          <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
-            <th style="padding: 8px 12px; color: #475569;">SKU</th>
-            <th style="padding: 8px 12px; color: #475569;">Description</th>
-            <th style="padding: 8px 12px; color: #475569; text-align: right;">Cases</th>
-            <th style="padding: 8px 12px; color: #475569; text-align: center;">Expiry</th>
+          <tr style="background-color: hsl(var(--bg-card-hover)); border-bottom: 2px solid hsl(var(--border-color));">
+            <th style="padding: 8px 12px; color: hsl(var(--text-muted));">SKU</th>
+            <th style="padding: 8px 12px; color: hsl(var(--text-muted));">Description</th>
+            <th style="padding: 8px 12px; color: hsl(var(--text-muted)); text-align: right;">Cases</th>
+            <th style="padding: 8px 12px; color: hsl(var(--text-muted)); text-align: center;">Expiry</th>
           </tr>
         </thead>
         <tbody>
-          <tr style="border-bottom: 1px solid #e2e8f0;">
+          <tr style="border-bottom: 1px solid hsl(var(--border-color));">
             <td style="padding: 8px 12px;">SKU-9901</td>
             <td style="padding: 8px 12px; font-weight: 500;">Organic Almond Milk 1L</td>
             <td style="padding: 8px 12px; font-weight: bold; text-align: right;">240</td>
-            <td style="padding: 8px 12px; color: #ef4444; text-align: center; font-weight: 600;">12 Days</td>
+            <td style="padding: 8px 12px; color: hsl(var(--error)); text-align: center; font-weight: 600;">12 Days</td>
           </tr>
           <tr>
             <td style="padding: 8px 12px;">SKU-9904</td>
             <td style="padding: 8px 12px; font-weight: 500;">Greek Yogurt 500g</td>
             <td style="padding: 8px 12px; font-weight: bold; text-align: right;">150</td>
-            <td style="padding: 8px 12px; color: #f59e0b; text-align: center; font-weight: 600;">18 Days</td>
+            <td style="padding: 8px 12px; color: hsl(var(--warning)); text-align: center; font-weight: 600;">18 Days</td>
           </tr>
         </tbody>
       </table>`;

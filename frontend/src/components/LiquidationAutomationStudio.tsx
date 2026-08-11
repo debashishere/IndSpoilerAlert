@@ -286,13 +286,13 @@ export function resolveStagesWithBuyerLists(stages: Stage[], buyerLists: any[]):
   });
 }
 
-export const DEFAULT_EMAIL_BODY_HTML = `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
-<h2 style="color: #4f46e5; margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
+export const DEFAULT_EMAIL_BODY_HTML = `<div style="font-family: sans-serif; padding: 20px; color: hsl(var(--bg-card)); max-width: 600px; margin: 0 auto; border: 1px solid hsl(var(--border-color)); border-radius: 8px; background: white;">
+<h2 style="color: hsl(var(--primary)); margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
 <p>Hello <strong>{{buyer_name}}</strong>,</p>
 <p>We have immediate surplus inventory available for liquidation. Stage offer: <strong>{{current_stage_discount}}</strong> (Response window: {{expiry_hours}}). Please review the itemized offer sheet below:</p>
 <div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
 <br/>
-<p style="text-align: center;"><a href="{{quick_bid_link}}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Submit 1-Click Bid</a></p>
+<p style="text-align: center;"><a href="{{quick_bid_link}}" style="background-color: hsl(var(--primary)); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Submit 1-Click Bid</a></p>
 </div>`;
 
 const DEFAULT_STAGES: Stage[] = [
@@ -573,11 +573,11 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
   };
 
   const inputSt: React.CSSProperties = {
-    background: 'hsl(223 47% 8%)',
+    background: 'hsl(var(--bg-card))',
     border: '1px solid hsl(var(--border-color))',
     borderRadius: '6px',
     padding: '7px 9px',
-    color: '#fff',
+    color: 'white',
     fontSize: '12px',
     width: '100%',
     boxSizing: 'border-box',
@@ -587,7 +587,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
 
       {/* Mode toggle */}
-      <div style={{ display: 'flex', gap: '0', background: 'hsl(223 47% 8%)', borderRadius: '8px', padding: '3px', border: '1px solid hsl(var(--border-color))' }}>
+      <div style={{ display: 'flex', gap: '0', background: 'hsl(var(--bg-card))', borderRadius: '8px', padding: '3px', border: '1px solid hsl(var(--border-color))' }}>
         {(['list', 'custom'] as const).map(mode => {
           const isActive = mode === 'list' ? isListMode : stage.buyerMode === 'custom';
           return (
@@ -607,7 +607,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
                 background: isActive
                   ? 'hsl(var(--primary))'
                   : 'transparent',
-                color: isActive ? '#fff' : 'hsl(var(--text-muted))',
+                color: isActive ? 'white' : 'hsl(var(--text-muted))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -700,7 +700,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
                 className="btn btn-secondary"
                 onClick={() => onInspectSegment && onInspectSegment(stage.buyerListId || stage.buyerSegment || '')}
                 title="Inspect Buyer Data (Name, Email, Reg Date)"
-                style={{ padding: '7px 10px', display: 'inline-flex', alignItems: 'center', gap: '4px', height: '34px', background: 'hsl(223 47% 12%)', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', color: 'hsl(var(--primary))', cursor: 'pointer' }}
+                style={{ padding: '7px 10px', display: 'inline-flex', alignItems: 'center', gap: '4px', height: '34px', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', color: 'hsl(var(--primary))', cursor: 'pointer' }}
               >
                 <Eye size={15} />
               </button>
@@ -762,7 +762,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
             </div>
 
             {stage.customBuyers.length === 0 ? (
-              <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', padding: '8px 10px', background: 'hsl(223 47% 8%)', borderRadius: '6px', border: '1px dashed hsl(var(--border-color))', textAlign: 'center' }}>
+              <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', padding: '8px 10px', background: 'hsl(var(--bg-card))', borderRadius: '6px', border: '1px dashed hsl(var(--border-color))', textAlign: 'center' }}>
                 No buyers selected — search below or add new
               </div>
             ) : (
@@ -774,10 +774,10 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
                     border: `1px solid ${TIER_COLOR[b.tier] || 'hsl(var(--primary))'}44`,
                     borderRadius: '16px', padding: '3px 8px 3px 6px',
                   }}>
-                    <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: TIER_COLOR[b.tier] || 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 800, color: '#000', flexShrink: 0 }}>
+                    <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: TIER_COLOR[b.tier] || 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 800, color: 'hsl(var(--text-primary))', flexShrink: 0 }}>
                       {b.name.charAt(0)}
                     </span>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: '#e2e8f0' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--border-color))' }}>
                       {b.name}
                       {b.isNew && <span style={{ marginLeft: '3px', fontSize: '9px', color: 'hsl(var(--success))' }}>NEW</span>}
                     </span>
@@ -806,7 +806,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
               </select>
               <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
                 <button type="button" onClick={() => setShowAddForm(false)} style={{ background: 'transparent', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-secondary))', borderRadius: '5px', padding: '5px 10px', fontSize: '11px', cursor: 'pointer' }}>Cancel</button>
-                <button type="button" onClick={addNewBuyer} disabled={!newName || !newEmail} style={{ background: newName && newEmail ? 'hsl(var(--primary))' : 'hsl(var(--border-color))', border: 'none', color: '#fff', borderRadius: '5px', padding: '5px 12px', fontSize: '11px', fontWeight: 700, cursor: newName && newEmail ? 'pointer' : 'not-allowed' }}>
+                <button type="button" onClick={addNewBuyer} disabled={!newName || !newEmail} style={{ background: newName && newEmail ? 'hsl(var(--primary))' : 'hsl(var(--border-color))', border: 'none', color: 'white', borderRadius: '5px', padding: '5px 12px', fontSize: '11px', fontWeight: 700, cursor: newName && newEmail ? 'pointer' : 'not-allowed' }}>
                   + Add
                 </button>
               </div>
@@ -830,7 +830,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
             {dropdownOpen && (
               <div style={{
                 position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 40,
-                background: 'hsl(223 47% 10%)', border: '1px solid hsl(var(--border-color))',
+                background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))',
                 borderRadius: '8px', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
                 maxHeight: '180px', overflowY: 'auto',
               }}>
@@ -849,11 +849,11 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
                       style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         padding: '8px 12px', cursor: alreadyAdded ? 'default' : 'pointer',
-                        borderBottom: '1px solid hsl(223 47% 14%)',
+                        borderBottom: '1px solid hsl(var(--bg-card))',
                         opacity: alreadyAdded ? 0.5 : 1,
                         transition: 'background 0.1s',
                       }}
-                      onMouseEnter={e => { if (!alreadyAdded) (e.currentTarget as HTMLElement).style.background = 'hsl(223 47% 14%)'; }}
+                      onMouseEnter={e => { if (!alreadyAdded) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card))'; }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -861,7 +861,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
                           {(b.companyName || b.name || 'B').charAt(0)}
                         </div>
                         <div>
-                          <div style={{ fontSize: '12px', fontWeight: 600, color: '#fff' }}>{b.companyName || b.name || b.email}</div>
+                          <div style={{ fontSize: '12px', fontWeight: 600, color: 'white' }}>{b.companyName || b.name || b.email}</div>
                           <div style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>{b.email}</div>
                         </div>
                       </div>
@@ -955,22 +955,22 @@ function buildBlockHtml(blocks: EmailBlock[], isPreview: boolean = false): strin
 
     switch (b.type) {
       case 'header':
-        return `<div style="text-align:${al};margin:16px 0;background:linear-gradient(135deg,#1e293b,#0f172a);padding:16px;border-radius:8px;border:1px solid #334155;"><h2 style="margin:0;font-size:18px;color:#38bdf8;font-weight:700;">${rawContent || 'SPECIAL CLEARANCE OFFER'}</h2></div>`;
+        return `<div style="text-align:${al};margin:16px 0;background:linear-gradient(135deg,hsl(var(--bg-card)),hsl(var(--bg-card)));padding:16px;border-radius:8px;border:1px solid hsl(var(--text-primary));"><h2 style="margin:0;font-size:18px;color:hsl(var(--secondary));font-weight:700;">${rawContent || 'SPECIAL CLEARANCE OFFER'}</h2></div>`;
       case 'logo':
-        return `<div style="text-align:${al};margin:12px 0;">${b.url ? `<img src="${b.url}" alt="${b.altText || 'Logo'}" style="max-height:60px;max-width:200px;" />` : `<div style="display:inline-block;background:#1e293b;border:1px dashed #334155;border-radius:8px;padding:10px 20px;color:#94a3b8;font-size:13px;">[Company Logo]</div>`}</div>`;
+        return `<div style="text-align:${al};margin:12px 0;">${b.url ? `<img src="${b.url}" alt="${b.altText || 'Logo'}" style="max-height:60px;max-width:200px;" />` : `<div style="display:inline-block;background:hsl(var(--bg-card));border:1px dashed hsl(var(--text-primary));border-radius:8px;padding:10px 20px;color:hsl(var(--border-color));font-size:13px;">[Company Logo]</div>`}</div>`;
       case 'image':
-        return `<div style="text-align:${al};margin:12px 0;">${b.url ? `<img src="${b.url}" alt="${b.altText||''}" style="max-width:100%;border-radius:8px;" />` : `<div style="background:#1e293b;border:1px dashed #334155;border-radius:8px;padding:20px;text-align:center;color:#64748b;font-size:12px;">[Image placeholder]</div>`}</div>`;
+        return `<div style="text-align:${al};margin:12px 0;">${b.url ? `<img src="${b.url}" alt="${b.altText||''}" style="max-width:100%;border-radius:8px;" />` : `<div style="background:hsl(var(--bg-card));border:1px dashed hsl(var(--text-primary));border-radius:8px;padding:20px;text-align:center;color:hsl(var(--text-muted));font-size:12px;">[Image placeholder]</div>`}</div>`;
       case 'text':
-        return `<p style="font-size:14px;line-height:1.7;color:#e2e8f0;text-align:${al};margin:10px 0;white-space:pre-wrap;">${rawContent}</p>`;
+        return `<p style="font-size:14px;line-height:1.7;color:hsl(var(--border-color));text-align:${al};margin:10px 0;white-space:pre-wrap;">${rawContent}</p>`;
       case 'link':
       case 'cta':
-        return `<div style="text-align:${al};margin:14px 0;"><a href="${b.url||'#'}" style="display:inline-block;padding:10px 24px;background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;">${rawContent||'Click Here'}</a></div>`;
+        return `<div style="text-align:${al};margin:14px 0;"><a href="${b.url||'#'}" style="display:inline-block;padding:10px 24px;background:linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary)));color:white;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;">${rawContent||'Click Here'}</a></div>`;
       case 'signature':
-        return `<div style="margin-top:20px;padding-top:14px;border-top:1px solid #1e293b;text-align:${al};"><div style="font-weight:700;font-size:14px;color:#f8fafc;">${b.signatureName||'Name'}</div><div style="font-size:12px;color:#94a3b8;">${b.signatureTitle||'Title'}</div></div>`;
+        return `<div style="margin-top:20px;padding-top:14px;border-top:1px solid hsl(var(--bg-card));text-align:${al};"><div style="font-weight:700;font-size:14px;color:hsl(var(--bg-card-hover));">${b.signatureName||'Name'}</div><div style="font-size:12px;color:hsl(var(--border-color));">${b.signatureTitle||'Title'}</div></div>`;
       case 'footer':
-        return `<div style="margin-top:24px;padding:12px;background:#0f172a;border-radius:6px;border:1px solid #1e293b;font-size:11px;color:#94a3b8;text-align:${al};">${rawContent || 'Logistics & Compliance Verified — Express Freight Delivery Available.'}</div>`;
+        return `<div style="margin-top:24px;padding:12px;background:hsl(var(--bg-card));border-radius:6px;border:1px solid hsl(var(--bg-card));font-size:11px;color:hsl(var(--border-color));text-align:${al};">${rawContent || 'Logistics & Compliance Verified — Express Freight Delivery Available.'}</div>`;
       case 'divider':
-        return `<hr style="border:none;border-top:1px solid #1e293b;margin:16px 0;" />`;
+        return `<hr style="border:none;border-top:1px solid hsl(var(--bg-card));margin:16px 0;" />`;
       case 'inventory_table': {
         const col = b.columnConfig || {};
         const showSku = col.sku !== false;
@@ -982,9 +982,9 @@ function buildBlockHtml(blocks: EmailBlock[], isPreview: boolean = false): strin
 
         return `
           <div style="margin:16px 0;overflow-x:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:12px;background:#0f172a;border:1px solid #1e293b;border-radius:8px;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;background:hsl(var(--bg-card));border:1px solid hsl(var(--bg-card));border-radius:8px;">
               <thead>
-                <tr style="background:#1e293b;color:#94a3b8;text-align:left;">
+                <tr style="background:hsl(var(--bg-card));color:hsl(var(--border-color));text-align:left;">
                   ${showSku ? '<th style="padding:8px 10px;">SKU</th>' : ''}
                   ${showDesc ? '<th style="padding:8px 10px;">Description</th>' : ''}
                   ${showCases ? '<th style="padding:8px 10px;">Cases</th>' : ''}
@@ -994,21 +994,21 @@ function buildBlockHtml(blocks: EmailBlock[], isPreview: boolean = false): strin
                 </tr>
               </thead>
               <tbody>
-                <tr style="border-bottom:1px solid #1e293b;color:#e2e8f0;">
+                <tr style="border-bottom:1px solid hsl(var(--bg-card));color:hsl(var(--border-color));">
                   ${showSku ? '<td style="padding:8px 10px;font-family:monospace;">SKU-9921</td>' : ''}
                   ${showDesc ? '<td style="padding:8px 10px;">Organic Whole Milk 1 gal</td>' : ''}
                   ${showCases ? '<td style="padding:8px 10px;">450 cs</td>' : ''}
                   ${showExp ? '<td style="padding:8px 10px;">2026-08-05</td>' : ''}
-                  ${showMsrp ? '<td style="padding:8px 10px;text-decoration:line-through;color:#94a3b8;">$24.00</td>' : ''}
-                  ${showPrice ? '<td style="padding:8px 10px;color:#34d399;font-weight:bold;">$18.00</td>' : ''}
+                  ${showMsrp ? '<td style="padding:8px 10px;text-decoration:line-through;color:hsl(var(--border-color));">$24.00</td>' : ''}
+                  ${showPrice ? '<td style="padding:8px 10px;color:hsl(var(--success));font-weight:bold;">$18.00</td>' : ''}
                 </tr>
-                <tr style="border-bottom:1px solid #1e293b;color:#e2e8f0;">
+                <tr style="border-bottom:1px solid hsl(var(--bg-card));color:hsl(var(--border-color));">
                   ${showSku ? '<td style="padding:8px 10px;font-family:monospace;">SKU-4402</td>' : ''}
                   ${showDesc ? '<td style="padding:8px 10px;">Greek Yogurt Strawberry 6oz</td>' : ''}
                   ${showCases ? '<td style="padding:8px 10px;">1,200 cs</td>' : ''}
                   ${showExp ? '<td style="padding:8px 10px;">2026-08-12</td>' : ''}
-                  ${showMsrp ? '<td style="padding:8px 10px;text-decoration:line-through;color:#94a3b8;">$16.50</td>' : ''}
-                  ${showPrice ? '<td style="padding:8px 10px;color:#34d399;font-weight:bold;">$11.55</td>' : ''}
+                  ${showMsrp ? '<td style="padding:8px 10px;text-decoration:line-through;color:hsl(var(--border-color));">$16.50</td>' : ''}
+                  ${showPrice ? '<td style="padding:8px 10px;color:hsl(var(--success));font-weight:bold;">$11.55</td>' : ''}
                 </tr>
               </tbody>
             </table>
@@ -1085,15 +1085,15 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
   };
 
   const inputSt: React.CSSProperties = {
-    width: '100%', background: 'hsl(223 47% 9%)', border: '1px solid hsl(var(--border-color))',
-    borderRadius: '6px', padding: '8px 10px', color: '#fff', fontSize: '12px', boxSizing: 'border-box',
+    width: '100%', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))',
+    borderRadius: '6px', padding: '8px 10px', color: 'white', fontSize: '12px', boxSizing: 'border-box',
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
       {/* Preset Starters & Token Pills Bar */}
-      <div style={{ background: 'hsl(223 47% 8%)', border: '1px solid hsl(var(--border-color))', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
           <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '5px' }}>
             <Sparkles size={12} color="hsl(var(--primary))" /> Starter Email Templates:
@@ -1129,7 +1129,7 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
               type="button"
               onClick={() => injectToken(tok)}
               style={{
-                background: 'hsl(223 47% 12%)',
+                background: 'hsl(var(--bg-card))',
                 border: '1px solid hsl(var(--border-color))',
                 color: 'hsl(var(--secondary))',
                 borderRadius: '12px',
@@ -1151,7 +1151,7 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
         <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
           {(['header', 'text', 'inventory_table', 'cta', 'footer', 'logo', 'image', 'signature', 'divider'] as EmailBlockType[]).map(t => (
             <button key={t} type="button" onClick={() => add(t)}
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'hsl(223 47% 12%)', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-secondary))', borderRadius: '6px', padding: '4px 9px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-secondary))', borderRadius: '6px', padding: '4px 9px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
               {BLOCK_ICONS[t]} +{BLOCK_LABELS[t]}
             </button>
           ))}
@@ -1159,14 +1159,14 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           {preview && (
-            <div style={{ display: 'flex', background: 'hsl(223 47% 8%)', borderRadius: '6px', border: '1px solid hsl(var(--border-color))', padding: '2px' }}>
+            <div style={{ display: 'flex', background: 'hsl(var(--bg-card))', borderRadius: '6px', border: '1px solid hsl(var(--border-color))', padding: '2px' }}>
               <button
                 type="button"
                 onClick={() => setViewport('desktop')}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', border: 'none',
                   background: viewport === 'desktop' ? 'hsl(var(--primary))' : 'transparent',
-                  color: viewport === 'desktop' ? '#fff' : 'hsl(var(--text-muted))',
+                  color: viewport === 'desktop' ? 'white' : 'hsl(var(--text-muted))',
                   fontSize: '10px', fontWeight: 700, cursor: 'pointer'
                 }}
               >
@@ -1178,7 +1178,7 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
                 style={{
                   display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', borderRadius: '4px', border: 'none',
                   background: viewport === 'mobile' ? 'hsl(var(--primary))' : 'transparent',
-                  color: viewport === 'mobile' ? '#fff' : 'hsl(var(--text-muted))',
+                  color: viewport === 'mobile' ? 'white' : 'hsl(var(--text-muted))',
                   fontSize: '10px', fontWeight: 700, cursor: 'pointer'
                 }}
               >
@@ -1195,20 +1195,20 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
       </div>
 
       {preview ? (
-        <div style={{ display: 'flex', justifyContent: 'center', background: '#030712', border: '1px solid hsl(var(--border-color))', borderRadius: '12px', padding: '24px 12px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '12px', padding: '24px 12px' }}>
           <div
             style={{
               width: viewport === 'mobile' ? '375px' : '100%',
               maxWidth: viewport === 'mobile' ? '375px' : '680px',
-              background: '#090d16',
+              background: 'hsl(var(--bg-card))',
               border: '1px solid hsl(var(--border-color))',
               borderRadius: viewport === 'mobile' ? '24px' : '12px',
               padding: '24px',
               minHeight: '200px',
               fontSize: '13px',
-              color: '#e2e8f0',
+              color: 'hsl(var(--border-color))',
               lineHeight: 1.6,
-              boxShadow: viewport === 'mobile' ? '0 0 0 10px #1e293b' : 'none',
+              boxShadow: viewport === 'mobile' ? '0 0 0 10px hsl(var(--bg-card))' : 'none',
               transition: 'all 0.2s ease-in-out'
             }}
             dangerouslySetInnerHTML={{ __html: buildBlockHtml(blocks, true) }}
@@ -1224,7 +1224,7 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
                 key={bl.id}
                 data-testid="email-block"
                 style={{
-                  background: isEdit ? 'hsl(var(--primary)/0.05)' : 'hsl(223 47% 9%)',
+                  background: isEdit ? 'hsl(var(--primary)/0.05)' : 'hsl(var(--bg-card))',
                   border: `1px solid ${isEdit ? 'hsl(var(--primary)/0.35)' : 'hsl(var(--border-color))'}`,
                   borderRadius: '8px',
                   overflow: 'hidden',
@@ -1244,7 +1244,7 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <GripVertical size={13} color="hsl(var(--text-muted))" />
                     <span style={{ color: isEdit ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))' }}>{BLOCK_ICONS[bl.type]}</span>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: isEdit ? '#fff' : 'hsl(var(--text-secondary))' }}>{BLOCK_LABELS[bl.type]}</span>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: isEdit ? 'white' : 'hsl(var(--text-secondary))' }}>{BLOCK_LABELS[bl.type]}</span>
                     {(bl.type === 'text' || bl.type === 'header' || bl.type === 'cta' || bl.type === 'footer') && (
                       <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {bl.content.slice(0, 55)}{bl.content.length > 55 ? '…' : ''}
@@ -1268,7 +1268,7 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
                         <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))', marginRight: '2px' }}>Align:</span>
                         {(['left', 'center', 'right'] as const).map(a => (
                           <button key={a} type="button" onClick={() => update(bl.id, { align: a })}
-                            style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', background: bl.align === a ? 'hsl(var(--primary))' : 'hsl(223 47% 12%)', border: `1px solid ${bl.align === a ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`, color: bl.align === a ? '#fff' : 'hsl(var(--text-muted))' }}>
+                            style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', background: bl.align === a ? 'hsl(var(--primary))' : 'hsl(var(--bg-card))', border: `1px solid ${bl.align === a ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`, color: bl.align === a ? 'white' : 'hsl(var(--text-muted))' }}>
                             {a.charAt(0).toUpperCase() + a.slice(1)}
                           </button>
                         ))}
@@ -1300,7 +1300,7 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
                     </>)}
 
                     {bl.type === 'inventory_table' && (
-                      <div style={{ background: 'hsl(223 47% 8%)', padding: '10px', borderRadius: '6px', border: '1px dashed hsl(var(--border-color))', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ background: 'hsl(var(--bg-card))', padding: '10px', borderRadius: '6px', border: '1px dashed hsl(var(--border-color))', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))' }}>📋 Table Column Visibility Configuration</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '6px' }}>
                           {[
@@ -1313,7 +1313,7 @@ export const EmailBuilder: React.FC<EmailBuilderProps> = ({ blocks, onChange }) 
                           ].map(col => {
                             const isChecked = colConfig[col.key as keyof EmailColumnConfig] !== false;
                             return (
-                              <label key={col.key} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#e2e8f0', cursor: 'pointer' }}>
+                              <label key={col.key} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'hsl(var(--border-color))', cursor: 'pointer' }}>
                                 <input
                                   type="checkbox"
                                   checked={isChecked}
@@ -1805,16 +1805,16 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     const quickBidLink = 'https://indspoileralert.com/bid?token=demo-token-123';
 
     // 7. Inventory Table HTML
-    let inventoryTable = '<div style="padding: 12px; border: 1px dashed #cbd5e1; border-radius: 6px; text-align: center; color: #64748b; font-size: 13px; background: #f8fafc;">[No Inventory Selected - Select lots in Step 1]</div>';
+    let inventoryTable = '<div style="padding: 12px; border: 1px dashed hsl(var(--border-color)); border-radius: 6px; text-align: center; color: hsl(var(--text-muted)); font-size: 13px; background: hsl(var(--bg-card-hover));">[No Inventory Selected - Select lots in Step 1]</div>';
     if (matchedLots.length > 0) {
       const rows = matchedLots.map((lot: any, idx: number) => {
         const sku = lot.productId?.sku || lot.lotNumber || `LOT-${idx + 1}`;
         const desc = lot.title || lot.productId?.description || 'Surplus Inventory Item';
         const qty = lot.availableQty ?? lot.quantityCases ?? 0;
         const rsl = lot.remainingShelfLife ? `${Math.round(lot.remainingShelfLife * 100)}% RSL` : 'N/A';
-        return `<tr style="border-bottom: 1px solid #e2e8f0;"><td style="padding: 8px 12px; font-weight: 600;">${sku}</td><td style="padding: 8px 12px;">${desc}</td><td style="padding: 8px 12px; text-align: right; font-weight: 600;">${qty} cs</td><td style="padding: 8px 12px; text-align: right; color: #64748b;">${rsl}</td></tr>`;
+        return `<tr style="border-bottom: 1px solid hsl(var(--border-color));"><td style="padding: 8px 12px; font-weight: 600;">${sku}</td><td style="padding: 8px 12px;">${desc}</td><td style="padding: 8px 12px; text-align: right; font-weight: 600;">${qty} cs</td><td style="padding: 8px 12px; text-align: right; color: hsl(var(--text-muted));">${rsl}</td></tr>`;
       }).join('');
-      inventoryTable = `<table style="width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden;"><thead style="background-color: #f1f5f9; color: #334155; text-align: left;"><tr><th style="padding: 8px 12px;">SKU / Lot #</th><th style="padding: 8px 12px;">Product Description</th><th style="padding: 8px 12px; text-align: right;">Quantity</th><th style="padding: 8px 12px; text-align: right;">Shelf Life</th></tr></thead><tbody>${rows}</tbody></table>`;
+      inventoryTable = `<table style="width: 100%; border-collapse: collapse; font-family: sans-serif; font-size: 13px; border: 1px solid hsl(var(--border-color)); border-radius: 6px; overflow: hidden;"><thead style="background-color: hsl(var(--bg-card-hover)); color: hsl(var(--text-primary)); text-align: left;"><tr><th style="padding: 8px 12px;">SKU / Lot #</th><th style="padding: 8px 12px;">Product Description</th><th style="padding: 8px 12px; text-align: right;">Quantity</th><th style="padding: 8px 12px; text-align: right;">Shelf Life</th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     const derived = {
@@ -2079,7 +2079,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   // ── Shared styles ──────────────────────────────────────────────────────────
   const card: React.CSSProperties = { background: 'hsl(var(--bg-card))', padding: '20px 24px', borderRadius: '14px', border: '1px solid hsl(var(--border-color))' };
   const h3st: React.CSSProperties = { fontSize: '15px', fontWeight: 700, margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' };
-  const inpSt: React.CSSProperties = { background: 'hsl(223 47% 9%)', border: '1px solid hsl(var(--border-color))', borderRadius: '8px', padding: '9px 10px', color: '#fff', fontSize: '13px', width: '100%', boxSizing: 'border-box' };
+  const inpSt: React.CSSProperties = { background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '8px', padding: '9px 10px', color: 'white', fontSize: '13px', width: '100%', boxSizing: 'border-box' };
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -2105,7 +2105,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               <p style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', margin: '4px 0 0' }}>Please re-authenticate to launch campaigns. You still have read-only access to historical data.</p>
             </div>
           </div>
-          <button type="button" onClick={oauth.connectMailbox} style={{ padding: '8px 16px', borderRadius: '8px', background: 'hsl(var(--destructive))', color: '#fff', border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
+          <button type="button" onClick={oauth.connectMailbox} style={{ padding: '8px 16px', borderRadius: '8px', background: 'hsl(var(--destructive))', color: 'white', border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
             Re-authenticate Now
           </button>
         </div>
@@ -2157,7 +2157,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 </span>
               </div>
               <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-muted))', marginTop: '3px' }}>
-                Currently editing parameters for <strong style={{ color: '#fff' }}>"{workflowName}"</strong>. Save will update this saved strategy.
+                Currently editing parameters for <strong style={{ color: 'white' }}>"{workflowName}"</strong>. Save will update this saved strategy.
               </div>
             </div>
           </div>
@@ -2192,7 +2192,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
           {/* Left: branding + name */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '260px' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0 }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
               <Zap size={24} />
             </div>
             <div style={{ flex: 1 }}>
@@ -2211,13 +2211,13 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             <div style={{ display: 'flex', gap: '7px' }}>
               {(['immediate', 'cron'] as const).map(mode => (
                 <button key={mode} type="button" onClick={() => setExecutionType(mode)}
-                  style={{ flex: 1, padding: '7px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', border: executionType === mode ? `1px solid hsl(var(--${mode === 'immediate' ? 'primary' : 'secondary'}))` : '1px solid hsl(var(--border-color))', background: executionType === mode ? `hsl(var(--${mode === 'immediate' ? 'primary' : 'secondary'})/0.15)` : 'transparent', color: '#fff' }}>
+                  style={{ flex: 1, padding: '7px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', border: executionType === mode ? `1px solid hsl(var(--${mode === 'immediate' ? 'primary' : 'secondary'}))` : '1px solid hsl(var(--border-color))', background: executionType === mode ? `hsl(var(--${mode === 'immediate' ? 'primary' : 'secondary'})/0.15)` : 'transparent', color: 'white' }}>
                   {mode === 'immediate' ? '⚡ Run Now' : '🕐 Scheduled'}
                 </button>
               ))}
             </div>
             {executionType === 'cron' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'hsl(223 47% 7%)', padding: '8px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'hsl(var(--bg-card))', padding: '8px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <div style={{ display: 'flex', gap: '3px' }}>
                     {['Su','Mo','Tu','We','Th','Fr','Sa'].map((d, i) => {
@@ -2228,7 +2228,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           setCronDays(nextDays);
                           setCronExpression(compileFrontendCron(scheduleTime, nextDays));
                         }}
-                          style={{ padding: '3px 7px', borderRadius: '4px', border: '1px solid hsl(var(--border-color))', background: sel ? 'hsl(var(--secondary))' : 'hsl(var(--bg-card))', color: '#fff', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>{d}</button>
+                          style={{ padding: '3px 7px', borderRadius: '4px', border: '1px solid hsl(var(--border-color))', background: sel ? 'hsl(var(--secondary))' : 'hsl(var(--bg-card))', color: 'white', fontSize: '10px', fontWeight: 700, cursor: 'pointer' }}>{d}</button>
                       );
                     })}
                   </div>
@@ -2236,7 +2236,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     setScheduleTime(e.target.value);
                     setCronExpression(compileFrontendCron(e.target.value, cronDays));
                   }}
-                    style={{ background: 'hsl(223 47% 9%)', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', padding: '4px 7px', color: '#fff', fontSize: '11px' }} />
+                    style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', padding: '4px 7px', color: 'white', fontSize: '11px' }} />
                   <span style={{ fontSize: '11px', color: 'hsl(var(--primary))', fontWeight: 600, background: 'hsl(var(--primary)/0.12)', border: '1px solid hsl(var(--primary)/0.25)', padding: '3px 8px', borderRadius: '12px', whiteSpace: 'nowrap' }}>
                     {format12HourTime(scheduleTime)}
                   </span>
@@ -2257,7 +2257,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                       setScheduleTime('09:00');
                       setCronExpression('0 9 * * 1');
                     }}
-                    style={{ background: 'hsl(223 47% 12%)', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))', borderRadius: '4px', padding: '3px 6px', fontSize: '10px', cursor: 'pointer' }}
+                    style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))', borderRadius: '4px', padding: '3px 6px', fontSize: '10px', cursor: 'pointer' }}
                   >
                     Reset
                   </button>
@@ -2274,8 +2274,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               onClick={() => handleSaveCampaign('draft')}
               disabled={isSubmitting || oauth.status === 'expired' || hasZeroBuyerStage}
               style={{
-                background: 'hsl(223 47% 12%)',
-                color: '#fff',
+                background: 'hsl(var(--bg-card))',
+                color: 'white',
                 border: '1px solid hsl(var(--primary))',
                 borderRadius: '8px',
                 padding: '10px 16px',
@@ -2294,7 +2294,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               <span>{isSubmitting ? 'Saving...' : 'Save as Draft'}</span>
             </button>
             <button type="button" onClick={() => !hasZeroBuyerStage && setShowPreFlightModal(true)} disabled={impactMetrics.totalLots === 0 || oauth.status === 'expired' || hasZeroBuyerStage}
-              style={{ background: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 20px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: (oauth.status === 'expired' || hasZeroBuyerStage) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? '0 4px 14px hsl(var(--primary)/0.35)' : 'none' }}>
+              style={{ background: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: (oauth.status === 'expired' || hasZeroBuyerStage) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? '0 4px 14px hsl(var(--primary)/0.35)' : 'none' }}>
               <Play size={15} /> Launch Active Campaign
             </button>
           </div>
@@ -2348,7 +2348,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
         </label>
         <div ref={templateRef} style={{ position: 'relative', maxWidth: '480px', marginBottom: '16px' }}>
           <button type="button" onClick={() => setShowTemplateDrop(p => !p)}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(223 47% 9%)', border: `1px solid ${showTemplateDrop ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`, borderRadius: '10px', padding: '12px 16px', color: '#fff', cursor: 'pointer', transition: 'border-color 0.15s' }}>
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))', border: `1px solid ${showTemplateDrop ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`, borderRadius: '10px', padding: '12px 16px', color: 'white', cursor: 'pointer', transition: 'border-color 0.15s' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ background: 'hsl(var(--secondary)/0.15)', color: 'hsl(var(--secondary))', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', border: '1px solid hsl(var(--secondary)/0.2)' }}>{selectedDef.badge}</span>
               <span style={{ fontSize: '14px', fontWeight: 700 }}>{selectedDef.name}</span>
@@ -2356,13 +2356,13 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             {showTemplateDrop ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
           {showTemplateDrop && (
-            <div style={{ position: 'absolute', top: 'calc(100% + 5px)', left: 0, right: 0, zIndex: 50, background: 'hsl(223 47% 10%)', border: '1px solid hsl(var(--border-color))', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' }}>
+            <div style={{ position: 'absolute', top: 'calc(100% + 5px)', left: 0, right: 0, zIndex: 50, background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' }}>
               {TEMPLATE_DEFINITIONS.map(t => {
                 const sel = selectedTemplateKey === t.key;
                 return (
                   <div key={t.key} onClick={() => handleSelectTemplate(t.key)}
                     style={{ padding: '13px 16px', cursor: 'pointer', background: sel ? 'hsl(var(--primary)/0.08)' : 'transparent', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', transition: 'background 0.12s' }}
-                    onMouseEnter={e => { if (!sel) (e.currentTarget as HTMLElement).style.background = 'hsl(223 47% 14%)'; }}
+                    onMouseEnter={e => { if (!sel) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card))'; }}
                     onMouseLeave={e => { if (!sel) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
@@ -2380,7 +2380,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
         </div>
 
         {/* Logic flow */}
-        <div style={{ background: 'hsl(223 47% 8%)', border: '1px dashed hsl(var(--primary)/0.4)', borderRadius: '10px', padding: '13px 18px' }}>
+        <div style={{ background: 'hsl(var(--bg-card))', border: '1px dashed hsl(var(--primary)/0.4)', borderRadius: '10px', padding: '13px 18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px' }}>
             <Sparkles size={14} color="hsl(var(--primary))" />
             <span style={{ fontSize: '12px', fontWeight: 600 }}>Logic Flow: <span style={{ color: 'hsl(var(--primary))' }}>{selectedDef.name}</span></span>
@@ -2446,26 +2446,26 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             </div>
 
             {showLotGrid && (
-              <div style={{ background: 'hsl(223 47% 8%)', border: '1px solid hsl(var(--border-color))', borderRadius: '10px', overflow: 'hidden' }}>
+              <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '10px', overflow: 'hidden' }}>
                 {/* Search row */}
-                <div style={{ padding: '9px 13px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', gap: '7px', flexWrap: 'wrap', alignItems: 'center', background: 'hsl(223 47% 10%)' }}>
+                <div style={{ padding: '9px 13px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', gap: '7px', flexWrap: 'wrap', alignItems: 'center', background: 'hsl(var(--bg-card))' }}>
                   <div style={{ position: 'relative', flex: 1, minWidth: '140px' }}>
                     <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--text-muted))' }} />
                     <input type="text" placeholder="Search lots…" value={lotSearch} onChange={e => setLotSearch(e.target.value)}
-                      style={{ ...inpSt, paddingLeft: '26px', padding: '6px 6px 6px 26px', fontSize: '12px', borderRadius: '6px', background: 'hsl(223 47% 9%)' }} />
+                      style={{ ...inpSt, paddingLeft: '26px', padding: '6px 6px 6px 26px', fontSize: '12px', borderRadius: '6px', background: 'hsl(var(--bg-card))' }} />
                   </div>
-                  <select value={lotDcFilter} onChange={e => setLotDcFilter(e.target.value)} style={{ ...inpSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px', background: 'hsl(223 47% 9%)' }}>
+                  <select value={lotDcFilter} onChange={e => setLotDcFilter(e.target.value)} style={{ ...inpSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px', background: 'hsl(var(--bg-card))' }}>
                     <option value="">All DCs</option>
                     {[...new Set(activeLots.map((l: any) => typeof l.distributionCenterId === 'object' ? (l.distributionCenterId?.name || '') : (l.distributionCenterId || '')).filter(Boolean))].map(dc => <option key={dc} value={dc}>{dc}</option>)}
                   </select>
-                  <select value={lotCoaFilter} onChange={e => setLotCoaFilter(e.target.value)} style={{ ...inpSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px', background: 'hsl(223 47% 9%)' }}>
+                  <select value={lotCoaFilter} onChange={e => setLotCoaFilter(e.target.value)} style={{ ...inpSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px', background: 'hsl(var(--bg-card))' }}>
                     <option value="all">All Compliance</option>
                     <option value="verified">COA Verified</option>
                     <option value="pending">COA Pending</option>
                   </select>
                 </div>
                 {/* Header row */}
-                <div style={{ background: 'hsl(223 47% 12%)', padding: '7px 15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>
+                <div style={{ background: 'hsl(var(--bg-card))', padding: '7px 15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button type="button" onClick={allDisplaySelected ? deselectAll : selectAll}
                       style={{ display: 'flex', alignItems: 'center', gap: '5px', background: allDisplaySelected ? 'hsl(var(--primary)/0.15)' : 'transparent', border: `1px solid ${allDisplaySelected ? 'hsl(var(--primary)/0.4)' : 'hsl(var(--border-color))'}`, color: allDisplaySelected ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))', borderRadius: '5px', padding: '3px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
@@ -2555,11 +2555,11 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '16px', flexShrink: 0 }}>
                       <div style={{
                         width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-                        background: isExpanded ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(223 47% 14%)',
+                        background: isExpanded ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--bg-card))',
                         border: `2px solid ${isExpanded ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '13px', fontWeight: 800,
-                        color: isExpanded ? '#fff' : 'hsl(var(--text-muted))',
+                        color: isExpanded ? 'white' : 'hsl(var(--text-muted))',
                         transition: 'all 0.2s', cursor: 'pointer', zIndex: 1,
                       }} onClick={() => setExpandedStageIdx(isExpanded ? null : idx)}>
                         {stage.stageIndex}
@@ -2578,27 +2578,27 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                           padding: '10px 14px',
-                          background: isExpanded ? 'hsl(var(--primary) / 0.08)' : 'hsl(223 47% 9%)',
+                          background: isExpanded ? 'hsl(var(--primary) / 0.08)' : 'hsl(var(--bg-card))',
                           border: `1px solid ${isExpanded ? 'hsl(var(--primary) / 0.35)' : 'hsl(var(--border-color))'}`,
                           borderRadius: isExpanded ? '10px 10px 0 0' : '10px',
                           cursor: 'pointer', transition: 'all 0.18s',
                           flexWrap: 'wrap', gap: '8px',
                         }}
-                        onMouseEnter={e => { if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'hsl(223 47% 12%)'; }}
-                        onMouseLeave={e => { if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'hsl(223 47% 9%)'; }}
+                        onMouseEnter={e => { if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card))'; }}
+                        onMouseLeave={e => { if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card))'; }}
                       >
                         {/* Left: name */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '140px' }}>
                           <span style={{
                             fontSize: '13px', fontWeight: 700,
-                            color: isExpanded ? 'hsl(var(--primary))' : '#e2e8f0',
+                            color: isExpanded ? 'hsl(var(--primary))' : 'hsl(var(--border-color))',
                           }}>{stage.name}</span>
                         </div>
 
                         {/* Centre: summary chips */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           {/* Token Binding Indicator */}
-                          <span data-testid="buyer-name-token-binding-indicator" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'hsl(217 91% 60% / 0.12)', border: '1px solid hsl(217 91% 60% / 0.3)', color: '#60a5fa', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                          <span data-testid="buyer-name-token-binding-indicator" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'hsl(var(--primary) / 0.12)', border: '1px solid hsl(var(--primary) / 0.3)', color: 'hsl(var(--primary))', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' }}>
                             🔗 Attached: &#123;&#123;buyer_name&#125;&#125; token bound to stage buyer selection
                           </span>
                           {/* Audience chip */}
@@ -2634,7 +2634,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                       {/* Expanded panel — full width, vertical stacking */}
                       {isExpanded && (
                         <div style={{
-                          background: 'hsl(223 47% 8%)',
+                          background: 'hsl(var(--bg-card))',
                           border: '1px solid hsl(var(--primary)/0.3)',
                           borderTop: 'none',
                           borderRadius: '0 0 10px 10px',
@@ -2742,7 +2742,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                           const newUnit = e.target.value as 'd' | 'h' | 'm';
                                           updateStage(idx, { waitUnit: newUnit });
                                         }}
-                                        style={{ background: 'hsl(223 47% 9%)', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', padding: '4px 6px', color: '#fff', fontSize: '11px', cursor: 'pointer' }}
+                                        style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', padding: '4px 6px', color: 'white', fontSize: '11px', cursor: 'pointer' }}
                                       >
                                         <option value="d">Days</option>
                                         <option value="h">Hours</option>
@@ -2821,7 +2821,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                   <button
                                     type="button"
                                     onClick={() => updateStage(idx, { emailBodyHtml: undefined, emailSubject: undefined, emailTemplateId: undefined })}
-                                    style={{ background: 'none', border: 'none', color: '#f59e0b', fontSize: '11px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                                    style={{ background: 'none', border: 'none', color: 'hsl(var(--warning))', fontSize: '11px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
                                   >
                                     ↺ Reset to Campaign Default Body
                                   </button>
@@ -2838,7 +2838,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                             </div>
 
                             {activeStageEmailEditorIdx === idx && (
-                              <div style={{ marginTop: '8px', background: '#ffffff', borderRadius: '8px', padding: '8px', border: '1px solid hsl(var(--border-color))' }}>
+                              <div style={{ marginTop: '8px', background: 'white', borderRadius: '8px', padding: '8px', border: '1px solid hsl(var(--border-color))' }}>
                                 <WorkflowTipTapBodyEditor
                                   contentHtml={stage.emailBodyHtml || emailBodyHtml}
                                   onChange={(html) => updateStage(idx, { emailBodyHtml: html })}
@@ -2853,8 +2853,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     </div>
                     </div>
                     {isZeroBuyer && (
-                      <div data-testid="zero-buyer-error-banner" style={{ marginTop: '6px', marginLeft: '52px', padding: '10px 14px', background: 'hsl(0 84% 60% / 0.15)', border: '1px solid hsl(0 84% 60% / 0.4)', borderRadius: '8px', color: '#f87171', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <AlertTriangle size={15} color="#f87171" />
+                      <div data-testid="zero-buyer-error-banner" style={{ marginTop: '6px', marginLeft: '52px', padding: '10px 14px', background: 'hsl(var(--error) / 0.15)', border: '1px solid hsl(var(--error) / 0.4)', borderRadius: '8px', color: 'hsl(var(--error))', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <AlertTriangle size={15} color="hsl(var(--error))" />
                         <span>⚠️ Zero-Buyer Selection Error: Stage {stage.stageIndex} has 0 targeted buyers. At least 1 valid buyer must be selected for this stage.</span>
                       </div>
                     )}
@@ -2881,9 +2881,9 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 }]);
                 setExpandedStageIdx(newIdx);
               }}
-              style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '7px', background: 'hsl(223 47% 9%)', border: '1px dashed hsl(var(--primary)/0.4)', color: 'hsl(var(--primary))', borderRadius: '10px', padding: '11px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', width: '100%', justifyContent: 'center', transition: 'all 0.15s' }}
+              style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '7px', background: 'hsl(var(--bg-card))', border: '1px dashed hsl(var(--primary)/0.4)', color: 'hsl(var(--primary))', borderRadius: '10px', padding: '11px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', width: '100%', justifyContent: 'center', transition: 'all 0.15s' }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(var(--primary)/0.08)'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'hsl(223 47% 9%)'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card))'}
             >
               <Plus size={14} /> Add Escalation Stage
             </button>
@@ -2918,7 +2918,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             {/* Progressive 4-Step Email Template Stepper */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Header Step Pills Navigation */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'hsl(223 47% 8%)', border: '1px solid hsl(var(--border-color))', borderRadius: '12px', padding: '10px 14px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '12px', padding: '10px 14px', flexWrap: 'wrap' }}>
                 {[
                   { id: 1, label: '1. Template', icon: LayoutTemplate },
                   { id: 2, label: '2. Subject', icon: PenLine },
@@ -2943,7 +2943,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                         fontWeight: 600,
                         cursor: 'pointer',
                         opacity: 1,
-                        backgroundColor: isActive ? 'hsl(var(--primary)/0.15)' : 'hsl(223 47% 10%)',
+                        backgroundColor: isActive ? 'hsl(var(--primary)/0.15)' : 'hsl(var(--bg-card))',
                         border: isActive ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border-color))',
                         color: isActive ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))',
                         transition: 'all 0.15s ease'
@@ -2961,7 +2961,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 <div
                   id="sec-concept-template"
                   style={{
-                    background: 'hsl(223 47% 8%)',
+                    background: 'hsl(var(--bg-card))',
                     border: stepperStep === 1 ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border-color))',
                     borderRadius: '12px',
                     padding: '16px',
@@ -2993,9 +2993,9 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                         if (matched && matched.bodyHtml) {
                           setEmailBodyHtml(matched.bodyHtml);
                         } else if (key === 'short-dated-auction') {
-                          setEmailBodyHtml(`<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #fecaca; border-radius: 8px; background: #fff5f5;"><div style="background-color: #dc2626; color: #ffffff; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; text-align: center; margin-bottom: 16px;">⚡ LIMITED TIME LIQUIDATION AUCTION</div><p>Hi <strong>{{buyer_name}}</strong>,</p><p>The following short-dated inventory has been scheduled for priority liquidation. Special offer: <strong>{{current_stage_discount}}</strong>. Response deadline: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><div style="text-align: center; margin-top: 24px;"><a href="{{quick_bid_link}}" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Place Auction Bid Now</a></div></div>`);
+                          setEmailBodyHtml(`<div style="font-family: sans-serif; padding: 20px; color: hsl(var(--bg-card)); max-width: 600px; margin: 0 auto; border: 1px solid hsl(var(--error) / 0.3); border-radius: 8px; background: hsl(var(--bg-card));"><div style="background-color: hsl(var(--error)); color: white; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; text-align: center; margin-bottom: 16px;">⚡ LIMITED TIME LIQUIDATION AUCTION</div><p>Hi <strong>{{buyer_name}}</strong>,</p><p>The following short-dated inventory has been scheduled for priority liquidation. Special offer: <strong>{{current_stage_discount}}</strong>. Response deadline: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><div style="text-align: center; margin-top: 24px;"><a href="{{quick_bid_link}}" style="background-color: hsl(var(--error)); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Place Auction Bid Now</a></div></div>`);
                         } else if (key === 'direct-donation-notice') {
-                          setEmailBodyHtml(`<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #bbf7d0; border-radius: 8px; background: #f0fdf4;"><h2 style="color: #166534; margin-top: 0;">🌱 Community Surplus Donation | {{supplier_name}}</h2><p>Dear <strong>{{buyer_name}}</strong> partner,</p><p>We are pleased to allocate the following fresh surplus products for zero-cost donation transfer. Response window: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><p style="font-size: 13px; color: #15803d; text-align: center; margin-top: 20px; font-weight: 600;">Thank you for helping divert quality food from landfill to families in need.</p></div>`);
+                          setEmailBodyHtml(`<div style="font-family: sans-serif; padding: 20px; color: hsl(var(--bg-card)); max-width: 600px; margin: 0 auto; border: 1px solid hsl(var(--success) / 0.3); border-radius: 8px; background: hsl(var(--bg-card-hover));"><h2 style="color: hsl(var(--success)); margin-top: 0;">🌱 Community Surplus Donation | {{supplier_name}}</h2><p>Dear <strong>{{buyer_name}}</strong> partner,</p><p>We are pleased to allocate the following fresh surplus products for zero-cost donation transfer. Response window: <strong>{{expiry_hours}}</strong>.</p><div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div><p style="font-size: 13px; color: hsl(var(--success)); text-align: center; margin-top: 20px; font-weight: 600;">Thank you for helping divert quality food from landfill to families in need.</p></div>`);
                         } else {
                           setEmailBodyHtml(DEFAULT_EMAIL_BODY_HTML);
                         }
@@ -3024,7 +3024,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 {/* STEP 2: Email Subject */}
                 <div
                   style={{
-                    background: 'hsl(223 47% 8%)',
+                    background: 'hsl(var(--bg-card))',
                     border: stepperStep === 2 ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border-color))',
                     borderRadius: '12px',
                     padding: '16px',
@@ -3075,7 +3075,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                         }}
                         style={{
                           background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
-                          color: '#fff',
+                          color: 'white',
                           border: 'none',
                           borderRadius: '8px',
                           padding: '8px 16px',
@@ -3099,7 +3099,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 <div
                   id="sec-concept-body-editor"
                   style={{
-                    background: 'hsl(223 47% 8%)',
+                    background: 'hsl(var(--bg-card))',
                     border: stepperStep === 3 ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border-color))',
                     borderRadius: '12px',
                     padding: '16px',
@@ -3146,7 +3146,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     Customize rich text body content, formatting, images, and insert dynamic token pills (e.g. &#123;&#123;buyer_name&#125;&#125;, &#123;&#123;inventory_table&#125;&#125;).
                   </p>
 
-                  <div style={{ background: '#ffffff', borderRadius: '8px', padding: '4px', border: '1px solid hsl(var(--border-color))' }}>
+                  <div style={{ background: 'white', borderRadius: '8px', padding: '4px', border: '1px solid hsl(var(--border-color))' }}>
                     <WorkflowTipTapBodyEditor
                       contentHtml={emailBodyHtml}
                       onChange={(html) => setEmailBodyHtml(html)}
@@ -3173,7 +3173,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                         }}
                         style={{
                           background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
-                          color: '#fff',
+                          color: 'white',
                           border: 'none',
                           borderRadius: '8px',
                           padding: '8px 16px',
@@ -3197,7 +3197,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 <div
                   id="sec-concept-preview"
                   style={{
-                    background: 'hsl(223 47% 7%)',
+                    background: 'hsl(var(--bg-card))',
                     border: stepperStep === 4 ? '1px solid hsl(var(--primary))' : '1px solid hsl(var(--border-color))',
                     borderRadius: '12px',
                     padding: '16px',
@@ -3236,7 +3236,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   >
                     <div
                       style={{
-                        background: 'hsl(223 47% 9%)',
+                        background: 'hsl(var(--bg-card))',
                         border: '1px solid hsl(var(--border-color))',
                         borderRadius: '16px',
                         width: '100%',
@@ -3285,7 +3285,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                         gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
                         gap: '10px',
                         padding: '12px',
-                        background: 'hsl(223 47% 7%)',
+                        background: 'hsl(var(--bg-card))',
                         borderRadius: '10px',
                         border: '1px solid hsl(var(--border-color))'
                       }}>
@@ -3431,7 +3431,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           <button
                             type="button"
                             onClick={() => setManualOverrides({})}
-                            style={{ background: 'none', border: 'none', color: '#f59e0b', cursor: 'pointer', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
+                            style={{ background: 'none', border: 'none', color: 'hsl(var(--warning))', cursor: 'pointer', fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}
                           >
                             Reset to Workflow Values ↺
                           </button>
@@ -3442,7 +3442,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           onClick={() => setShowDynamicDataPanel(false)}
                           style={{
                             background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
-                            color: '#fff',
+                            color: 'white',
                             border: 'none',
                             borderRadius: '8px',
                             padding: '8px 18px',
@@ -3471,7 +3471,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(223 47% 8%)', padding: '10px 14px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))', padding: '10px 14px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
                   <span style={{ fontSize: '12px', fontWeight: 600 }}>Enable Auto-Donation Backstop</span>
                   <input
                     type="checkbox"
@@ -3512,7 +3512,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
                         {donatingEntities.map((ent, idx) => (
-                          <div key={ent.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(223 47% 8%)', padding: '10px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
+                          <div key={ent.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))', padding: '10px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
                             <div>
                               <div style={{ fontWeight: 700, fontSize: '12px' }}>{ent.name}</div>
                               <div style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>{ent.email} • Max {ent.maxCases} Cases • {ent.allocationPercent}% Allocation</div>
@@ -3530,7 +3530,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                       </div>
 
                       {/* Add Entity Form */}
-                      <div style={{ background: 'hsl(223 47% 7%)', padding: '12px', borderRadius: '8px', border: '1px dashed hsl(var(--border-color))', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ background: 'hsl(var(--bg-card))', padding: '12px', borderRadius: '8px', border: '1px dashed hsl(var(--border-color))', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>+ Add Donating-To Entity</div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                           <input type="text" placeholder="Entity Name (e.g. Food Bank)" value={newEntityName} onChange={e => setNewEntityName(e.target.value)} style={{ ...inpSt, fontSize: '11px' }} />
@@ -3555,7 +3555,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                       </div>
 
                       {/* Donating Entity Email Alert Settings */}
-                      <div style={{ background: 'hsl(223 47% 8%)', padding: '14px', borderRadius: '8px', border: '1px solid hsl(var(--primary)/0.3)', marginTop: '8px' }}>
+                      <div style={{ background: 'hsl(var(--bg-card))', padding: '14px', borderRadius: '8px', border: '1px solid hsl(var(--primary)/0.3)', marginTop: '8px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                           <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                             <Mail size={13} /> Donating Entity Email Alert Settings
@@ -3626,24 +3626,24 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
           {/* Impact Metrics Row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-            <div style={{ background: 'hsl(223 47% 8%)', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
+            <div style={{ background: 'hsl(var(--bg-card))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
               <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Matched Lots</span>
               <div style={{ fontSize: '24px', fontWeight: 800, color: 'hsl(var(--primary))' }}>{impactMetrics.totalLots}</div>
             </div>
-            <div style={{ background: 'hsl(223 47% 8%)', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
+            <div style={{ background: 'hsl(var(--bg-card))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
               <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Total Cases</span>
               <div style={{ fontSize: '24px', fontWeight: 800 }}>{impactMetrics.totalCases.toLocaleString()}</div>
             </div>
-            <div style={{ background: 'hsl(223 47% 8%)', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
+            <div style={{ background: 'hsl(var(--bg-card))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
               <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Est. COGS Recovery</span>
               <div style={{ fontSize: '24px', fontWeight: 800, color: 'hsl(var(--success))' }}>${impactMetrics.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             </div>
-            <div style={{ background: 'hsl(223 47% 8%)', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
+            <div style={{ background: 'hsl(var(--bg-card))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
                 <span style={{ color: 'hsl(var(--text-muted))' }}>RSL Risk</span>
                 <span style={{ color: 'hsl(var(--warning))', fontWeight: 600 }}>{impactMetrics.urgentLots} urgent</span>
               </div>
-              <div style={{ height: '8px', background: 'hsl(223 47% 16%)', borderRadius: '4px', overflow: 'hidden', display: 'flex', marginTop: '6px' }}>
+              <div style={{ height: '8px', background: 'hsl(var(--bg-card))', borderRadius: '4px', overflow: 'hidden', display: 'flex', marginTop: '6px' }}>
                 <div style={{ width: `${impactMetrics.totalLots > 0 ? (impactMetrics.urgentLots / impactMetrics.totalLots) * 100 : 0}%`, background: 'hsl(var(--error))' }} />
                 <div style={{ flex: 1, background: 'hsl(var(--success))' }} />
               </div>
@@ -3651,12 +3651,12 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
           </div>
 
           {/* Per-Stage Audiences Strip */}
-          <div style={{ background: 'hsl(223 47% 8%)', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
+          <div style={{ background: 'hsl(var(--bg-card))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Stage Audiences</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {stages.map((s, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'hsl(223 47% 12%)', padding: '6px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))', fontSize: '11px' }}>
-                  <span style={{ background: 'hsl(var(--primary))', color: '#fff', fontSize: '9px', fontWeight: 800, borderRadius: '4px', padding: '2px 6px' }}>S{s.stageIndex}</span>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'hsl(var(--bg-card))', padding: '6px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))', fontSize: '11px' }}>
+                  <span style={{ background: 'hsl(var(--primary))', color: 'white', fontSize: '9px', fontWeight: 800, borderRadius: '4px', padding: '2px 6px' }}>S{s.stageIndex}</span>
                   <span style={{ color: 'hsl(var(--text-secondary))', fontWeight: 600 }}>{s.name.replace(/Stage \d+:\s*/, '')}</span>
                   {s.buyerMode === 'list' || s.buyerMode === 'segment'
                     ? <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>{s.buyerListName || s.buyerListId || s.buyerSegment || 'Target List'}</span>
@@ -3675,8 +3675,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               disabled={isSubmitting || oauth.status === 'expired'}
               style={{
                 flex: 1,
-                background: 'hsl(223 47% 12%)',
-                color: '#fff',
+                background: 'hsl(var(--bg-card))',
+                color: 'white',
                 border: '1px solid hsl(var(--primary))',
                 borderRadius: '10px',
                 padding: '13px',
@@ -3697,7 +3697,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             </button>
 
             <button type="button" onClick={() => !hasZeroBuyerStage && setShowPreFlightModal(true)} disabled={impactMetrics.totalLots === 0 || oauth.status === 'expired' || hasZeroBuyerStage}
-              style={{ flex: 1, background: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: '#fff', border: 'none', borderRadius: '10px', padding: '13px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: (oauth.status === 'expired' || hasZeroBuyerStage) ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? '0 6px 20px hsl(var(--primary)/0.3)' : 'none' }}>
+              style={{ flex: 1, background: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: 'white', border: 'none', borderRadius: '10px', padding: '13px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: (oauth.status === 'expired' || hasZeroBuyerStage) ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? '0 6px 20px hsl(var(--primary)/0.3)' : 'none' }}>
               <Play size={15} /> Launch Active Campaign
             </button>
           </div>
@@ -3781,8 +3781,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   padding: '8px 12px',
                   borderRadius: '6px',
                   border: '1px solid hsl(var(--border-color))',
-                  backgroundColor: 'hsl(223 47% 8%)',
-                  color: '#fff',
+                  backgroundColor: 'hsl(var(--bg-card))',
+                  color: 'white',
                   fontSize: '0.85rem'
                 }}
               />
@@ -3862,35 +3862,35 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 <X size={18} />
               </button>
             </div>
-            <div style={{ padding: '20px', overflowY: 'auto', flex: 1, backgroundColor: 'hsl(223 47% 6%)', color: '#fff', fontSize: '0.85rem', fontFamily: 'sans-serif' }}>
-              <div style={{ background: 'hsl(223 47% 10%)', border: '1px solid hsl(var(--border-color))', padding: '14px', borderRadius: '8px', marginBottom: '16px' }}>
+            <div style={{ padding: '20px', overflowY: 'auto', flex: 1, backgroundColor: 'hsl(var(--bg-card))', color: 'white', fontSize: '0.85rem', fontFamily: 'sans-serif' }}>
+              <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', padding: '14px', borderRadius: '8px', marginBottom: '16px' }}>
                 <div><strong>To:</strong> {donatingEntities[0]?.email || 'donations@feedingamerica.org'}</div>
                 <div><strong>Subject:</strong> {donationEmailSubject.replace(/\{\{lot_number\}\}/g, 'LOT-9921').replace(/\{\{cases\}\}/g, '300')}</div>
               </div>
-              <div style={{ background: '#fff', color: '#1a1a1a', padding: '24px', borderRadius: '8px' }}>
-                <h2 style={{ color: '#0f172a', fontSize: '1.2rem', marginTop: 0 }}>Food Rescue Donation Transfer Advice</h2>
+              <div style={{ background: 'white', color: 'hsl(var(--text-primary))', padding: '24px', borderRadius: '8px' }}>
+                <h2 style={{ color: 'hsl(var(--bg-card))', fontSize: '1.2rem', marginTop: 0 }}>Food Rescue Donation Transfer Advice</h2>
                 <p>Dear {donatingEntities[0]?.name || 'Feeding America Partner'} Operations Team,</p>
                 <p>We are pleased to inform you that a surplus food inventory donation transfer has been allocated to your organization:</p>
                 <table style={{ width: '100%', borderCollapse: 'collapse', margin: '16px 0', fontSize: '0.85rem' }}>
                   <thead>
-                    <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
+                    <tr style={{ background: 'hsl(var(--bg-card-hover))', borderBottom: '2px solid hsl(var(--border-color))', textAlign: 'left' }}>
                       <th style={{ padding: '8px' }}>Product SKU</th>
                       <th style={{ padding: '8px' }}>Description</th>
                       <th style={{ padding: '8px' }}>Allocated Cases</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <tr style={{ borderBottom: '1px solid hsl(var(--border-color))' }}>
                       <td style={{ padding: '8px' }}>MILK-ORGANIC</td>
                       <td style={{ padding: '8px' }}>Organic Whole Milk 1 Gallon</td>
                       <td style={{ padding: '8px', fontWeight: 700 }}>300 Cases</td>
                     </tr>
                   </tbody>
                 </table>
-                <div style={{ background: '#f8fafc', padding: '12px', borderLeft: '4px solid #3b82f6', borderRadius: '4px', margin: '16px 0' }}>
+                <div style={{ background: 'hsl(var(--bg-card-hover))', padding: '12px', borderLeft: '4px solid hsl(var(--primary))', borderRadius: '4px', margin: '16px 0' }}>
                   <strong>Dock Instructions:</strong> {donationEmailCustomNotes}
                 </div>
-                <p style={{ marginTop: '20px', color: '#64748b', fontSize: '0.8rem' }}>IndSpoiler Alert Surplus Recovery Division</p>
+                <p style={{ marginTop: '20px', color: 'hsl(var(--text-muted))', fontSize: '0.8rem' }}>IndSpoiler Alert Surplus Recovery Division</p>
               </div>
             </div>
           </div>

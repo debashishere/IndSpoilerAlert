@@ -43,7 +43,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div
           style={{
-            background: 'hsl(223, 47%, 12%)',
+            background: 'hsl(var(--bg-card))',
             padding: '10px 16px',
             display: 'flex',
             justifyContent: 'space-between',
@@ -156,7 +156,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
                             style={{
                               fontSize: '0.65rem',
                               padding: '1px 6px',
-                              backgroundColor: 'hsl(223, 47%, 16%)',
+                              backgroundColor: 'hsl(var(--bg-card))',
                               color: 'hsl(var(--text-muted))',
                               fontFamily: 'monospace',
                             }}
@@ -342,7 +342,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
                   fontWeight: 600,
                   cursor: 'pointer',
                   backgroundColor: currentPage === page ? 'hsl(var(--primary))' : 'transparent',
-                  color: currentPage === page ? '#ffffff' : 'hsl(var(--text-secondary))',
+                  color: currentPage === page ? 'white' : 'hsl(var(--text-secondary))',
                   transition: 'all 0.2s',
                 }}
               >

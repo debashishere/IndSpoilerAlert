@@ -145,7 +145,7 @@ export const UploadDropzone = ({ pipelineType }: UploadDropzoneProps) => {
           {isInventory ? (
             <Sparkles size={18} style={{ color: 'hsl(var(--primary))' }} />
           ) : (
-            <DollarSign size={18} style={{ color: 'hsl(142, 76%, 46%)' }} />
+            <DollarSign size={18} style={{ color: 'hsl(var(--success))' }} />
           )}
           <span>{isInventory ? 'Document Source' : 'Sales Report Source'}</span>
         </h3>
@@ -186,12 +186,12 @@ export const UploadDropzone = ({ pipelineType }: UploadDropzoneProps) => {
               {file.name.endsWith('.csv') ? (
                 <FileSpreadsheet
                   className="dropzone-icon"
-                  style={{ color: isInventory ? 'hsl(var(--primary))' : 'hsl(142, 76%, 46%)' }}
+                  style={{ color: isInventory ? 'hsl(var(--primary))' : 'hsl(var(--success))' }}
                 />
               ) : (
                 <FileText
                   className="dropzone-icon"
-                  style={{ color: isInventory ? 'hsl(var(--primary))' : 'hsl(142, 76%, 46%)' }}
+                  style={{ color: isInventory ? 'hsl(var(--primary))' : 'hsl(var(--success))' }}
                 />
               )}
               <div>
@@ -226,7 +226,7 @@ export const UploadDropzone = ({ pipelineType }: UploadDropzoneProps) => {
               marginTop: '20px',
               ...(isInventory
                 ? {}
-                : { background: 'linear-gradient(135deg, hsl(142, 76%, 36%), hsl(142, 76%, 46%))' }),
+                : { background: 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--success)))' }),
             }}
             onClick={handleRunExtraction}
             disabled={loading}
@@ -304,15 +304,15 @@ export const UploadDropzone = ({ pipelineType }: UploadDropzoneProps) => {
         <div
           className="card"
           style={{
-            borderLeft: '4px solid hsl(142, 76%, 46%)',
+            borderLeft: '4px solid hsl(var(--success))',
             display: 'flex',
             gap: '12px',
             alignItems: 'flex-start',
           }}
         >
-          <CheckCircle2 size={20} style={{ color: 'hsl(142, 76%, 46%)', flexShrink: 0 }} />
+          <CheckCircle2 size={20} style={{ color: 'hsl(var(--success))', flexShrink: 0 }} />
           <div>
-            <h4 style={{ color: 'hsl(142, 76%, 46%)', marginBottom: '4px' }}>
+            <h4 style={{ color: 'hsl(var(--success))', marginBottom: '4px' }}>
               Sales Reconciliation Complete
             </h4>
             <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))' }}>

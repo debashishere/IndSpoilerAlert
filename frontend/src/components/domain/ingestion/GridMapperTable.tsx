@@ -233,12 +233,12 @@ export const GridMapperTable = ({ pipelineType }: GridMapperTableProps) => {
                   cursor: isDisabled ? 'not-allowed' : 'pointer',
                   opacity: isDisabled ? 0.75 : 1,
                   background: isImported
-                    ? 'hsl(142 76% 20% / 40%)'
+                    ? 'hsl(var(--success) / 40%)'
                     : isInventory
                     ? undefined
-                    : 'linear-gradient(135deg, hsl(142, 76%, 36%), hsl(142, 76%, 46%))',
-                  color: isImported ? 'hsl(142 76% 65%)' : '#fff',
-                  border: isImported ? '1px solid hsl(142 76% 36% / 50%)' : 'none',
+                    : 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--success)))',
+                  color: isImported ? 'hsl(142 76% 65%)' : 'white',
+                  border: isImported ? '1px solid hsl(var(--success) / 50%)' : 'none',
                   boxShadow: isDisabled ? 'none' : '0 4px 12px hsl(var(--primary) / 0.25)',
                 }}
                 onClick={handleConfirm}
@@ -319,8 +319,8 @@ export const GridMapperTable = ({ pipelineType }: GridMapperTableProps) => {
           <div
             className="empty-state-icon-wrapper"
             style={{
-              background: isInventory ? 'hsl(var(--primary) / 10%)' : 'hsl(142 76% 46% / 10%)',
-              color: isInventory ? 'hsl(var(--primary))' : 'hsl(142, 76%, 46%)',
+              background: isInventory ? 'hsl(var(--primary) / 10%)' : 'hsl(var(--success) / 10%)',
+              color: isInventory ? 'hsl(var(--primary))' : 'hsl(var(--success))',
             }}
           >
             {isInventory ? <UploadCloud size={36} /> : <DollarSign size={36} />}

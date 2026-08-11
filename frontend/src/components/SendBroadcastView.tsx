@@ -26,7 +26,7 @@ export const SendBroadcastView: React.FC<SendBroadcastViewProps> = ({
     '<p>Hello <strong>{{buyer_name}}</strong>,</p>' +
     '<p>We have immediate surplus inventory available for liquidation. Please review item details below:</p>' +
     '{{inventory_table}}<br/>' +
-    '<p><a href="{{quick_bid_link}}" style="background-color: #4f46e5; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">Place 1-Click Quick Bid</a></p>' +
+    '<p><a href="{{quick_bid_link}}" style="background-color: hsl(var(--primary)); color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">Place 1-Click Quick Bid</a></p>' +
     '</div>'
   );
   const [dispatching, setDispatching] = useState<boolean>(false);
@@ -359,8 +359,8 @@ export const SendBroadcastView: React.FC<SendBroadcastViewProps> = ({
               minHeight: '300px',
               border: '1px solid hsl(var(--border-color))',
               borderRadius: '8px',
-              backgroundColor: '#ffffff',
-              color: '#000000',
+              backgroundColor: 'white',
+              color: 'hsl(var(--text-primary))000',
               padding: '16px',
               overflowY: 'auto'
             }}

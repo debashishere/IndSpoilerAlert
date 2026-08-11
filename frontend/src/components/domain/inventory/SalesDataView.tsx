@@ -125,8 +125,8 @@ export const SalesDataView: React.FC = () => {
   // Chart 2: COGS vs Realized Revenue Recovery by Category
   const categoryRecoveryData = [
     { category: 'Dry Goods', cogs: 120000, revenue: 94080, recoveryPct: 78.4, color: 'hsl(var(--primary))' },
-    { category: 'Dairy', cogs: 95000, revenue: 64790, recoveryPct: 68.2, color: 'hsl(142, 76%, 46%)' },
-    { category: 'Beverages', cogs: 88000, revenue: 65120, recoveryPct: 74.0, color: 'hsl(217, 91%, 60%)' },
+    { category: 'Dairy', cogs: 95000, revenue: 64790, recoveryPct: 68.2, color: 'hsl(var(--success))' },
+    { category: 'Beverages', cogs: 88000, revenue: 65120, recoveryPct: 74.0, color: 'hsl(var(--primary))' },
     { category: 'Frozen Food', cogs: 110000, revenue: 68310, recoveryPct: 62.1, color: 'hsl(45, 93%, 47%)' },
     { category: 'Bakery & Snacks', cogs: 65000, revenue: 45500, recoveryPct: 70.0, color: 'hsl(280, 80%, 65%)' },
   ];
@@ -134,8 +134,8 @@ export const SalesDataView: React.FC = () => {
   // Chart 3: Buyer Channel Revenue Share
   const channelBreakdown = [
     { channel: 'Off-Price Wholesalers', pct: 42, rev: 184737, color: 'hsl(var(--primary))' },
-    { channel: 'Regional Liquidators', pct: 28, rev: 123158, color: 'hsl(142, 76%, 46%)' },
-    { channel: 'Food Rescue & Discount', pct: 18, rev: 79173, color: 'hsl(217, 91%, 60%)' },
+    { channel: 'Regional Liquidators', pct: 28, rev: 123158, color: 'hsl(var(--success))' },
+    { channel: 'Food Rescue & Discount', pct: 18, rev: 79173, color: 'hsl(var(--primary))' },
     { channel: 'Secondary Direct Export', pct: 12, rev: 52782, color: 'hsl(45, 93%, 47%)' },
   ];
 
@@ -191,11 +191,11 @@ export const SalesDataView: React.FC = () => {
               width: '52px',
               height: '52px',
               borderRadius: '14px',
-              background: 'linear-gradient(135deg, hsl(142, 76%, 46%), hsl(var(--primary)))',
+              background: 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--primary)))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fff',
+              color: 'white',
               boxShadow: '0 4px 16px hsl(142, 76%, 46% / 40%)',
               flexShrink: 0,
             }}
@@ -209,8 +209,8 @@ export const SalesDataView: React.FC = () => {
               </h3>
               <span
                 style={{
-                  background: 'linear-gradient(135deg, hsl(142, 76%, 46%), hsl(var(--primary)))',
-                  color: '#fff',
+                  background: 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--primary)))',
+                  color: 'white',
                   fontSize: '0.72rem',
                   fontWeight: 800,
                   padding: '4px 12px',
@@ -247,7 +247,7 @@ export const SalesDataView: React.FC = () => {
               gap: '6px',
             }}
           >
-            <ShieldCheck size={14} style={{ color: 'hsl(142, 76%, 46%)' }} />
+            <ShieldCheck size={14} style={{ color: 'hsl(var(--success))' }} />
             <span>Ingestion Sync Active</span>
           </div>
         </div>
@@ -258,13 +258,13 @@ export const SalesDataView: React.FC = () => {
         <div className="kpi-card">
           <div className="kpi-card-header">
             <span>Total Realized Revenue</span>
-            <DollarSign size={16} style={{ color: 'hsl(142, 76%, 46%)' }} />
+            <DollarSign size={16} style={{ color: 'hsl(var(--success))' }} />
           </div>
-          <div className="kpi-card-value" style={{ color: 'hsl(142, 76%, 46%)' }}>
+          <div className="kpi-card-value" style={{ color: 'hsl(var(--success))' }}>
             ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div className="kpi-card-footer">
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'hsl(142, 76%, 46%)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'hsl(var(--success))' }}>
               <ArrowUpRight size={12} /> +14.2% vs previous period
             </span>
           </div>
@@ -339,8 +339,8 @@ export const SalesDataView: React.FC = () => {
                   fontWeight: timeframe === t ? 700 : 500,
                   borderRadius: '6px',
                   border: 'none',
-                  background: timeframe === t ? 'hsl(142, 76%, 46%)' : 'transparent',
-                  color: timeframe === t ? '#fff' : 'hsl(var(--text-muted))',
+                  background: timeframe === t ? 'hsl(var(--success))' : 'transparent',
+                  color: timeframe === t ? 'white' : 'hsl(var(--text-muted))',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                   textTransform: 'uppercase',
@@ -419,7 +419,7 @@ export const SalesDataView: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <BarChart3 size={18} style={{ color: 'hsl(142, 76%, 46%)' }} />
+                <BarChart3 size={18} style={{ color: 'hsl(var(--success))' }} />
                 <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--text-primary))', margin: 0 }}>
                   Realized Closeout Revenue & Volume Trajectory
                 </h4>
@@ -435,12 +435,12 @@ export const SalesDataView: React.FC = () => {
             <svg viewBox="0 0 500 150" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
               <defs>
                 <linearGradient id="gradSalesRev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(142, 76%, 46%)" stopOpacity="0.45" />
-                  <stop offset="100%" stopColor="hsl(142, 76%, 46%)" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="hsl(var(--success))" stopOpacity="0.0" />
                 </linearGradient>
                 <linearGradient id="gradSalesVol" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(217, 91%, 60%)" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="hsl(217, 91%, 60%)" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
 
@@ -451,18 +451,18 @@ export const SalesDataView: React.FC = () => {
 
               {/* Area 1: Revenue ($) */}
               <path d="M 0,110 Q 100,50 200,75 T 400,30 L 500,50 L 500,140 L 0,140 Z" fill="url(#gradSalesRev)" />
-              <path d="M 0,110 Q 100,50 200,75 T 400,30 L 500,50" fill="none" stroke="hsl(142, 76%, 46%)" strokeWidth="3" />
+              <path d="M 0,110 Q 100,50 200,75 T 400,30 L 500,50" fill="none" stroke="hsl(var(--success))" strokeWidth="3" />
 
               {/* Line 2: Volume (Cases) */}
               <path d="M 0,130 Q 100,90 200,105 T 400,70 L 500,85 L 500,140 L 0,140 Z" fill="url(#gradSalesVol)" />
-              <path d="M 0,130 Q 100,90 200,105 T 400,70 L 500,85" fill="none" stroke="hsl(217, 91%, 60%)" strokeWidth="2.5" strokeDasharray="5 3" />
+              <path d="M 0,130 Q 100,90 200,105 T 400,70 L 500,85" fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeDasharray="5 3" />
 
               {/* Interactive Point Nodes */}
               {trajectoryData.map((_d, i) => {
                 const x = (i / (trajectoryData.length - 1)) * 500;
                 return (
                   <g key={i}>
-                    <circle cx={x} cy={50 + Math.sin(i) * 20} r="5" fill="hsl(142, 76%, 46%)" stroke="#fff" strokeWidth="2" />
+                    <circle cx={x} cy={50 + Math.sin(i) * 20} r="5" fill="hsl(var(--success))" stroke='white' strokeWidth="2" />
                   </g>
                 );
               })}
@@ -478,10 +478,10 @@ export const SalesDataView: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'hsl(var(--text-secondary))' }}>
             <div style={{ display: 'flex', gap: '16px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'hsl(142, 76%, 46%)' }} /> Realized Revenue ($)
+                <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'hsl(var(--success))' }} /> Realized Revenue ($)
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'hsl(217, 91%, 60%)' }} /> Case Volume Sold
+                <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'hsl(var(--primary))' }} /> Case Volume Sold
               </span>
             </div>
           </div>
@@ -572,9 +572,9 @@ export const SalesDataView: React.FC = () => {
                 {/* Off-Price Wholesalers (42%) */}
                 <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeDasharray="42 58" strokeDashoffset="0" />
                 {/* Regional Liquidators (28%) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(142, 76%, 46%)" strokeWidth="4" strokeDasharray="28 72" strokeDashoffset="-42" />
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(var(--success))" strokeWidth="4" strokeDasharray="28 72" strokeDashoffset="-42" />
                 {/* Food Rescue & Discount (18%) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(217, 91%, 60%)" strokeWidth="4" strokeDasharray="18 82" strokeDashoffset="-70" />
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeDasharray="18 82" strokeDashoffset="-70" />
                 {/* Export (12%) */}
                 <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(45, 93%, 47%)" strokeWidth="4" strokeDasharray="12 88" strokeDashoffset="-88" />
               </svg>
@@ -648,7 +648,7 @@ export const SalesDataView: React.FC = () => {
                       cx={cx}
                       cy={cy}
                       r={isSelected ? '8' : '6'}
-                      fill={isSelected ? '#fff' : 'hsl(45, 93%, 47%)'}
+                      fill={isSelected ? 'white' : 'hsl(45, 93%, 47%)'}
                       stroke="hsl(45, 93%, 47%)"
                       strokeWidth="2"
                     />
@@ -719,7 +719,7 @@ export const SalesDataView: React.FC = () => {
                 borderRadius: '6px',
                 border: 'none',
                 background: activeLeaderboardTab === 'buyers' ? 'hsl(var(--primary))' : 'transparent',
-                color: activeLeaderboardTab === 'buyers' ? '#fff' : 'hsl(var(--text-muted))',
+                color: activeLeaderboardTab === 'buyers' ? 'white' : 'hsl(var(--text-muted))',
                 cursor: 'pointer',
               }}
             >
@@ -734,7 +734,7 @@ export const SalesDataView: React.FC = () => {
                 borderRadius: '6px',
                 border: 'none',
                 background: activeLeaderboardTab === 'dcs' ? 'hsl(var(--primary))' : 'transparent',
-                color: activeLeaderboardTab === 'dcs' ? '#fff' : 'hsl(var(--text-muted))',
+                color: activeLeaderboardTab === 'dcs' ? 'white' : 'hsl(var(--text-muted))',
                 cursor: 'pointer',
               }}
             >
@@ -755,7 +755,7 @@ export const SalesDataView: React.FC = () => {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'hsl(142, 76%, 46%)' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'hsl(var(--success))' }}>
                     ${b.totalSpent.toLocaleString()}
                   </span>
                   <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px', background: 'hsl(var(--primary) / 15%)', color: 'hsl(var(--primary))', fontWeight: 700 }}>
@@ -777,10 +777,10 @@ export const SalesDataView: React.FC = () => {
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'hsl(142, 76%, 46%)' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'hsl(var(--success))' }}>
                     ${wh.clearedRevenue.toLocaleString()}
                   </span>
-                  <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px', background: 'hsl(142, 76%, 46% / 15%)', color: 'hsl(142, 76%, 46%)', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px', background: 'hsl(142, 76%, 46% / 15%)', color: 'hsl(var(--success))', fontWeight: 700 }}>
                     {wh.recoveryPct}% Recovery
                   </span>
                 </div>

@@ -213,8 +213,8 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                 padding: '9px 16px',
                 borderRadius: '8px',
                 border: 'none',
-                background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(262, 83%, 53%))',
-                color: '#fff',
+                background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
+                color: 'white',
                 fontSize: '13px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -249,7 +249,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(10, 14, 26, 0.8)',
+            backgroundColor: 'hsl(var(--bg-card) / 0.8)',
             backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
@@ -261,7 +261,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
         >
           <div
             style={{
-              background: 'hsl(223, 47%, 10%)',
+              background: 'hsl(var(--bg-card))',
               border: '1px solid hsl(var(--primary) / 0.35)',
               borderRadius: '16px',
               width: '100%',
@@ -292,7 +292,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                   <Sparkles size={22} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#fff' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'white' }}>
                     Upload Inventory Document
                   </h3>
                   <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'hsl(var(--text-muted))' }}>
@@ -304,7 +304,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                 type="button"
                 onClick={() => setIsImportModalOpen(false)}
                 style={{
-                  background: 'hsl(223, 47%, 14%)',
+                  background: 'hsl(var(--bg-card))',
                   border: '1px solid hsl(var(--border-color))',
                   borderRadius: '8px',
                   color: 'hsl(var(--text-muted))',
@@ -330,11 +330,11 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                 onChange={(e) => dispatch(setSelectedSupplier(e.target.value))}
                 style={{
                   width: '100%',
-                  background: 'hsl(223, 47%, 8%)',
+                  background: 'hsl(var(--bg-card))',
                   border: '1px solid hsl(var(--border-color))',
                   borderRadius: '8px',
                   padding: '10px 12px',
-                  color: '#fff',
+                  color: 'white',
                   fontSize: '13px',
                   outline: 'none',
                 }}
@@ -387,7 +387,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                   ) : (
                     <FileText size={38} style={{ color: 'hsl(var(--primary))', marginBottom: '10px' }} />
                   )}
-                  <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>
+                  <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', fontWeight: 600, color: 'white' }}>
                     {inventoryFile.name}
                   </h4>
                   <p style={{ margin: 0, fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
@@ -397,7 +397,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
               ) : (
                 <>
                   <UploadCloud size={38} style={{ color: 'hsl(var(--primary))', marginBottom: '10px' }} />
-                  <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>
+                  <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', fontWeight: 600, color: 'white' }}>
                     Drag & Drop Invoice File here
                   </h4>
                   <p style={{ margin: 0, fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
@@ -416,7 +416,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                   padding: '9px 18px',
                   borderRadius: '8px',
                   border: '1px solid hsl(var(--border-color))',
-                  background: 'hsl(223, 47%, 14%)',
+                  background: 'hsl(var(--bg-card))',
                   color: 'hsl(var(--text-muted))',
                   fontSize: '13px',
                   fontWeight: 600,
@@ -433,8 +433,8 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                   padding: '9px 20px',
                   borderRadius: '8px',
                   border: 'none',
-                  background: inventoryFile ? 'linear-gradient(135deg, hsl(var(--primary)), hsl(262, 83%, 53%))' : 'hsl(var(--border-color))',
-                  color: '#fff',
+                  background: inventoryFile ? 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))' : 'hsl(var(--border-color))',
+                  color: 'white',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: inventoryFile && !inventoryLoading ? 'pointer' : 'not-allowed',
@@ -525,7 +525,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
           className="card"
           style={{
             border: '1px solid hsl(var(--primary) / 0.5)',
-            background: 'hsl(223, 47%, 10%)',
+            background: 'hsl(var(--bg-card))',
             minHeight: '400px',
             display: 'flex',
             flexDirection: 'column',
@@ -537,7 +537,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                   right: 0,
                   bottom: 0,
                   zIndex: 9999,
-                  background: 'hsl(223, 47%, 9%)',
+                  background: 'hsl(var(--bg-card))',
                   padding: '24px',
                   borderRadius: 0,
                   overflow: 'hidden',
@@ -550,7 +550,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
                   <CheckCircle2 size={20} style={{ color: 'hsl(var(--primary))' }} />
-                  <h3 style={{ fontSize: '1.2rem', margin: 0, color: '#fff', fontWeight: 700 }}>
+                  <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'white', fontWeight: 700 }}>
                     Extract Preview: {inventoryParsedResult.fileName}
                   </h3>
                   <span
@@ -586,8 +586,8 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                     fontSize: '12px',
                     borderRadius: '8px',
                     border: '1px solid hsl(var(--border-color))',
-                    background: 'hsl(223, 47%, 14%)',
-                    color: '#fff',
+                    background: 'hsl(var(--bg-card))',
+                    color: 'white',
                     cursor: 'pointer',
                   }}
                 >
@@ -606,9 +606,9 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                     fontSize: '13px',
                     cursor: inventoryLoading || inventoryIsImported ? 'not-allowed' : 'pointer',
                     background: inventoryIsImported
-                      ? 'hsl(142 76% 20% / 40%)'
-                      : 'linear-gradient(135deg, hsl(var(--primary)), hsl(262, 83%, 53%))',
-                    color: inventoryIsImported ? 'hsl(142 76% 65%)' : '#fff',
+                      ? 'hsl(var(--success) / 40%)'
+                      : 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
+                    color: inventoryIsImported ? 'hsl(142 76% 65%)' : 'white',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -625,7 +625,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
                     padding: '9px 12px',
                     borderRadius: '8px',
                     border: '1px solid hsl(var(--border-color))',
-                    background: 'hsl(223, 47%, 14%)',
+                    background: 'hsl(var(--bg-card))',
                     color: 'hsl(var(--text-muted))',
                     fontSize: '13px',
                     cursor: 'pointer',

@@ -76,7 +76,7 @@ export const InventoryFilterBar: React.FC<InventoryFilterBarProps> = ({
               fontWeight: 600,
               cursor: 'pointer',
               backgroundColor: dashboardViewMode === 'table' ? 'hsl(var(--primary))' : 'transparent',
-              color: dashboardViewMode === 'table' ? '#ffffff' : 'hsl(var(--text-secondary))',
+              color: dashboardViewMode === 'table' ? 'white' : 'hsl(var(--text-secondary))',
               transition: 'all 0.2s',
             }}
           >
@@ -95,7 +95,7 @@ export const InventoryFilterBar: React.FC<InventoryFilterBarProps> = ({
               fontWeight: 600,
               cursor: 'pointer',
               backgroundColor: dashboardViewMode === 'kanban' ? 'hsl(var(--primary))' : 'transparent',
-              color: dashboardViewMode === 'kanban' ? '#ffffff' : 'hsl(var(--text-secondary))',
+              color: dashboardViewMode === 'kanban' ? 'white' : 'hsl(var(--text-secondary))',
               transition: 'all 0.2s',
             }}
           >

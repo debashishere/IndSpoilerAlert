@@ -70,7 +70,7 @@ export const BuyerTable: React.FC<BuyerTableProps> = ({ filteredBuyers, onBuyerC
     return (
       <div className="card empty-state" style={{ padding: '40px', textAlign: 'center' }}>
         <Users size={36} style={{ opacity: 0.3, marginBottom: '12px', color: 'hsl(var(--text-muted))' }} />
-        <h4 style={{ margin: '0 0 6px', color: '#fff' }}>No Registered Buyers Found</h4>
+        <h4 style={{ margin: '0 0 6px', color: 'white' }}>No Registered Buyers Found</h4>
         <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--text-muted))' }}>
           No buyers match your current filter and search criteria.
         </p>
@@ -83,7 +83,7 @@ export const BuyerTable: React.FC<BuyerTableProps> = ({ filteredBuyers, onBuyerC
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div
           style={{
-            background: 'hsl(223, 47%, 12%)',
+            background: 'hsl(var(--bg-card))',
             padding: '10px 16px',
             display: 'flex',
             justifyContent: 'space-between',
@@ -95,7 +95,7 @@ export const BuyerTable: React.FC<BuyerTableProps> = ({ filteredBuyers, onBuyerC
           }}
         >
           <span>Buyer Data Pipeline ({sortedBuyers.length})</span>
-          <span style={{ color: 'hsl(262, 83%, 63%)' }}>Company · Contact · Tier & Preferences</span>
+          <span style={{ color: 'hsl(var(--primary))' }}>Company · Contact · Tier & Preferences</span>
         </div>
         <div className="premium-table-container">
           <table className="premium-table">
@@ -157,13 +157,13 @@ export const BuyerTable: React.FC<BuyerTableProps> = ({ filteredBuyers, onBuyerC
                                 ? 'hsl(221, 83%, 53% / 0.2)'
                                 : buyer.tier === 'liquidator'
                                 ? 'hsl(38, 92%, 50% / 0.2)'
-                                : 'hsl(262, 83%, 63% / 0.2)',
+                                : 'hsl(var(--primary) / 0.2)',
                             border: `1px solid ${
                               buyer.tier === 'tier1'
                                 ? 'hsl(221, 83%, 53% / 0.4)'
                                 : buyer.tier === 'liquidator'
                                 ? 'hsl(38, 92%, 50% / 0.4)'
-                                : 'hsl(262, 83%, 63% / 0.4)'
+                                : 'hsl(var(--primary) / 0.4)'
                             }`,
                             display: 'flex',
                             alignItems: 'center',
@@ -175,7 +175,7 @@ export const BuyerTable: React.FC<BuyerTableProps> = ({ filteredBuyers, onBuyerC
                                 ? 'hsl(221, 83%, 63%)'
                                 : buyer.tier === 'liquidator'
                                 ? 'hsl(38, 92%, 60%)'
-                                : 'hsl(262, 83%, 73%)',
+                                : 'hsl(var(--primary))',
                             flexShrink: 0,
                           }}
                         >
@@ -226,19 +226,19 @@ export const BuyerTable: React.FC<BuyerTableProps> = ({ filteredBuyers, onBuyerC
                                 ? 'hsl(221, 83%, 53% / 0.15)'
                                 : buyer.tier === 'liquidator'
                                 ? 'hsl(38, 92%, 50% / 0.15)'
-                                : 'hsl(262, 83%, 63% / 0.15)',
+                                : 'hsl(var(--primary) / 0.15)',
                             color:
                               buyer.tier === 'tier1'
                                 ? 'hsl(221, 83%, 63%)'
                                 : buyer.tier === 'liquidator'
                                 ? 'hsl(38, 92%, 60%)'
-                                : 'hsl(262, 83%, 73%)',
+                                : 'hsl(var(--primary))',
                             border: `1px solid ${
                               buyer.tier === 'tier1'
                                 ? 'hsl(221, 83%, 53% / 0.3)'
                                 : buyer.tier === 'liquidator'
                                 ? 'hsl(38, 92%, 50% / 0.3)'
-                                : 'hsl(262, 83%, 63% / 0.3)'
+                                : 'hsl(var(--primary) / 0.3)'
                             }`,
                           }}
                         >
@@ -324,9 +324,9 @@ export const BuyerTable: React.FC<BuyerTableProps> = ({ filteredBuyers, onBuyerC
                       <span
                         className="badge"
                         style={{
-                          backgroundColor: isBuyerInactive ? 'hsl(var(--error) / 12%)' : 'hsl(142 76% 46% / 12%)',
+                          backgroundColor: isBuyerInactive ? 'hsl(var(--error) / 12%)' : 'hsl(var(--success) / 12%)',
                           color: isBuyerInactive ? 'hsl(var(--error))' : 'hsl(142 76% 46%)',
-                          border: `1px solid ${isBuyerInactive ? 'hsl(var(--error) / 30%)' : 'hsl(142 76% 46% / 30%)'}`,
+                          border: `1px solid ${isBuyerInactive ? 'hsl(var(--error) / 30%)' : 'hsl(var(--success) / 30%)'}`,
                           fontSize: '0.7rem',
                           textTransform: 'capitalize',
                         }}
@@ -384,8 +384,8 @@ export const BuyerTable: React.FC<BuyerTableProps> = ({ filteredBuyers, onBuyerC
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    backgroundColor: currentPage === page ? 'hsl(262, 83%, 53%)' : 'transparent',
-                    color: currentPage === page ? '#ffffff' : 'hsl(var(--text-secondary))',
+                    backgroundColor: currentPage === page ? 'hsl(var(--primary))' : 'transparent',
+                    color: currentPage === page ? 'white' : 'hsl(var(--text-secondary))',
                     transition: 'all 0.2s',
                   }}
                 >

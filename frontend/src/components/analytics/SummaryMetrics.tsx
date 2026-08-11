@@ -80,7 +80,7 @@ export const SummaryMetrics: React.FC = () => {
           <Leaf size={16} style={{ color: 'hsl(var(--secondary))' }} />
         </div>
         <div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: 'hsl(var(--text-primary))', background: 'linear-gradient(135deg, hsl(var(--secondary)), #a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <div style={{ fontSize: '2rem', fontWeight: 800, color: 'hsl(var(--text-primary))', background: 'linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary)))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
             {metrics.co2SavedTons} Tons
           </div>
           <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))' }}>

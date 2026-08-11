@@ -150,17 +150,17 @@ export const BuyerRegistryPanel = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Top Header & Ingestion Actions */}
-      <div className="card" style={{ borderLeft: '4px solid hsl(262, 83%, 63%)' }}>
+      <div className="card" style={{ borderLeft: '4px solid hsl(var(--primary))' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-              <Users size={20} style={{ color: 'hsl(262, 83%, 63%)' }} />
+              <Users size={20} style={{ color: 'hsl(var(--primary))' }} />
               <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Buyer List Ingestion</h3>
               <span
                 style={{
-                  background: 'hsl(262, 83%, 63% / 0.15)',
-                  color: 'hsl(262, 83%, 63%)',
-                  border: '1px solid hsl(262, 83%, 63% / 0.3)',
+                  background: 'hsl(var(--primary) / 0.15)',
+                  color: 'hsl(var(--primary))',
+                  border: '1px solid hsl(var(--primary) / 0.3)',
                   fontSize: '11px',
                   fontWeight: 600,
                   padding: '2px 10px',
@@ -183,9 +183,9 @@ export const BuyerRegistryPanel = () => {
               style={{
                 padding: '9px 16px',
                 borderRadius: '8px',
-                border: '1px solid hsl(262, 83%, 63% / 0.4)',
-                background: 'hsl(262, 83%, 63% / 0.12)',
-                color: 'hsl(262, 83%, 73%)',
+                border: '1px solid hsl(var(--primary) / 0.4)',
+                background: 'hsl(var(--primary) / 0.12)',
+                color: 'hsl(var(--primary))',
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -206,8 +206,8 @@ export const BuyerRegistryPanel = () => {
                 padding: '9px 16px',
                 borderRadius: '8px',
                 border: 'none',
-                background: 'linear-gradient(135deg, hsl(262, 83%, 53%), hsl(221, 83%, 53%))',
-                color: '#fff',
+                background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
+                color: 'white',
                 fontSize: '13px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -230,9 +230,9 @@ export const BuyerRegistryPanel = () => {
               style={{
                 padding: '9px 16px',
                 borderRadius: '8px',
-                border: '1px solid hsl(160, 84%, 39% / 0.4)',
-                background: 'hsl(160, 84%, 39% / 0.15)',
-                color: 'hsl(160, 84%, 45%)',
+                border: '1px solid hsl(var(--success) / 0.4)',
+                background: 'hsl(var(--success) / 0.15)',
+                color: 'hsl(var(--success))',
                 fontSize: '13px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -271,8 +271,8 @@ export const BuyerRegistryPanel = () => {
         <div
           className="card"
           style={{
-            border: '1px solid hsl(262, 83%, 63% / 0.5)',
-            background: 'hsl(223, 47%, 10%)',
+            border: '1px solid hsl(var(--primary) / 0.5)',
+            background: 'hsl(var(--bg-card))',
             minHeight: '400px',
             display: 'flex',
             flexDirection: 'column',
@@ -284,7 +284,7 @@ export const BuyerRegistryPanel = () => {
                   right: 0,
                   bottom: 0,
                   zIndex: 9999,
-                  background: 'hsl(223, 47%, 9%)',
+                  background: 'hsl(var(--bg-card))',
                   padding: '24px',
                   borderRadius: 0,
                   overflow: 'hidden',
@@ -296,16 +296,16 @@ export const BuyerRegistryPanel = () => {
             <div className="preview-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                  <CheckCircle2 size={20} style={{ color: 'hsl(262, 83%, 63%)' }} />
-                  <h3 style={{ fontSize: '1.2rem', margin: 0, color: '#fff', fontWeight: 700 }}>
+                  <CheckCircle2 size={20} style={{ color: 'hsl(var(--primary))' }} />
+                  <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'white', fontWeight: 700 }}>
                     Confirm Buyer CSV Mapping
                   </h3>
                   <span
                     style={{
                       fontSize: '11px',
-                      background: 'hsl(262, 83%, 63% / 0.2)',
-                      color: 'hsl(262, 83%, 73%)',
-                      border: '1px solid hsl(262, 83%, 63% / 0.4)',
+                      background: 'hsl(var(--primary) / 0.2)',
+                      color: 'hsl(var(--primary))',
+                      border: '1px solid hsl(var(--primary) / 0.4)',
                       padding: '2px 10px',
                       borderRadius: '12px',
                       fontWeight: 600,
@@ -333,8 +333,8 @@ export const BuyerRegistryPanel = () => {
                     fontSize: '12px',
                     borderRadius: '8px',
                     border: '1px solid hsl(var(--border-color))',
-                    background: 'hsl(223, 47%, 14%)',
-                    color: '#fff',
+                    background: 'hsl(var(--bg-card))',
+                    color: 'white',
                     cursor: 'pointer',
                   }}
                 >
@@ -352,8 +352,8 @@ export const BuyerRegistryPanel = () => {
                     fontWeight: 700,
                     fontSize: '13px',
                     cursor: buyerLoading ? 'not-allowed' : 'pointer',
-                    background: 'linear-gradient(135deg, hsl(262, 83%, 53%), hsl(221, 83%, 53%))',
-                    color: '#fff',
+                    background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
+                    color: 'white',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -370,7 +370,7 @@ export const BuyerRegistryPanel = () => {
                     padding: '9px 12px',
                     borderRadius: '8px',
                     border: '1px solid hsl(var(--border-color))',
-                    background: 'hsl(223, 47%, 14%)',
+                    background: 'hsl(var(--bg-card))',
                     color: 'hsl(var(--text-muted))',
                     fontSize: '13px',
                     cursor: 'pointer',
@@ -456,7 +456,7 @@ export const BuyerRegistryPanel = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(10, 14, 26, 0.8)',
+            backgroundColor: 'hsl(var(--bg-card) / 0.8)',
             backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
@@ -468,13 +468,13 @@ export const BuyerRegistryPanel = () => {
         >
           <div
             style={{
-              background: 'hsl(223, 47%, 10%)',
-              border: '1px solid hsl(262, 83%, 63% / 0.35)',
+              background: 'hsl(var(--bg-card))',
+              border: '1px solid hsl(var(--primary) / 0.35)',
               borderRadius: '16px',
               width: '100%',
               maxWidth: '540px',
               padding: '28px',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.6), 0 0 20px hsl(262, 83%, 63% / 0.15)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.6), 0 0 20px hsl(var(--primary) / 0.15)',
               display: 'flex',
               flexDirection: 'column',
               gap: '20px',
@@ -488,18 +488,18 @@ export const BuyerRegistryPanel = () => {
                     width: '42px',
                     height: '42px',
                     borderRadius: '12px',
-                    background: 'hsl(262, 83%, 63% / 0.15)',
-                    border: '1px solid hsl(262, 83%, 63% / 0.3)',
+                    background: 'hsl(var(--primary) / 0.15)',
+                    border: '1px solid hsl(var(--primary) / 0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'hsl(262, 83%, 73%)',
+                    color: 'hsl(var(--primary))',
                   }}
                 >
                   <UploadCloud size={22} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#fff' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'white' }}>
                     Bulk Import Buyers via CSV
                   </h3>
                   <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'hsl(var(--text-muted))' }}>
@@ -511,7 +511,7 @@ export const BuyerRegistryPanel = () => {
                 type="button"
                 onClick={() => setIsImportModalOpen(false)}
                 style={{
-                  background: 'hsl(223, 47%, 14%)',
+                  background: 'hsl(var(--bg-card))',
                   border: '1px solid hsl(var(--border-color))',
                   borderRadius: '8px',
                   color: 'hsl(var(--text-muted))',
@@ -544,28 +544,28 @@ export const BuyerRegistryPanel = () => {
                 await dispatch(uploadBuyerThunk({ file: f }));
               }}
               style={{
-                border: '2px dashed hsl(262, 83%, 63% / 0.4)',
+                border: '2px dashed hsl(var(--primary) / 0.4)',
                 borderRadius: '12px',
-                background: 'hsl(262, 83%, 63% / 0.04)',
+                background: 'hsl(var(--primary) / 0.04)',
                 padding: '32px 20px',
                 textAlign: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
               }}
             >
-              <UploadCloud size={38} style={{ color: 'hsl(262, 83%, 73%)', marginBottom: '10px' }} />
-              <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>
+              <UploadCloud size={38} style={{ color: 'hsl(var(--primary))', marginBottom: '10px' }} />
+              <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', fontWeight: 600, color: 'white' }}>
                 Select or drag your CSV file here
               </h4>
               <p style={{ margin: 0, fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
-                Supports <code style={{ color: 'hsl(262, 83%, 73%)' }}>.csv</code> files up to 500 records per import
+                Supports <code style={{ color: 'hsl(var(--primary))' }}>.csv</code> files up to 500 records per import
               </p>
             </div>
 
             {/* Header info */}
             <div
               style={{
-                background: 'hsl(223, 47%, 8%)',
+                background: 'hsl(var(--bg-card))',
                 borderRadius: '10px',
                 padding: '12px 16px',
                 border: '1px solid hsl(var(--border-color))',
@@ -576,13 +576,13 @@ export const BuyerRegistryPanel = () => {
                 Supported CSV Column Format:
               </div>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ background: 'hsl(262, 83%, 63% / 0.15)', color: 'hsl(262, 83%, 73%)', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                <span style={{ background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
                   name / companyName
                 </span>
-                <span style={{ background: 'hsl(262, 83%, 63% / 0.15)', color: 'hsl(262, 83%, 73%)', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                <span style={{ background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
                   email
                 </span>
-                <span style={{ background: 'hsl(262, 83%, 63% / 0.15)', color: 'hsl(262, 83%, 73%)', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
+                <span style={{ background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
                   tier
                 </span>
               </div>
@@ -597,7 +597,7 @@ export const BuyerRegistryPanel = () => {
                   padding: '9px 18px',
                   borderRadius: '8px',
                   border: '1px solid hsl(var(--border-color))',
-                  background: 'hsl(223, 47%, 14%)',
+                  background: 'hsl(var(--bg-card))',
                   color: 'hsl(var(--text-muted))',
                   fontSize: '13px',
                   fontWeight: 600,
@@ -613,8 +613,8 @@ export const BuyerRegistryPanel = () => {
                   padding: '9px 20px',
                   borderRadius: '8px',
                   border: 'none',
-                  background: 'linear-gradient(135deg, hsl(262, 83%, 53%), hsl(221, 83%, 53%))',
-                  color: '#fff',
+                  background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
+                  color: 'white',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -640,7 +640,7 @@ export const BuyerRegistryPanel = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(10, 14, 26, 0.8)',
+            backgroundColor: 'hsl(var(--bg-card) / 0.8)',
             backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
@@ -652,13 +652,13 @@ export const BuyerRegistryPanel = () => {
         >
           <div
             style={{
-              background: 'hsl(223, 47%, 10%)',
-              border: '1px solid hsl(262, 83%, 63% / 0.35)',
+              background: 'hsl(var(--bg-card))',
+              border: '1px solid hsl(var(--primary) / 0.35)',
               borderRadius: '16px',
               width: '100%',
               maxWidth: '500px',
               padding: '28px',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.6), 0 0 20px hsl(262, 83%, 63% / 0.15)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.6), 0 0 20px hsl(var(--primary) / 0.15)',
               display: 'flex',
               flexDirection: 'column',
               gap: '20px',
@@ -672,18 +672,18 @@ export const BuyerRegistryPanel = () => {
                     width: '42px',
                     height: '42px',
                     borderRadius: '12px',
-                    background: 'hsl(262, 83%, 63% / 0.15)',
-                    border: '1px solid hsl(262, 83%, 63% / 0.3)',
+                    background: 'hsl(var(--primary) / 0.15)',
+                    border: '1px solid hsl(var(--primary) / 0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'hsl(262, 83%, 73%)',
+                    color: 'hsl(var(--primary))',
                   }}
                 >
                   <Users size={22} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#fff' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'white' }}>
                     Add Buyer Manually
                   </h3>
                   <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'hsl(var(--text-muted))' }}>
@@ -695,7 +695,7 @@ export const BuyerRegistryPanel = () => {
                 type="button"
                 onClick={() => setIsAddBuyerModalOpen(false)}
                 style={{
-                  background: 'hsl(223, 47%, 14%)',
+                  background: 'hsl(var(--bg-card))',
                   border: '1px solid hsl(var(--border-color))',
                   borderRadius: '8px',
                   color: 'hsl(var(--text-muted))',
@@ -758,11 +758,11 @@ export const BuyerRegistryPanel = () => {
                   placeholder="e.g. Costco Wholesale"
                   style={{
                     width: '100%',
-                    background: 'hsl(223, 47%, 8%)',
+                    background: 'hsl(var(--bg-card))',
                     border: '1px solid hsl(var(--border-color))',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#fff',
+                    color: 'white',
                     fontSize: '13px',
                     boxSizing: 'border-box',
                     outline: 'none',
@@ -780,11 +780,11 @@ export const BuyerRegistryPanel = () => {
                   placeholder="buyer@company.com"
                   style={{
                     width: '100%',
-                    background: 'hsl(223, 47%, 8%)',
+                    background: 'hsl(var(--bg-card))',
                     border: '1px solid hsl(var(--border-color))',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#fff',
+                    color: 'white',
                     fontSize: '13px',
                     boxSizing: 'border-box',
                     outline: 'none',
@@ -800,11 +800,11 @@ export const BuyerRegistryPanel = () => {
                   onChange={(e) => dispatch(setBuyerNewTier(e.target.value))}
                   style={{
                     width: '100%',
-                    background: 'hsl(223, 47%, 8%)',
+                    background: 'hsl(var(--bg-card))',
                     border: '1px solid hsl(var(--border-color))',
                     borderRadius: '8px',
                     padding: '10px 12px',
-                    color: '#fff',
+                    color: 'white',
                     fontSize: '13px',
                     outline: 'none',
                   }}
@@ -825,7 +825,7 @@ export const BuyerRegistryPanel = () => {
                   padding: '9px 18px',
                   borderRadius: '8px',
                   border: '1px solid hsl(var(--border-color))',
-                  background: 'hsl(223, 47%, 14%)',
+                  background: 'hsl(var(--bg-card))',
                   color: 'hsl(var(--text-muted))',
                   fontSize: '13px',
                   fontWeight: 600,
@@ -847,9 +847,9 @@ export const BuyerRegistryPanel = () => {
                   cursor: newName && newEmail && !saving ? 'pointer' : 'not-allowed',
                   background:
                     newName && newEmail
-                      ? 'linear-gradient(135deg, hsl(262, 83%, 53%), hsl(221, 83%, 53%))'
+                      ? 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))'
                       : 'hsl(var(--border-color))',
-                  color: '#fff',
+                  color: 'white',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',

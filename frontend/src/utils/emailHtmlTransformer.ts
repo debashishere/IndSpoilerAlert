@@ -42,7 +42,7 @@ export function transformEmailHtml(
   html = html.replace(
     /<figcaption\b([^>]*)>([\s\S]*?)<\/figcaption>/gi,
     (_match, _attrs, content) => {
-      return `<p style="margin: 8px 0 0; font-size: 14px; color: #6b7280; text-align: center;">${content}</p>`;
+      return `<p style="margin: 8px 0 0; font-size: 14px; color: #5d7a9e; text-align: center;">${content}</p>`;
     }
   );
 
@@ -62,7 +62,7 @@ export function transformEmailHtml(
       const existingStyle = extractStyle(attrs) || '';
       const mergedStyle = mergeStyles(
         existingStyle,
-        'padding: 10px; border: 1px solid #d1d5db; background-color: #f3f4f6; font-weight: 600; text-align: left;'
+        'padding: 10px; border: 1px solid #90caf9; background-color: #e3f2fd; font-weight: 600; text-align: left;'
       );
       return `<th style="${mergedStyle}">`;
     }
@@ -74,7 +74,7 @@ export function transformEmailHtml(
       const existingStyle = extractStyle(attrs) || '';
       const mergedStyle = mergeStyles(
         existingStyle,
-        'padding: 10px; border: 1px solid #d1d5db;'
+        'padding: 10px; border: 1px solid #90caf9;'
       );
       return `<td style="${mergedStyle}">`;
     }
@@ -82,9 +82,9 @@ export function transformEmailHtml(
 
   // ─── 4. Inline heading styles ─────────────────────────────────
   const headingStyles: Record<string, string> = {
-    h1: 'font-size: 24px; font-weight: 700; margin: 16px 0; color: #111827;',
-    h2: 'font-size: 20px; font-weight: 600; margin: 14px 0; color: #1f2937;',
-    h3: 'font-size: 18px; font-weight: 600; margin: 12px 0; color: #374151;',
+    h1: 'font-size: 24px; font-weight: 700; margin: 16px 0; color: #0d47a1;',
+    h2: 'font-size: 20px; font-weight: 600; margin: 14px 0; color: #0d47a1;',
+    h3: 'font-size: 18px; font-weight: 600; margin: 12px 0; color: #0d47a1;',
   };
 
   Object.entries(headingStyles).forEach(([tag, style]) => {
@@ -118,13 +118,13 @@ export function transformEmailHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Inventory Offer</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f3f4f6;">
+<body style="margin: 0; padding: 0; background-color: #e3f2fd;">
   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>
       <td align="center" style="padding: 20px 0;">
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="${width}" style="max-width: ${width}px; width: 100%; background-color: #ffffff;">
           <tr>
-            <td style="padding: 24px; font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.5; color: #374151;">
+            <td style="padding: 24px; font-family: Arial, Helvetica, sans-serif; font-size: 16px; line-height: 1.5; color: #0d47a1;">
               ${html}
             </td>
           </tr>

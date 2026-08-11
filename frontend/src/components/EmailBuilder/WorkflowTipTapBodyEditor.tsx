@@ -113,7 +113,7 @@ export const TokenBadgeNode = Node.create({
           'data-token': attributes.token,
           class: 'token-badge-pill',
           style:
-            'display: inline-flex; align-items: center; gap: 4px; background-color: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.825rem; font-family: monospace; user-select: all; cursor: pointer;',
+            'display: inline-flex; align-items: center; gap: 4px; background-color: hsl(var(--warning) / 0.1); color: hsl(var(--warning)); border: 1px solid hsl(var(--warning) / 0.1); padding: 2px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.825rem; font-family: monospace; user-select: all; cursor: pointer;',
         }),
       },
     };
@@ -148,7 +148,7 @@ export const LinkMark = Mark.create({
     return [{ tag: 'a[href]' }];
   },
   renderHTML({ HTMLAttributes }) {
-    return ['a', mergeAttributes(HTMLAttributes, { style: 'color: #2563eb; text-decoration: underline;' }), 0];
+    return ['a', mergeAttributes(HTMLAttributes, { style: 'color: hsl(var(--primary)); text-decoration: underline;' }), 0];
   },
 });
 
@@ -200,8 +200,8 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [imageAlt, _setImageAlt] = useState('');
-  const [textColor, setTextColor] = useState('#1e293b');
-  const [bgColor, setBgColor] = useState('#ffffff');
+  const [textColor, setTextColor] = useState('hsl(var(--bg-card))');
+  const [bgColor, setBgColor] = useState('white');
   const [showTokenDropdown, setShowTokenDropdown] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -227,18 +227,18 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
       resolveExt(Table).configure({
         resizable: true,
         HTMLAttributes: {
-          style: 'width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid #cbd5e1;',
+          style: 'width: 100%; border-collapse: collapse; margin: 16px 0; border: 1px solid hsl(var(--border-color));',
         },
       }),
       resolveExt(TableRow),
       resolveExt(TableHeader).configure({
         HTMLAttributes: {
-          style: 'background-color: #f1f5f9; font-weight: 600; text-align: left; padding: 8px 12px; border: 1px solid #cbd5e1;',
+          style: 'background-color: hsl(var(--bg-card-hover)); font-weight: 600; text-align: left; padding: 8px 12px; border: 1px solid hsl(var(--border-color));',
         },
       }),
       resolveExt(TableCell).configure({
         HTMLAttributes: {
-          style: 'padding: 8px 12px; border: 1px solid #e2e8f0;',
+          style: 'padding: 8px 12px; border: 1px solid hsl(var(--border-color));',
         },
       }),
       TextStyle,
@@ -323,7 +323,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
     <div
       data-testid="workflow-tiptap-editor"
       className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-xs"
-      style={{ border: '1px solid var(--border, #cbd5e1)', borderRadius: '8px', backgroundColor: 'var(--surface-card, #ffffff)' }}
+      style={{ border: '1px solid var(--border, hsl(var(--border-color)))', borderRadius: '8px', backgroundColor: 'var(--surface-card, white)' }}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
@@ -336,9 +336,9 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
           alignItems: 'center',
           gap: '6px',
           padding: '8px 12px',
-          borderBottom: '1px solid var(--border, #e2e8f0)',
-          backgroundColor: 'var(--surface-elevated, #f8fafc)',
-          color: 'var(--text-secondary, #334155)'
+          borderBottom: '1px solid var(--border, hsl(var(--border-color)))',
+          backgroundColor: 'var(--surface-elevated, hsl(var(--bg-card-hover)))',
+          color: 'var(--text-secondary, hsl(var(--text-primary)))'
         }}
       >
         {/* Font Family Selector */}
@@ -354,7 +354,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
             }
           }}
           className="px-2 py-1 bg-white border border-slate-300 rounded text-xs text-slate-700 font-medium cursor-pointer"
-          style={{ padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px' }}
+          style={{ padding: '4px 8px', border: '1px solid hsl(var(--border-color))', borderRadius: '4px', fontSize: '12px' }}
         >
           {FONT_FAMILIES.map((font) => (
             <option key={font.name} value={font.name}>
@@ -373,7 +373,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
             editor.chain().focus().setMark('textStyle', { fontSize: size }).run();
           }}
           className="px-2 py-1 bg-white border border-slate-300 rounded text-xs text-slate-700 font-medium cursor-pointer"
-          style={{ padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px' }}
+          style={{ padding: '4px 8px', border: '1px solid hsl(var(--border-color))', borderRadius: '4px', fontSize: '12px' }}
         >
           {FONT_SIZES.map((size) => (
             <option key={size} value={size}>
@@ -382,7 +382,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
           ))}
         </select>
 
-        <div className="h-4 w-px bg-slate-300 mx-1" style={{ height: '16px', width: '1px', backgroundColor: '#cbd5e1' }} />
+        <div className="h-4 w-px bg-slate-300 mx-1" style={{ height: '16px', width: '1px', backgroundColor: 'hsl(var(--border-color))' }} />
 
         {/* Tags / Tokens Dropdown */}
         <div className="relative inline-block text-left">
@@ -396,16 +396,16 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
               alignItems: 'center',
               gap: '4px',
               padding: '4px 10px',
-              backgroundColor: '#fff7ed',
-              border: '1px solid #fed7aa',
-              color: '#c2410c',
+              backgroundColor: 'hsl(var(--warning) / 0.1)',
+              border: '1px solid hsl(var(--warning) / 0.1)',
+              color: 'hsl(var(--warning))',
               borderRadius: '4px',
               fontSize: '12px',
               fontWeight: 600,
               cursor: 'pointer'
             }}
           >
-            <Tag size={13} style={{ color: '#ea580c' }} />
+            <Tag size={13} style={{ color: 'hsl(var(--warning))' }} />
             <span>Tags</span>
             <ChevronDown size={12} />
           </button>
@@ -418,8 +418,8 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                 left: 0,
                 marginTop: '4px',
                 width: '192px',
-                backgroundColor: 'var(--surface-card, #ffffff)',
-                border: '1px solid var(--border, #e2e8f0)',
+                backgroundColor: 'var(--surface-card, white)',
+                border: '1px solid var(--border, hsl(var(--border-color)))',
                 borderRadius: '6px',
                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                 zIndex: 50
@@ -439,14 +439,14 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                     textAlign: 'left',
                     padding: '6px 12px',
                     fontSize: '12px',
-                    color: '#334155',
+                    color: 'hsl(var(--text-primary))',
                     cursor: 'pointer',
                     display: 'flex',
                     justifyContent: 'space-between'
                   }}
                 >
                   <span className="font-mono text-slate-600">&#123;&#123;{token}&#125;&#125;</span>
-                  <PlusIcon size={12} style={{ color: '#f97316' }} />
+                  <PlusIcon size={12} style={{ color: 'hsl(var(--warning))' }} />
                 </button>
               ))}
             </div>
@@ -465,9 +465,9 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
               alignItems: 'center',
               gap: '4px',
               padding: '4px 10px',
-              backgroundColor: '#fffbeb',
-              border: '1px solid #fcd34d',
-              color: '#78350f',
+              backgroundColor: 'hsl(var(--warning) / 0.1)',
+              border: '1px solid hsl(var(--warning))',
+              color: 'hsl(var(--warning))',
               borderRadius: '4px',
               fontSize: '12px',
               fontWeight: 600,
@@ -475,7 +475,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
             }}
             title="Open Token Config"
           >
-            <Sliders size={13} style={{ color: '#d97706' }} />
+            <Sliders size={13} style={{ color: 'hsl(var(--warning))' }} />
             <span>Token Config</span>
           </button>
         )}
@@ -495,7 +495,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
             else editor.chain().focus().setParagraph().run();
           }}
           className="px-2 py-1 bg-white border border-slate-300 rounded text-xs text-slate-700 font-medium cursor-pointer"
-          style={{ padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px' }}
+          style={{ padding: '4px 8px', border: '1px solid hsl(var(--border-color))', borderRadius: '4px', fontSize: '12px' }}
         >
           <option value="Paragraph">Paragraph</option>
           <option value="Heading 1">Heading 1</option>
@@ -505,7 +505,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
           <option value="Code">Code Block</option>
         </select>
 
-        <div className="h-4 w-px bg-slate-300 mx-1" style={{ height: '16px', width: '1px', backgroundColor: '#cbd5e1' }} />
+        <div className="h-4 w-px bg-slate-300 mx-1" style={{ height: '16px', width: '1px', backgroundColor: 'hsl(var(--border-color))' }} />
 
         {/* Basic Text Formatting */}
         <button
@@ -553,7 +553,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
           <ListOrdered size={14} />
         </button>
 
-        <div className="h-4 w-px bg-slate-300 mx-1" style={{ height: '16px', width: '1px', backgroundColor: '#cbd5e1' }} />
+        <div className="h-4 w-px bg-slate-300 mx-1" style={{ height: '16px', width: '1px', backgroundColor: 'hsl(var(--border-color))' }} />
 
         {/* Alignments */}
         <button
@@ -600,7 +600,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
           <AlignJustify size={14} />
         </button>
 
-        <div className="h-4 w-px bg-slate-300 mx-1" style={{ height: '16px', width: '1px', backgroundColor: '#cbd5e1' }} />
+        <div className="h-4 w-px bg-slate-300 mx-1" style={{ height: '16px', width: '1px', backgroundColor: 'hsl(var(--border-color))' }} />
 
         {/* Link Option */}
         <button
@@ -630,11 +630,11 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
           <ImageIcon size={14} />
         </button>
 
-        <div className="h-4 w-px bg-slate-300 mx-1" style={{ height: '16px', width: '1px', backgroundColor: '#cbd5e1' }} />
+        <div className="h-4 w-px bg-slate-300 mx-1" style={{ height: '16px', width: '1px', backgroundColor: 'hsl(var(--border-color))' }} />
 
         {/* Text Color Picker */}
         <div className="flex items-center gap-1" title="Text Color" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-          <Palette size={14} style={{ color: '#475569' }} />
+          <Palette size={14} style={{ color: 'hsl(var(--text-muted))' }} />
           <input
             type="color"
             data-testid="text-color-picker"
@@ -645,13 +645,13 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
               editor.chain().focus().setMark('textStyle', { color: col }).run();
             }}
             className="w-5 h-5 rounded border border-slate-300 cursor-pointer"
-            style={{ width: '20px', height: '20px', padding: 0, border: '1px solid #cbd5e1', cursor: 'pointer' }}
+            style={{ width: '20px', height: '20px', padding: 0, border: '1px solid hsl(var(--border-color))', cursor: 'pointer' }}
           />
         </div>
 
         {/* Background Color Picker */}
         <div className="flex items-center gap-1" title="Background Color" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-          <Highlighter size={14} style={{ color: '#475569' }} />
+          <Highlighter size={14} style={{ color: 'hsl(var(--text-muted))' }} />
           <input
             type="color"
             data-testid="bg-color-picker"
@@ -662,14 +662,14 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
               editor.chain().focus().setMark('textStyle', { backgroundColor: col }).run();
             }}
             className="w-5 h-5 rounded border border-slate-300 cursor-pointer"
-            style={{ width: '20px', height: '20px', padding: 0, border: '1px solid #cbd5e1', cursor: 'pointer' }}
+            style={{ width: '20px', height: '20px', padding: 0, border: '1px solid hsl(var(--border-color))', cursor: 'pointer' }}
           />
         </div>
       </div>
 
       {/* ─── TipTap Canvas ─────────────────────────────────────────────── */}
-      <div className="p-4 min-h-[320px] max-h-[600px] overflow-y-auto font-sans text-slate-900" style={{ padding: '16px', minHeight: '320px', color: '#0f172a' }}>
-        <EditorContent editor={editor} className="prose max-w-none focus:outline-none min-h-[280px] text-slate-900" style={{ color: '#0f172a' }} />
+      <div className="p-4 min-h-[320px] max-h-[600px] overflow-y-auto font-sans text-slate-900" style={{ padding: '16px', minHeight: '320px', color: 'hsl(var(--bg-card))' }}>
+        <EditorContent editor={editor} className="prose max-w-none focus:outline-none min-h-[280px] text-slate-900" style={{ color: 'hsl(var(--bg-card))' }} />
       </div>
 
       {/* Hidden File Input for Image Upload */}
@@ -685,10 +685,10 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
       {/* ─── Link Modal ────────────────────────────────────────────────── */}
       {showLinkModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-          <div className="bg-white rounded-xl border border-slate-200 p-5 w-96 shadow-2xl space-y-4" style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '20px', width: '384px' }}>
+          <div className="bg-white rounded-xl border border-slate-200 p-5 w-96 shadow-2xl space-y-4" style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', width: '384px' }}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h4 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
-                <LinkIcon size={16} style={{ color: '#f97316' }} />
+                <LinkIcon size={16} style={{ color: 'hsl(var(--warning))' }} />
                 Insert Hyperlink
               </h4>
               <button type="button" onClick={() => setShowLinkModal(false)} className="text-slate-400 hover:text-slate-600">
@@ -704,7 +704,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-sans outline-none focus:border-orange-500"
-                style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '12px' }}
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid hsl(var(--border-color))', borderRadius: '8px', fontSize: '12px' }}
               />
             </div>
             <div className="flex justify-end gap-2 pt-2">
@@ -712,7 +712,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                 type="button"
                 onClick={() => setShowLinkModal(false)}
                 className="px-3 py-1.5 text-xs text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 font-semibold"
-                style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px', backgroundColor: '#f1f5f9', color: '#475569' }}
+                style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px', backgroundColor: 'hsl(var(--bg-card-hover))', color: 'hsl(var(--text-muted))' }}
               >
                 Cancel
               </button>
@@ -728,7 +728,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                   setShowLinkModal(false);
                 }}
                 className="px-3 py-1.5 text-xs text-white bg-orange-500 rounded-lg hover:bg-orange-600 font-semibold"
-                style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px', backgroundColor: '#f97316', color: '#ffffff' }}
+                style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px', backgroundColor: 'hsl(var(--warning))', color: 'white' }}
               >
                 Apply Link
               </button>
@@ -740,10 +740,10 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
       {/* ─── Image Modal ───────────────────────────────────────────────── */}
       {showImageModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-          <div className="bg-white rounded-xl border border-slate-200 p-5 w-96 shadow-2xl space-y-4" style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '20px', width: '384px' }}>
+          <div className="bg-white rounded-xl border border-slate-200 p-5 w-96 shadow-2xl space-y-4" style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', width: '384px' }}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h4 className="font-semibold text-slate-800 text-sm flex items-center gap-2">
-                <ImageIcon size={16} style={{ color: '#f97316' }} />
+                <ImageIcon size={16} style={{ color: 'hsl(var(--warning))' }} />
                 Insert Image
               </h4>
               <button type="button" onClick={() => setShowImageModal(false)} className="text-slate-400 hover:text-slate-600">
@@ -760,7 +760,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
                 className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-sans outline-none focus:border-orange-500"
-                style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '12px' }}
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid hsl(var(--border-color))', borderRadius: '8px', fontSize: '12px' }}
               />
             </div>
 
@@ -782,9 +782,9 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                 justifyContent: 'center',
                 gap: '8px',
                 padding: '10px',
-                border: '2px dashed #fdba74',
-                backgroundColor: '#fff7ed',
-                color: '#c2410c',
+                border: '2px dashed hsl(var(--warning) / 0.5)',
+                backgroundColor: 'hsl(var(--warning) / 0.1)',
+                color: 'hsl(var(--warning))',
                 borderRadius: '8px',
                 fontSize: '12px',
                 fontWeight: 600,
@@ -800,7 +800,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                 type="button"
                 onClick={() => setShowImageModal(false)}
                 className="px-3 py-1.5 text-xs text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 font-semibold"
-                style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px', backgroundColor: '#f1f5f9', color: '#475569' }}
+                style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px', backgroundColor: 'hsl(var(--bg-card-hover))', color: 'hsl(var(--text-muted))' }}
               >
                 Cancel
               </button>
@@ -815,7 +815,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                   }
                 }}
                 className="px-3 py-1.5 text-xs text-white bg-orange-500 rounded-lg hover:bg-orange-600 font-semibold"
-                style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px', backgroundColor: '#f97316', color: '#ffffff' }}
+                style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px', backgroundColor: 'hsl(var(--warning))', color: 'white' }}
               >
                 Insert Image URL
               </button>

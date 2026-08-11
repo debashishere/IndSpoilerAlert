@@ -648,7 +648,7 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
         {!isCorrectTab() && (
           <div style={{
             fontSize: '0.75rem',
-            color: '#f59e0b',
+            color: 'hsl(var(--warning))',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
@@ -666,7 +666,7 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
           <div 
             className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-950 border-l-2 border-indigo-600 text-xs text-slate-800 dark:text-slate-200 font-mono flex items-center gap-2"
           >
-            {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} style={{ color: '#10b981' }} />}
+            {isProcessing ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} style={{ color: 'hsl(var(--success))' }} />}
             <span>{statusMessage}</span>
           </div>
         )}
@@ -718,7 +718,7 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
 
         {/* Tip / Hint */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginTop: '4px' }}>
-          <HelpCircle size={14} style={{ color: '#f59e0b', flexShrink: 0, marginTop: '2px' }} />
+          <HelpCircle size={14} style={{ color: 'hsl(var(--warning))', flexShrink: 0, marginTop: '2px' }} />
           <span className="text-xs text-slate-600 dark:text-slate-400 italic">
             {activeStepObj.hint}
           </span>
@@ -735,7 +735,7 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
           style={{
             background: 'none',
             border: 'none',
-            color: '#ef4444',
+            color: 'hsl(var(--error))',
             fontSize: '0.75rem',
             fontWeight: 600,
             cursor: 'pointer',

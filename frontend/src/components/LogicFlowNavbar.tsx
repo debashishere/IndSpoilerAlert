@@ -34,23 +34,23 @@ export const LogicFlowNavbar: React.FC<LogicFlowNavbarProps> = ({
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        backgroundColor: isDark ? 'hsl(223 47% 8% / 0.95)' : 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: 'hsl(var(--bg-card))',
         backdropFilter: 'blur(8px)',
-        borderBottom: isDark ? '1px solid hsl(var(--border-color))' : '1px solid #e2e8f0',
-        boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+        borderBottom: '1px solid hsl(var(--border-color))',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
         borderRadius: '0 0 12px 12px'
       }}
     >
       {/* Title & Brand Badge */}
       <div className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <Sparkles size={16} className="text-orange-500" style={{ color: '#f97316' }} />
+        <Sparkles size={16} className="text-orange-500" style={{ color: 'hsl(var(--primary))' }} />
         <span
           className="text-xs font-bold uppercase tracking-wider"
           style={{
             fontSize: '11px',
             fontWeight: 700,
             letterSpacing: '0.05em',
-            color: isDark ? '#94a3b8' : '#64748b'
+            color: 'hsl(var(--border-color))'
           }}
         >
           Logic Flow
@@ -76,14 +76,14 @@ export const LogicFlowNavbar: React.FC<LogicFlowNavbarProps> = ({
                   padding: '6px 12px',
                   borderRadius: '8px',
                   border: isActive
-                    ? (isDark ? '1px solid hsl(var(--primary))' : '1px solid #fdba74')
-                    : (isDark ? '1px solid hsl(var(--border-color))' : '1px solid #e2e8f0'),
+                    ? ('1px solid hsl(var(--primary))')
+                    : ('1px solid hsl(var(--border-color))'),
                   backgroundColor: isActive
-                    ? (isDark ? 'hsl(var(--primary) / 0.15)' : '#fff7ed')
-                    : (isDark ? 'hsl(223 47% 11%)' : '#f8fafc'),
+                    ? ('hsl(var(--primary) / 0.15)')
+                    : ('hsl(var(--bg-card))'),
                   color: isActive
-                    ? (isDark ? 'hsl(var(--primary))' : '#9a3412')
-                    : (isDark ? 'hsl(var(--text-secondary))' : '#475569'),
+                    ? ('hsl(var(--primary))')
+                    : ('hsl(var(--text-secondary))'),
                   cursor: 'pointer',
                   transition: 'all 0.15s ease'
                 }}
@@ -100,11 +100,11 @@ export const LogicFlowNavbar: React.FC<LogicFlowNavbarProps> = ({
                     fontSize: '11px',
                     fontWeight: 800,
                     backgroundColor: isActive
-                      ? '#f97316'
-                      : (isDark ? 'hsl(223 47% 18%)' : '#e2e8f0'),
+                      ? 'hsl(var(--primary))'
+                      : ('hsl(var(--bg-card))'),
                     color: isActive
-                      ? '#ffffff'
-                      : (isDark ? 'hsl(var(--text-muted))' : '#64748b')
+                      ? 'white'
+                      : ('hsl(var(--text-muted))')
                   }}
                 >
                   {i + 1}
@@ -119,8 +119,8 @@ export const LogicFlowNavbar: React.FC<LogicFlowNavbarProps> = ({
                       style={{
                         fontSize: '10px',
                         color: isActive
-                          ? (isDark ? 'hsl(var(--primary))' : '#ea580c')
-                          : (isDark ? 'hsl(var(--text-muted))' : '#94a3b8')
+                          ? ('hsl(var(--primary))')
+                          : ('hsl(var(--text-muted))')
                       }}
                     >
                       {stage.detail}
@@ -133,7 +133,7 @@ export const LogicFlowNavbar: React.FC<LogicFlowNavbarProps> = ({
                 <ArrowRight
                   size={13}
                   className="mx-0.5"
-                  style={{ color: isDark ? 'hsl(var(--border-color))' : '#cbd5e1', margin: '0 2px' }}
+                  style={{ color: 'hsl(var(--border-color))', margin: '0 2px' }}
                 />
               )}
             </React.Fragment>
@@ -155,15 +155,15 @@ export const LogicFlowNavbar: React.FC<LogicFlowNavbarProps> = ({
             padding: '6px 12px',
             fontSize: '12px',
             fontWeight: 600,
-            color: isDark ? 'hsl(var(--primary))' : '#ea580c',
-            backgroundColor: isDark ? 'hsl(var(--primary) / 0.12)' : '#fff7ed',
-            border: isDark ? '1px solid hsl(var(--primary) / 0.3)' : '1px solid #fed7aa',
+            color: 'hsl(var(--primary))',
+            backgroundColor: 'hsl(var(--primary) / 0.12)',
+            border: '1px solid hsl(var(--primary) / 0.3)',
             borderRadius: '8px',
             cursor: 'pointer',
             transition: 'all 0.15s ease'
           }}
         >
-          <Plus size={14} style={{ color: isDark ? 'hsl(var(--primary))' : '#ea580c' }} />
+          <Plus size={14} style={{ color: 'hsl(var(--primary))' }} />
           <span>+ Add Escalation Stage</span>
         </button>
       )}

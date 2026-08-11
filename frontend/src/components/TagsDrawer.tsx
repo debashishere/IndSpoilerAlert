@@ -100,8 +100,8 @@ export const TagsDrawer: React.FC<TagsDrawerProps> = ({
         top: 0,
         bottom: 0,
         width: '320px',
-        backgroundColor: '#ffffff',
-        borderLeft: '1px solid #e2e8f0',
+        backgroundColor: 'white',
+        borderLeft: '1px solid hsl(var(--border-color))',
         boxShadow: '-4px 0 20px rgba(0, 0, 0, 0.08)',
         zIndex: 50,
         display: 'flex',
@@ -117,13 +117,13 @@ export const TagsDrawer: React.FC<TagsDrawerProps> = ({
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '12px 16px',
-          borderBottom: '1px solid #e2e8f0',
-          backgroundColor: '#f8fafc'
+          borderBottom: '1px solid hsl(var(--border-color))',
+          backgroundColor: 'hsl(var(--bg-card-hover))'
         }}
       >
         <div className="flex items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Tag size={16} style={{ color: '#f97316' }} />
-          <span className="font-semibold text-sm text-slate-800" style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b' }}>
+          <Tag size={16} style={{ color: 'hsl(var(--warning))' }} />
+          <span className="font-semibold text-sm text-slate-800" style={{ fontWeight: 600, fontSize: '14px', color: 'hsl(var(--bg-card))' }}>
             &lt; Tags
           </span>
           <span
@@ -133,9 +133,9 @@ export const TagsDrawer: React.FC<TagsDrawerProps> = ({
               fontWeight: 700,
               padding: '2px 8px',
               borderRadius: '9999px',
-              backgroundColor: '#fff7ed',
-              color: '#ea580c',
-              border: '1px solid #ffedd5'
+              backgroundColor: 'hsl(var(--warning) / 0.1)',
+              color: 'hsl(var(--warning))',
+              border: '1px solid hsl(var(--warning) / 0.1)'
             }}
           >
             Dynamic Tokens
@@ -149,7 +149,7 @@ export const TagsDrawer: React.FC<TagsDrawerProps> = ({
           className="p-1 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-200/50 transition-colors cursor-pointer"
           style={{
             padding: '4px',
-            color: '#94a3b8',
+            color: 'hsl(var(--border-color))',
             borderRadius: '6px',
             cursor: 'pointer',
             border: 'none',
@@ -161,12 +161,12 @@ export const TagsDrawer: React.FC<TagsDrawerProps> = ({
       </div>
 
       {/* Search Bar */}
-      <div className="p-3 border-b border-slate-200 bg-white" style={{ padding: '12px', borderBottom: '1px solid #e2e8f0' }}>
+      <div className="p-3 border-b border-slate-200 bg-white" style={{ padding: '12px', borderBottom: '1px solid hsl(var(--border-color))' }}>
         <div className="relative flex items-center" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
           <Search
             size={14}
             className="absolute left-3 text-slate-400"
-            style={{ position: 'absolute', left: '10px', color: '#94a3b8' }}
+            style={{ position: 'absolute', left: '10px', color: 'hsl(var(--border-color))' }}
           />
           <input
             type="text"
@@ -182,8 +182,8 @@ export const TagsDrawer: React.FC<TagsDrawerProps> = ({
               paddingTop: '6px',
               paddingBottom: '6px',
               fontSize: '12px',
-              backgroundColor: '#f8fafc',
-              border: '1px solid #cbd5e1',
+              backgroundColor: 'hsl(var(--bg-card-hover))',
+              border: '1px solid hsl(var(--border-color))',
               borderRadius: '8px',
               outline: 'none'
             }}
@@ -204,7 +204,7 @@ export const TagsDrawer: React.FC<TagsDrawerProps> = ({
         }}
       >
         {filteredCategories.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400" style={{ padding: '32px 0', textAlign: 'center', fontSize: '12px', color: '#94a3b8' }}>
+          <div className="py-8 text-center text-xs text-slate-400" style={{ padding: '32px 0', textAlign: 'center', fontSize: '12px', color: 'hsl(var(--border-color))' }}>
             No merge tags match "{searchQuery}"
           </div>
         ) : (
@@ -220,11 +220,11 @@ export const TagsDrawer: React.FC<TagsDrawerProps> = ({
                     gap: '6px',
                     fontSize: '11px',
                     fontWeight: 700,
-                    color: '#64748b',
+                    color: 'hsl(var(--text-muted))',
                     letterSpacing: '0.05em'
                   }}
                 >
-                  <CategoryIcon size={13} style={{ color: '#f97316' }} />
+                  <CategoryIcon size={13} style={{ color: 'hsl(var(--warning))' }} />
                   <span>{category.name}</span>
                 </div>
 
@@ -241,9 +241,9 @@ export const TagsDrawer: React.FC<TagsDrawerProps> = ({
                         fontSize: '12px',
                         fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
                         fontWeight: 600,
-                        color: '#c2410c',
-                        backgroundColor: '#fff7ed',
-                        border: '1px solid #fed7aa',
+                        color: 'hsl(var(--warning))',
+                        backgroundColor: 'hsl(var(--warning) / 0.1)',
+                        border: '1px solid hsl(var(--warning) / 0.1)',
                         borderRadius: '6px',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease'

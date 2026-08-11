@@ -233,17 +233,17 @@ export const SalesRegistryPanel = () => {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Top Header & Ingestion Actions (Converted from "Sales Report Source" to "Buyer List Ingestion" structure) */}
-      <div className="card" style={{ borderLeft: '4px solid hsl(142, 76%, 46%)' }}>
+      <div className="card" style={{ borderLeft: '4px solid hsl(var(--success))' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-              <DollarSign size={20} style={{ color: 'hsl(142, 76%, 46%)' }} />
+              <DollarSign size={20} style={{ color: 'hsl(var(--success))' }} />
               <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Sales Data Ingestion</h3>
               <span
                 style={{
-                  background: 'hsl(142, 76%, 46% / 0.15)',
-                  color: 'hsl(142, 76%, 46%)',
-                  border: '1px solid hsl(142, 76%, 46% / 0.3)',
+                  background: 'hsl(var(--success) / 0.15)',
+                  color: 'hsl(var(--success))',
+                  border: '1px solid hsl(var(--success) / 0.3)',
                   fontSize: '11px',
                   fontWeight: 600,
                   padding: '2px 10px',
@@ -267,8 +267,8 @@ export const SalesRegistryPanel = () => {
                 padding: '9px 16px',
                 borderRadius: '8px',
                 border: 'none',
-                background: 'linear-gradient(135deg, hsl(142, 76%, 36%), hsl(142, 76%, 46%))',
-                color: '#fff',
+                background: 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--success)))',
+                color: 'white',
                 fontSize: '13px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -303,7 +303,7 @@ export const SalesRegistryPanel = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(10, 14, 26, 0.8)',
+            backgroundColor: 'hsl(var(--bg-card) / 0.8)',
             backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
@@ -315,13 +315,13 @@ export const SalesRegistryPanel = () => {
         >
           <div
             style={{
-              background: 'hsl(223, 47%, 10%)',
-              border: '1px solid hsl(142, 76%, 46% / 0.35)',
+              background: 'hsl(var(--bg-card))',
+              border: '1px solid hsl(var(--success) / 0.35)',
               borderRadius: '16px',
               width: '100%',
               maxWidth: '540px',
               padding: '28px',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.6), 0 0 20px hsl(142, 76%, 46% / 0.15)',
+              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.6), 0 0 20px hsl(var(--success) / 0.15)',
               display: 'flex',
               flexDirection: 'column',
               gap: '20px',
@@ -335,18 +335,18 @@ export const SalesRegistryPanel = () => {
                     width: '42px',
                     height: '42px',
                     borderRadius: '12px',
-                    background: 'hsl(142, 76%, 46% / 0.15)',
-                    border: '1px solid hsl(142, 76%, 46% / 0.3)',
+                    background: 'hsl(var(--success) / 0.15)',
+                    border: '1px solid hsl(var(--success) / 0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: 'hsl(142, 76%, 46%)',
+                    color: 'hsl(var(--success))',
                   }}
                 >
                   <DollarSign size={22} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#fff' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'white' }}>
                     Upload Sales Report
                   </h3>
                   <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'hsl(var(--text-muted))' }}>
@@ -358,7 +358,7 @@ export const SalesRegistryPanel = () => {
                 type="button"
                 onClick={() => setIsImportModalOpen(false)}
                 style={{
-                  background: 'hsl(223, 47%, 14%)',
+                  background: 'hsl(var(--bg-card))',
                   border: '1px solid hsl(var(--border-color))',
                   borderRadius: '8px',
                   color: 'hsl(var(--text-muted))',
@@ -384,11 +384,11 @@ export const SalesRegistryPanel = () => {
                 onChange={(e) => dispatch(setSelectedSupplier(e.target.value))}
                 style={{
                   width: '100%',
-                  background: 'hsl(223, 47%, 8%)',
+                  background: 'hsl(var(--bg-card))',
                   border: '1px solid hsl(var(--border-color))',
                   borderRadius: '8px',
                   padding: '10px 12px',
-                  color: '#fff',
+                  color: 'white',
                   fontSize: '13px',
                   outline: 'none',
                 }}
@@ -425,9 +425,9 @@ export const SalesRegistryPanel = () => {
                 }
               }}
               style={{
-                border: `2px dashed ${salesDragActive ? 'hsl(142, 76%, 46%)' : 'hsl(142, 76%, 46% / 0.4)'}`,
+                border: `2px dashed ${salesDragActive ? 'hsl(var(--success))' : 'hsl(var(--success) / 0.4)'}`,
                 borderRadius: '12px',
-                background: salesDragActive ? 'hsl(142, 76%, 46% / 0.1)' : 'hsl(142, 76%, 46% / 0.04)',
+                background: salesDragActive ? 'hsl(var(--success) / 0.1)' : 'hsl(var(--success) / 0.04)',
                 padding: '32px 20px',
                 textAlign: 'center',
                 cursor: 'pointer',
@@ -437,11 +437,11 @@ export const SalesRegistryPanel = () => {
               {salesFile ? (
                 <>
                   {salesFile.name.endsWith('.csv') ? (
-                    <FileSpreadsheet size={38} style={{ color: 'hsl(142, 76%, 46%)', marginBottom: '10px' }} />
+                    <FileSpreadsheet size={38} style={{ color: 'hsl(var(--success))', marginBottom: '10px' }} />
                   ) : (
-                    <FileText size={38} style={{ color: 'hsl(142, 76%, 46%)', marginBottom: '10px' }} />
+                    <FileText size={38} style={{ color: 'hsl(var(--success))', marginBottom: '10px' }} />
                   )}
-                  <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>
+                  <h4 style={{ margin: '0 0 4px', fontSize: '0.95rem', fontWeight: 600, color: 'white' }}>
                     {salesFile.name}
                   </h4>
                   <p style={{ margin: 0, fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
@@ -450,12 +450,12 @@ export const SalesRegistryPanel = () => {
                 </>
               ) : (
                 <>
-                  <UploadCloud size={38} style={{ color: 'hsl(142, 76%, 46%)', marginBottom: '10px' }} />
-                  <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>
+                  <UploadCloud size={38} style={{ color: 'hsl(var(--success))', marginBottom: '10px' }} />
+                  <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', fontWeight: 600, color: 'white' }}>
                     Drag & Drop Sales Report here
                   </h4>
                   <p style={{ margin: 0, fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
-                    Supports distributor closeout sales sheets in <code style={{ color: 'hsl(142, 76%, 46%)' }}>.csv</code> or <code style={{ color: 'hsl(142, 76%, 46%)' }}>.pdf</code> format
+                    Supports distributor closeout sales sheets in <code style={{ color: 'hsl(var(--success))' }}>.csv</code> or <code style={{ color: 'hsl(var(--success))' }}>.pdf</code> format
                   </p>
                 </>
               )}
@@ -470,7 +470,7 @@ export const SalesRegistryPanel = () => {
                   padding: '9px 18px',
                   borderRadius: '8px',
                   border: '1px solid hsl(var(--border-color))',
-                  background: 'hsl(223, 47%, 14%)',
+                  background: 'hsl(var(--bg-card))',
                   color: 'hsl(var(--text-muted))',
                   fontSize: '13px',
                   fontWeight: 600,
@@ -487,8 +487,8 @@ export const SalesRegistryPanel = () => {
                   padding: '9px 20px',
                   borderRadius: '8px',
                   border: 'none',
-                  background: salesFile ? 'linear-gradient(135deg, hsl(142, 76%, 36%), hsl(142, 76%, 46%))' : 'hsl(var(--border-color))',
-                  color: '#fff',
+                  background: salesFile ? 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--success)))' : 'hsl(var(--border-color))',
+                  color: 'white',
                   fontSize: '13px',
                   fontWeight: 700,
                   cursor: salesFile && !salesLoading ? 'pointer' : 'not-allowed',
@@ -529,15 +529,15 @@ export const SalesRegistryPanel = () => {
         <div
           className="card"
           style={{
-            borderLeft: '4px solid hsl(142, 76%, 46%)',
+            borderLeft: '4px solid hsl(var(--success))',
             display: 'flex',
             gap: '12px',
             alignItems: 'flex-start',
           }}
         >
-          <CheckCircle2 size={20} style={{ color: 'hsl(142, 76%, 46%)', flexShrink: 0 }} />
+          <CheckCircle2 size={20} style={{ color: 'hsl(var(--success))', flexShrink: 0 }} />
           <div>
-            <h4 style={{ color: 'hsl(142, 76%, 46%)', margin: '0 0 4px' }}>
+            <h4 style={{ color: 'hsl(var(--success))', margin: '0 0 4px' }}>
               Sales Reconciliation Complete
             </h4>
             <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', margin: 0 }}>
@@ -570,8 +570,8 @@ export const SalesRegistryPanel = () => {
         <div
           className="card"
           style={{
-            border: '1px solid hsl(142, 76%, 46% / 0.5)',
-            background: 'hsl(223, 47%, 10%)',
+            border: '1px solid hsl(var(--success) / 0.5)',
+            background: 'hsl(var(--bg-card))',
             minHeight: '400px',
             display: 'flex',
             flexDirection: 'column',
@@ -583,7 +583,7 @@ export const SalesRegistryPanel = () => {
                   right: 0,
                   bottom: 0,
                   zIndex: 9999,
-                  background: 'hsl(223, 47%, 9%)',
+                  background: 'hsl(var(--bg-card))',
                   padding: '24px',
                   borderRadius: 0,
                   overflow: 'hidden',
@@ -595,16 +595,16 @@ export const SalesRegistryPanel = () => {
             <div className="preview-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                  <CheckCircle2 size={20} style={{ color: 'hsl(142, 76%, 46%)' }} />
-                  <h3 style={{ fontSize: '1.2rem', margin: 0, color: '#fff', fontWeight: 700 }}>
+                  <CheckCircle2 size={20} style={{ color: 'hsl(var(--success))' }} />
+                  <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'white', fontWeight: 700 }}>
                     Confirm Sales CSV Mapping
                   </h3>
                   <span
                     style={{
                       fontSize: '11px',
-                      background: 'hsl(142, 76%, 46% / 0.2)',
+                      background: 'hsl(var(--success) / 0.2)',
                       color: 'hsl(142, 76%, 66%)',
-                      border: '1px solid hsl(142, 76%, 46% / 0.4)',
+                      border: '1px solid hsl(var(--success) / 0.4)',
                       padding: '2px 10px',
                       borderRadius: '12px',
                       fontWeight: 600,
@@ -632,8 +632,8 @@ export const SalesRegistryPanel = () => {
                     fontSize: '12px',
                     borderRadius: '8px',
                     border: '1px solid hsl(var(--border-color))',
-                    background: 'hsl(223, 47%, 14%)',
-                    color: '#fff',
+                    background: 'hsl(var(--bg-card))',
+                    color: 'white',
                     cursor: 'pointer',
                   }}
                 >
@@ -651,8 +651,8 @@ export const SalesRegistryPanel = () => {
                     fontWeight: 700,
                     fontSize: '13px',
                     cursor: salesLoading ? 'not-allowed' : 'pointer',
-                    background: 'linear-gradient(135deg, hsl(142, 76%, 36%), hsl(142, 76%, 46%))',
-                    color: '#fff',
+                    background: 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--success)))',
+                    color: 'white',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -669,7 +669,7 @@ export const SalesRegistryPanel = () => {
                     padding: '9px 12px',
                     borderRadius: '8px',
                     border: '1px solid hsl(var(--border-color))',
-                    background: 'hsl(223, 47%, 14%)',
+                    background: 'hsl(var(--bg-card))',
                     color: 'hsl(var(--text-muted))',
                     fontSize: '13px',
                     cursor: 'pointer',

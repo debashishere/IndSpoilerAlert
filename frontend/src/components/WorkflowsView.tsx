@@ -359,7 +359,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
   const renderNextRunTime = (campaign: any) => {
     if (campaign.status === 'stopped' || campaign.status === 'completed' || campaign.isActive === false) {
       return (
-        <span style={{ background: 'hsl(223 47% 12%)', color: 'hsl(var(--text-muted))', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>
+        <span style={{ background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-muted))', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>
           Not Active
         </span>
       );
@@ -592,7 +592,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               height: '18px',
               borderRadius: '50%',
               backgroundColor: 'hsl(var(--warning))',
-              color: '#000',
+              color: 'hsl(var(--text-primary))',
               fontSize: '0.65rem',
               fontWeight: 800,
               display: 'flex',
@@ -708,7 +708,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                         </td>
                         <td style={{ padding: '12px 14px' }}>
                           {campaignRuns.length === 0 ? (
-                            <span style={{ background: 'hsl(223 47% 12%)', color: 'hsl(var(--text-muted))', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>
+                            <span style={{ background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-muted))', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>
                               Never Executed
                             </span>
                           ) : campaignRuns.length === 1 ? (
@@ -736,7 +736,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                                 }
                               }}
                               style={{
-                                background: 'hsl(223 47% 8%)',
+                                background: 'hsl(var(--bg-card))',
                                 border: '1px solid hsl(var(--border-color))',
                                 borderRadius: '6px',
                                 color: 'hsl(var(--primary))',
@@ -1253,7 +1253,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                                   <div
                                     key={stg.stageIndex || sIdx}
                                     style={{
-                                      backgroundColor: isActive ? 'hsl(var(--warning) / 6%)' : 'hsl(223 47% 8%)',
+                                      backgroundColor: isActive ? 'hsl(var(--warning) / 6%)' : 'hsl(var(--bg-card))',
                                       border: `1px solid ${statusBadge.border}`,
                                       borderRadius: '8px',
                                       padding: '10px',
@@ -1279,7 +1279,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                                       </span>
                                     </div>
 
-                                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff' }}>
+                                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'white' }}>
                                       {stg.name || `Stage ${sIdx + 1}`}
                                     </div>
 
@@ -1342,7 +1342,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
 
                               {/* Fallback Node */}
                               <div style={{
-                                backgroundColor: 'hsl(223 47% 8%)',
+                                backgroundColor: 'hsl(var(--bg-card))',
                                 border: '1px dashed hsl(var(--border-color) / 70%)',
                                 borderRadius: '8px',
                                 padding: '10px',
@@ -1365,7 +1365,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                                     UP NEXT
                                   </span>
                                 </div>
-                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff' }}>
+                                <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'white' }}>
                                   {donationConfig?.enabled !== false ? 'Auto-Donate / Markdown' : 'Escalate Review'}
                                 </div>
                                 <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))', marginTop: 'auto' }}>
@@ -1433,7 +1433,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                         <div style={{
                           marginTop: '12px',
                           padding: '16px',
-                          backgroundColor: 'hsl(223 47% 7%)',
+                          backgroundColor: 'hsl(var(--bg-card))',
                           borderRadius: '8px',
                           border: '1px solid hsl(var(--border-color))',
                           boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.3)',
@@ -1449,7 +1449,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                           </div>
 
                           {runBids.length === 0 ? (
-                            <div style={{ padding: '24px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '0.82rem', background: 'hsl(223 47% 9%)', borderRadius: '6px' }}>
+                            <div style={{ padding: '24px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '0.82rem', background: 'hsl(var(--bg-card))', borderRadius: '6px' }}>
                               No buyer bids have been submitted yet for the inventory lots in this evaluation run. Bids will render here in real-time as buyers submit offers.
                             </div>
                           ) : (
@@ -1505,7 +1505,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                         <div style={{
                           marginTop: '12px',
                           padding: '16px',
-                          backgroundColor: 'hsl(223 47% 7%)',
+                          backgroundColor: 'hsl(var(--bg-card))',
                           borderRadius: '8px',
                           border: '1px solid hsl(var(--border-color))',
                           boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.3)',
@@ -1520,7 +1520,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                             </span>
                           </div>
 
-                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', fontSize: '0.8rem', backgroundColor: 'hsl(223 47% 9%)', padding: '14px', borderRadius: '8px', border: '1px solid hsl(var(--border-color)/40%)' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px', fontSize: '0.8rem', backgroundColor: 'hsl(var(--bg-card))', padding: '14px', borderRadius: '8px', border: '1px solid hsl(var(--border-color)/40%)' }}>
                             <div>
                               <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.7rem' }}>Run Identifier</div>
                               <div style={{ fontWeight: 700, fontFamily: 'monospace', color: 'hsl(var(--primary))' }}>{run._id}</div>
@@ -1548,7 +1548,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                           </div>
 
                           {run.resolution && (
-                            <div style={{ marginTop: '12px', padding: '12px', backgroundColor: 'hsl(223 47% 9%)', borderRadius: '8px', border: '1px solid hsl(var(--border-color)/40%)', fontSize: '0.8rem' }}>
+                            <div style={{ marginTop: '12px', padding: '12px', backgroundColor: 'hsl(var(--bg-card))', borderRadius: '8px', border: '1px solid hsl(var(--border-color)/40%)', fontSize: '0.8rem' }}>
                               <div style={{ fontWeight: 700, color: 'hsl(var(--warning))', marginBottom: '4px' }}>Resolution Audit Details:</div>
                               <pre style={{ margin: 0, fontSize: '0.75rem', color: 'hsl(var(--text-muted))', whiteSpace: 'pre-wrap' }}>
                                 {JSON.stringify(run.resolution, null, 2)}
@@ -1813,7 +1813,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                             <div style={{
                               marginTop: '8px',
                               padding: '16px',
-                              backgroundColor: 'hsl(223 47% 7%)',
+                              backgroundColor: 'hsl(var(--bg-card))',
                               borderRadius: '8px',
                               border: '1px solid hsl(var(--border-color))'
                             }}>
@@ -1872,7 +1872,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                             <div style={{
                               marginTop: '8px',
                               padding: '16px',
-                              backgroundColor: 'hsl(223 47% 7%)',
+                              backgroundColor: 'hsl(var(--bg-card))',
                               borderRadius: '8px',
                               border: '1px solid hsl(var(--border-color))'
                             }}>
@@ -1895,7 +1895,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                               </div>
 
                               {activeDetailsTab === 'overview' && (
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', fontSize: '0.8rem', backgroundColor: 'hsl(223 47% 9%)', padding: '14px', borderRadius: '8px', border: '1px solid hsl(var(--border-color)/40%)' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', fontSize: '0.8rem', backgroundColor: 'hsl(var(--bg-card))', padding: '14px', borderRadius: '8px', border: '1px solid hsl(var(--border-color)/40%)' }}>
                                   <div>
                                     <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.7rem' }}>Run Identifier</div>
                                     <div style={{ fontWeight: 700, fontFamily: 'monospace', color: 'hsl(var(--primary))' }}>{run._id}</div>
@@ -1920,7 +1920,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                               )}
 
                               {activeDetailsTab === 'lots' && (
-                                <div style={{ fontSize: '0.8rem', backgroundColor: 'hsl(223 47% 9%)', padding: '12px', borderRadius: '8px' }}>
+                                <div style={{ fontSize: '0.8rem', backgroundColor: 'hsl(var(--bg-card))', padding: '12px', borderRadius: '8px' }}>
                                   <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.75rem', marginBottom: '8px' }}>Snapshot Lot Identifiers ({run.snapshotInventoryIds?.length || 0}):</div>
                                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                                     {run.snapshotInventoryIds?.map((lotId: string, idx: number) => (
@@ -1933,7 +1933,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                               )}
 
                               {activeDetailsTab === 'stages' && (
-                                <div style={{ fontSize: '0.8rem', backgroundColor: 'hsl(223 47% 9%)', padding: '12px', borderRadius: '8px' }}>
+                                <div style={{ fontSize: '0.8rem', backgroundColor: 'hsl(var(--bg-card))', padding: '12px', borderRadius: '8px' }}>
                                   <div style={{ fontWeight: 700, marginBottom: '6px', color: 'hsl(var(--primary))' }}>Stage Progression Record:</div>
                                   <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>
                                     Run evaluated across {run.campaignSnapshot?.stages?.length || 2} campaign stage gates and executed final resolution action: <strong>{run.resolution?.action || run.status}</strong>.
@@ -1942,7 +1942,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                               )}
 
                               {activeDetailsTab === 'audit' && (
-                                <div style={{ padding: '12px', backgroundColor: 'hsl(223 47% 9%)', borderRadius: '8px', border: '1px solid hsl(var(--border-color)/40%)', fontSize: '0.8rem' }}>
+                                <div style={{ padding: '12px', backgroundColor: 'hsl(var(--bg-card))', borderRadius: '8px', border: '1px solid hsl(var(--border-color)/40%)', fontSize: '0.8rem' }}>
                                   <pre style={{ margin: 0, fontSize: '0.72rem', color: 'hsl(var(--text-muted))', whiteSpace: 'pre-wrap' }}>
                                     {JSON.stringify(run.resolution || run, null, 2)}
                                   </pre>
@@ -2013,11 +2013,11 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
             display: 'flex', flexDirection: 'column', boxShadow: '0 16px 40px rgba(0,0,0,0.6)', overflow: 'hidden'
           }}>
             {/* Modal Header */}
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(223 47% 7%)' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <Clock size={20} color="hsl(var(--primary))" />
                 <div>
-                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: '#fff' }}>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'white' }}>
                     Workflow Execution Timeline Data Snapshot
                   </h3>
                   <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
@@ -2034,7 +2034,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
             <div style={{ padding: '20px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
               {/* Section 1: Affected Inventory Lots */}
-              <div style={{ background: 'hsl(223 47% 9%)', padding: '14px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
+              <div style={{ background: 'hsl(var(--bg-card))', padding: '14px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Box size={14} /> 1. Affected Inventory Lots ({inspectingRun.affectedInventoryLots?.length || inspectingRun.snapshotInventoryIds?.length || 0})
                 </div>
@@ -2099,7 +2099,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               </div>
 
               {/* Section 2: Targeted Buyer Email List */}
-              <div style={{ background: 'hsl(223 47% 9%)', padding: '14px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
+              <div style={{ background: 'hsl(var(--bg-card))', padding: '14px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Mail size={14} /> 2. Targeted Buyer Email List ({inspectingRun.buyerEmails?.length || 0})
                 </div>
@@ -2117,7 +2117,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               </div>
 
               {/* Section 3: Campaign Settings Snapshot */}
-              <div style={{ background: 'hsl(223 47% 9%)', padding: '14px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
+              <div style={{ background: 'hsl(var(--bg-card))', padding: '14px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Sliders size={14} /> 3. Frozen Campaign Settings & Rules Snapshot
                 </div>
@@ -2142,7 +2142,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               </div>
 
               {/* Section 4: Resolution Outcome */}
-              <div style={{ background: 'hsl(223 47% 9%)', padding: '14px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
+              <div style={{ background: 'hsl(var(--bg-card))', padding: '14px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <CheckCircle2 size={14} /> 4. Execution Resolution Outcome
                 </div>
@@ -2150,7 +2150,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                   <div>Status: <span style={{ fontWeight: 700, textTransform: 'uppercase', color: inspectingRun.status === 'awarded' ? 'hsl(var(--success))' : 'hsl(var(--warning))' }}>{inspectingRun.status || 'evaluating'}</span></div>
                   {inspectingRun.resolution?.action && (
                     <div style={{ marginTop: '4px', color: 'hsl(var(--text-secondary))' }}>
-                      Resolution Action: <strong style={{ color: '#fff' }}>{inspectingRun.resolution.action}</strong>
+                      Resolution Action: <strong style={{ color: 'white' }}>{inspectingRun.resolution.action}</strong>
                     </div>
                   )}
                 </div>
@@ -2183,15 +2183,15 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               display: 'flex', flexDirection: 'column', boxShadow: '0 16px 40px rgba(0,0,0,0.6)', overflow: 'hidden'
             }}>
               {/* Modal Header */}
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(223 47% 7%)' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <Box size={20} color="hsl(var(--primary))" />
                   <div>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: '#fff' }}>
+                    <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'white' }}>
                       Matched Inventory Scope
                     </h3>
                     <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                      Strategy: <strong style={{ color: 'hsl(var(--primary))' }}>{inspectingMatchedCampaign.name || 'Saved Campaign'}</strong> • Category Filter: <span style={{ textTransform: 'capitalize', color: '#fff' }}>{inspectingMatchedCampaign.inventoryFilters?.category || 'All Categories'}</span>
+                      Strategy: <strong style={{ color: 'hsl(var(--primary))' }}>{inspectingMatchedCampaign.name || 'Saved Campaign'}</strong> • Category Filter: <span style={{ textTransform: 'capitalize', color: 'white' }}>{inspectingMatchedCampaign.inventoryFilters?.category || 'All Categories'}</span>
                     </div>
                   </div>
                 </div>
@@ -2201,7 +2201,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               </div>
 
               {/* Impact Summary Bar */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', padding: '14px 20px', background: 'hsl(223 47% 9%)', borderBottom: '1px solid hsl(var(--border-color) / 50%)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', padding: '14px 20px', background: 'hsl(var(--bg-card))', borderBottom: '1px solid hsl(var(--border-color) / 50%)' }}>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'hsl(var(--primary))' }}>{scopeData.lotCount}</div>
                   <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))' }}>Matched Lots</div>
@@ -2211,7 +2211,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                   <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))' }}>Total Cases</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff' }}>${totalValue.toLocaleString()}</div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white' }}>${totalValue.toLocaleString()}</div>
                   <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))' }}>Est. COGS Value</div>
                 </div>
               </div>
@@ -2297,15 +2297,15 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               display: 'flex', flexDirection: 'column', boxShadow: '0 20px 50px rgba(0,0,0,0.7)', overflow: 'hidden'
             }}>
               {/* Modal Header */}
-              <div style={{ padding: '18px 24px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(223 47% 7%)' }}>
+              <div style={{ padding: '18px 24px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <Layers size={22} color="hsl(var(--primary))" />
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: '#fff' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'white' }}>
                       Workflow Strategy Stage & Action Timeline
                     </h3>
                     <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                      Strategy: <strong style={{ color: 'hsl(var(--primary))' }}>{c.name || c.templateName}</strong> • Template: <span style={{ textTransform: 'capitalize', color: '#fff' }}>{(c.templateName || 'custom').replace(/_/g, ' ')}</span>
+                      Strategy: <strong style={{ color: 'hsl(var(--primary))' }}>{c.name || c.templateName}</strong> • Template: <span style={{ textTransform: 'capitalize', color: 'white' }}>{(c.templateName || 'custom').replace(/_/g, ' ')}</span>
                     </div>
                   </div>
                 </div>
@@ -2315,14 +2315,14 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               </div>
 
               {/* Schedule & Timing Parameters Bar */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', padding: '14px 24px', background: 'hsl(223 47% 9%)', borderBottom: '1px solid hsl(var(--border-color) / 50%)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', padding: '14px 24px', background: 'hsl(var(--bg-card))', borderBottom: '1px solid hsl(var(--border-color) / 50%)' }}>
                 <div>
                   <div style={{ fontSize: '0.68rem', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', fontWeight: 700 }}>Dispatch Schedule</div>
                   <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'hsl(var(--primary))', marginTop: '2px', textTransform: 'capitalize' }}>{sched.type || 'Immediate'}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '0.68rem', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', fontWeight: 700 }}>Timezone / Timing</div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff', marginTop: '2px' }}>{sched.timezone || 'UTC'} {sched.timeOfDay ? `@ ${sched.timeOfDay}` : ''}</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'white', marginTop: '2px' }}>{sched.timezone || 'UTC'} {sched.timeOfDay ? `@ ${sched.timeOfDay}` : ''}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '0.68rem', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', fontWeight: 700 }}>Evaluation Window</div>
@@ -2388,7 +2388,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                           : `$${stg.discountValue || 0}/case Floor`;
 
                         return (
-                          <div key={stg.stageIndex || sIdx} style={{ background: 'hsl(223 47% 9%)', border: '1px solid hsl(var(--primary) / 35%)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div key={stg.stageIndex || sIdx} style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--primary) / 35%)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '10px', background: 'hsl(var(--primary) / 20%)', color: 'hsl(var(--primary))', fontWeight: 800 }}>
                                 STAGE {stg.stageIndex || sIdx + 1}
@@ -2397,7 +2397,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                                 Duration: {formatDurationHours(stg.waitHours || 24)}
                               </span>
                             </div>
-                            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <Zap size={16} style={{ color: 'hsl(var(--warning))' }} /> {stg.name || `Stage ${sIdx + 1}`}
                             </div>
                             <div style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', lineHeight: 1.4 }}>
@@ -2414,7 +2414,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                               </div>
                               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <span style={{ color: 'hsl(var(--text-muted))' }}>Evaluation Window:</span>
-                                <strong style={{ color: '#fff' }}>{formatDurationHours(stg.waitHours || 24)}</strong>
+                                <strong style={{ color: 'white' }}>{formatDurationHours(stg.waitHours || 24)}</strong>
                               </div>
                             </div>
                           </div>
@@ -2422,14 +2422,14 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                       })}
 
                       {/* FALLBACK GATE CARD */}
-                      <div style={{ background: 'hsl(223 47% 9%)', border: '1px solid hsl(var(--error) / 35%)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--error) / 35%)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '10px', background: 'hsl(var(--error) / 20%)', color: 'hsl(var(--error))', fontWeight: 800 }}>
                             FALLBACK GATE
                           </span>
                           <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', fontWeight: 600 }}>Final Resolution</span>
                         </div>
-                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <CheckCircle2 size={16} style={{ color: 'hsl(var(--error))' }} /> Resolution & Fallback Diversion
                         </div>
                         <div style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', lineHeight: 1.4 }}>
@@ -2455,17 +2455,17 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                 })()}
 
                 {/* Email Template Preview Box */}
-                <div style={{ background: 'hsl(223 47% 9%)', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color))' }}>
+                <div style={{ background: 'hsl(var(--bg-card))', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color))' }}>
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Mail size={14} /> Stage 1 Email Template & Message Payload
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 600, marginBottom: '6px' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'white', fontWeight: 600, marginBottom: '6px' }}>
                     Subject: {email.subject || 'Liquidation Opportunity Notification'}
                   </div>
                   <div style={{
                     fontSize: '0.78rem',
                     color: 'hsl(var(--text-muted))',
-                    backgroundColor: 'hsl(223 47% 6%)',
+                    backgroundColor: 'hsl(var(--bg-card))',
                     padding: '12px',
                     borderRadius: '8px',
                     fontFamily: 'monospace',
@@ -2477,18 +2477,18 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                 </div>
 
                 {/* Strategy Inventory Filters Box */}
-                <div style={{ background: 'hsl(223 47% 9%)', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color))' }}>
+                <div style={{ background: 'hsl(var(--bg-card))', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color))' }}>
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Sliders size={14} /> Matched Inventory Filter Criteria
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', fontSize: '0.78rem' }}>
                     <div>
                       <span style={{ color: 'hsl(var(--text-muted))' }}>Category Filter: </span>
-                      <strong style={{ color: '#fff', textTransform: 'capitalize' }}>{c.inventoryFilters?.category || 'All Categories'}</strong>
+                      <strong style={{ color: 'white', textTransform: 'capitalize' }}>{c.inventoryFilters?.category || 'All Categories'}</strong>
                     </div>
                     <div>
                       <span style={{ color: 'hsl(var(--text-muted))' }}>Max Expiration (RSL): </span>
-                      <strong style={{ color: '#fff' }}>{c.inventoryFilters?.maxDaysUntilExpiration ? `${c.inventoryFilters.maxDaysUntilExpiration} Days` : 'Any RSL'}</strong>
+                      <strong style={{ color: 'white' }}>{c.inventoryFilters?.maxDaysUntilExpiration ? `${c.inventoryFilters.maxDaysUntilExpiration} Days` : 'Any RSL'}</strong>
                     </div>
                     <div>
                       <span style={{ color: 'hsl(var(--text-muted))' }}>Minimum Yield Target: </span>

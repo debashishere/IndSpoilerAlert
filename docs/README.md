@@ -27,5 +27,7 @@ All major architectural designs are documented under [docs/adr/](adr/):
 - **[ADR 0028: Relocate Inventory & Buyer Data Lists to Ingestion Pipeline & Transition Inventory Tab to Charts](adr/0028-relocate-inventory-and-buyer-lists-to-ingestion-pipeline-and-transition-inventory-tab-to-charts.md)**: Moving raw inventory and buyer data lists to Ingestion Pipeline and replacing Inventory tab table with visual placeholder charts marked Coming Soon.
 - **[ADR 0029: Unified TipTap Email Builder Engine & Progressive Stepper](adr/0029-unified-tiptap-email-builder-and-progressive-stepper.md)**: Unified rich WYSIWYG email builder engine, legacy client XHTML transformer pipeline, and 3-step progressive stepper accordion.
 - **[ADR 0030: Light Theme Support & Top-Right Moon Icon Theme Switcher System](adr/0030-light-theme-support-and-top-right-moon-icon-theme-switcher.md)**: High-contrast light mode design system, centralized React theme context with localStorage persistence, and floating top-right moon/sun icon theme switcher.
+- **[ADR 0031: Premium ColorHunt Palette Theme Integration](adr/0031-colorhunt-palette-e3f2fd-90caf9-2196f3-0d47a1-theme-integration.md)**: Standardizing UI visual identity to ColorHunt palette (#E3F2FD, #90CAF9, #2196F3, #0D47A1) across light/dark design tokens and semantic surfaces.
+
 
 

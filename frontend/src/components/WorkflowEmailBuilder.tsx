@@ -120,7 +120,7 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
     } else {
       // Clean token name without braces for badge node insertion
       const cleanToken = token.replace(/[\{\}]/g, '');
-      const badgeHtml = `<span data-token="${cleanToken}" class="token-badge-pill" style="display: inline-flex; align-items: center; background-color: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; padding: 2px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.825rem; font-family: monospace;">{{${cleanToken}}}</span>`;
+      const badgeHtml = `<span data-token="${cleanToken}" class="token-badge-pill" style="display: inline-flex; align-items: center; background-color: hsl(var(--primary) / 0.1); color: hsl(var(--primary)); border: 1px solid hsl(var(--primary) / 0.1); padding: 2px 8px; border-radius: 9999px; font-weight: 600; font-size: 0.825rem; font-family: monospace;">{{${cleanToken}}}</span>`;
       handleBodyChange(`${bodyHtml} ${badgeHtml}`);
     }
   };
@@ -128,39 +128,39 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
   return (
     <div
       data-testid="workflow-email-builder-container"
-      className="bg-white rounded-xl border border-slate-200 shadow-sm text-slate-800 font-sans overflow-hidden relative"
+      className="bg-white rounded-xl border shadow-sm text-[hsl(var(--text-secondary))] font-sans overflow-hidden relative" style={{ borderColor: 'hsl(var(--border-color))' }}
       style={{
-        backgroundColor: 'var(--surface-card, #ffffff)',
-        borderColor: 'var(--border, #e2e8f0)',
-        color: 'var(--text-on-surface, #1e293b)',
+        backgroundColor: 'var(--surface-card, white)',
+        borderColor: 'var(--border, hsl(var(--border-color)))',
+        color: 'var(--text-on-surface, hsl(var(--bg-card)))',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         position: 'relative'
       }}
     >
       {/* Header Navigation Bar */}
       <header
-        className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/50"
+        className="flex items-center justify-between px-6 py-4 border-b bg-[hsl(var(--bg-card-hover))]" style={{ borderColor: 'hsl(var(--border-color))' }}
         style={{
-          borderBottom: '1px solid var(--border, #e2e8f0)',
-          backgroundColor: 'var(--surface-elevated, #f8fafc)',
+          borderBottom: '1px solid var(--border, hsl(var(--border-color)))',
+          backgroundColor: 'var(--surface-elevated, hsl(var(--bg-card-hover)))',
           padding: '16px 24px'
         }}
       >
         {/* Breadcrumb Navigation */}
-        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm text-slate-500 font-medium">
-          <span style={{ color: 'var(--text-muted, #64748b)', fontSize: '13px', fontWeight: 500 }}>Campaigns</span>
-          <ChevronRight size={14} style={{ color: '#94a3b8' }} />
-          <span style={{ color: 'var(--text-muted, #64748b)', fontSize: '13px', fontWeight: 500 }}>Liquidation Workflow</span>
-          <ChevronRight size={14} style={{ color: '#94a3b8' }} />
+        <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm font-medium" style={{ color: 'hsl(var(--text-muted))' }}>
+          <span style={{ color: 'var(--text-muted, hsl(var(--text-muted)))', fontSize: '13px', fontWeight: 500 }}>Campaigns</span>
+          <ChevronRight size={14} style={{ color: 'hsl(var(--border-color))' }} />
+          <span style={{ color: 'var(--text-muted, hsl(var(--text-muted)))', fontSize: '13px', fontWeight: 500 }}>Liquidation Workflow</span>
+          <ChevronRight size={14} style={{ color: 'hsl(var(--border-color))' }} />
           <span
             style={{
-              color: '#f97316',
+              color: 'hsl(var(--primary))',
               fontSize: '13px',
               fontWeight: 700,
-              backgroundColor: '#fff7ed',
+              backgroundColor: 'hsl(var(--primary) / 0.1)',
               padding: '2px 8px',
               borderRadius: '6px',
-              border: '1px solid #ffedd5'
+              border: '1px solid hsl(var(--primary) / 0.1)'
             }}
           >
             Email Template Body
@@ -174,7 +174,7 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
             type="button"
             data-testid="tags-drawer-toggle"
             onClick={() => setIsTagsDrawerOpen((prev) => !prev)}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-orange-700 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-all cursor-pointer shadow-xs"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border rounded-lg bg-[hsl(var(--warning)_/_0.1)] transition-all cursor-pointer shadow-xs" style={{ color: 'hsl(var(--warning))', backgroundColor: 'hsl(var(--warning) / 0.1)', borderColor: 'hsl(var(--warning) / 0.3)' }}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -182,23 +182,23 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
               padding: '8px 14px',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#c2410c',
-              backgroundColor: '#fff7ed',
-              border: '1px solid #fed7aa',
+              color: 'hsl(var(--primary))',
+              backgroundColor: 'hsl(var(--primary) / 0.1)',
+              border: '1px solid hsl(var(--primary) / 0.1)',
               borderRadius: '8px',
               cursor: 'pointer',
-              boxShadow: '0 1px 2px 0 rgba(249, 115, 22, 0.05)',
+              boxShadow: '0 1px 2px 0 hsl(var(--primary) / 0.05)',
               transition: 'all 0.15s ease'
             }}
           >
-            <Tag size={14} style={{ color: '#ea580c' }} />
+            <Tag size={14} style={{ color: 'hsl(var(--primary))' }} />
             <span>&lt; Tags</span>
           </button>
 
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-white border rounded-lg text-[hsl(var(--text-primary))] transition-all shadow-sm cursor-pointer" style={{ color: 'hsl(var(--text-secondary))', borderColor: 'hsl(var(--border-color))' }}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -206,9 +206,9 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
               padding: '8px 16px',
               fontSize: '12px',
               fontWeight: 600,
-              color: 'var(--text-secondary, #475569)',
-              backgroundColor: 'var(--surface-card, #ffffff)',
-              border: '1px solid var(--border, #cbd5e1)',
+              color: 'var(--text-secondary, hsl(var(--text-muted)))',
+              backgroundColor: 'var(--surface-card, white)',
+              border: '1px solid var(--border, hsl(var(--border-color)))',
               borderRadius: '8px',
               cursor: 'pointer',
               boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
@@ -224,7 +224,7 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
             data-testid="save-draft-btn"
             onClick={() => onSaveDraft?.({ ...metadata, bodyHtml })}
             disabled={disabled}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-300 rounded-lg hover:bg-slate-200 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-[hsl(var(--bg-card-hover))] border rounded-lg transition-all cursor-pointer" style={{ color: 'hsl(var(--text-secondary))', borderColor: 'hsl(var(--border-color))' }}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -232,16 +232,16 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
               padding: '8px 16px',
               fontSize: '12px',
               fontWeight: 600,
-              color: 'var(--text-secondary, #334155)',
-              backgroundColor: 'var(--surface-elevated, #f1f5f9)',
-              border: '1px solid var(--border, #cbd5e1)',
+              color: 'var(--text-secondary, hsl(var(--text-primary)))',
+              backgroundColor: 'var(--surface-elevated, hsl(var(--bg-card-hover)))',
+              border: '1px solid var(--border, hsl(var(--border-color)))',
               borderRadius: '8px',
               cursor: disabled ? 'not-allowed' : 'pointer',
               opacity: disabled ? 0.5 : 1,
               transition: 'all 0.15s ease'
             }}
           >
-            <Save size={14} style={{ color: '#64748b' }} />
+            <Save size={14} style={{ color: 'hsl(var(--text-muted))' }} />
             <span>Save as Draft</span>
           </button>
 
@@ -250,7 +250,7 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
             data-testid="next-step-btn"
             onClick={() => onNext?.({ ...metadata, bodyHtml })}
             disabled={disabled}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-all shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white rounded-lg bg-[hsl(var(--warning))] transition-all shadow-sm cursor-pointer" style={{ backgroundColor: 'hsl(var(--warning) / 0.1)' }}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -258,13 +258,13 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
               padding: '8px 16px',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#ffffff',
-              backgroundColor: disabled ? '#94a3b8' : '#f97316',
-              border: disabled ? '1px solid #94a3b8' : '1px solid #ea580c',
+              color: 'white',
+              backgroundColor: disabled ? 'hsl(var(--border-color))' : 'hsl(var(--primary))',
+              border: disabled ? '1px solid hsl(var(--border-color))' : '1px solid hsl(var(--primary))',
               borderRadius: '8px',
               cursor: disabled ? 'not-allowed' : 'pointer',
               opacity: disabled ? 0.5 : 1,
-              boxShadow: disabled ? 'none' : '0 1px 2px 0 rgba(249, 115, 22, 0.2)',
+              boxShadow: disabled ? 'none' : '0 1px 2px 0 hsl(var(--primary) / 0.2)',
               transition: 'all 0.15s ease'
             }}
           >
@@ -289,7 +289,7 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
 
         {/* TipTap Text Editor for Email Body */}
         <div className="space-y-2">
-          <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+          <label className="block text-xs font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--text-secondary))' }}>
             Email Body (Rich Text TipTap Editor)
           </label>
 
@@ -313,13 +313,13 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
 
       {/* Template Replacement Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
-          <div className="bg-white rounded-xl border border-slate-200 p-6 max-w-md w-full shadow-2xl space-y-4" style={{ backgroundColor: '#ffffff', borderRadius: '12px', padding: '24px', maxWidth: '448px' }}>
-            <div className="flex items-center gap-3 text-amber-600">
-              <AlertTriangle size={24} style={{ color: '#d97706' }} />
-              <h3 className="font-bold text-base text-slate-800">Replace Current Email Body?</h3>
+        <div className="fixed inset-0 bg-[hsl(var(--bg-card)_/_0.8)] backdrop-blur-xs flex items-center justify-center z-50 p-4" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(15, 23, 42, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+          <div className="bg-white rounded-xl border p-6 max-w-md w-full shadow-2xl space-y-4" style={{ borderColor: 'hsl(var(--border-color))' }} style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px', maxWidth: '448px' }}>
+            <div className="flex items-center gap-3" style={{ color: 'hsl(var(--warning))' }}>
+              <AlertTriangle size={24} style={{ color: 'hsl(var(--warning))' }} />
+              <h3 className="font-bold text-base text-[hsl(var(--text-secondary))]">Replace Current Email Body?</h3>
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
+            <p className="text-xs leading-relaxed" style={{ color: 'hsl(var(--text-secondary))' }}>
               Loading a new template will replace your existing body content and unsaved edits. Are you sure you want to load the new template?
             </p>
             <div className="flex justify-end gap-3 pt-2">
@@ -330,8 +330,8 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
                   setShowConfirmModal(false);
                   setPendingTemplateId(null);
                 }}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
-                style={{ padding: '8px 16px', fontSize: '12px', borderRadius: '8px', backgroundColor: '#f1f5f9', color: '#475569', fontWeight: 600 }}
+                className="px-4 py-2 text-xs font-semibold bg-[hsl(var(--bg-card-hover))] rounded-lg" style={{ color: 'hsl(var(--text-secondary))' }}
+                style={{ padding: '8px 16px', fontSize: '12px', borderRadius: '8px', backgroundColor: 'hsl(var(--bg-card-hover))', color: 'hsl(var(--text-muted))', fontWeight: 600 }}
               >
                 Keep Current Edits
               </button>
@@ -339,8 +339,8 @@ export const WorkflowEmailBuilder: React.FC<WorkflowEmailBuilderProps> = ({
                 type="button"
                 data-testid="confirm-template-change-btn"
                 onClick={confirmTemplateChange}
-                className="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-700"
-                style={{ padding: '8px 16px', fontSize: '12px', borderRadius: '8px', backgroundColor: '#ea580c', color: '#ffffff', fontWeight: 600 }}
+                className="px-4 py-2 text-xs font-semibold text-white rounded-lg bg-[hsl(var(--warning))]" style={{ backgroundColor: 'hsl(var(--warning))' }}
+                style={{ padding: '8px 16px', fontSize: '12px', borderRadius: '8px', backgroundColor: 'hsl(var(--primary))', color: 'white', fontWeight: 600 }}
               >
                 Yes, Load Template
               </button>

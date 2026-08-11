@@ -78,10 +78,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     <div className="p-6 max-w-7xl mx-auto space-y-6 text-[hsl(var(--text-primary))] font-sans h-[calc(100vh-64px)] flex flex-col settings-view-container">
       {/* Header Banner */}
       <div className="bg-[hsl(var(--bg-card))] border border-[hsl(var(--border-color))] rounded-2xl p-6 shadow-xl relative overflow-hidden flex-shrink-0">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl pointer-events-none" style={{ backgroundColor: 'hsl(var(--primary) / 0.1)' }} />
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
           <div className="flex items-center gap-4">
-            <div className="p-3.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg text-white">
+            <div className="p-3.5 bg-gradient-to-br rounded-xl shadow-lg text-white" style={{ backgroundImage: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}>
               <SettingsIcon className="w-8 h-8" />
             </div>
             <div>
@@ -94,9 +94,9 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2 bg-[hsl(var(--bg-card-hover))] backdrop-blur px-4 py-2 rounded-xl border border-[hsl(var(--border-color))] text-xs shadow-inner">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <ShieldCheck className="w-4 h-4" style={{ color: 'hsl(var(--success) / 0.1)' }} />
             <span className="text-[hsl(var(--text-secondary))]">Active Supplier:</span>
-            <span className="font-semibold text-indigo-500">{supplierId}</span>
+            <span className="font-semibold" style={{ color: 'hsl(var(--secondary))' }}>{supplierId}</span>
           </div>
         </div>
       </div>
@@ -109,11 +109,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             <button
               key={id}
               onClick={() => setActiveTab(id)}
-              className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                activeTab === id
-                  ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-600/30'
-                  : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-card-hover))]'
-              }`}
+              className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-medium transition-all ${ activeTab === id ? 'bg-gradient-to-r bg-[linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))] text-white shadow-md shadow-[hsl(var(--primary)_/_0.3)]' : 'text-[hsl(var(--text-secondary))] hover:text-[hsl(var(--text-primary))] hover:bg-[hsl(var(--bg-card-hover))]' }`}
             >
               <div className="flex items-center gap-3">
                 <Icon className={`w-5 h-5 ${activeTab === id ? 'text-white' : 'text-[hsl(var(--text-muted))]'}`} />
@@ -125,7 +121,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="mt-auto pt-6 px-3">
             <div className="p-4 bg-[hsl(var(--bg-card-hover))] border border-[hsl(var(--border-color))] rounded-xl space-y-2 text-xs text-[hsl(var(--text-muted))]">
               <p className="font-semibold text-[hsl(var(--text-primary))] flex items-center gap-1.5">
-                <Shield className="w-4 h-4 text-indigo-500" /> Security Info
+                <Shield className="w-4 h-4" style={{ color: 'hsl(var(--secondary))' }} /> Security Info
               </p>
               <p>IndSpoilerAlert Platform Subsystem v2.4. OAuth & Access Control Active.</p>
             </div>
@@ -138,13 +134,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {activeTab === 'profile' && (
             <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {!isSupplierProfileActive && (
-                <div className="p-6 rounded-2xl bg-gradient-to-r from-emerald-950/40 to-indigo-950/40 border border-emerald-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+                <div className="p-6 rounded-2xl bg-gradient-to-r border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl" style={{ backgroundImage: 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--success) / 0.5))', borderColor: 'hsl(var(--success) / 0.3)' }}>
                   <div>
-                    <div className="flex items-center gap-2 text-emerald-400 font-bold text-base mb-1">
+                    <div className="flex items-center gap-2 font-bold text-base mb-1" style={{ color: 'hsl(var(--success))' }}>
                       <Sparkles className="w-5 h-5" />
                       Become a Supplier
                     </div>
-                    <p className="text-slate-300 text-sm">
+                    <p className="text-sm" style={{ color: 'hsl(var(--secondary))' }}>
                       You currently hold a Buyer account. Activate your Supplier profile to unlock AI Ingestion Engine, Inventory Lot Management, and Automated Liquidation Workflows.
                     </p>
                   </div>
@@ -154,49 +150,49 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         await updateProfiles({ supplier: true });
                       }
                     }}
-                    className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md shrink-0"
+                    className="px-5 py-2.5 text-[hsl(var(--text-primary))] font-bold rounded-xl text-sm transition-all shadow-md shrink-0" style={{ backgroundColor: 'hsl(var(--success) / 0.1)' }}
                   >
                     Activate Supplier Profile
                   </button>
                 </div>
               )}
 
-              <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-                <div className="p-2.5 bg-indigo-500/10 rounded-xl">
-                  <UserCheck className="w-6 h-6 text-indigo-400" />
+              <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: 'hsl(var(--border-color))' }}>
+                <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'hsl(var(--primary) / 0.1)' }}>
+                  <UserCheck className="w-6 h-6" style={{ color: 'hsl(var(--primary))' }} />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Supplier Identity & Profile</h2>
-                  <p className="text-sm text-slate-400 mt-1">Active supplier account details and company configuration.</p>
+                  <p className="text-sm mt-1" style={{ color: 'hsl(var(--text-muted))' }}>Active supplier account details and company configuration.</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-3 shadow-lg hover:border-slate-700 transition-colors">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    <Hash className="w-4 h-4 text-indigo-400" /> Account ID
+                <div className="p-5 bg-[hsl(var(--bg-card)_/_0.8)] rounded-2xl border space-y-3 shadow-lg transition-colors" style={{ borderColor: 'hsl(var(--border-color))' }}>
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--text-muted))' }}>
+                    <Hash className="w-4 h-4" style={{ color: 'hsl(var(--primary))' }} /> Account ID
                   </div>
-                  <p className="text-lg font-bold text-indigo-300 font-mono break-all">{supplierId}</p>
+                  <p className="text-lg font-bold font-mono break-all" style={{ color: 'hsl(var(--secondary))' }}>{supplierId}</p>
                 </div>
-                <div className="p-5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-3 shadow-lg hover:border-slate-700 transition-colors">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    <Layers className="w-4 h-4 text-emerald-400" /> Strategy
+                <div className="p-5 bg-[hsl(var(--bg-card)_/_0.8)] rounded-2xl border space-y-3 shadow-lg transition-colors" style={{ borderColor: 'hsl(var(--border-color))' }}>
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--text-muted))' }}>
+                    <Layers className="w-4 h-4" style={{ color: 'hsl(var(--success))' }} /> Strategy
                   </div>
-                  <p className="text-lg font-bold text-emerald-300">Sell / Auction First</p>
+                  <p className="text-lg font-bold" style={{ color: 'hsl(var(--success) / 0.1)' }}>Sell / Auction First</p>
                 </div>
-                <div className="p-5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-3 shadow-lg hover:border-slate-700 transition-colors">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" /> Compliance
+                <div className="p-5 bg-[hsl(var(--bg-card)_/_0.8)] rounded-2xl border space-y-3 shadow-lg transition-colors" style={{ borderColor: 'hsl(var(--border-color))' }}>
+                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider" style={{ color: 'hsl(var(--text-muted))' }}>
+                    <ShieldCheck className="w-4 h-4" style={{ color: 'hsl(var(--success))' }} /> Compliance
                   </div>
-                  <p className="text-lg font-bold text-emerald-300 flex items-center gap-2">
+                  <p className="text-lg font-bold flex items-center gap-2" style={{ color: 'hsl(var(--success) / 0.1)' }}>
                     <CheckCircle2 className="w-5 h-5" /> Approved
                   </p>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-slate-800">
+              <div className="pt-6 border-t" style={{ borderColor: 'hsl(var(--border-color))' }}>
                 <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-indigo-400" /> Account Security Actions
+                  <Lock className="w-5 h-5" style={{ color: 'hsl(var(--primary))' }} /> Account Security Actions
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
@@ -212,17 +208,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           alert('Export functionality coming in next release.');
                         }
                       }}
-                      className={`flex flex-col items-start p-5 rounded-2xl border text-left transition-all group hover:-translate-y-0.5 shadow-md ${
-                        danger
-                          ? 'bg-rose-950/10 border-rose-500/20 hover:border-rose-500/50 hover:bg-rose-950/20'
-                          : 'bg-slate-950/40 border-slate-800 hover:border-indigo-500/40 hover:bg-slate-950/60'
-                      }`}
+                      className={`flex flex-col items-start p-5 rounded-2xl border text-left transition-all group hover:-translate-y-0.5 shadow-md ${ danger ? 'bg-[hsl(var(--error) / 0.1)] border-[hsl(var(--error) / 0.3)] border-[hsl(var(--error)_/_0.3)] bg-[hsl(var(--error)_/_0.1)]' : 'bg-[hsl(var(--bg-card)_/_0.8)] border-[hsl(var(--border-color))] ' }`}
                     >
                       <div className="flex items-center justify-between w-full mb-2">
-                        <p className={`font-bold text-sm ${danger ? 'text-rose-400' : 'text-slate-200'}`}>{label}</p>
-                        <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${danger ? 'text-rose-500/50' : 'text-slate-600'}`} />
+                        <p className={`font-bold text-sm ${danger ? 'text-[hsl(var(--error))]' : 'text-[hsl(var(--secondary))]'}`}>{label}</p>
+                        <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${danger ? 'text-[hsl(var(--error))]' : 'text-[hsl(var(--text-secondary))]'}`} />
                       </div>
-                      <p className={`text-xs ${danger ? 'text-rose-400/70' : 'text-slate-500'}`}>{desc}</p>
+                      <p className={`text-xs ${danger ? 'text-[hsl(var(--error))]' : 'text-[hsl(var(--text-muted))]'}`}>{desc}</p>
                     </button>
                   ))}
                 </div>
@@ -233,18 +225,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {/* ===== Section: Platform Preferences ===== */}
           {activeTab === 'platform' && (
             <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-                <div className="p-2.5 bg-indigo-500/10 rounded-xl">
-                  <Sliders className="w-6 h-6 text-indigo-400" />
+              <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: 'hsl(var(--border-color))' }}>
+                <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'hsl(var(--primary) / 0.1)' }}>
+                  <Sliders className="w-6 h-6" style={{ color: 'hsl(var(--primary))' }} />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Platform Preferences</h2>
-                  <p className="text-sm text-slate-400 mt-1">Default operational settings for bid windows and automation behavior.</p>
+                  <p className="text-sm mt-1" style={{ color: 'hsl(var(--text-muted))' }}>Default operational settings for bid windows and automation behavior.</p>
                 </div>
               </div>
 
               {prefsSaved && (
-                <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-emerald-400 text-sm font-medium flex items-center gap-2 shadow-[0_0_15px_rgba(52,211,153,0.1)]">
+                <div className="p-4 rounded-xl border text-sm font-medium flex items-center gap-2 shadow-[0_0_15px_hsl(var(--success) / 0.1)]" style={{ backgroundColor: 'hsl(var(--success) / 0.1)', borderColor: 'hsl(var(--success) / 0.3)', color: 'hsl(var(--success))' }}>
                   <CheckCircle2 className="w-5 h-5" />
                   Preferences saved successfully.
                 </div>
@@ -254,7 +246,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                 {/* Bid & Offer Defaults */}
                 <div className="space-y-5">
                   <h3 className="text-sm font-bold text-[hsl(var(--text-primary))] flex items-center gap-2 uppercase tracking-wide">
-                    <Clock className="w-4 h-4 text-indigo-500" />
+                    <Clock className="w-4 h-4" style={{ color: 'hsl(var(--secondary))' }} />
                     Bid Window Defaults
                   </h3>
                   <div className="space-y-4">
@@ -267,15 +259,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         onChange={(e) => setDefaultExpiryHours(Number(e.target.value))}
                         min={1}
                         max={720}
-                        className="w-full bg-[hsl(var(--bg-card))] border border-[hsl(var(--border-color))] focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 rounded-xl px-4 py-2.5 text-sm text-[hsl(var(--text-primary))] outline-none transition-all shadow-inner"
+                        className="w-full bg-[hsl(var(--bg-card))] border border-[hsl(var(--border-color))] focus:border-[hsl(var(--primary))] focus:ring-1 focus:border-[hsl(var(--primary))] rounded-xl px-4 py-2.5 text-sm text-[hsl(var(--text-primary))] outline-none transition-all shadow-inner"
                       />
                       <p className="text-xs text-[hsl(var(--text-muted))]">Token links in buyer emails expire after this window.</p>
                     </div>
 
-                    <div className="p-5 bg-slate-950/60 rounded-2xl border border-slate-800 flex items-center justify-between group hover:border-slate-700 transition-colors">
+                    <div className="p-5 bg-[hsl(var(--bg-card)_/_0.8)] rounded-2xl border flex items-center justify-between group transition-colors" style={{ borderColor: 'hsl(var(--border-color))' }}>
                       <div>
-                        <p className="text-sm font-bold text-slate-300">Auto-Archive Threads</p>
-                        <p className="text-xs text-slate-500 mt-1">Move closed threads to archive view.</p>
+                        <p className="text-sm font-bold" style={{ color: 'hsl(var(--secondary))' }}>Auto-Archive Threads</p>
+                        <p className="text-xs mt-1" style={{ color: 'hsl(var(--text-muted))' }}>Move closed threads to archive view.</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -284,7 +276,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           onChange={(e) => setAutoArchiveThreads(e.target.checked)}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-slate-700 peer-focus:ring-2 peer-focus:ring-indigo-500/50 rounded-full peer peer-checked:bg-indigo-600 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white shadow-inner" />
+                        <div className="w-11 h-6 peer-focus:ring-2 ring-[hsl(var(--primary))] rounded-full peer peer-checked:bg-[hsl(var(--primary))] transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[hsl(var(--border-color))] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white shadow-inner" style={{ backgroundColor: 'hsl(var(--bg-card-hover))' }} />
                       </label>
                     </div>
                   </div>
@@ -292,15 +284,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
                 {/* Notifications */}
                 <div className="space-y-5">
-                  <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2 uppercase tracking-wide">
-                    <Bell className="w-4 h-4 text-indigo-400" />
+                  <h3 className="text-sm font-bold flex items-center gap-2 uppercase tracking-wide" style={{ color: 'hsl(var(--secondary))' }}>
+                    <Bell className="w-4 h-4" style={{ color: 'hsl(var(--primary))' }} />
                     Notifications
                   </h3>
                   <div className="space-y-4">
-                    <div className="p-5 bg-slate-950/60 rounded-2xl border border-slate-800 flex items-center justify-between group hover:border-slate-700 transition-colors">
+                    <div className="p-5 bg-[hsl(var(--bg-card)_/_0.8)] rounded-2xl border flex items-center justify-between group transition-colors" style={{ borderColor: 'hsl(var(--border-color))' }}>
                       <div>
-                        <p className="text-sm font-bold text-slate-300">Email alerts for buyer replies</p>
-                        <p className="text-xs text-slate-500 mt-1">Receive system notifications when a buyer responds.</p>
+                        <p className="text-sm font-bold" style={{ color: 'hsl(var(--secondary))' }}>Email alerts for buyer replies</p>
+                        <p className="text-xs mt-1" style={{ color: 'hsl(var(--text-muted))' }}>Receive system notifications when a buyer responds.</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -309,17 +301,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                           onChange={(e) => setEmailNotifications(e.target.checked)}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-slate-700 peer-focus:ring-2 peer-focus:ring-indigo-500/50 rounded-full peer peer-checked:bg-indigo-600 transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white shadow-inner" />
+                        <div className="w-11 h-6 peer-focus:ring-2 ring-[hsl(var(--primary))] rounded-full peer peer-checked:bg-[hsl(var(--primary))] transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-[hsl(var(--border-color))] after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white shadow-inner" style={{ backgroundColor: 'hsl(var(--bg-card-hover))' }} />
                       </label>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-8 border-t border-slate-800 mt-8">
+              <div className="flex justify-end pt-8 border-t mt-8" style={{ borderColor: 'hsl(var(--border-color))' }}>
                 <button
                   onClick={handleSavePrefs}
-                  className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/30 transition-all hover:shadow-indigo-600/50 hover:-translate-y-0.5"
+                  className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r text-white rounded-xl text-sm font-bold shadow-lg shadow-[hsl(var(--primary)_/_0.3)] transition-all shadow-[hsl(var(--primary)_/_0.3)] hover:-translate-y-0.5" style={{ backgroundImage: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}
                 >
                   <Save className="w-4 h-4" />
                   Save Preferences
@@ -331,42 +323,42 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {/* ===== Section: Security & Access ===== */}
           {activeTab === 'security' && (
             <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-                <div className="p-2.5 bg-indigo-500/10 rounded-xl">
-                  <ShieldCheck className="w-6 h-6 text-indigo-400" />
+              <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: 'hsl(var(--border-color))' }}>
+                <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'hsl(var(--primary) / 0.1)' }}>
+                  <ShieldCheck className="w-6 h-6" style={{ color: 'hsl(var(--primary))' }} />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Security & Access Control</h2>
-                  <p className="text-sm text-slate-400 mt-1">Platform access tokens, API security policies, and session controls.</p>
+                  <p className="text-sm mt-1" style={{ color: 'hsl(var(--text-muted))' }}>Platform access tokens, API security policies, and session controls.</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-4 shadow-lg">
+                <div className="p-6 bg-[hsl(var(--bg-card)_/_0.8)] border rounded-2xl space-y-4 shadow-lg" style={{ borderColor: 'hsl(var(--border-color))' }}>
                   <div className="flex items-center gap-3">
-                    <Key className="w-5 h-5 text-indigo-400" />
+                    <Key className="w-5 h-5" style={{ color: 'hsl(var(--primary))' }} />
                     <h3 className="text-base font-bold text-white">API Tokens & Authentication</h3>
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs leading-relaxed" style={{ color: 'hsl(var(--text-muted))' }}>
                     Single-use HMAC signed tokens active for quick-bid links and API authorization.
                   </p>
                   <div className="pt-2">
-                    <span className="px-3 py-1 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-xs font-bold rounded-lg">
+                    <span className="px-3 py-1 border text-xs font-bold rounded-lg" style={{ backgroundColor: 'hsl(var(--primary) / 0.1)', borderColor: 'hsl(var(--primary) / 0.3)', color: 'hsl(var(--secondary))' }}>
                       HMAC-SHA256 Encryption Active
                     </span>
                   </div>
                 </div>
 
-                <div className="p-6 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-4 shadow-lg">
+                <div className="p-6 bg-[hsl(var(--bg-card)_/_0.8)] border rounded-2xl space-y-4 shadow-lg" style={{ borderColor: 'hsl(var(--border-color))' }}>
                   <div className="flex items-center gap-3">
-                    <Lock className="w-5 h-5 text-emerald-400" />
+                    <Lock className="w-5 h-5" style={{ color: 'hsl(var(--success))' }} />
                     <h3 className="text-base font-bold text-white">Session Policy</h3>
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs leading-relaxed" style={{ color: 'hsl(var(--text-muted))' }}>
                     Sessions auto-expire after 24 hours of inactivity.
                   </p>
                   <div className="pt-2">
-                    <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold rounded-lg flex items-center gap-1 w-fit">
+                    <span className="px-3 py-1 border text-xs font-bold rounded-lg flex items-center gap-1 w-fit" style={{ backgroundColor: 'hsl(var(--success) / 0.1)', borderColor: 'hsl(var(--success) / 0.3)', color: 'hsl(var(--success) / 0.1)' }}>
                       <CheckCircle2 className="w-3.5 h-3.5" /> Enforced
                     </span>
                   </div>
@@ -378,29 +370,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           {/* ===== Section: System Defaults ===== */}
           {activeTab === 'system' && (
             <div className="max-w-4xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-                <div className="p-2.5 bg-indigo-500/10 rounded-xl">
-                  <Server className="w-6 h-6 text-indigo-400" />
+              <div className="flex items-center gap-3 border-b pb-4" style={{ borderColor: 'hsl(var(--border-color))' }}>
+                <div className="p-2.5 rounded-xl" style={{ backgroundColor: 'hsl(var(--primary) / 0.1)' }}>
+                  <Server className="w-6 h-6" style={{ color: 'hsl(var(--primary))' }} />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">System Defaults & Regional Settings</h2>
-                  <p className="text-sm text-slate-400 mt-1">Configure global currency, timezone, and data storage policies.</p>
+                  <p className="text-sm mt-1" style={{ color: 'hsl(var(--text-muted))' }}>Configure global currency, timezone, and data storage policies.</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-4 shadow-lg">
+                <div className="p-6 bg-[hsl(var(--bg-card)_/_0.8)] border rounded-2xl space-y-4 shadow-lg" style={{ borderColor: 'hsl(var(--border-color))' }}>
                   <div className="flex items-center gap-3">
-                    <Globe className="w-5 h-5 text-indigo-400" />
+                    <Globe className="w-5 h-5" style={{ color: 'hsl(var(--primary))' }} />
                     <h3 className="text-base font-bold text-white">Localization & Currency</h3>
                   </div>
                   <div className="space-y-3 text-xs">
                     <div>
-                      <label className="text-slate-400 block mb-1 font-semibold">Default Platform Currency</label>
+                      <label className="block mb-1 font-semibold" style={{ color: 'hsl(var(--text-muted))' }}>Default Platform Currency</label>
                       <select
                         value={defaultCurrency}
                         onChange={(e) => setDefaultCurrency(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-slate-200 outline-none"
+                        className="w-full border rounded-xl p-2.5 outline-none" style={{ backgroundColor: 'hsl(var(--bg-card))', borderColor: 'hsl(var(--border-color))', color: 'hsl(var(--secondary))' }}
                       >
                         <option value="USD">USD ($)</option>
                         <option value="EUR">EUR (€)</option>
@@ -408,11 +400,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       </select>
                     </div>
                     <div>
-                      <label className="text-slate-400 block mb-1 font-semibold">Display Timezone</label>
+                      <label className="block mb-1 font-semibold" style={{ color: 'hsl(var(--text-muted))' }}>Display Timezone</label>
                       <select
                         value={timezone}
                         onChange={(e) => setTimezone(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-slate-200 outline-none"
+                        className="w-full border rounded-xl p-2.5 outline-none" style={{ backgroundColor: 'hsl(var(--bg-card))', borderColor: 'hsl(var(--border-color))', color: 'hsl(var(--secondary))' }}
                       >
                         <option value="UTC">UTC (Coordinated Universal Time)</option>
                         <option value="EST">EST (Eastern Standard Time)</option>
@@ -422,26 +414,26 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
                 </div>
 
-                <div className="p-6 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-4 shadow-lg">
+                <div className="p-6 bg-[hsl(var(--bg-card)_/_0.8)] border rounded-2xl space-y-4 shadow-lg" style={{ borderColor: 'hsl(var(--border-color))' }}>
                   <div className="flex items-center gap-3">
-                    <Database className="w-5 h-5 text-purple-400" />
+                    <Database className="w-5 h-5" style={{ color: 'hsl(var(--primary))' }} />
                     <h3 className="text-base font-bold text-white">Database & Ingestion Engine</h3>
                   </div>
-                  <p className="text-xs text-slate-400 leading-relaxed">
+                  <p className="text-xs leading-relaxed" style={{ color: 'hsl(var(--text-muted))' }}>
                     Automated CSV ingestion pipelines and MongoDB indexing active.
                   </p>
                   <div className="pt-2">
-                    <span className="px-3 py-1 bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-bold rounded-lg">
+                    <span className="px-3 py-1 border text-xs font-bold rounded-lg" style={{ backgroundColor: 'hsl(var(--primary) / 0.1)', borderColor: 'hsl(var(--primary) / 0.3)', color: 'hsl(var(--secondary))' }}>
                       Engine v3.1 Operational
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-end pt-4 border-t border-slate-800">
+              <div className="flex justify-end pt-4 border-t" style={{ borderColor: 'hsl(var(--border-color))' }}>
                 <button
                   onClick={handleSavePrefs}
-                  className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-indigo-600/30 transition-all hover:shadow-indigo-600/50"
+                  className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r text-white rounded-xl text-sm font-bold shadow-lg shadow-[hsl(var(--primary)_/_0.3)] transition-all shadow-[hsl(var(--primary)_/_0.3)]" style={{ backgroundImage: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))' }}
                 >
                   <Save className="w-4 h-4" />
                   Save System Defaults

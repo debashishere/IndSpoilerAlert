@@ -78,7 +78,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
     return (
       <div className="card empty-state" style={{ padding: '40px', textAlign: 'center' }}>
         <DollarSign size={36} style={{ opacity: 0.3, marginBottom: '12px', color: 'hsl(var(--text-muted))' }} />
-        <h4 style={{ margin: '0 0 6px', color: '#fff' }}>No Sales Records Found</h4>
+        <h4 style={{ margin: '0 0 6px', color: 'white' }}>No Sales Records Found</h4>
         <p style={{ margin: 0, fontSize: '0.85rem', color: 'hsl(var(--text-muted))' }}>
           No sales records match your current search query.
         </p>
@@ -91,7 +91,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
       <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
         <div
           style={{
-            background: 'hsl(223, 47%, 12%)',
+            background: 'hsl(var(--bg-card))',
             padding: '10px 16px',
             display: 'flex',
             justifyContent: 'space-between',
@@ -103,7 +103,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
           }}
         >
           <span>Sales Data Pipeline ({sortedRecords.length})</span>
-          <span style={{ color: 'hsl(142, 76%, 46%)' }}>Product · Lot Number · Customer · Revenue</span>
+          <span style={{ color: 'hsl(var(--success))' }}>Product · Lot Number · Customer · Revenue</span>
         </div>
         <div className="premium-table-container">
           <table className="premium-table">
@@ -184,7 +184,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
                             style={{
                               fontSize: '0.65rem',
                               padding: '1px 6px',
-                              backgroundColor: 'hsl(223, 47%, 16%)',
+                              backgroundColor: 'hsl(var(--bg-card))',
                               color: 'hsl(var(--text-muted))',
                               fontFamily: 'monospace',
                             }}
@@ -228,7 +228,7 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
                     <div style={{ fontSize: '0.85rem' }}>${price.toFixed(2)}/cs</div>
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <div style={{ fontWeight: 700, color: 'hsl(142, 76%, 46%)', fontSize: '0.85rem' }}>
+                    <div style={{ fontWeight: 700, color: 'hsl(var(--success))', fontSize: '0.85rem' }}>
                       ${rev.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </td>
@@ -245,9 +245,9 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
                     <span
                       className="badge"
                       style={{
-                        backgroundColor: 'hsl(142 76% 46% / 12%)',
+                        backgroundColor: 'hsl(var(--success) / 12%)',
                         color: 'hsl(142 76% 46%)',
-                        border: '1px solid hsl(142 76% 46% / 30%)',
+                        border: '1px solid hsl(var(--success) / 30%)',
                         fontSize: '0.7rem',
                         textTransform: 'capitalize',
                       }}
@@ -305,8 +305,8 @@ export const SalesTable: React.FC<SalesTableProps> = ({ filteredRecords, onRecor
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    backgroundColor: currentPage === page ? 'hsl(142, 76%, 36%)' : 'transparent',
-                    color: currentPage === page ? '#ffffff' : 'hsl(var(--text-secondary))',
+                    backgroundColor: currentPage === page ? 'hsl(var(--success))' : 'transparent',
+                    color: currentPage === page ? 'white' : 'hsl(var(--text-secondary))',
                     transition: 'all 0.2s',
                   }}
                 >

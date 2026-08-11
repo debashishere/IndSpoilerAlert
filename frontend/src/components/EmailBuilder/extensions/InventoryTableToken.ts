@@ -46,7 +46,7 @@ export const InventoryTableToken = Node.create({
         'data-inventory-table-token': 'true',
         'data-token': 'inventory_table',
         class: 'inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300 select-none cursor-default my-1',
-        style: 'display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background-color: #f0fdf4; color: #15803d; border: 1.5px dashed #86efac; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 0 2px;',
+        style: 'display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background-color: hsl(var(--success) / 0.1); color: hsl(var(--success)); border: 1.5px dashed hsl(var(--success)); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 0 2px;',
       }),
       '📊 Dynamic Inventory Table {{inventory_table}}',
     ];

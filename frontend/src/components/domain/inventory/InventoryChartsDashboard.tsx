@@ -35,7 +35,7 @@ export const InventoryChartsDashboard: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fff',
+              color: 'white',
               boxShadow: '0 4px 16px hsl(var(--primary) / 40%)',
               flexShrink: 0,
             }}
@@ -50,7 +50,7 @@ export const InventoryChartsDashboard: React.FC = () => {
               <span
                 style={{
                   background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)))',
-                  color: '#fff',
+                  color: 'white',
                   fontSize: '0.72rem',
                   fontWeight: 800,
                   padding: '4px 12px',
@@ -122,7 +122,7 @@ export const InventoryChartsDashboard: React.FC = () => {
                   borderRadius: '6px',
                   border: 'none',
                   background: timeframe === t ? 'hsl(var(--primary))' : 'transparent',
-                  color: timeframe === t ? '#fff' : 'hsl(var(--text-muted))',
+                  color: timeframe === t ? 'white' : 'hsl(var(--text-muted))',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                   textTransform: 'uppercase',
@@ -229,12 +229,12 @@ export const InventoryChartsDashboard: React.FC = () => {
             <svg viewBox="0 0 500 160" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
               <defs>
                 <linearGradient id="gradCogs" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(217, 91%, 60%)" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="hsl(217, 91%, 60%)" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0.0" />
                 </linearGradient>
                 <linearGradient id="gradRisk" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(0, 84%, 60%)" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="hsl(0, 84%, 60%)" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="hsl(var(--error))" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="hsl(var(--error))" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
               
@@ -245,16 +245,16 @@ export const InventoryChartsDashboard: React.FC = () => {
 
               {/* Area 1: Total COGS */}
               <path d="M 0,130 Q 100,60 200,90 T 400,40 L 500,70 L 500,150 L 0,150 Z" fill="url(#gradCogs)" />
-              <path d="M 0,130 Q 100,60 200,90 T 400,40 L 500,70" fill="none" stroke="hsl(217, 91%, 60%)" strokeWidth="3" />
+              <path d="M 0,130 Q 100,60 200,90 T 400,40 L 500,70" fill="none" stroke="hsl(var(--primary))" strokeWidth="3" />
 
               {/* Area 2: Risk COGS */}
               <path d="M 0,145 Q 100,120 200,130 T 400,95 L 500,110 L 500,150 L 0,150 Z" fill="url(#gradRisk)" />
-              <path d="M 0,145 Q 100,120 200,130 T 400,95 L 500,110" fill="none" stroke="hsl(0, 84%, 60%)" strokeWidth="2.5" strokeDasharray="6 3" />
+              <path d="M 0,145 Q 100,120 200,130 T 400,95 L 500,110" fill="none" stroke="hsl(var(--error))" strokeWidth="2.5" strokeDasharray="6 3" />
 
               {/* Interactive Nodes */}
-              <circle cx="200" cy="90" r="5" fill="hsl(217, 91%, 60%)" stroke="#fff" strokeWidth="2" />
-              <circle cx="400" cy="40" r="5" fill="hsl(217, 91%, 60%)" stroke="#fff" strokeWidth="2" />
-              <circle cx="400" cy="95" r="5" fill="hsl(0, 84%, 60%)" stroke="#fff" strokeWidth="2" />
+              <circle cx="200" cy="90" r="5" fill="hsl(var(--primary))" stroke='white' strokeWidth="2" />
+              <circle cx="400" cy="40" r="5" fill="hsl(var(--primary))" stroke='white' strokeWidth="2" />
+              <circle cx="400" cy="95" r="5" fill="hsl(var(--error))" stroke='white' strokeWidth="2" />
             </svg>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'hsl(var(--text-muted))', borderTop: '1px solid hsl(var(--border))', paddingTop: '8px' }}>
               <span>Week 1</span>
@@ -268,10 +268,10 @@ export const InventoryChartsDashboard: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'hsl(var(--text-secondary))' }}>
             <div style={{ display: 'flex', gap: '16px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'hsl(217, 91%, 60%)' }} /> Total COGS ($248,500)
+                <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'hsl(var(--primary))' }} /> Total COGS ($248,500)
               </span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'hsl(0, 84%, 60%)' }} /> At-Risk COGS ($42,100)
+                <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'hsl(var(--error))' }} /> At-Risk COGS ($42,100)
               </span>
             </div>
           </div>
@@ -325,13 +325,13 @@ export const InventoryChartsDashboard: React.FC = () => {
             <div style={{ width: '140px', height: '140px', position: 'relative', margin: '0 auto' }}>
               <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
                 {/* < 10 Days (Red) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(0, 84%, 60%)" strokeWidth="4" strokeDasharray="15 85" strokeDashoffset="0" />
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(var(--error))" strokeWidth="4" strokeDasharray="15 85" strokeDashoffset="0" />
                 {/* 10-30 Days (Yellow) */}
                 <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(45, 93%, 47%)" strokeWidth="4" strokeDasharray="25 75" strokeDashoffset="-15" />
                 {/* 30-60 Days (Blue) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(217, 91%, 60%)" strokeWidth="4" strokeDasharray="35 65" strokeDashoffset="-40" />
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeDasharray="35 65" strokeDashoffset="-40" />
                 {/* 60+ Days (Green) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(142, 76%, 46%)" strokeWidth="4" strokeDasharray="25 75" strokeDashoffset="-75" />
+                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(var(--success))" strokeWidth="4" strokeDasharray="25 75" strokeDashoffset="-75" />
               </svg>
               <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
                 <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'hsl(var(--text-primary))', display: 'block' }}>100%</span>
@@ -343,11 +343,11 @@ export const InventoryChartsDashboard: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '3px' }}>
-                  <span style={{ color: 'hsl(0, 84%, 60%)', fontWeight: 600 }}>&lt; 10 Days (Critical)</span>
+                  <span style={{ color: 'hsl(var(--error))', fontWeight: 600 }}>&lt; 10 Days (Critical)</span>
                   <span style={{ color: 'hsl(var(--text-primary))', fontWeight: 700 }}>15% (12 lots)</span>
                 </div>
                 <div style={{ height: '6px', width: '100%', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: '15%', background: 'hsl(0, 84%, 60%)' }} />
+                  <div style={{ height: '100%', width: '15%', background: 'hsl(var(--error))' }} />
                 </div>
               </div>
 
@@ -363,21 +363,21 @@ export const InventoryChartsDashboard: React.FC = () => {
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '3px' }}>
-                  <span style={{ color: 'hsl(217, 91%, 60%)', fontWeight: 600 }}>30 – 60 Days (Moderate)</span>
+                  <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>30 – 60 Days (Moderate)</span>
                   <span style={{ color: 'hsl(var(--text-primary))', fontWeight: 700 }}>35% (28 lots)</span>
                 </div>
                 <div style={{ height: '6px', width: '100%', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: '35%', background: 'hsl(217, 91%, 60%)' }} />
+                  <div style={{ height: '100%', width: '35%', background: 'hsl(var(--primary))' }} />
                 </div>
               </div>
 
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '3px' }}>
-                  <span style={{ color: 'hsl(142, 76%, 46%)', fontWeight: 600 }}>60+ Days (Optimal)</span>
+                  <span style={{ color: 'hsl(var(--success))', fontWeight: 600 }}>60+ Days (Optimal)</span>
                   <span style={{ color: 'hsl(var(--text-primary))', fontWeight: 700 }}>25% (20 lots)</span>
                 </div>
                 <div style={{ height: '6px', width: '100%', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: '25%', background: 'hsl(142, 76%, 46%)' }} />
+                  <div style={{ height: '100%', width: '25%', background: 'hsl(var(--success))' }} />
                 </div>
               </div>
             </div>
@@ -401,7 +401,7 @@ export const InventoryChartsDashboard: React.FC = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Layers size={18} style={{ color: 'hsl(142, 76%, 46%)' }} />
+                <Layers size={18} style={{ color: 'hsl(var(--success))' }} />
                 <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--text-primary))', margin: 0 }}>
                   Landfill Diversion & Channel Yield
                 </h4>
@@ -437,10 +437,10 @@ export const InventoryChartsDashboard: React.FC = () => {
             ].map((col, idx) => (
               <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flex: 1, height: '100%', justifyContent: 'flex-end' }}>
                 <div style={{ width: '100%', maxWidth: '40px', height: '150px', display: 'flex', flexDirection: 'column-reverse', borderRadius: '6px', overflow: 'hidden' }}>
-                  <div style={{ height: `${col.sold}%`, background: 'hsl(142, 76%, 46%)' }} title={`Sold: ${col.sold}%`} />
-                  <div style={{ height: `${col.donated}%`, background: 'hsl(217, 91%, 60%)' }} title={`Donated: ${col.donated}%`} />
+                  <div style={{ height: `${col.sold}%`, background: 'hsl(var(--success))' }} title={`Sold: ${col.sold}%`} />
+                  <div style={{ height: `${col.donated}%`, background: 'hsl(var(--primary))' }} title={`Donated: ${col.donated}%`} />
                   <div style={{ height: `${col.recycled}%`, background: 'hsl(45, 93%, 47%)' }} title={`Recycled: ${col.recycled}%`} />
-                  <div style={{ height: `${col.pending}%`, background: 'hsl(0, 84%, 60%)' }} title={`Pending: ${col.pending}%`} />
+                  <div style={{ height: `${col.pending}%`, background: 'hsl(var(--error))' }} title={`Pending: ${col.pending}%`} />
                 </div>
                 <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', fontWeight: 600 }}>{col.month}</span>
               </div>
@@ -448,10 +448,10 @@ export const InventoryChartsDashboard: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-around', fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', flexWrap: 'wrap', gap: '8px' }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'hsl(142, 76%, 46%)' }} /> Sold (68%)</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'hsl(217, 91%, 60%)' }} /> Donated (18%)</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'hsl(var(--success))' }} /> Sold (68%)</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'hsl(var(--primary))' }} /> Donated (18%)</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'hsl(45, 93%, 47%)' }} /> Recycled (8%)</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'hsl(0, 84%, 60%)' }} /> At Risk (6%)</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span style={{ width: '10px', height: '10px', borderRadius: '2px', background: 'hsl(var(--error))' }} /> At Risk (6%)</span>
           </div>
         </div>
 
@@ -501,9 +501,9 @@ export const InventoryChartsDashboard: React.FC = () => {
           <div style={{ height: '220px', background: 'hsl(var(--bg-app))', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border) / 50%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: '10px' }}>
             {[
               { category: 'Dry Goods', bids: '42 Bids', recovery: '78% COGS', width: '85%', color: 'hsl(var(--primary))' },
-              { category: 'Dairy', bids: '28 Bids', recovery: '65% COGS', width: '65%', color: 'hsl(142, 76%, 46%)' },
+              { category: 'Dairy', bids: '28 Bids', recovery: '65% COGS', width: '65%', color: 'hsl(var(--success))' },
               { category: 'Frozen Food', bids: '19 Bids', recovery: '58% COGS', width: '50%', color: 'hsl(45, 93%, 47%)' },
-              { category: 'Beverages', bids: '35 Bids', recovery: '72% COGS', width: '75%', color: 'hsl(217, 91%, 60%)' },
+              { category: 'Beverages', bids: '35 Bids', recovery: '72% COGS', width: '75%', color: 'hsl(var(--primary))' },
             ].map((cat, idx) => (
               <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>

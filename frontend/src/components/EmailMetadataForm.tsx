@@ -62,10 +62,10 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
       data-testid="email-metadata-form"
       className="bg-slate-50/70 p-4 rounded-xl border border-slate-200 shadow-xs mb-6 text-slate-800 font-sans"
       style={{
-        backgroundColor: 'var(--surface-elevated, #f8fafc)',
+        backgroundColor: 'var(--surface-elevated, hsl(var(--bg-card-hover)))',
         padding: '20px',
         borderRadius: '12px',
-        border: '1px solid var(--border, #e2e8f0)',
+        border: '1px solid var(--border, hsl(var(--border-color)))',
         marginBottom: '24px',
         boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
@@ -90,11 +90,11 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               gap: '6px',
               fontSize: '12px',
               fontWeight: 600,
-              color: 'var(--text-secondary, #334155)',
+              color: 'var(--text-secondary, hsl(var(--text-primary)))',
               marginBottom: '4px'
             }}
           >
-            <LayoutTemplate size={14} style={{ color: '#f97316' }} />
+            <LayoutTemplate size={14} style={{ color: 'hsl(var(--warning))' }} />
             <span>Template</span>
           </label>
           <select
@@ -108,9 +108,9 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               padding: '8px 12px',
               fontSize: '13px',
               fontWeight: 500,
-              color: 'var(--text-on-surface, #1e293b)',
-              backgroundColor: 'var(--surface-card, #ffffff)',
-              border: '1px solid var(--border, #cbd5e1)',
+              color: 'var(--text-on-surface, hsl(var(--bg-card)))',
+              backgroundColor: 'var(--surface-card, white)',
+              border: '1px solid var(--border, hsl(var(--border-color)))',
               borderRadius: '8px',
               outline: 'none',
               cursor: 'pointer'
@@ -135,13 +135,13 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               gap: '6px',
               fontSize: '12px',
               fontWeight: 600,
-              color: 'var(--text-secondary, #334155)',
+              color: 'var(--text-secondary, hsl(var(--text-primary)))',
               marginBottom: '4px'
             }}
           >
-            <Mail size={14} style={{ color: '#f97316' }} />
+            <Mail size={14} style={{ color: 'hsl(var(--warning))' }} />
             <span>From Email</span>
-            <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
+            <span style={{ color: 'hsl(var(--error))', fontWeight: 700 }}>*</span>
           </label>
           <select
             id="email-metadata-from"
@@ -154,9 +154,9 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               padding: '8px 12px',
               fontSize: '13px',
               fontWeight: 500,
-              color: 'var(--text-on-surface, #1e293b)',
-              backgroundColor: 'var(--surface-card, #ffffff)',
-              border: '1px solid var(--border, #cbd5e1)',
+              color: 'var(--text-on-surface, hsl(var(--bg-card)))',
+              backgroundColor: 'var(--surface-card, white)',
+              border: '1px solid var(--border, hsl(var(--border-color)))',
               borderRadius: '8px',
               outline: 'none',
               cursor: 'pointer'
@@ -181,13 +181,13 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               gap: '6px',
               fontSize: '12px',
               fontWeight: 600,
-              color: 'var(--text-secondary, #334155)',
+              color: 'var(--text-secondary, hsl(var(--text-primary)))',
               marginBottom: '4px'
             }}
           >
-            <PenLine size={14} style={{ color: '#f97316' }} />
+            <PenLine size={14} style={{ color: 'hsl(var(--warning))' }} />
             <span>Subject</span>
-            <span style={{ color: '#ef4444', fontWeight: 700 }}>*</span>
+            <span style={{ color: 'hsl(var(--error))', fontWeight: 700 }}>*</span>
           </label>
           <input
             id="email-metadata-subject"
@@ -204,9 +204,9 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               padding: '8px 12px',
               fontSize: '13px',
               fontWeight: 500,
-              color: 'var(--text-on-surface, #1e293b)',
-              backgroundColor: 'var(--surface-card, #ffffff)',
-              border: '1px solid var(--border, #cbd5e1)',
+              color: 'var(--text-on-surface, hsl(var(--bg-card)))',
+              backgroundColor: 'var(--surface-card, white)',
+              border: '1px solid var(--border, hsl(var(--border-color)))',
               borderRadius: '8px',
               outline: 'none'
             }}
@@ -224,11 +224,11 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               gap: '6px',
               fontSize: '12px',
               fontWeight: 600,
-              color: 'var(--text-secondary, #334155)',
+              color: 'var(--text-secondary, hsl(var(--text-primary)))',
               marginBottom: '4px'
             }}
           >
-            <FileSignature size={14} style={{ color: '#f97316' }} />
+            <FileSignature size={14} style={{ color: 'hsl(var(--warning))' }} />
             <span>Signature</span>
           </label>
           <select
@@ -242,9 +242,9 @@ export const EmailMetadataForm: React.FC<EmailMetadataFormProps> = ({
               padding: '8px 12px',
               fontSize: '13px',
               fontWeight: 500,
-              color: 'var(--text-on-surface, #1e293b)',
-              backgroundColor: 'var(--surface-card, #ffffff)',
-              border: '1px solid var(--border, #cbd5e1)',
+              color: 'var(--text-on-surface, hsl(var(--bg-card)))',
+              backgroundColor: 'var(--surface-card, white)',
+              border: '1px solid var(--border, hsl(var(--border-color)))',
               borderRadius: '8px',
               outline: 'none',
               cursor: 'pointer'

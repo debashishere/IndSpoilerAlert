@@ -80,21 +80,21 @@ function buildInventoryTableHtml(lot: any) {
   ]);
 
   const rowsHtml = items.map((item: any) => `
-    <tr style="border-bottom: 1px solid #e2e8f0;">
+    <tr style="border-bottom: 1px solid hsl(var(--border-color));">
       <td style="padding: 8px 12px; font-family: monospace;">${item.sku || 'SKU-001'}</td>
       <td style="padding: 8px 12px; font-weight: 500;">${item.name || item.description || 'Product Item'}</td>
       <td style="padding: 8px 12px; font-weight: bold; text-align: right;">${item.cases || item.quantity || 100}</td>
-      <td style="padding: 8px 12px; color: #ef4444; text-align: center; font-weight: 600;">${item.expiry || (item.daysRemaining ? `${item.daysRemaining} Days` : '14 Days')}</td>
+      <td style="padding: 8px 12px; color: hsl(var(--error)); text-align: center; font-weight: 600;">${item.expiry || (item.daysRemaining ? `${item.daysRemaining} Days` : '14 Days')}</td>
     </tr>
   `).join('');
 
-  return `<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; text-align: left; border: 1px solid #cbd5e1; background-color: #ffffff;">
+  return `<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; text-align: left; border: 1px solid hsl(var(--border-color)); background-color: white;">
     <thead>
-      <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
-        <th style="padding: 8px 12px; color: #475569;">SKU</th>
-        <th style="padding: 8px 12px; color: #475569;">Description</th>
-        <th style="padding: 8px 12px; color: #475569; text-align: right;">Cases</th>
-        <th style="padding: 8px 12px; color: #475569; text-align: center;">Expiry</th>
+      <tr style="background-color: hsl(var(--bg-card-hover)); border-bottom: 2px solid hsl(var(--border-color));">
+        <th style="padding: 8px 12px; color: hsl(var(--text-muted));">SKU</th>
+        <th style="padding: 8px 12px; color: hsl(var(--text-muted));">Description</th>
+        <th style="padding: 8px 12px; color: hsl(var(--text-muted)); text-align: right;">Cases</th>
+        <th style="padding: 8px 12px; color: hsl(var(--text-muted)); text-align: center;">Expiry</th>
       </tr>
     </thead>
     <tbody>
@@ -105,9 +105,9 @@ function buildInventoryTableHtml(lot: any) {
 
 export function renderTokenPillHtml(token: string): string {
   if (token === 'inventory_table') {
-    return `<div class="dynamic-token-pill" data-token="inventory_table" contenteditable="false" style="display: block; padding: 12px 16px; background-color: #f0fdf4; color: #15803d; border: 1.5px dashed #86efac; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 12px 0;">📊 Dynamic Inventory Table (Workflow Data) ℹ️</div>`;
+    return `<div class="dynamic-token-pill" data-token="inventory_table" contenteditable="false" style="display: block; padding: 12px 16px; background-color: hsl(var(--bg-card-hover)); color: hsl(var(--success)); border: 1.5px dashed hsl(var(--success)); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 12px 0;">📊 Dynamic Inventory Table (Workflow Data) ℹ️</div>`;
   } else if (token === 'header') {
-    return `<div class="dynamic-token-pill" data-token="header" contenteditable="false" style="display: block; padding: 10px 14px; background-color: #eff6ff; color: #1d4ed8; border: 1px dashed #bfdbfe; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 8px 0;">🏷️ Dynamic Header Component ℹ️</div>`;
+    return `<div class="dynamic-token-pill" data-token="header" contenteditable="false" style="display: block; padding: 10px 14px; background-color: hsl(var(--bg-card-hover)); color: hsl(var(--primary)); border: 1px dashed hsl(var(--border-color)); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 8px 0;">🏷️ Dynamic Header Component ℹ️</div>`;
   } else {
     const label = token === 'buyer_name' ? 'Buyer Account Name'
       : token === 'supplier_name' ? 'Supplier Organization'
@@ -116,7 +116,7 @@ export function renderTokenPillHtml(token: string): string {
       : token === 'expiry_date' ? 'Expiry Date Component'
       : token === 'discount_percent' ? 'Discount % Component'
       : `${token.replace(/_/g, ' ')} Component`;
-    return `<span class="dynamic-token-pill" data-token="${token}" contenteditable="false" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 9999px; font-size: 12px; font-weight: 600; cursor: pointer; margin: 0 2px;">${label} ℹ️</span>`;
+    return `<span class="dynamic-token-pill" data-token="${token}" contenteditable="false" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background-color: hsl(var(--bg-card-hover)); color: hsl(var(--primary)); border: 1px solid hsl(var(--border-color)); border-radius: 9999px; font-size: 12px; font-weight: 600; cursor: pointer; margin: 0 2px;">${label} ℹ️</span>`;
   }
 }
 
@@ -141,7 +141,7 @@ export function TipTapTemplateEditor({
   const [category, setCategory] = useState<'clearance' | 'auction' | 'award' | 'general'>(initialTemplate?.category || 'clearance');
   const [bodyHtml, setBodyHtml] = useState<string>(() => {
     const raw = initialTemplate?.bodyHtml ||
-      `<p>Dear {{buyer_name}},</p><p>We have immediate distressed stock available for liquidation. Please review the itemized inventory below:</p>{{inventory_table}}<p style="text-align: center; margin-top: 20px;"><a href="{{quick_bid_link}}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Submit 1-Click Bid</a></p>`;
+      `<p>Dear {{buyer_name}},</p><p>We have immediate distressed stock available for liquidation. Please review the itemized inventory below:</p>{{inventory_table}}<p style="text-align: center; margin-top: 20px;"><a href="{{quick_bid_link}}" style="background-color: hsl(var(--primary)); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Submit 1-Click Bid</a></p>`;
     return hydrateRawTokensInHtml(raw);
   });
 
@@ -169,7 +169,7 @@ export function TipTapTemplateEditor({
       setTemplateId('short-dated-flash-sale');
       setName('Short-Dated Flash Sale');
       setSubject('⚡ Flash Sale: Short-Dated {{lot_title}} Available Now');
-      setBodyHtml(hydrateRawTokensInHtml(`<h2 style="color: #dc2626;">Time-Sensitive Clearance Opportunity</h2><p>Dear {{buyer_name}},</p><p>We have loaded a high-priority short-dated inventory lot: <strong>{{lot_title}}</strong>.</p>{{inventory_table}}<p style="text-align: center; margin: 20px 0;"><a href="{{quick_bid_link}}" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Review & Place Instant Bid</a></p><p style="font-size: 12px; color: #64748b;">Dispatched by {{supplier_name}}</p>`));
+      setBodyHtml(hydrateRawTokensInHtml(`<h2 style="color: hsl(var(--error));">Time-Sensitive Clearance Opportunity</h2><p>Dear {{buyer_name}},</p><p>We have loaded a high-priority short-dated inventory lot: <strong>{{lot_title}}</strong>.</p>{{inventory_table}}<p style="text-align: center; margin: 20px 0;"><a href="{{quick_bid_link}}" style="background-color: hsl(var(--error)); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Review & Place Instant Bid</a></p><p style="font-size: 12px; color: hsl(var(--text-muted));">Dispatched by {{supplier_name}}</p>`));
     }
     setPendingTemplateId(null);
     setShowOverwriteModal(false);
@@ -344,12 +344,12 @@ export function TipTapTemplateEditor({
   const insertToken = (token: string) => {
     let pillHtml = '';
     if (token === 'inventory_table') {
-      pillHtml = `<div class="dynamic-token-pill" data-token="inventory_table" contenteditable="false" style="display: block; padding: 12px 16px; background-color: #f0fdf4; color: #15803d; border: 1.5px dashed #86efac; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 12px 0;">📊 Dynamic Inventory Table (Workflow Data) ℹ️</div>`;
+      pillHtml = `<div class="dynamic-token-pill" data-token="inventory_table" contenteditable="false" style="display: block; padding: 12px 16px; background-color: hsl(var(--bg-card-hover)); color: hsl(var(--success)); border: 1.5px dashed hsl(var(--success)); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 12px 0;">📊 Dynamic Inventory Table (Workflow Data) ℹ️</div>`;
     } else if (token === 'header') {
-      pillHtml = `<div class="dynamic-token-pill" data-token="header" contenteditable="false" style="display: block; padding: 10px 14px; background-color: #eff6ff; color: #1d4ed8; border: 1px dashed #bfdbfe; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 8px 0;">🏷️ Dynamic Header Component ℹ️</div>`;
+      pillHtml = `<div class="dynamic-token-pill" data-token="header" contenteditable="false" style="display: block; padding: 10px 14px; background-color: hsl(var(--bg-card-hover)); color: hsl(var(--primary)); border: 1px dashed hsl(var(--border-color)); border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin: 8px 0;">🏷️ Dynamic Header Component ℹ️</div>`;
     } else {
       const info = getFriendlyTokenInfo(token);
-      pillHtml = `<span class="dynamic-token-pill" data-token="${token}" contenteditable="false" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background-color: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 9999px; font-size: 12px; font-weight: 600; cursor: pointer; margin: 0 2px;">${info.label} ℹ️</span>`;
+      pillHtml = `<span class="dynamic-token-pill" data-token="${token}" contenteditable="false" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background-color: hsl(var(--bg-card-hover)); color: hsl(var(--primary)); border: 1px solid hsl(var(--border-color)); border-radius: 9999px; font-size: 12px; font-weight: 600; cursor: pointer; margin: 0 2px;">${info.label} ℹ️</span>`;
     }
     setBodyHtml((prev) => `${prev} ${pillHtml}`);
   };
@@ -441,7 +441,7 @@ export function TipTapTemplateEditor({
     setSubject('Flash Offer: {{supplier_name}} Distressed Inventory');
     setBodyHtml(
       hydrateRawTokensInHtml(
-        `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #334155;"><h2 style="color: #4f46e5; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">Surplus Inventory Clearance</h2><p>Dear <strong>{{buyer_name}}</strong>,</p><p>We have uploaded a short-dated lot <strong>{{lot_title}}</strong> available for immediate auction bidding.</p>{{inventory_table}}<p style="text-align: center; margin: 24px 0;"><a href="{{quick_bid_link}}" style="background-color: #10b981; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Click Here to Bid</a></p><p style="font-size: 12px; color: #94a3b8;">Sent via IndSpoilerAlert Email Hub | {{supplier_name}}</p></div>`
+        `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: hsl(var(--text-primary));"><h2 style="color: hsl(var(--primary)); border-bottom: 2px solid hsl(var(--border-color)); padding-bottom: 8px;">Surplus Inventory Clearance</h2><p>Dear <strong>{{buyer_name}}</strong>,</p><p>We have uploaded a short-dated lot <strong>{{lot_title}}</strong> available for immediate auction bidding.</p>{{inventory_table}}<p style="text-align: center; margin: 24px 0;"><a href="{{quick_bid_link}}" style="background-color: hsl(var(--success)); color: white; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Click Here to Bid</a></p><p style="font-size: 12px; color: hsl(var(--border-color));">Sent via IndSpoilerAlert Email Hub | {{supplier_name}}</p></div>`
       )
     );
     setAvailableTokens(DEFAULT_TOKENS);
@@ -460,9 +460,9 @@ export function TipTapTemplateEditor({
       .replace(/\{\{lot_title\}\}/g, 'Surplus Dairy & Beverage Pack Lot #880')
       .replace(
         /\{\{inventory_table\}\}/g,
-        `<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; text-align: left; border: 1px solid #cbd5e1;">
+        `<table style="width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; text-align: left; border: 1px solid hsl(var(--border-color));">
           <thead>
-            <tr style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1;">
+            <tr style="background-color: hsl(var(--bg-card-hover)); border-bottom: 2px solid hsl(var(--border-color));">
               <th style="padding: 8px 12px;">SKU</th>
               <th style="padding: 8px 12px;">Description</th>
               <th style="padding: 8px 12px;">Cases</th>
@@ -470,17 +470,17 @@ export function TipTapTemplateEditor({
             </tr>
           </thead>
           <tbody>
-            <tr style="border-bottom: 1px solid #e2e8f0;">
+            <tr style="border-bottom: 1px solid hsl(var(--border-color));">
               <td style="padding: 8px 12px;">SKU-9901</td>
               <td style="padding: 8px 12px;">Organic Almond Milk 1L</td>
               <td style="padding: 8px 12px; font-weight: bold;">240</td>
-              <td style="padding: 8px 12px; color: #ef4444;">12 Days</td>
+              <td style="padding: 8px 12px; color: hsl(var(--error));">12 Days</td>
             </tr>
             <tr>
               <td style="padding: 8px 12px;">SKU-9904</td>
               <td style="padding: 8px 12px;">Greek Yogurt 500g</td>
               <td style="padding: 8px 12px; font-weight: bold;">150</td>
-              <td style="padding: 8px 12px; color: #f59e0b;">18 Days</td>
+              <td style="padding: 8px 12px; color: hsl(var(--warning));">18 Days</td>
             </tr>
           </tbody>
         </table>`
@@ -538,7 +538,7 @@ export function TipTapTemplateEditor({
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all"
+            className="px-5 py-2 bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary-dark))] text-white rounded-xl text-xs font-bold shadow-lg shadow-[hsl(var(--primary))]/30 flex items-center gap-2 transition-all cursor-pointer"
           >
             {saving ? (
               <>
