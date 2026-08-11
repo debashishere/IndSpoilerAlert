@@ -43,7 +43,7 @@ describe('Workflow Stage Email Template & Body Data Editor Functionality', () =>
     expect(screen.getByTestId('workflow-tiptap-editor')).toBeInTheDocument();
   });
 
-  test('expanded Stage card in Section 3 renders Stage Email Template & Body Data editor controls', () => {
+  test('expanded Stage card in Section 3 renders "Configure Stage Email" button and email-configured badge', () => {
     render(
       <LiquidationAutomationStudio
         supplierId="sup-101"
@@ -53,16 +53,16 @@ describe('Workflow Stage Email Template & Body Data Editor Functionality', () =>
       />
     );
 
-    // Verify Stage 1 email editor section exists in expanded stage card
+    // Stage email section container still exists
     expect(screen.getByTestId('stage-1-email-editor-section')).toBeInTheDocument();
-    expect(screen.getByTestId('stage-1-subject-input')).toBeInTheDocument();
-    expect(screen.getByTestId('stage-1-template-select')).toBeInTheDocument();
 
-    const editStageBodyBtn = screen.getByTestId('edit-stage-1-body-btn');
-    expect(editStageBodyBtn).toBeInTheDocument();
+    // Old inline controls are gone — new button exists
+    expect(screen.getByTestId('configure-stage-email-btn-1')).toBeInTheDocument();
+    expect(screen.queryByTestId('stage-1-subject-input')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('stage-1-template-select')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('edit-stage-1-body-btn')).not.toBeInTheDocument();
 
-    // Click toggle button to expand stage-specific TipTap editor
-    fireEvent.click(editStageBodyBtn);
-    expect(screen.getAllByTestId('workflow-tiptap-editor').length).toBeGreaterThan(0);
+    // Default stages ship with email data — badge is shown
+    expect(screen.getByTestId('email-configured-badge-1')).toBeInTheDocument();
   });
 });

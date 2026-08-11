@@ -175,8 +175,7 @@ export const CampaignDrawer: React.FC<{ supplierId: string }> = ({ supplierId })
           {[
             { step: 1, label: '📅 Campaign' },
             { step: 2, label: '🤖 Strategy' },
-            { step: 3, label: '📦 Rules & Filters' },
-            { step: 4, label: '📨 Email Notification' }
+            { step: 3, label: '📦 Rules & Filters' }
           ].map(s => (
             <div
               key={s.step}
@@ -316,21 +315,7 @@ export const CampaignDrawer: React.FC<{ supplierId: string }> = ({ supplierId })
             </div>
           )}
 
-          {campaignWizardStep === 4 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ fontSize: '0.88rem', color: 'hsl(var(--text-muted))' }}>
-                Review and finalize stage-gate discount rules and notification settings.
-              </div>
-              {stageGates.map((sg, i) => (
-                <div key={i} style={{ padding: '14px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))', backgroundColor: 'hsl(var(--bg-card-hover) / 10%)' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'hsl(var(--primary))' }}>Stage {sg.stageNumber}: {sg.name}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-muted))', marginTop: '4px' }}>
-                    Discount: {sg.discountValue}% · Wait: {sg.waitHours < 1 ? `${Math.round(sg.waitHours * 60)} mins` : `${sg.waitHours} hours`}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+
         </div>
 
         {/* Footer */}
@@ -344,7 +329,7 @@ export const CampaignDrawer: React.FC<{ supplierId: string }> = ({ supplierId })
                 Back
               </button>
             )}
-            {campaignWizardStep < 4 ? (
+            {campaignWizardStep < 3 ? (
               <button
                 type="button"
                 className="btn btn-primary"
