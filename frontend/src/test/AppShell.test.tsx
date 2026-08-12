@@ -44,7 +44,7 @@ describe('Cycle 4: AppShell, Sidebar & Header Integration', () => {
     expect(screen.getByText('Inventory')).toBeInTheDocument();
     expect(screen.getByText('Workflow Setup')).toBeInTheDocument();
     expect(screen.getByText('Buyer Marketplace')).toBeInTheDocument();
-    expect(screen.getByText('Inbox')).toBeInTheDocument();
+    expect(screen.getByText('Emails')).toBeInTheDocument();
     expect(screen.getByText('Settings')).toBeInTheDocument();
     expect(screen.queryByText('Distressed Analytics')).not.toBeInTheDocument();
     expect(screen.queryByText('Freight Logistics')).not.toBeInTheDocument();

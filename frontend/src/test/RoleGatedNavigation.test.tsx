@@ -41,7 +41,7 @@ describe('Issue 03: Role-Gated Navigation & Module Access Matrix', () => {
 
       // Common modules MUST be visible for Buyer-only
       expect(screen.getByText('Buyer Marketplace')).toBeInTheDocument();
-      expect(screen.getByText('Inbox')).toBeInTheDocument();
+      expect(screen.getByText('Emails')).toBeInTheDocument();
       expect(screen.getByText('Settings')).toBeInTheDocument();
 
       // Supplier-only modules MUST NOT be visible for Buyer-only
@@ -68,7 +68,7 @@ describe('Issue 03: Role-Gated Navigation & Module Access Matrix', () => {
 
       // Common modules MUST also be visible
       expect(screen.getByText('Buyer Marketplace')).toBeInTheDocument();
-      expect(screen.getByText('Inbox')).toBeInTheDocument();
+      expect(screen.getByText('Emails')).toBeInTheDocument();
       expect(screen.getByText('Settings')).toBeInTheDocument();
     });
   });

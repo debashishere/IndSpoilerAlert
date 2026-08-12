@@ -150,15 +150,15 @@ describe('Issue #78 / Slice 3: TipTap WYSIWYG Template Editor & Dynamic Token Pa
     expect(editorContent.innerHTML).toContain('data-token="inventory_table"');
   });
 
-  it('Slice 3 - Seam 2: integrates Centralized Email Template Selector in LiquidationAutomationStudio', async () => {
+  it('Slice 3 - Seam 2: verifies redundant Section 4 Email Template is removed from LiquidationAutomationStudio', async () => {
     const { LiquidationAutomationStudio } = await import('../components/LiquidationAutomationStudio');
     render(
       <LiquidationAutomationStudio supplierId="sup-101" />
     );
 
-    // Verify Email Template Attachment section exists
-    expect(screen.getByText(/4\. Email Template/i)).toBeInTheDocument();
-    expect(screen.getByTestId('attach-email-template-select')).toBeInTheDocument();
+    // Verify redundant Email Template section 4 does not exist
+    expect(screen.queryByText(/4\. Email Template/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('attach-email-template-select')).not.toBeInTheDocument();
   });
 
   it('allows adding custom variable tokens via input box and inserting them', async () => {

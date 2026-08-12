@@ -36,7 +36,7 @@ export interface WorkflowState {
   editingCampaignId: string | null;
   showCampaignDrawer: boolean;
   campaignWizardStep: number;
-  workflowSubTab: 'saved' | 'builder' | 'runs' | 'templates' | 'broadcast';
+  workflowSubTab: 'saved' | 'builder' | 'runs';
   runsFilter: 'all' | 'evaluating' | 'awarded' | 'fallback_executed' | 'failed';
   selectedAutomationTemplate: string;
   stageGates: StageGate[];
@@ -137,7 +137,7 @@ export const workflowSlice = createSlice({
     setCampaignWizardStep: (state, action: PayloadAction<number>) => {
       state.campaignWizardStep = action.payload;
     },
-    setWorkflowSubTab: (state, action: PayloadAction<'saved' | 'builder' | 'runs' | 'templates' | 'broadcast'>) => {
+    setWorkflowSubTab: (state, action: PayloadAction<'saved' | 'builder' | 'runs'>) => {
       state.workflowSubTab = action.payload;
     },
     setRunsFilter: (state, action: PayloadAction<'all' | 'evaluating' | 'awarded' | 'fallback_executed' | 'failed'>) => {

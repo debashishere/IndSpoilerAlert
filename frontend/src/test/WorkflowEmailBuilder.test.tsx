@@ -105,7 +105,7 @@ describe('WorkflowEmailBuilder & TipTap Body Editor Integration', () => {
     expect(screen.getAllByText(/buyer_name/i).length).toBeGreaterThan(0);
   });
 
-  test('renders in LiquidationAutomationStudio', () => {
+  test('verifies Section 4 Email Template container is not rendered in LiquidationAutomationStudio', () => {
     const { container } = render(
       <LiquidationAutomationStudio
         supplierId="sup-101"
@@ -116,6 +116,6 @@ describe('WorkflowEmailBuilder & TipTap Body Editor Integration', () => {
     );
 
     const builderShell = container.querySelector('[data-testid="workflow-email-builder-container"]');
-    expect(builderShell).toBeInTheDocument();
+    expect(builderShell).not.toBeInTheDocument();
   });
 });

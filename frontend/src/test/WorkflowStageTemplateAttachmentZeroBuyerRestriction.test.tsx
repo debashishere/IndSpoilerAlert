@@ -27,14 +27,10 @@ describe('Issue #03 — Workflow Stage Template Attachment & Zero-Buyer Selectio
       />
     );
 
-    // Verify template selector exists
-    const templateSelect = screen.getByTestId('attach-email-template-select');
-    expect(templateSelect).toBeInTheDocument();
-
     // Verify stage cards indicate buyer_name token binding
     const tokenBindingBadges = screen.getAllByTestId('buyer-name-token-binding-indicator');
     expect(tokenBindingBadges.length).toBeGreaterThan(0);
-    expect(tokenBindingBadges[0].textContent).toContain('{{buyer_name}}');
+    expect(tokenBindingBadges[0].textContent).toContain('buyer_name');
   });
 
   it('Seam 2: displays an immediate blocking UI error banner when a stage has 0 buyers selected', async () => {

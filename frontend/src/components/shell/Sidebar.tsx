@@ -144,7 +144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onTabChange }) => {
             onClick={(e) => handleTabClick(e, 'inbox')}
           >
             <Mail size={18} />
-            <span>Inbox</span>
+            <span>Emails</span>
           </li>
           <li
             className={`nav-link ${effectiveTab === 'settings' ? 'active' : ''}`}

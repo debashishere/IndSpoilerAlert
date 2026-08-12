@@ -184,6 +184,72 @@ export interface EmailThread {
   [key: string]: any;
 }
 
+// ─── Email Templates ─────────────────────────────────────────────────────────
+
+export type EmailTemplateCategory = 'Clearance' | 'Auction' | 'Award' | 'General';
+
+export interface EmailTemplate {
+  _id: string;
+  name: string;
+  category: EmailTemplateCategory;
+  subject: string;
+  body?: string;
+  supplierId: string;
+  updatedAt?: string;
+  createdAt?: string;
+}
+
+/**
+ * Fetch all email templates for a given supplier.
+ */
+export async function getEmailTemplates(supplierId: string): Promise<EmailTemplate[]> {
+  return apiFetch<EmailTemplate[]>(`/email-templates?supplierId=${encodeURIComponent(supplierId)}`, { method: 'GET' });
+}
+
+/**
+ * Delete an email template by id.
+ */
+export async function deleteEmailTemplate(id: string): Promise<void> {
+  await apiFetch(`/email-templates/${id}`, { method: 'DELETE' });
+}
+
+export interface CreateEmailTemplatePayload {
+  name: string;
+  subject: string;
+  category: EmailTemplateCategory;
+  bodyHtml: string;
+  supplierId: string;
+  fromEmail?: string;
+  signature?: string;
+}
+
+/**
+ * Create a new email template (POST).
+ */
+export async function createEmailTemplate(
+  payload: CreateEmailTemplatePayload
+): Promise<EmailTemplate> {
+  return apiFetch<EmailTemplate>('/email-templates', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+/**
+ * Update an existing email template (PUT).
+ */
+export async function updateEmailTemplate(
+  id: string,
+  payload: CreateEmailTemplatePayload
+): Promise<EmailTemplate> {
+  return apiFetch<EmailTemplate>(`/email-templates/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
 export async function getEmailThreadsByBuyerEmail(email: string): Promise<EmailThread[]> {
   const encoded = encodeURIComponent(email);
   const result = await apiFetch<any>(`/email-threads?buyerEmail=${encoded}`, { method: 'GET' });
@@ -216,6 +282,8 @@ const networkService = {
   getInventory,
   getShipments,
   updateProductAllergens,
+  getEmailTemplates,
+  deleteEmailTemplate,
 };
 
 export default networkService;

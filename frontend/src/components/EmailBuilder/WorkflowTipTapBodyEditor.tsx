@@ -200,7 +200,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
   const [showImageModal, setShowImageModal] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [imageAlt, _setImageAlt] = useState('');
-  const [textColor, setTextColor] = useState('hsl(var(--bg-card))');
+  const [textColor, setTextColor] = useState('hsl(var(--text-primary))');
   const [bgColor, setBgColor] = useState('white');
   const [showTokenDropdown, setShowTokenDropdown] = useState(false);
 
@@ -668,8 +668,8 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
       </div>
 
       {/* ─── TipTap Canvas ─────────────────────────────────────────────── */}
-      <div className="p-4 min-h-[320px] max-h-[600px] overflow-y-auto font-sans text-slate-900" style={{ padding: '16px', minHeight: '320px', color: 'hsl(var(--bg-card))' }}>
-        <EditorContent editor={editor} className="prose max-w-none focus:outline-none min-h-[280px] text-slate-900" style={{ color: 'hsl(var(--bg-card))' }} />
+      <div className="p-4 min-h-[320px] max-h-[600px] overflow-y-auto font-sans text-slate-900" style={{ padding: '16px', minHeight: '320px', color: 'hsl(var(--text-primary))' }}>
+        <EditorContent editor={editor} className="prose max-w-none focus:outline-none min-h-[280px] text-slate-900" style={{ color: 'hsl(var(--text-primary))' }} />
       </div>
 
       {/* Hidden File Input for Image Upload */}

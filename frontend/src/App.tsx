@@ -42,6 +42,7 @@ import { MarketplaceLayout } from './components/shell/MarketplaceLayout';
 import { InteractiveTour } from './components/InteractiveTour';
 import { SettingsView } from './views/SettingsView';
 import { EmailCommunicationsView } from './views/EmailCommunicationsView';
+import { EmailsHubView } from './views/EmailsHubView';
 import { QuickBidModal } from './components/QuickBidModal';
 import { SHOW_DISTRESSED_ANALYTICS, SHOW_FREIGHT_LOGISTICS } from './components/shell/Sidebar';
 import { useAuth } from './context/AuthContext';
@@ -1644,7 +1645,7 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
         )}
 
         {activeTab === 'inbox' && (
-          <EmailCommunicationsView
+          <EmailsHubView
             supplierId={selectedSupplier || '60c72b2f9b1d8b0015f8e001'}
             accountName={suppliers.find(s => s._id === selectedSupplier)?.name}
           />
