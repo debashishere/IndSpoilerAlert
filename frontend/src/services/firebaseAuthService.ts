@@ -1,3 +1,7 @@
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { isValidRealEmail } from '../utils/emailValidation';
+
 export interface UserProfiles {
   buyer: boolean;
   supplier: boolean;
@@ -19,6 +23,17 @@ const isFirebaseConfigured = (): boolean => {
   const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
   const forceMock = import.meta.env.VITE_USE_DEV_MOCK_AUTH === 'true';
   return Boolean(apiKey && !forceMock);
+};
+
+const getFirebaseAuth = () => {
+  const firebaseConfig = {
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  };
+  const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+  return getAuth(app);
 };
 
 type AuthStateCallback = (user: AuthUser | null) => void;
@@ -71,6 +86,118 @@ class FirebaseAuthService {
     return this.mockToken;
   }
 
+  public async handleGoogleAuthError(error: any): Promise<never> {
+    if (error?.code === 'auth/popup-closed-by-user') {
+      throw new Error('User closed the login popup');
+    }
+    if (error?.code === 'auth/unauthorized-domain') {
+      throw new Error('Unauthorized Domain: Please add your current domain (e.g. localhost) in Firebase Console > Authentication > Settings > Authorized domains.');
+    }
+    if (error?.code === 'auth/operation-not-allowed') {
+      throw new Error('Google Sign-In Disabled: Please enable Google as a Sign-in provider in Firebase Console > Authentication > Sign-in method.');
+    }
+    if (error?.code === 'auth/popup-blocked') {
+      throw new Error('Popup Blocked: Your browser blocked the sign-in popup. Please allow popups for this site.');
+    }
+    if (error?.code === 'auth/invalid-api-key') {
+      throw new Error('Invalid Firebase API Key: Please verify VITE_FIREBASE_API_KEY in frontend/.env.');
+    }
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(String(error));
+  }
+
+  public async signInWithGoogle(
+    profiles: UserProfiles = { buyer: true, supplier: true }
+  ): Promise<AuthUser> {
+    if (!isFirebaseConfigured()) {
+      const email = 'google.user@indspoileralert.com';
+      if (!isValidRealEmail(email)) {
+        throw new Error('Disallowed mock email domain. Please use a valid real email address.');
+      }
+
+      let userProfiles: UserProfiles = profiles;
+      try {
+        const storedProfiles = localStorage.getItem(`${MOCK_PROFILES_STORAGE_KEY}_${email}`);
+        if (storedProfiles) {
+          userProfiles = JSON.parse(storedProfiles);
+        }
+      } catch {
+        // default dual profiles
+      }
+
+      const uid = 'mock-google-uid-12345';
+      const user: AuthUser = {
+        uid,
+        email,
+        displayName: 'Google Test User',
+        photoURL: 'https://lh3.googleusercontent.com/a/default-user-photo',
+        profiles: userProfiles,
+      };
+
+      const token = `mock-firebase-id-token-${uid}`;
+      this.mockUser = user;
+      this.mockToken = token;
+
+      localStorage.setItem(MOCK_USER_STORAGE_KEY, JSON.stringify(user));
+      localStorage.setItem(MOCK_TOKEN_STORAGE_KEY, token);
+      localStorage.setItem(`${MOCK_PROFILES_STORAGE_KEY}_${email}`, JSON.stringify(userProfiles));
+      localStorage.setItem('ind_spoiler_auth_session_active', 'true');
+
+      this.notifyListeners();
+      return user;
+    }
+
+    try {
+      const auth = getFirebaseAuth();
+      const provider = new GoogleAuthProvider();
+      provider.addScope('email');
+      provider.addScope('profile');
+
+      const credential = await signInWithPopup(auth, provider);
+      const firebaseUser = credential.user;
+      const userEmail = firebaseUser.email || '';
+
+      if (!isValidRealEmail(userEmail)) {
+        throw new Error('Disallowed mock email domain. Please use a valid real email address.');
+      }
+
+      const idToken = await firebaseUser.getIdToken();
+
+      let userProfiles: UserProfiles = profiles;
+      try {
+        const storedProfiles = localStorage.getItem(`${MOCK_PROFILES_STORAGE_KEY}_${userEmail}`);
+        if (storedProfiles) {
+          userProfiles = JSON.parse(storedProfiles);
+        }
+      } catch {
+        // default dual profiles
+      }
+
+      const authUser: AuthUser = {
+        uid: firebaseUser.uid,
+        email: userEmail,
+        displayName: firebaseUser.displayName || undefined,
+        photoURL: firebaseUser.photoURL || undefined,
+        profiles: userProfiles,
+      };
+
+      this.mockUser = authUser;
+      this.mockToken = idToken;
+
+      localStorage.setItem(MOCK_USER_STORAGE_KEY, JSON.stringify(authUser));
+      localStorage.setItem(MOCK_TOKEN_STORAGE_KEY, idToken);
+      localStorage.setItem(`${MOCK_PROFILES_STORAGE_KEY}_${userEmail}`, JSON.stringify(userProfiles));
+      localStorage.setItem('ind_spoiler_auth_session_active', 'true');
+
+      this.notifyListeners();
+      return authUser;
+    } catch (error: any) {
+      return this.handleGoogleAuthError(error);
+    }
+  }
+
   public async updateUserProfiles(profiles: Partial<UserProfiles>): Promise<AuthUser> {
     const currentUser = this.getCurrentUser();
     if (!currentUser) {
@@ -97,6 +224,10 @@ class FirebaseAuthService {
   }
 
   public async loginWithEmail(email: string, _password?: string): Promise<AuthUser> {
+    if (!isValidRealEmail(email)) {
+      throw new Error('Disallowed mock email domain. Please use a valid real email address.');
+    }
+
     if (!isFirebaseConfigured()) {
       let profiles: UserProfiles = { buyer: true, supplier: true };
       try {
@@ -136,6 +267,10 @@ class FirebaseAuthService {
     _password?: string,
     profiles: UserProfiles = { buyer: true, supplier: false }
   ): Promise<AuthUser> {
+    if (!isValidRealEmail(email)) {
+      throw new Error('Disallowed mock email domain. Please use a valid real email address.');
+    }
+
     if (!isFirebaseConfigured()) {
       const uid = `mock-uid-${btoa(email).replace(/=/g, '')}`;
       const user: AuthUser = {
@@ -180,3 +315,4 @@ class FirebaseAuthService {
 }
 
 export const firebaseAuthService = new FirebaseAuthService();
+

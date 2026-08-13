@@ -19,7 +19,7 @@ describe('networkService Authorization Header Sync', () => {
   });
 
   it('should send Authorization: Bearer <id_token> when user is authenticated', async () => {
-    await firebaseAuthService.signupWithEmail('authtest@example.com', 'pass', { buyer: true, supplier: true });
+    await firebaseAuthService.signupWithEmail('authtest@indspoileralert.com', 'pass', { buyer: true, supplier: true });
     const token = await firebaseAuthService.getCurrentIdToken();
 
     await apiFetch('/test-endpoint');

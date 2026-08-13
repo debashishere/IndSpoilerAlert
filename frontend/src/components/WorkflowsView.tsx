@@ -176,8 +176,8 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
   }, []);
 
   useEffect(() => {
-    dispatch(fetchBuyerLists());
-    dispatch(fetchCoreReferenceData());
+    dispatch(fetchBuyerLists(supplierId));
+    dispatch(fetchCoreReferenceData({ supplierId }));
     if (supplierId) {
       dispatch(fetchLiquidationCyclesThunk(supplierId));
       dispatch(fetchLiquidationAutomationsThunk(supplierId));

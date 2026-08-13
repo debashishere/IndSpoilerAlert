@@ -8,56 +8,8 @@ export async function getBuyerLists(req: Request, res: Response): Promise<void> 
     if (supplierId) {
       query.supplierId = supplierId;
     }
-    let lists = await BuyerList.find(query).populate('buyerIds').sort({ createdAt: 1 });
-    const hasPrimary = lists.some((l: any) => l.type === 'primary' || l.name?.toLowerCase().includes('primary'));
-    const hasSecondary = lists.some((l: any) => l.type === 'secondary' || l.name?.toLowerCase().includes('secondary'));
-
-    if (!hasPrimary) {
-      const primary = await BuyerList.create({
-        name: 'Primary Buyers',
-        type: 'primary',
-        supplierId: supplierId || undefined,
-        buyerIds: [],
-        description: 'System default primary buyer list'
-      });
-      lists.unshift(primary);
-    }
-    if (!hasSecondary) {
-      const secondary = await BuyerList.create({
-        name: 'Secondary Liquidators',
-        type: 'secondary',
-        supplierId: supplierId || undefined,
-        buyerIds: [],
-        description: 'System default secondary liquidators list'
-      });
-      const primaryIdx = lists.findIndex((l: any) => l.type === 'primary');
-      lists.splice(primaryIdx >= 0 ? primaryIdx + 1 : 1, 0, secondary);
-    }
-    // Deduplicate lists
-    const uniqueMap = new Map<string, boolean>();
-    let primarySeen = false;
-    let secondarySeen = false;
-
-    const deduplicated: any[] = [];
-    for (const list of lists) {
-      const isPrimary = list.type === 'primary' || list.name?.toLowerCase().includes('primary');
-      const isSecondary = list.type === 'secondary' || list.name?.toLowerCase().includes('secondary');
-
-      if (isPrimary) {
-        if (primarySeen) continue;
-        primarySeen = true;
-      } else if (isSecondary) {
-        if (secondarySeen) continue;
-        secondarySeen = true;
-      } else {
-        const key = list._id ? list._id.toString() : list.name?.trim().toLowerCase();
-        if (key && uniqueMap.has(key)) continue;
-        if (key) uniqueMap.set(key, true);
-      }
-      deduplicated.push(list);
-    }
-
-    res.status(200).json(deduplicated);
+    const lists = await BuyerList.find(query).populate('buyerIds').sort({ createdAt: 1 });
+    res.status(200).json(lists);
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Failed to fetch buyer lists' });
   }

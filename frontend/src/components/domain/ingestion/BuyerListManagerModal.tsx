@@ -14,16 +14,20 @@ interface BuyerListManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialSelectedListId?: string;
+  supplierId?: string;
 }
 
 export const BuyerListManagerModal: React.FC<BuyerListManagerModalProps> = ({ 
   isOpen, 
   onClose,
-  initialSelectedListId 
+  initialSelectedListId,
+  supplierId
 }) => {
   const dispatch = useAppDispatch();
   const buyerLists = useAppSelector(selectBuyerLists);
   const allBuyers = useAppSelector(selectBuyers);
+  const reduxSelectedSupplier = useAppSelector((state) => state.ingestion?.selectedSupplier || '');
+  const effectiveSupplierId = supplierId || reduxSelectedSupplier;
 
   const [selectedListId, setSelectedListId] = useState<string | null>(initialSelectedListId || null);
 
@@ -89,7 +93,10 @@ export const BuyerListManagerModal: React.FC<BuyerListManagerModalProps> = ({
   const handleCreateList = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!newListName.trim()) return;
-    const res = await dispatch(createBuyerListThunk({ name: newListName.trim() }));
+    const res = await dispatch(createBuyerListThunk({ 
+      name: newListName.trim(), 
+      supplierId: effectiveSupplierId || undefined 
+    }));
     if (createBuyerListThunk.fulfilled.match(res)) {
       if (res.payload && res.payload._id) {
         setSelectedListId(res.payload._id);

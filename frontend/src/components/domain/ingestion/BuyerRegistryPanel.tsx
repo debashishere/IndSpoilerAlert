@@ -32,6 +32,7 @@ const BUYER_OPTIONS = [
 export const BuyerRegistryPanel = () => {
   const dispatch = useAppDispatch();
   const buyers = useAppSelector((state) => state.core.buyers);
+  const selectedSupplier = useAppSelector((state) => state.ingestion?.selectedSupplier || '');
 
   const [selectedBuyer, setSelectedBuyer] = useState<Buyer | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -40,9 +41,9 @@ export const BuyerRegistryPanel = () => {
   const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
-    dispatch(fetchCoreReferenceData({ all: showInactive }));
-    dispatch(fetchBuyerLists());
-  }, [dispatch, showInactive]);
+    dispatch(fetchCoreReferenceData({ all: showInactive, supplierId: selectedSupplier }));
+    dispatch(fetchBuyerLists(selectedSupplier));
+  }, [dispatch, showInactive, selectedSupplier]);
 
   const search = useAppSelector((state) => state.ingestion.buyerSearch);
   const tierFilter = useAppSelector((state) => state.ingestion.buyerTierFilter);
@@ -112,7 +113,7 @@ export const BuyerRegistryPanel = () => {
     dispatch(setBuyerNewName(''));
     dispatch(setBuyerNewEmail(''));
     // Automatically re-fetch buyers into core slice
-    dispatch(fetchCoreReferenceData());
+    dispatch(fetchCoreReferenceData({ supplierId: selectedSupplier }));
   };
 
   const handleCsvSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,7 +135,7 @@ export const BuyerRegistryPanel = () => {
       })
     );
     if (confirmBuyerThunk.fulfilled.match(res)) {
-      dispatch(fetchCoreReferenceData());
+      dispatch(fetchCoreReferenceData({ supplierId: selectedSupplier }));
       dispatch(setBuyerParsedResult(null));
       dispatch(setBuyerFile(null));
       setIsFullscreen(false);
@@ -255,6 +256,7 @@ export const BuyerRegistryPanel = () => {
         isOpen={isBuyerListModalOpen} 
         onClose={() => setIsBuyerListModalOpen(false)}
         initialSelectedListId={selectedModalListId}
+        supplierId={selectedSupplier}
       />
 
       {/* Hidden File Input (Always in DOM for ref & tests) */}
@@ -968,11 +970,11 @@ export const BuyerRegistryPanel = () => {
         onClose={() => {
           setIsDrawerOpen(false);
           setSelectedBuyer(null);
-          dispatch(fetchCoreReferenceData({ all: showInactive }));
+          dispatch(fetchCoreReferenceData({ all: showInactive, supplierId: selectedSupplier }));
         }}
         onBuyerUpdated={(updatedBuyer) => {
           setSelectedBuyer(updatedBuyer);
-          dispatch(fetchCoreReferenceData({ all: showInactive }));
+          dispatch(fetchCoreReferenceData({ all: showInactive, supplierId: selectedSupplier }));
         }}
       />
     </div>

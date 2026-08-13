@@ -282,6 +282,12 @@ describe('BuyerRegistryPanel — Live CSV Ingestion & Unified Buyer Registry (Is
   });
 
   it('should open BuyerListManagerModal when clicking "Buyer Lists" header button to configure buyer lists and segments', async () => {
+    const { setBuyerLists } = await import('../store/slices/coreSlice');
+    store.dispatch(setBuyerLists([
+      { _id: 'l1', name: 'Primary Buyers', type: 'primary', buyerIds: [] },
+      { _id: 'l2', name: 'Secondary Liquidators', type: 'secondary', buyerIds: [] }
+    ]));
+
     render(
       <Provider store={store}>
         <BuyerRegistryPanel />

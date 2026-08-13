@@ -29,6 +29,28 @@ const getDefaultMailTransporter = async () => {
  */
 export const getSupplierTransporter = async (supplierId: string = 'default') => {
   try {
+    const mailbox = await SupplierOAuthMailbox.findOne({ supplierId, status: 'connected' });
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+    if (mailbox && clientId && clientSecret && mailbox.accessToken && mailbox.refreshToken) {
+      const fromAddress = mailbox.userEmail || mailbox.accountId || 'supplier@company.com';
+      return {
+        transporter: nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            type: 'OAuth2',
+            user: fromAddress,
+            clientId,
+            clientSecret,
+            refreshToken: mailbox.refreshToken,
+            accessToken: mailbox.accessToken,
+          }
+        }),
+        fromAddress: `"${fromAddress}" <${fromAddress}>`
+      };
+    }
+
     const config = await SupplierSmtpConfig.findOne({ supplierId, isVerified: true });
     if (config && config.encryptedPass) {
       const decryptedPass = decryptText(config.encryptedPass);
@@ -46,7 +68,7 @@ export const getSupplierTransporter = async (supplierId: string = 'default') => 
       };
     }
   } catch (err) {
-    console.warn('Could not load supplier SMTP config, falling back to default:', err);
+    console.warn('Could not load supplier OAuth/SMTP config, falling back to default:', err);
   }
 
   return {
@@ -54,6 +76,7 @@ export const getSupplierTransporter = async (supplierId: string = 'default') => 
     fromAddress: `"IndSpoiler Alert Platform" <eveline94@ethereal.email>`
   };
 };
+
 
 /**
  * Send an email using the platform default transporter.

@@ -8,6 +8,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password?: string) => Promise<AuthUser>;
+  loginWithGoogle: (profiles?: UserProfiles) => Promise<AuthUser>;
   signup: (email: string, password?: string, profiles?: UserProfiles) => Promise<AuthUser>;
   logout: () => Promise<void>;
   updateProfiles: (profiles: Partial<UserProfiles>) => Promise<AuthUser>;
@@ -45,6 +46,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const loggedInUser = await firebaseAuthService.loginWithEmail(email, password);
+      const currentToken = await firebaseAuthService.getCurrentIdToken();
+      setUser(loggedInUser);
+      setToken(currentToken);
+      return loggedInUser;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithGoogle = async (profiles?: UserProfiles): Promise<AuthUser> => {
+    setIsLoading(true);
+    try {
+      const loggedInUser = await firebaseAuthService.signInWithGoogle(profiles);
       const currentToken = await firebaseAuthService.getCurrentIdToken();
       setUser(loggedInUser);
       setToken(currentToken);
@@ -94,6 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAuthenticated: Boolean(user),
     isLoading,
     login,
+    loginWithGoogle,
     signup,
     logout,
     updateProfiles,
@@ -101,6 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);

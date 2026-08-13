@@ -19,15 +19,27 @@ describe('backend authMiddleware', () => {
     expect(res.body.error).toMatch(/authorization header missing/i);
   });
 
-  it('should decode Dev Mock Token and attach req.user with dual profiles', async () => {
+  it('should return 403 Forbidden if user email is a mock domain', async () => {
+    // authtest@example.com
     const mockToken = 'mock-firebase-id-token-mock-uid-YXV0aHRlc3RAZXhhbXBsZS5jb20';
     const res = await request(app)
       .get('/api/protected')
       .set('Authorization', `Bearer ${mockToken}`);
 
+    expect(res.status).toBe(403);
+    expect(res.body.error).toMatch(/disallowed mock email domain|forbidden/i);
+  });
+
+  it('should decode valid non-mock email token and allow access with 200 OK', async () => {
+    // authtest@indspoileralert.com
+    const validToken = 'mock-firebase-id-token-mock-uid-YXV0aHRlc3RAaW5kc3BvaWxlcmFsZXJ0LmNvbQ';
+    const res = await request(app)
+      .get('/api/protected')
+      .set('Authorization', `Bearer ${validToken}`);
+
     expect(res.status).toBe(200);
     expect(res.body.user).toBeDefined();
-    expect(res.body.user.email).toBe('authtest@example.com');
+    expect(res.body.user.email).toBe('authtest@indspoileralert.com');
     expect(res.body.user.buyerProfile).toBeDefined();
     expect(res.body.user.supplierProfile).toBeDefined();
     expect(res.body.user.profiles).toEqual(

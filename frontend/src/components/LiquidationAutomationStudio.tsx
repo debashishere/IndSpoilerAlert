@@ -666,19 +666,23 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
                 }}
                 style={{ ...inputSt, padding: '8px 10px', flex: 1 }}
               >
-                {effectiveBuyerLists.map(list => {
-                  const count = getListCount(list);
-                  const isEmpty = count === 0;
-                  return (
-                    <option
-                      key={list._id || list.type}
-                      value={list._id || list.type}
-                      disabled={isEmpty}
-                    >
-                      {list.name} — {count} buyers{isEmpty ? ' (Error: No buyers configured)' : ''}
-                    </option>
-                  );
-                })}
+                {effectiveBuyerLists.length === 0 ? (
+                  <option value="">No buyer lists found (Create lists in Buyer Registry)</option>
+                ) : (
+                  effectiveBuyerLists.map(list => {
+                    const count = getListCount(list);
+                    const isEmpty = count === 0;
+                    return (
+                      <option
+                        key={list._id || list.type}
+                        value={list._id || list.type}
+                        disabled={isEmpty}
+                      >
+                        {list.name} — {count} buyers{isEmpty ? ' (Error: No buyers configured)' : ''}
+                      </option>
+                    );
+                  })
+                )}
                 {stage.buyerListId && !effectiveBuyerLists.some(l => l._id === stage.buyerListId || l.type === stage.buyerListId) && (
                   <option value={stage.buyerListId} disabled>
                     {stage.buyerListName || 'Select a list'} — 0 buyers (Error: No buyers configured)

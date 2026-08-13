@@ -142,11 +142,12 @@ export async function updateProductAllergens(
 
 // ─── Buyer Lists ─────────────────────────────────────────────────────────────
 
-export async function getBuyerLists(): Promise<any[]> {
-  return apiFetch<any[]>('/buyer-lists', { method: 'GET' });
+export async function getBuyerLists(supplierId?: string): Promise<any[]> {
+  const url = supplierId ? `/buyer-lists?supplierId=${encodeURIComponent(supplierId)}` : '/buyer-lists';
+  return apiFetch<any[]>(url, { method: 'GET' });
 }
 
-export async function createBuyerList(payload: { name: string; description?: string; type?: string }): Promise<any> {
+export async function createBuyerList(payload: { name: string; description?: string; type?: string; supplierId?: string }): Promise<any> {
   return apiFetch('/buyer-lists', {
     method: 'POST',
     body: JSON.stringify(payload),

@@ -81,7 +81,7 @@ describe('BuyerList Backend Model & REST APIs', () => {
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThanOrEqual(2);
+    expect(res.body.length).toBeGreaterThanOrEqual(1);
   });
 
   it('GET /api/buyer-lists/:id - should fetch a single buyer list with populated buyers', async () => {

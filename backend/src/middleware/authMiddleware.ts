@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { isValidRealEmail } from '../utils/emailValidation';
 
 export interface AuthenticatedUser {
   uid: string;
@@ -79,6 +80,10 @@ export const authenticateToken = (
     return res.status(401).json({ error: 'Invalid or expired token' });
   }
 
+  if (!isValidRealEmail(user.email)) {
+    return res.status(403).json({ error: 'Disallowed mock email domain' });
+  }
+
   req.user = user;
   next();
 };
@@ -93,7 +98,9 @@ export const optionalAuthToken = (
     const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader;
     if (token) {
       const user = decodeToken(token);
-      if (user) req.user = user;
+      if (user && isValidRealEmail(user.email)) {
+        req.user = user;
+      }
     }
   }
   next();

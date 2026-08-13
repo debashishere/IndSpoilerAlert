@@ -221,10 +221,10 @@ describe('01 - Buyer API Service Layer', () => {
   });
 
   describe('coreSlice BuyerList integration', () => {
-    it('initial state has default Primary and Secondary buyer lists', () => {
+    it('initial state has empty buyer lists (user controlled)', () => {
       const testStore = configureStore({ reducer: { core: coreSlice.reducer } });
-      expect(testStore.getState().core.buyerLists.length).toBe(2);
-      expect(selectBuyerLists(testStore.getState()).length).toBe(2);
+      expect(testStore.getState().core.buyerLists.length).toBe(0);
+      expect(selectBuyerLists(testStore.getState()).length).toBe(0);
     });
 
     it('fetchBuyerLists updates buyerLists in store and ensures default lists', async () => {

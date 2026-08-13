@@ -19,6 +19,7 @@ import emailThreadRoutes from './emailThreadRoutes';
 import oauthRoutes from './oauthRoutes';
 import emailTemplateRoutes from './emailTemplateRoutes';
 import * as emailTemplateController from '../controllers/emailTemplateController';
+import { authenticateToken } from '../middleware/authMiddleware';
 
 
 
@@ -113,7 +114,7 @@ router.post('/ingest/confirm-buyer', ingestController.confirmBuyerIngest);
 // Inventory
 router.get('/inventory', inventoryController.getInventory);
 router.get('/inventory/facets', inventoryController.getInventoryFacets);
-router.get('/sales', inventoryController.getSales);
+router.get('/sales', authenticateToken, inventoryController.getSales);
 router.put('/inventory/lot/:id', inventoryController.updateLot);
 
 

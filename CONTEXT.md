@@ -24,4 +24,9 @@
 - **Template Gallery**: The second sub-tab inside the Emails Hub reserved for browsing and managing reusable email templates. Currently shows a placeholder pending the Template Builder feature.
 - **Template Editor**: The forthcoming editor surface inside the Template Gallery where suppliers will create and modify reusable email templates.
 - **Email Template**: A reusable, pre-formatted email body (with optional merge tokens) that can be applied to outbound communications or workflow stages.
+- **Google OAuth Mailbox**: The authenticated mail connection bound to a supplier ID, authorizing outbound email dispatch via Google's OAuth 2.0 API (`https://mail.google.com/` scope). Serves as the single unified transport engine for all outbound email types (campaign broadcasts, direct inbox thread replies, and automated workflow notifications) whenever connected. Tracks access/refresh tokens and connection status (`connected`, `expired`, `missing`).
+
+## Authentication & User Identity
+
+- **Disallowed Mock Email Domain**: Any email domain address matching mock/test domain patterns (such as `@example.com`, `@mock.com`, `@test.com`, `@invalid`, `@localhost`, or containing `mock` in the domain name). Email addresses matching these patterns are strictly prohibited from authenticating or registering on the platform.
 

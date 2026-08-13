@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import * as inventoryService from '../services/inventoryService';
 
 export async function getInventory(req: Request, res: Response) {
@@ -230,9 +231,13 @@ export async function getInventoryFacets(req: Request, res: Response) {
   }
 }
 
-export async function getSales(req: Request, res: Response) {
+export async function getSales(req: AuthenticatedRequest, res: Response) {
   try {
-    const sales = await inventoryService.getSales();
+    const filters: any = {
+      ...req.query,
+      user: req.user
+    };
+    const sales = await inventoryService.getSales(filters);
     return res.json(sales);
   } catch (error: any) {
     return res.status(500).json({ error: error.message });

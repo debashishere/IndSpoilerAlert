@@ -185,8 +185,16 @@ describe('Sales & Bids Endpoints', () => {
     expect(foundOffer.buyerId.companyName).toBe('Test Buyer TDD');
   });
 
-  it('should return 200 and all sales (Behavior 2)', async () => {
+  it('should return 401 Unauthorized when requesting sales without authorization header', async () => {
     const res = await request(app).get('/api/sales');
+    expect(res.status).toBe(401);
+  });
+
+  it('should return 200 and sales for logged in user (Behavior 2)', async () => {
+    const validToken = 'mock-firebase-id-token-valid-user';
+    const res = await request(app)
+      .get(`/api/sales?supplierId=${sellerId}`)
+      .set('Authorization', `Bearer ${validToken}`);
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
 

@@ -4,6 +4,7 @@ import InventoryRisk from '../models/InventoryRisk';
 import Opportunity from '../models/Opportunity';
 import PricingRecommendation from '../models/PricingRecommendation';
 import MarketplaceListing from '../models/MarketplaceListing';
+import Supplier from '../models/Supplier';
 import Buyer from '../models/Buyer';
 import Offer from '../models/Offer';
 import Award from '../models/Award';
@@ -948,8 +949,46 @@ export async function getInventoryFacets(filter: any = {}): Promise<Array<{ attr
   return facets;
 }
 
-export async function getSales() {
-  return await Sale.find()
+export async function getSales(filters: any = {}) {
+  const query: any = {};
+
+  if (filters.supplierId) {
+    query.supplierId = filters.supplierId;
+  }
+  if (filters.buyerId) {
+    query.buyerId = filters.buyerId;
+  }
+  if (filters.liquidationCycleId) {
+    query.liquidationCycleId = filters.liquidationCycleId;
+  }
+
+  if (filters.user && filters.user.email) {
+    const userEmail = filters.user.email;
+    const buyer = await Buyer.findOne({ email: userEmail });
+
+    if (buyer) {
+      if (!query.supplierId && !query.buyerId) {
+        query.$or = [
+          { buyerId: buyer._id },
+          { buyerEmail: userEmail }
+        ];
+      }
+    } else if (!query.supplierId && !query.buyerId) {
+      const supplier = await Supplier.findOne({
+        name: { $regex: new RegExp(`^${userEmail.split('@')[0]}`, 'i') }
+      });
+
+      if (supplier) {
+        query.supplierId = supplier._id;
+      } else {
+        query.$or = [
+          { buyerEmail: userEmail }
+        ];
+      }
+    }
+  }
+
+  return await Sale.find(query)
     .populate('supplierId')
     .populate('buyerId')
     .populate('lotId')

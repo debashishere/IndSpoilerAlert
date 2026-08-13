@@ -34,6 +34,7 @@ const IngestionView = React.lazy(() => import('./views/IngestionView').then(m =>
 import { useDispatch } from 'react-redux';
 import { setActiveTab as setActiveTabRedux, setReturnTab as setReturnTabRedux, fetchCoreReferenceData, fetchBuyerLists } from './store/slices/coreSlice';
 import { setBuyerAuth } from './store/slices/authSlice';
+import { setSelectedSupplier as setSelectedSupplierIngestion } from './store/slices/ingestionSlice';
 import { fetchShipmentsThunk } from './store/slices/logisticsSlice';
 import { fetchInventoryLotsThunk } from './services/inventoryService';
 const AnalyticsView = React.lazy(() => import('./views/AnalyticsView').then(m => ({ default: m.AnalyticsView || m.default })));
@@ -95,10 +96,13 @@ export default function App() {
   const { isAuthenticated, isLoading, user, token, logout } = useAuth();
   const isSupplier = Boolean(user?.profiles?.supplier);
 
+  const [suppliers, setSuppliers] = useState<Supplier[]>(DEFAULT_SUPPLIERS);
+  const [selectedSupplier, setSelectedSupplier] = useState<string>(DEFAULT_SUPPLIERS[0]._id);
+
   useEffect(() => {
-    dispatch(fetchCoreReferenceData() as any);
-    dispatch(fetchBuyerLists() as any);
-  }, [dispatch]);
+    dispatch(fetchCoreReferenceData({ supplierId: selectedSupplier }) as any);
+    dispatch(fetchBuyerLists(selectedSupplier) as any);
+  }, [dispatch, selectedSupplier]);
 
   useEffect(() => {
     if (user) {
@@ -138,8 +142,6 @@ export default function App() {
     }
     return 'details';
   });
-  const [suppliers, setSuppliers] = useState<Supplier[]>(DEFAULT_SUPPLIERS);
-  const [selectedSupplier, setSelectedSupplier] = useState<string>(DEFAULT_SUPPLIERS[0]._id);
   const [file, setFile] = useState<File | null>(null);
   const [_dragActive, _setDragActive] = useState<boolean>(false);
   const [_loading, _setLoading] = useState<boolean>(false);
@@ -442,17 +444,45 @@ export default function App() {
 
   useEffect(() => {
     if (selectedSupplier) {
+      dispatch(setSelectedSupplierIngestion(selectedSupplier));
+      dispatch(fetchBuyerLists(selectedSupplier) as any);
       fetchLiquidationCycles(selectedSupplier);
       fetchLiquidationAutomations(selectedSupplier);
       setSelectedCycleId(''); // Reset selected cycle on supplier switch
     }
-  }, [selectedSupplier]);
+  }, [selectedSupplier, dispatch]);
+
+  // Match logged-in user email to supplier automatically if possible
+  useEffect(() => {
+    if (user?.email && suppliers.length > 0) {
+      const userEmailLower = user.email.toLowerCase();
+      const domain = userEmailLower.split('@')[1] || '';
+      const domainPrefix = domain.split('.')[0] || '';
+      const matched = suppliers.find((s) => {
+        const sNameLower = (s.name || '').toLowerCase().replace(/\s+/g, '');
+        return (
+          userEmailLower.includes(sNameLower) ||
+          (domainPrefix.length > 2 && sNameLower.includes(domainPrefix))
+        );
+      });
+      if (matched && matched._id !== selectedSupplier) {
+        setSelectedSupplier(matched._id);
+      }
+    }
+  }, [user, suppliers, selectedSupplier]);
 
   // Fetch sales records from backend
   const fetchSalesRecords = async () => {
     setSalesRecordsLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/sales`);
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const queryParam = selectedSupplier ? `?supplierId=${selectedSupplier}` : '';
+      const res = await fetch(`${API_BASE_URL}/sales${queryParam}`, { headers });
       if (res.ok) {
         const data = await res.json();
         setSalesRecords(data);
@@ -464,14 +494,12 @@ export default function App() {
     }
   };
 
-
-
   useEffect(() => {
     if (activeTab === 'inventory' || activeTab === 'marketplace' || activeTab === 'lot-hub' || activeTab === 'workflows') {
       fetchInventory(selectedCycleId);
       fetchSalesRecords();
     }
-  }, [activeTab, selectedCycleId]);
+  }, [activeTab, selectedCycleId, selectedSupplier, token]);
 
   const openLotOperationsHub = async (lot: any, navigate = true, targetSubTab: 'details' | 'bids' | 'activities' = 'details') => {
     setSelectedLot(lot);

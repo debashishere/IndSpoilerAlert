@@ -256,5 +256,17 @@ The unauthenticated entry point rendered by the platform when no active Firebase
 ### Auth Resolution Screen
 A full-screen branded loading state rendered while Firebase asynchronously resolves the current session on cold page load. It prevents any flash of the landing page for returning authenticated users, or flash of the platform shell for logged-out users.
 
+### Central Passwordless OTP Authentication
+A passwordless authentication mechanism for central platform accounts ("Sign In to Platform" and "Create Central Account") where users register dual profiles (CPG Supplier / Retail Buyer) or log in by entering their work email and verifying a 6-digit OTP delivered via email, generating an authenticated central user session without passwords.
+
+### Google OAuth Single Sign-On
+An authentication mechanism integrated into "Sign In to Platform" and "Create Central Account" modal views (`CentralAuthModal`) leveraging Firebase JS SDK (`GoogleAuthProvider` & `signInWithPopup`). It allows users to log in or create central accounts using Google credentials, preserving selected dual-profile roles (CPG Supplier / Retail Buyer) upon signup or defaulting to dual profiles for new users upon login.
+
+### Central Auth OTP Endpoints
+Dedicated backend API routes (`/api/auth/otp/request` and `/api/auth/otp/verify`) powered by `centralAuthService.ts` that manage 6-digit OTP generation (with a 15-minute TTL), email dispatch via `emailService.ts` (exposing `devOtp` in development), OTP verification, and central user profile/session creation.
+
+
 ### Session Gate
 The conditional rendering logic in `App` that reads `isLoading` and `isAuthenticated` from `AuthContext` to decide which root-level view to display: Auth Resolution Screen (loading), Public Landing Page (unauthenticated), or Platform Shell (authenticated).
+
+

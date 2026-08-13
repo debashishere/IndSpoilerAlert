@@ -82,12 +82,19 @@ export const checkSystemHealth = createAsyncThunk(
 
 export const fetchCoreReferenceData = createAsyncThunk(
   'core/fetchCoreReferenceData',
-  async (params: { all?: boolean } | boolean | undefined = undefined, { rejectWithValue }) => {
+  async (params: { all?: boolean; supplierId?: string } | boolean | string | undefined = undefined, { rejectWithValue }) => {
     try {
+      let supplierId: string | undefined;
+      if (typeof params === 'object' && params !== null) {
+        supplierId = params.supplierId;
+      } else if (typeof params === 'string') {
+        supplierId = params;
+      }
+
       const [suppliers, buyers, buyerLists] = await Promise.all([
         coreService.getSuppliers(),
         coreService.getBuyers(params),
-        networkService.getBuyerLists(),
+        networkService.getBuyerLists(supplierId),
       ]);
       return { suppliers, buyers, buyerLists };
     } catch (err: any) {
@@ -98,9 +105,9 @@ export const fetchCoreReferenceData = createAsyncThunk(
 
 export const fetchBuyerLists = createAsyncThunk(
   'core/fetchBuyerLists',
-  async (_, { rejectWithValue }) => {
+  async (supplierId: string | undefined = undefined, { rejectWithValue }) => {
     try {
-      const lists = await networkService.getBuyerLists();
+      const lists = await networkService.getBuyerLists(supplierId);
       return lists;
     } catch (err: any) {
       return rejectWithValue(err.message || 'Failed to fetch buyer lists');
@@ -110,7 +117,7 @@ export const fetchBuyerLists = createAsyncThunk(
 
 export const createBuyerListThunk = createAsyncThunk(
   'core/createBuyerList',
-  async (payload: { name: string; description?: string }, { rejectWithValue }) => {
+  async (payload: { name: string; description?: string; supplierId?: string }, { rejectWithValue }) => {
     try {
       const newList = await networkService.createBuyerList(payload);
       return newList;
@@ -187,66 +194,19 @@ const getInitialTab = (): NavigationTab => {
   return 'ingestion';
 };
 
-export const DEFAULT_BUYER_LISTS: BuyerList[] = [
-  {
-    _id: 'list-primary',
-    name: 'Primary Buyers',
-    type: 'primary',
-    buyerIds: [],
-    description: 'System default primary buyer list'
-  },
-  {
-    _id: 'list-secondary',
-    name: 'Secondary Liquidators',
-    type: 'secondary',
-    buyerIds: [],
-    description: 'System default secondary liquidators list'
-  }
-];
+export const DEFAULT_BUYER_LISTS: BuyerList[] = [];
 
 export function ensureDefaultBuyerLists(lists: BuyerList[] = []): BuyerList[] {
-  const source = Array.isArray(lists) && lists.length > 0 ? lists : DEFAULT_BUYER_LISTS;
-  
+  if (!Array.isArray(lists)) return [];
   const uniqueLists: BuyerList[] = [];
   const seenIds = new Set<string>();
-  const seenNames = new Set<string>();
-  let primaryFound = false;
-  let secondaryFound = false;
 
-  for (const list of source) {
+  for (const list of lists) {
     if (!list) continue;
     const id = list._id || list.id;
-    const nameNorm = (list.name || '').trim().toLowerCase();
-    const isPrimary = list.type === 'primary' || id === 'list-primary' || nameNorm.includes('primary');
-    const isSecondary = list.type === 'secondary' || id === 'list-secondary' || nameNorm.includes('secondary');
-
-    if (isPrimary) {
-      if (primaryFound) continue;
-      primaryFound = true;
-    } else if (isSecondary) {
-      if (secondaryFound) continue;
-      secondaryFound = true;
-    } else {
-      if (id && seenIds.has(id)) continue;
-      if (nameNorm && seenNames.has(nameNorm)) continue;
-    }
-
+    if (id && seenIds.has(id)) continue;
     if (id) seenIds.add(id);
-    if (nameNorm) seenNames.add(nameNorm);
-
     uniqueLists.push(list);
-  }
-
-  if (!primaryFound) {
-    uniqueLists.unshift(DEFAULT_BUYER_LISTS[0]);
-  }
-
-  if (!secondaryFound) {
-    const primaryIdx = uniqueLists.findIndex(
-      (l) => l.type === 'primary' || l._id === 'list-primary' || (l.name || '').toLowerCase().includes('primary')
-    );
-    const insertIdx = primaryIdx >= 0 ? primaryIdx + 1 : 1;
-    uniqueLists.splice(insertIdx, 0, DEFAULT_BUYER_LISTS[1]);
   }
 
   return uniqueLists;
@@ -260,7 +220,7 @@ const initialState: CoreState = {
   sidecarHealthy: null,
   suppliers: [],
   buyers: [],
-  buyerLists: DEFAULT_BUYER_LISTS,
+  buyerLists: [],
   loading: false,
   error: null,
   analyticsSummary: null,
