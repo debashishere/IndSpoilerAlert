@@ -23,7 +23,7 @@ router.get('/smtp', async (req: Request, res: Response) => {
         user: process.env.SMTP_USER || '',
         passMasked: process.env.SMTP_PASS ? '********' : '',
         senderName: 'IndSpoiler Alert Platform',
-        senderEmail: process.env.SMTP_USER || 'eveline94@ethereal.email',
+        senderEmail: process.env.SMTP_USER || 'noreply@spoileralert.com',
         isDefault: true
       });
     }
@@ -193,7 +193,7 @@ router.post('/send-email', async (req: Request, res: Response) => {
     }
 
     const smtpConfig = await SupplierSmtpConfig.findOne({ supplierId });
-    const fromEmail = smtpConfig?.senderEmail || 'eveline94@ethereal.email';
+    const fromEmail = smtpConfig?.senderEmail || process.env.SMTP_USER || 'noreply@spoileralert.com';
     const fromName = smtpConfig?.senderName || 'IndSpoiler Alert Platform';
 
     const result = await sendEmailHelper(to, subject, body, fromEmail, fromName);

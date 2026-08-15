@@ -28,15 +28,20 @@ import { SalesTable } from '../inventory/SalesTable';
 
 const SALES_OPTIONS = [
   { value: 'sku', label: 'SKU' },
+  { value: 'description', label: 'Description' },
+  { value: 'brand', label: 'Brand' },
   { value: 'lotNumber', label: 'Lot Number' },
   { value: 'buyerEmail', label: 'Buyer Email' },
+  { value: 'buyerCompany', label: 'Buyer Company' },
   { value: 'quantity', label: 'Quantity Sold (Cases)' },
   { value: 'price', label: 'Price Per Case' },
+  { value: 'totalValue', label: 'Total Value' },
+  { value: 'revenue', label: 'Total Revenue' },
   { value: 'saleDate', label: 'Sale Date' },
   { value: 'invoiceNumber', label: 'Invoice #' },
   { value: 'productName', label: 'Product Name' },
+  { value: 'status', label: 'Status' },
   { value: 'warehouse', label: 'Warehouse / DC' },
-  { value: 'revenue', label: 'Total Revenue' },
 ];
 
 export const SalesRegistryPanel = () => {
@@ -75,8 +80,8 @@ export const SalesRegistryPanel = () => {
   const effectiveSupplierId = selectedSupplier || (availableSuppliers.length > 0 ? (availableSuppliers[0]._id || '') : '');
 
   useEffect(() => {
-    dispatch(fetchSalesRecordsThunk());
-  }, [dispatch]);
+    dispatch(fetchSalesRecordsThunk(effectiveSupplierId));
+  }, [dispatch, effectiveSupplierId]);
 
   const getMappedField = (headerName: string): string => {
     return Object.entries(salesMappings).find(([, h]) => h === headerName)?.[0] || '';
@@ -124,7 +129,7 @@ export const SalesRegistryPanel = () => {
       })
     );
     if (confirmSalesThunk.fulfilled.match(res)) {
-      dispatch(fetchSalesRecordsThunk());
+      dispatch(fetchSalesRecordsThunk(effectiveSupplierId));
       dispatch(setSalesParsedResult(null));
       dispatch(setSalesFile(null));
       actualFileRef.current = null;

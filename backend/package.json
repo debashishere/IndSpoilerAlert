@@ -12,6 +12,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1084.0",
     "@aws-sdk/client-sqs": "^3.1084.0",
+    "@sendgrid/mail": "^8.1.6",
     "@types/handlebars": "^4.0.40",
     "agenda": "^5.0.0",
     "axios": "^1.7.2",

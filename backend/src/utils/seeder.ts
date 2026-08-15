@@ -25,6 +25,14 @@ import AutomationRun from '../models/AutomationRun';
 import Activity from '../models/Activity';
 import EmailThread from '../models/EmailThread';
 import EmailDispatchLog from '../models/EmailDispatchLog';
+import EmailTemplate from '../models/EmailTemplate';
+
+// Specified real emails for all mock email generation
+export const REAL_USER_EMAILS = [
+  'debashishere007@gmail.com',
+  'edebashise@gmail.com',
+  'debashisroe1996@gmail.com'
+];
 
 export async function seedDatabase(forceClean: boolean = false) {
   try {
@@ -32,8 +40,8 @@ export async function seedDatabase(forceClean: boolean = false) {
     const saleCount = await Sale.countDocuments();
     const buyerCount = await Buyer.countDocuments();
 
-    if (!forceClean && lotCount > 0 && saleCount > 0 && buyerCount >= 100) {
-      console.log('Database already populated with complete demo dataset.');
+    if (!forceClean && (lotCount > 0 || saleCount > 0 || buyerCount > 0)) {
+      console.log('Database already populated. Skipping database seeding to preserve existing data.');
       return;
     }
 
@@ -60,20 +68,21 @@ export async function seedDatabase(forceClean: boolean = false) {
     await LiquidationAutomation.deleteMany({});
     await AutomationRun.deleteMany({});
     await Activity.deleteMany({});
+    await EmailTemplate.deleteMany({});
     if (forceClean) {
       await EmailThread.deleteMany({});
       await EmailDispatchLog.deleteMany({});
     }
 
-    console.log('Seeding database with comprehensive demo dataset...');
+    console.log('Seeding database with high-quality 50-buyer demo dataset and real email integration...');
 
     // 1. Create Suppliers
     const suppliersData = [
-      { name: 'Unilever', companyCode: 'ULVR', preferredDisposition: 'sell' },
-      { name: 'Kraft Heinz', companyCode: 'KHC', preferredDisposition: 'sell' },
-      { name: 'Mondelez International', companyCode: 'MDLZ', preferredDisposition: 'sell' },
-      { name: 'Danone North America', companyCode: 'DANN', preferredDisposition: 'donate' },
-      { name: 'Conagra Brands', companyCode: 'CAG', preferredDisposition: 'recycle' }
+      { name: 'Unilever', companyCode: 'ULVR', preferredDisposition: 'sell', email: REAL_USER_EMAILS[0] },
+      { name: 'Kraft Heinz', companyCode: 'KHC', preferredDisposition: 'sell', email: REAL_USER_EMAILS[1] },
+      { name: 'Mondelez International', companyCode: 'MDLZ', preferredDisposition: 'sell', email: REAL_USER_EMAILS[2] },
+      { name: 'Danone North America', companyCode: 'DANN', preferredDisposition: 'donate', email: REAL_USER_EMAILS[0] },
+      { name: 'Conagra Brands', companyCode: 'CAG', preferredDisposition: 'recycle', email: REAL_USER_EMAILS[1] }
     ];
 
     const suppliers: any[] = [];
@@ -119,12 +128,10 @@ export async function seedDatabase(forceClean: boolean = false) {
       products.push(prod);
     }
 
-    // 3. Create Buyers (100 high quality buyers from test_files)
-    const buyersJsonPath = path.join(__dirname, '../../../test_files/buyers_100_seed.json');
-    let buyerSeedData: any[] = [];
-    if (fs.existsSync(buyersJsonPath)) {
-      buyerSeedData = JSON.parse(fs.readFileSync(buyersJsonPath, 'utf8'));
-    }
+    // 3. Create 50 High Quality Buyers using Real User Emails
+    // Generate buyers or read from test_files
+    const { generateBuyers } = require('./generate50Buyers');
+    const buyerSeedData = generateBuyers();
 
     const buyers: any[] = [];
     for (const bData of buyerSeedData) {
@@ -132,23 +139,52 @@ export async function seedDatabase(forceClean: boolean = false) {
       buyers.push(buyer);
     }
 
-    const primaryBuyerIds = buyers.filter(b => b.tier === 'tier1' || b.tier === 'tier2').slice(0, 25).map(b => b._id);
-    const secondaryBuyerIds = buyers.filter(b => b.tier === 'liquidator' || b.tier === 'custom').slice(0, 50).map(b => b._id);
+    // Categorize buyers into lists
+    const tier1BuyerIds = buyers.filter(b => b.tier === 'tier1').map(b => b._id);
+    const tier2BuyerIds = buyers.filter(b => b.tier === 'tier2').map(b => b._id);
+    const liquidatorBuyerIds = buyers.filter(b => b.tier === 'liquidator').map(b => b._id);
+    const customBuyerIds = buyers.filter(b => b.tier === 'custom').map(b => b._id);
+    const allBuyerIds = buyers.map(b => b._id);
 
-    await BuyerList.create({
-      name: 'Primary Buyers',
+    // Save Buyer Lists for Workflow Setup
+    const listPrimary = await BuyerList.create({
+      name: 'Primary Retailers (Tier 1)',
       type: 'primary',
       supplierId: unilever._id,
-      buyerIds: primaryBuyerIds,
-      description: 'Default list for top-tier primary buyers and direct retail outlets',
+      buyerIds: tier1BuyerIds,
+      description: 'Top-tier supermarket chains and national grocery retailers (15 buyers)',
+    });
+
+    const listSecondary = await BuyerList.create({
+      name: 'Regional & Co-op Grocers (Tier 2)',
+      type: 'secondary',
+      supplierId: unilever._id,
+      buyerIds: tier2BuyerIds,
+      description: 'Regional grocery chains, co-ops, and local retail outlets (15 buyers)',
+    });
+
+    const listLiquidators = await BuyerList.create({
+      name: 'Secondary Market Liquidators',
+      type: 'secondary',
+      supplierId: unilever._id,
+      buyerIds: liquidatorBuyerIds,
+      description: 'Closeout merchants, salvage buyers, and bargain outlets (12 buyers)',
+    });
+
+    const listFoodRescue = await BuyerList.create({
+      name: 'Food Rescue & Non-Profits',
+      type: 'custom',
+      supplierId: unilever._id,
+      buyerIds: customBuyerIds,
+      description: 'Non-profit food banks and charitable rescue organizations (8 buyers)',
     });
 
     await BuyerList.create({
-      name: 'Secondary Buyers',
-      type: 'secondary',
+      name: 'All 50 Verified Liquidation Buyers',
+      type: 'custom',
       supplierId: unilever._id,
-      buyerIds: secondaryBuyerIds,
-      description: 'Default list for secondary market liquidators and salvage outlets',
+      buyerIds: allBuyerIds,
+      description: 'Master list of all 50 verified buyer partners across all tiers and categories',
     });
 
     // 4. Create Liquidation Cycles
@@ -169,146 +205,133 @@ export async function seedDatabase(forceClean: boolean = false) {
     });
 
     // 5. Create Inventory Lots
-    const now = new Date('2026-07-23T11:00:00Z');
+    // Requirement: Sales data will have FULLY, PARTIALLY, and NO SALES against at least 3 inventory data lots.
     const lotsData = [
+      // LOT 1: FULLY SOLD (Initial: 1,200 cases, Sold: 1,200 cases, Available: 0 cases, Status: 'sold')
       {
         supplierId: unilever._id,
         distributionCenterId: dcs[0]._id,
-        productId: products[0]._id, // ULVR-YOG-01
+        productId: products[0]._id, // ULVR-YOG-01 (Breyers Organic Vanilla Yogurt)
         liquidationCycleId: cycle1._id,
         lotNumber: 'LOT-ULVR-2026-001',
-        productionDate: new Date('2026-06-15'),
-        expirationDate: new Date('2026-08-02'), // 10 days left
-        remainingShelfLife: 0.15,
+        productionDate: new Date('2026-07-15'),
+        expirationDate: new Date('2026-09-02'),
+        remainingShelfLife: 0.35,
         quantityCases: 1200,
-        availableQty: 1200,
+        availableQty: 0, // Fully sold out!
         costPerCase: 18.00,
         standardSellPrice: 32.00,
-        status: 'active',
-        comment: 'Organic Yogurt lot near expiration. Recommended 45% markdown.',
+        status: 'sold',
+        comment: 'Organic Yogurt lot near expiration. Fully sold via 2 liquidation sales.',
         fdaRegulated: true,
         temperatureMin: 34,
         temperatureMax: 38,
         attributes: new Map([['PalletHi', '5'], ['PalletTi', '10'], ['StorageTemp', 'Cold (34-38F)']])
       },
-      {
-        supplierId: unilever._id,
-        distributionCenterId: dcs[0]._id,
-        productId: products[1]._id, // ULVR-BUT-02
-        liquidationCycleId: cycle1._id,
-        lotNumber: 'LOT-ULVR-2026-002',
-        productionDate: new Date('2026-06-01'),
-        expirationDate: new Date('2026-08-10'), // 18 days left
-        remainingShelfLife: 0.18,
-        quantityCases: 800,
-        availableQty: 800,
-        costPerCase: 22.00,
-        standardSellPrice: 45.00,
-        status: 'active',
-        comment: 'Plant-Based Butter closeout lot ready for stage-gate bidding.',
-        fdaRegulated: false,
-        temperatureMin: 34,
-        temperatureMax: 40,
-        attributes: new Map([['PalletHi', '6'], ['PalletTi', '8']])
-      },
+      // LOT 2: PARTIALLY SOLD (Initial: 2,500 cases, Sold: 1,000 cases, Available: 1,500 cases, Status: 'active')
       {
         supplierId: kraftHeinz._id,
         distributionCenterId: dcs[1]._id,
-        productId: products[2]._id, // KHC-KET-01
+        productId: products[2]._id, // KHC-KET-01 (Heinz Tomato Ketchup)
         liquidationCycleId: cycle2._id,
         lotNumber: 'LOT-KHC-2026-003',
-        productionDate: new Date('2026-03-01'),
-        expirationDate: new Date('2026-09-05'), // 44 days left
-        remainingShelfLife: 0.49,
+        productionDate: new Date('2026-04-01'),
+        expirationDate: new Date('2026-10-05'),
+        remainingShelfLife: 0.55,
         quantityCases: 2500,
-        availableQty: 1500,
+        availableQty: 1500, // Partially sold! (1,000 sold, 1,500 remaining)
         costPerCase: 12.00,
         standardSellPrice: 24.00,
         status: 'active',
-        comment: 'Tomato Ketchup excess seasonal inventory. Partially awarded.',
+        comment: 'Tomato Ketchup excess seasonal inventory. Partially sold to Big Lots.',
         fdaRegulated: false,
         attributes: new Map([['BrixScore', '33.5'], ['Container', 'Squeeze Bottle']])
       },
+      // LOT 3: NO SALES (UNSOLD / 0 SALES) (Initial: 3,000 cases, Sold: 0 cases, Available: 3,000 cases, Status: 'active')
       {
         supplierId: mondelez._id,
         distributionCenterId: dcs[2]._id,
-        productId: products[4]._id, // MDLZ-CRK-01
+        productId: products[4]._id, // MDLZ-CRK-01 (Triscuit Whole Wheat Crackers)
         lotNumber: 'LOT-MDLZ-2026-004',
-        productionDate: new Date('2026-05-10'),
-        expirationDate: new Date('2026-08-06'), // 14 days left
-        remainingShelfLife: 0.20,
+        productionDate: new Date('2026-06-10'),
+        expirationDate: new Date('2026-09-20'),
+        remainingShelfLife: 0.40,
         quantityCases: 3000,
-        availableQty: 3000,
+        availableQty: 3000, // No sales yet! 100% available
         costPerCase: 8.00,
         standardSellPrice: 16.00,
         status: 'active',
-        comment: 'Whole Wheat Crackers short-dated lot requiring rapid markdown.',
+        comment: 'Whole Wheat Crackers short-dated lot requiring rapid markdown bidding. Zero sales so far.',
         fdaRegulated: false,
         attributes: new Map([['Packaging', '12x12oz Box'], ['PalletCount', '50']])
       },
+      // LOT 4: DONATED LOT (Greek Yogurt, 500 cases)
       {
         supplierId: danone._id,
         distributionCenterId: dcs[3]._id,
-        productId: products[6]._id, // DANN-YOG-01
+        productId: products[6]._id, // DANN-YOG-01 (Oikos Greek Yogurt)
         lotNumber: 'LOT-DANN-2026-005',
-        productionDate: new Date('2026-06-25'),
-        expirationDate: new Date('2026-07-26'), // 3 days left
-        remainingShelfLife: 0.08,
+        productionDate: new Date('2026-07-01'),
+        expirationDate: new Date('2026-08-26'),
+        remainingShelfLife: 0.15,
         quantityCases: 500,
-        availableQty: 500,
+        availableQty: 0,
         costPerCase: 15.00,
         standardSellPrice: 30.00,
-        status: 'active',
-        comment: 'Greek Yogurt short-dated lot needing urgent liquidation or rescue.',
+        status: 'donated',
+        comment: 'Greek Yogurt short-dated lot donated to Greater Chicago Food Depository.',
         fdaRegulated: true,
         temperatureMin: 34,
         temperatureMax: 38
       },
+      // LOT 5: FULLY SOLD LOT (Frozen Poultry, 1,500 cases)
       {
         supplierId: conagra._id,
         distributionCenterId: dcs[4]._id,
-        productId: products[8]._id, // CAG-MEAT-01
+        productId: products[8]._id, // CAG-MEAT-01 (Banquet Frozen Poultry)
         lotNumber: 'LOT-CAG-2026-006',
-        productionDate: new Date('2026-05-01'),
-        expirationDate: new Date('2026-08-20'), // 28 days left
-        remainingShelfLife: 0.35,
+        productionDate: new Date('2026-06-01'),
+        expirationDate: new Date('2026-09-20'),
+        remainingShelfLife: 0.45,
         quantityCases: 1500,
-        availableQty: 1500,
+        availableQty: 0,
         costPerCase: 35.00,
         standardSellPrice: 60.00,
-        status: 'active',
-        comment: 'Frozen Boneless Poultry Breasts excess lot.',
+        status: 'sold',
+        comment: 'Frozen Poultry Breasts excess lot fully sold to Big Lots.',
         fdaRegulated: true,
         temperatureMin: 0,
         temperatureMax: 10
       },
+      // LOT 6: ACTIVE WORKFLOW LOT (Pure Leaf Tea, 1,000 cases)
       {
         supplierId: unilever._id,
         distributionCenterId: dcs[0]._id,
-        productId: products[9]._id, // ULVR-MLK-03
+        productId: products[9]._id, // ULVR-MLK-03 (Pure Leaf Almond Milk)
         liquidationCycleId: cycle1._id,
         lotNumber: 'LOT-ULVR-2026-007',
-        productionDate: new Date('2026-06-10'),
-        expirationDate: new Date('2026-08-04'), // 12 days left
-        remainingShelfLife: 0.12,
+        productionDate: new Date('2026-07-01'),
+        expirationDate: new Date('2026-09-28'),
+        remainingShelfLife: 0.50,
         quantityCases: 1000,
         availableQty: 1000,
         costPerCase: 14.00,
         standardSellPrice: 28.00,
         status: 'active',
-        comment: 'Almond Milk with Tree Nut allergen tag.',
+        comment: 'Almond Milk active in stage-gate automated liquidation.',
         fdaRegulated: true,
         temperatureMin: 34,
         temperatureMax: 40
       },
+      // LOT 7: RECYCLED LOT (Kraft Dressing, 300 cases)
       {
         supplierId: kraftHeinz._id,
         distributionCenterId: dcs[1]._id,
-        productId: products[3]._id, // KHC-DRS-02
+        productId: products[3]._id, // KHC-DRS-02 (Kraft Italian Dressing)
         lotNumber: 'LOT-KHC-2026-008',
-        productionDate: new Date('2026-03-20'),
-        expirationDate: new Date('2026-07-24'), // 1 day left
-        remainingShelfLife: 0.01,
+        productionDate: new Date('2026-04-20'),
+        expirationDate: new Date('2026-08-24'),
+        remainingShelfLife: 0.10,
         quantityCases: 300,
         availableQty: 0,
         costPerCase: 10.00,
@@ -317,37 +340,60 @@ export async function seedDatabase(forceClean: boolean = false) {
         comment: 'Expired lot sent to organic composting facility.',
         fdaRegulated: false
       },
+      // LOT 8: PARTIALLY SOLD LOT (Cadbury Dark Chocolate, 600 cases)
       {
         supplierId: mondelez._id,
         distributionCenterId: dcs[2]._id,
-        productId: products[5]._id, // MDLZ-CHO-02
+        productId: products[5]._id, // MDLZ-CHO-02 (Cadbury Dark Chocolate)
         lotNumber: 'LOT-MDLZ-2026-009',
-        productionDate: new Date('2026-05-15'),
-        expirationDate: new Date('2026-08-12'),
-        remainingShelfLife: 0.10,
+        productionDate: new Date('2026-06-15'),
+        expirationDate: new Date('2026-09-30'),
+        remainingShelfLife: 0.45,
         quantityCases: 600,
-        availableQty: 600,
+        availableQty: 400, // 200 cases sold
         costPerCase: 12.00,
         standardSellPrice: 22.00,
         status: 'active',
-        comment: 'Dark Chocolate Bar short-dated lot.',
+        comment: 'Dark Chocolate Bar short-dated lot. Partially sold 200 cases.',
         fdaRegulated: false
       },
+      // LOT 9: ACTIVE MARKETPLACE LOT (Silk Oat Milk, 1,200 cases)
       {
         supplierId: danone._id,
         distributionCenterId: dcs[3]._id,
-        productId: products[7]._id, // DANN-MLK-02
+        productId: products[7]._id, // DANN-MLK-02 (Silk Oat Milk)
         lotNumber: 'LOT-DANN-2026-010',
-        productionDate: new Date('2026-06-20'),
-        expirationDate: new Date('2026-09-15'),
-        remainingShelfLife: 0.65,
+        productionDate: new Date('2026-07-01'),
+        expirationDate: new Date('2026-10-15'),
+        remainingShelfLife: 0.70,
         quantityCases: 1200,
         availableQty: 1200,
         costPerCase: 16.00,
         standardSellPrice: 32.00,
         status: 'active',
-        comment: 'Oat Milk Barista Blend surplus lot.',
+        comment: 'Oat Milk Barista Blend surplus lot on active Marketplace.',
         fdaRegulated: false
+      },
+      // LOT 10: ACTIVE LOT (Country Crock Butter, 800 cases)
+      {
+        supplierId: unilever._id,
+        distributionCenterId: dcs[0]._id,
+        productId: products[1]._id, // ULVR-BUT-02 (Country Crock Butter)
+        liquidationCycleId: cycle1._id,
+        lotNumber: 'LOT-ULVR-2026-002',
+        productionDate: new Date('2026-07-01'),
+        expirationDate: new Date('2026-09-25'),
+        remainingShelfLife: 0.45,
+        quantityCases: 800,
+        availableQty: 800,
+        costPerCase: 22.00,
+        standardSellPrice: 45.00,
+        status: 'active',
+        comment: 'Plant-Based Butter closeout lot ready for bidding.',
+        fdaRegulated: false,
+        temperatureMin: 34,
+        temperatureMax: 40,
+        attributes: new Map([['PalletHi', '6'], ['PalletTi', '8']])
       }
     ];
 
@@ -357,31 +403,57 @@ export async function seedDatabase(forceClean: boolean = false) {
       lots.push(lot);
     }
 
-    // 6. Create Sales Records (5 Sales transactions for analytics & reconciliation)
+    // 6. Create Sales Data
+    // Fulfilling the requirement:
+    // Lot 0 (LOT-ULVR-2026-001): FULLY SOLD (1,200 cases total sold via 2 sales)
+    // Lot 1 (LOT-KHC-2026-003): PARTIALLY SOLD (1,000 cases sold out of 2,500)
+    // Lot 2 (LOT-MDLZ-2026-004): NO SALES (0 sales)
     const salesData = [
+      // --- Sales against LOT 1 (LOT-ULVR-2026-001) -> FULLY SOLD ---
       {
         supplierId: unilever._id,
-        buyerId: buyers[0]._id, // Grocery Outlet
+        buyerId: buyers[0]._id, // Whole Foods Market Regional
+        lotId: lots[0]._id,
+        liquidationCycleId: cycle1._id,
+        lotNumber: 'LOT-ULVR-2026-001',
+        sku: 'ULVR-YOG-01',
+        description: 'Creamery Organic Vanilla Yogurt 32oz',
+        quantityCases: 800,
+        pricePerCase: 17.50,
+        totalValue: 14000.00,
+        saleDate: new Date('2026-07-20'),
+        status: 'delivered',
+        buyerEmail: buyers[0].email, // uses REAL_USER_EMAILS
+        invoiceNumber: 'INV-2026-1001',
+        brand: 'Breyers',
+        warehouse: 'Unilever Midwest DC',
+        revenue: 14000.00
+      },
+      {
+        supplierId: unilever._id,
+        buyerId: buyers[30]._id, // Grocery Outlet Bargain Market
         lotId: lots[0]._id,
         liquidationCycleId: cycle1._id,
         lotNumber: 'LOT-ULVR-2026-001',
         sku: 'ULVR-YOG-01',
         description: 'Creamery Organic Vanilla Yogurt 32oz',
         quantityCases: 400,
-        pricePerCase: 17.50,
-        totalValue: 7000.00,
-        saleDate: new Date('2026-07-20'),
+        pricePerCase: 18.00,
+        totalValue: 7200.00,
+        saleDate: new Date('2026-07-21'),
         status: 'delivered',
-        buyerEmail: buyers[0].email,
-        invoiceNumber: 'INV-2026-8801',
+        buyerEmail: buyers[30].email, // uses REAL_USER_EMAILS
+        invoiceNumber: 'INV-2026-1002',
         brand: 'Breyers',
         warehouse: 'Unilever Midwest DC',
-        revenue: 7000.00
+        revenue: 7200.00
       },
+
+      // --- Sale against LOT 2 (LOT-KHC-2026-003) -> PARTIALLY SOLD ---
       {
         supplierId: kraftHeinz._id,
-        buyerId: buyers[1]._id, // Big Lots
-        lotId: lots[2]._id,
+        buyerId: buyers[33]._id, // Big Lots Food Disposals
+        lotId: lots[1]._id,
         liquidationCycleId: cycle2._id,
         lotNumber: 'LOT-KHC-2026-003',
         sku: 'KHC-KET-01',
@@ -391,16 +463,20 @@ export async function seedDatabase(forceClean: boolean = false) {
         totalValue: 14000.00,
         saleDate: new Date('2026-07-21'),
         status: 'in_transit',
-        buyerEmail: buyers[1].email,
-        invoiceNumber: 'INV-2026-8802',
+        buyerEmail: buyers[33].email, // uses REAL_USER_EMAILS
+        invoiceNumber: 'INV-2026-1003',
         brand: 'Heinz',
         warehouse: 'Kraft Heinz Midwest DC',
         revenue: 14000.00
       },
+
+      // --- NO SALES recorded against LOT 3 (LOT-MDLZ-2026-004) -> NO SALES / UNSOLD ---
+
+      // --- Additional Sales for complete analytics coverage ---
       {
         supplierId: conagra._id,
-        buyerId: buyers[1]._id, // Big Lots
-        lotId: lots[5]._id,
+        buyerId: buyers[33]._id, // Big Lots Food Disposals
+        lotId: lots[4]._id, // LOT-CAG-2026-006 (Banquet Frozen Poultry)
         lotNumber: 'LOT-CAG-2026-006',
         sku: 'CAG-MEAT-01',
         description: 'Frozen Boneless Poultry Breasts 5lb',
@@ -409,48 +485,29 @@ export async function seedDatabase(forceClean: boolean = false) {
         totalValue: 57000.00,
         saleDate: new Date('2026-07-18'),
         status: 'delivered',
-        buyerEmail: buyers[1].email,
-        invoiceNumber: 'INV-2026-8803',
+        buyerEmail: buyers[33].email,
+        invoiceNumber: 'INV-2026-1004',
         brand: 'Banquet',
         warehouse: 'Conagra Midwest DC',
         revenue: 57000.00
       },
       {
         supplierId: mondelez._id,
-        buyerId: buyers[4]._id, // Dollar General Surplus
-        lotId: lots[3]._id,
-        lotNumber: 'LOT-MDLZ-2026-004',
-        sku: 'MDLZ-CRK-01',
-        description: 'Whole Wheat Original Crackers 12oz',
-        quantityCases: 1000,
-        pricePerCase: 9.50,
-        totalValue: 9500.00,
+        buyerId: buyers[31]._id, // Ollie's Bargain Outlet
+        lotId: lots[7]._id, // LOT-MDLZ-2026-009 (Cadbury Dark Chocolate)
+        lotNumber: 'LOT-MDLZ-2026-009',
+        sku: 'MDLZ-CHO-02',
+        description: 'Royal Dark Chocolate Bar 3.5oz',
+        quantityCases: 200,
+        pricePerCase: 12.50,
+        totalValue: 2500.00,
         saleDate: new Date('2026-07-22'),
         status: 'confirmed',
-        buyerEmail: buyers[4].email,
-        invoiceNumber: 'INV-2026-8804',
-        brand: 'Triscuit',
+        buyerEmail: buyers[31].email,
+        invoiceNumber: 'INV-2026-1005',
+        brand: 'Cadbury',
         warehouse: 'Mondelez Midwest DC',
-        revenue: 9500.00
-      },
-      {
-        supplierId: unilever._id,
-        buyerId: buyers[2]._id, // Misfits Market
-        lotId: lots[0]._id,
-        liquidationCycleId: cycle1._id,
-        lotNumber: 'LOT-ULVR-2026-001',
-        sku: 'ULVR-YOG-01',
-        description: 'Creamery Organic Vanilla Yogurt 32oz',
-        quantityCases: 300,
-        pricePerCase: 16.00,
-        totalValue: 4800.00,
-        saleDate: new Date('2026-07-22'),
-        status: 'scheduled',
-        buyerEmail: buyers[2].email,
-        invoiceNumber: 'INV-2026-8805',
-        brand: 'Breyers',
-        warehouse: 'Unilever Midwest DC',
-        revenue: 4800.00
+        revenue: 2500.00
       }
     ];
 
@@ -464,7 +521,7 @@ export async function seedDatabase(forceClean: boolean = false) {
       opportunityType: 'sell',
       priority: 'high',
       recommendedAction: 'Initiate 45% Markdown Bidding Batch to Retail Clearance Buyers',
-      status: 'approved'
+      status: 'completed'
     });
 
     const listing1 = await MarketplaceListing.create({
@@ -473,48 +530,66 @@ export async function seedDatabase(forceClean: boolean = false) {
       allowBidding: true,
       startingPrice: 20.00,
       minimumPrice: 15.00,
-      status: 'active',
-      expiresAt: new Date(Date.now() + 5 * 86400000)
+      status: 'closed',
+      expiresAt: new Date()
     });
 
     const offer1 = await Offer.create({
       listingId: listing1._id,
-      buyerId: buyers[0]._id, // Grocery Outlet
-      quantity: 500,
-      price: 17.50,
-      status: 'pending',
-      awardedQty: 0,
-      submittedAt: new Date(),
+      buyerId: buyers[30]._id, // Grocery Outlet
+      quantity: 400,
+      price: 18.00,
+      status: 'fully_accepted',
+      awardedQty: 400,
+      submittedAt: new Date('2026-07-21'),
       messages: [
-        { sender: 'buyer', content: 'We can purchase 500 cases at $17.50/case with immediate pickup.', timestamp: new Date(), proposedPrice: 17.50, proposedQuantity: 500 },
-        { sender: 'supplier', content: 'Counter offer: $18.00/case for 500 cases.', timestamp: new Date(), proposedPrice: 18.00, proposedQuantity: 500 }
+        { sender: 'buyer', content: 'We offer $18.00/case for 400 cases with immediate dock pickup.', timestamp: new Date('2026-07-21'), proposedPrice: 18.00, proposedQuantity: 400 },
+        { sender: 'supplier', content: 'Offer accepted! Invoice INV-2026-1002 issued.', timestamp: new Date('2026-07-21'), proposedPrice: 18.00, proposedQuantity: 400 }
       ]
     });
 
-    const offer2 = await Offer.create({
-      listingId: listing1._id,
-      buyerId: buyers[2]._id, // Misfits Market
-      quantity: 300,
-      price: 16.00,
+    const opp2 = await Opportunity.create({
+      lotId: lots[2]._id, // LOT-MDLZ-2026-004 (No sales lot)
+      opportunityType: 'sell',
+      priority: 'high',
+      recommendedAction: 'Stage-Gate Bidding Auction to 50 Buyer Network',
+      status: 'approved'
+    });
+
+    const listing2 = await MarketplaceListing.create({
+      opportunityId: opp2._id,
+      sellerId: mondelez._id,
+      allowBidding: true,
+      startingPrice: 12.00,
+      minimumPrice: 8.00,
+      status: 'active',
+      expiresAt: new Date(Date.now() + 7 * 86400000)
+    });
+
+    await Offer.create({
+      listingId: listing2._id,
+      buyerId: buyers[1]._id, // Kroger
+      quantity: 500,
+      price: 9.50,
       status: 'pending',
       awardedQty: 0,
       submittedAt: new Date(),
       messages: [
-        { sender: 'buyer', content: 'Submitting bid for 300 cases at $16.00/case.', timestamp: new Date(), proposedPrice: 16.00, proposedQuantity: 300 }
+        { sender: 'buyer', content: 'Submitting initial bid of $9.50/case for 500 cases of Triscuit.', timestamp: new Date(), proposedPrice: 9.50, proposedQuantity: 500 }
       ]
     });
 
     // 8. Create Award & Shipment for CAG-MEAT-01 (Sold lot)
-    const opp2 = await Opportunity.create({
-      lotId: lots[5]._id,
+    const opp3 = await Opportunity.create({
+      lotId: lots[4]._id,
       opportunityType: 'sell',
       priority: 'medium',
       recommendedAction: 'Direct Closeout Award to Big Lots',
       status: 'completed'
     });
 
-    const listing2 = await MarketplaceListing.create({
-      opportunityId: opp2._id,
+    const listing3 = await MarketplaceListing.create({
+      opportunityId: opp3._id,
       sellerId: conagra._id,
       allowBidding: true,
       startingPrice: 40.00,
@@ -524,8 +599,8 @@ export async function seedDatabase(forceClean: boolean = false) {
     });
 
     const offer3 = await Offer.create({
-      listingId: listing2._id,
-      buyerId: buyers[1]._id, // Big Lots
+      listingId: listing3._id,
+      buyerId: buyers[33]._id, // Big Lots
       quantity: 1500,
       price: 38.00,
       status: 'fully_accepted',
@@ -537,12 +612,12 @@ export async function seedDatabase(forceClean: boolean = false) {
     });
 
     const award1 = await Award.create({
-      listingId: listing2._id,
+      listingId: listing3._id,
       offerId: offer3._id,
-      buyerId: buyers[1]._id,
+      buyerId: buyers[33]._id,
       awardedQty: 1500,
       price: 38.00,
-      emailSent: 'Award Notice: PO #PO-CAG-9912 generated for Big Lots.',
+      emailSent: `Award Notice: PO #PO-CAG-9912 generated for Big Lots. Contact: ${REAL_USER_EMAILS[2]}`,
       approvedDate: new Date('2026-07-18')
     });
 
@@ -567,17 +642,17 @@ export async function seedDatabase(forceClean: boolean = false) {
 
     // 9. Create Donation & Recycling Records
     await Donation.create({
-      lotId: lots[4]._id, // DANN-YOG-01
+      lotId: lots[3]._id, // DANN-YOG-01
       foodBankName: 'Greater Chicago Food Depository',
       quantity: 500,
-      taxBenefit: 7500.00, // 500 * $15 cost
-      landfillAvoided: 0.45, // 0.45 tons
-      co2Saved: 1.12, // 1.12 tons CO2
+      taxBenefit: 7500.00,
+      landfillAvoided: 0.45,
+      co2Saved: 1.12,
       pickupDate: new Date('2026-07-22')
     });
 
     await Disposal.create({
-      lotId: lots[7]._id, // KHC-DRS-02
+      lotId: lots[6]._id, // KHC-DRS-02
       method: 'recycle',
       facility: 'Midwest Biogas Composting Facility',
       landfillFee: 0,
@@ -585,7 +660,19 @@ export async function seedDatabase(forceClean: boolean = false) {
       completedDate: new Date('2026-07-23')
     });
 
-    // 10. Create Liquidation Automation & Run Audit
+    // 10. Create Email Templates & Liquidation Automation Workflows
+    const emailTmpl1 = await EmailTemplate.create({
+      supplierId: unilever._id,
+      name: 'Surplus Dairy Liquidation Offer Sheet',
+      subject: 'Surplus Dairy Liquidation Opportunity: {{inventory_count}} Lots Available',
+      body: `<p>Dear {{buyer_name}},</p>
+<p>We are offering surplus dairy inventory at special closeout pricing:</p>
+{{inventory_table}}
+<p>Please review and submit your bids before expiration.</p>
+<p><a href="{{deal_url}}" style="display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">Submit Bid via QuickBid</a></p>`,
+      isDefault: true
+    });
+
     const auto1 = await LiquidationAutomation.create({
       supplierId: unilever._id,
       liquidationCycleId: cycle1._id,
@@ -593,15 +680,16 @@ export async function seedDatabase(forceClean: boolean = false) {
       templateName: 'smart_bidding_auction',
       inventoryFilters: {
         category: 'Dairy',
-        maxDaysUntilExpiration: 15
+        maxDaysUntilExpiration: 25
       },
-      targetBuyerSelection: 'all_matched',
+      targetBuyerSelection: 'buyer_list',
+      buyerListId: listPrimary._id,
       schedule: {
         type: 'immediate'
       },
       emailTemplate: {
-        subject: 'Surplus Dairy Liquidation Opportunity: {{inventory_count}} Lots Available',
-        body: 'Dear Partner,\n\nWe have surplus dairy inventory available for bidding:\n\n{{inventory_table}}\n\nPlease submit your bids prior to expiration.',
+        subject: emailTmpl1.subject,
+        body: emailTmpl1.body,
         targetBuyers: 'matched_only'
       },
       rules: {
@@ -620,23 +708,67 @@ export async function seedDatabase(forceClean: boolean = false) {
       }
     });
 
+    const auto2 = await LiquidationAutomation.create({
+      supplierId: mondelez._id,
+      name: 'Dry Goods & Seasonal Surplus Quick-Bid Auction',
+      templateName: 'linear_stage_gate',
+      inventoryFilters: {
+        category: 'Dry Goods',
+        maxDaysUntilExpiration: 30
+      },
+      targetBuyerSelection: 'buyer_list',
+      buyerListId: listLiquidators._id,
+      schedule: {
+        type: 'immediate'
+      },
+      emailTemplate: {
+        subject: 'Clearance Snacks & Dry Goods: {{inventory_count}} Lots Open for Bidding',
+        body: '<p>Hi {{buyer_name}},</p><p>Check out our latest surplus inventory lot table:</p>{{inventory_table}}<p>Submit your offer now!</p>',
+        targetBuyers: 'matched_only'
+      },
+      rules: {
+        evaluationWindowHours: 48,
+        onSuccess: 'auto_award',
+        onFallback: 'auto_donate',
+        minimumBidFloorPrice: 8.00,
+        minimumYieldRecoveryPercent: 35,
+        minimumMatchScore: 65
+      },
+      isActive: true,
+      stats: {
+        totalRuns: 1,
+        totalAwarded: 0,
+        totalDonated: 0
+      }
+    });
+
     await AutomationRun.create({
       automationId: auto1._id,
       runType: 'manual',
       status: 'awarded',
-      snapshotInventoryIds: [lots[0]._id, lots[1]._id],
-      evaluatedBuyerIds: [buyers[0]._id, buyers[2]._id, buyers[3]._id],
-      dispatchedAt: new Date('2026-07-22T10:00:00Z'),
-      evaluationEndsAt: new Date('2026-07-23T10:00:00Z'),
+      snapshotInventoryIds: [lots[0]._id, lots[9]._id],
+      evaluatedBuyerIds: [buyers[0]._id, buyers[1]._id, buyers[30]._id],
+      dispatchedAt: new Date('2026-07-21T10:00:00Z'),
+      evaluationEndsAt: new Date('2026-07-22T10:00:00Z'),
       resolution: {
         action: 'auto_award',
-        targetBuyerId: buyers[0]._id,
+        targetBuyerId: buyers[30]._id,
         winningOfferId: offer1._id,
-        resolvedAt: new Date('2026-07-23T09:00:00Z')
+        resolvedAt: new Date('2026-07-21T16:00:00Z')
       }
     });
 
-    // 11. Create Activity Logs for Inventory Lot
+    await AutomationRun.create({
+      automationId: auto2._id,
+      runType: 'manual',
+      status: 'in_progress',
+      snapshotInventoryIds: [lots[2]._id], // Triscuit unsold lot
+      evaluatedBuyerIds: allBuyerIds.slice(0, 15),
+      dispatchedAt: new Date('2026-07-23T08:00:00Z'),
+      evaluationEndsAt: new Date('2026-07-25T08:00:00Z')
+    });
+
+    // 11. Create Activity Logs
     await Activity.create({
       lotId: lots[0]._id,
       type: 'note',
@@ -648,112 +780,150 @@ export async function seedDatabase(forceClean: boolean = false) {
 
     await Activity.create({
       lotId: lots[0]._id,
-      type: 'note',
-      subject: 'Yield Risk Assessed',
-      content: 'Yield Optimization Engine flagged high risk (RSL 0.22). Recommended 45% discount markdown.',
-      sender: 'Yield Optimizer AI',
-      timestamp: new Date('2026-07-20T08:05:00Z')
+      type: 'email',
+      subject: 'Fully Liquidated & Delivered',
+      content: 'Lot 1,200 cases fully sold via 2 sales (INV-2026-1001 & INV-2026-1002). Available Qty: 0.',
+      sender: `Sales Rep (${REAL_USER_EMAILS[0]})`,
+      timestamp: new Date('2026-07-21T17:00:00Z')
     });
 
     await Activity.create({
-      lotId: lots[0]._id,
-      type: 'email',
-      subject: 'Bidding Enabled & Marketplace Listing Live',
-      content: 'Promoted to active Marketplace Listing. Smart Buyer Matching notified 12 qualified buyers.',
-      sender: 'Sales Rep John Doe',
-      timestamp: new Date('2026-07-20T09:00:00Z')
+      lotId: lots[1]._id,
+      type: 'note',
+      subject: 'Partially Sold (1,000 / 2,500 Cases)',
+      content: '1,000 cases sold to Big Lots. 1,500 cases remain active in inventory.',
+      sender: `Sales Rep (${REAL_USER_EMAILS[1]})`,
+      timestamp: new Date('2026-07-21T14:00:00Z')
     });
 
-    // 12. Create Demo Email Threads & Dispatch Logs (only if collection is empty)
-    if ((await EmailThread.countDocuments()) === 0) {
-      await EmailThread.create({
-      threadId: 'th-demo-101',
+    await Activity.create({
+      lotId: lots[2]._id,
+      type: 'email',
+      subject: 'Stage-Gate Bidding Broadcast Dispatched',
+      content: 'Dispatched bidding email broadcast for 3,000 cases of Triscuit Whole Wheat Crackers to 50 buyers.',
+      sender: `Sales Rep (${REAL_USER_EMAILS[2]})`,
+      timestamp: new Date('2026-07-23T08:30:00Z')
+    });
+
+    // 12. Create Email Threads with Real User Emails
+    await EmailThread.create({
+      threadId: 'th-demo-501',
       supplierId: unilever._id.toString(),
-      buyerEmail: 'eveline94@ethereal.email',
-      listingId: 'lst-101',
-      subject: 'Surplus Dairy Liquidation Offer Sheet - Breyers & Country Crock',
+      buyerEmail: REAL_USER_EMAILS[0],
+      listingId: listing1._id.toString(),
+      subject: 'Surplus Dairy Liquidation Offer Sheet - Breyers Organic Vanilla Yogurt',
       status: 'active',
-      openCount: 3,
-      firstOpenedAt: new Date('2026-07-28T14:30:00Z'),
-      lastOpenedAt: new Date('2026-07-29T09:15:00Z'),
+      openCount: 4,
+      firstOpenedAt: new Date('2026-07-20T14:30:00Z'),
+      lastOpenedAt: new Date('2026-07-21T09:15:00Z'),
       messages: [
         {
-          messageId: 'msg-101-1',
+          messageId: 'msg-501-1',
           senderType: 'supplier',
-          senderEmail: 'eveline94@ethereal.email',
-          body: 'Hello Grocery Outlet team,\n\nWe have 1,200 cases of Breyers Organic Vanilla Yogurt (SKU: ULVR-YOG-01) with 25 days shelf life remaining. Special clearance price: $18.50/case (45% discount).\n\nPlease let us know if you would like to submit a bid or lock in this order.',
-          sentAt: new Date('2026-07-28T14:00:00Z')
+          senderEmail: REAL_USER_EMAILS[0],
+          body: `Hello Whole Foods team,\n\nWe have 1,200 cases of Breyers Organic Vanilla Yogurt (SKU: ULVR-YOG-01) with 18 days shelf life remaining. Closeout pricing: $17.50/case (45% markdown).\n\nPlease let us know if you want to lock in your order.`,
+          sentAt: new Date('2026-07-20T14:00:00Z')
         },
         {
-          messageId: 'msg-101-2',
+          messageId: 'msg-501-2',
           senderType: 'buyer',
-          senderEmail: 'eveline94@ethereal.email',
-          body: 'Hi Unilever team,\n\nWe are interested in taking 200 cases at $18.50/case. Please confirm FOB Chicago warehouse availability.',
-          sentAt: new Date('2026-07-28T15:20:00Z')
+          senderEmail: REAL_USER_EMAILS[0],
+          body: `Hi Unilever team,\n\nWe are accepting 800 cases at $17.50/case. Please confirm FOB Chicago DC pickup appointment.`,
+          sentAt: new Date('2026-07-20T15:20:00Z')
         },
         {
-          messageId: 'msg-101-3',
+          messageId: 'msg-501-3',
           senderType: 'supplier',
-          senderEmail: 'eveline94@ethereal.email',
-          body: 'Bid received and logged! 200 cases allocated for pickup at Chicago DC. Logistics paperwork dispatched.',
-          sentAt: new Date('2026-07-28T16:05:00Z')
+          senderEmail: REAL_USER_EMAILS[0],
+          body: `Confirmed! 800 cases reserved under INV-2026-1001. Dock appointment set for tomorrow morning.`,
+          sentAt: new Date('2026-07-20T16:05:00Z')
         }
       ]
     });
 
     await EmailThread.create({
-      threadId: 'th-demo-102',
-      supplierId: unilever._id.toString(),
-      buyerEmail: 'buyer@misfitsmarket.com',
-      listingId: 'lst-102',
-      subject: 'Short-Dated Pure Leaf & Silk Plant Milk Clearance',
+      threadId: 'th-demo-502',
+      supplierId: kraftHeinz._id.toString(),
+      buyerEmail: REAL_USER_EMAILS[1],
+      listingId: 'lst-ketchup-502',
+      subject: 'Heinz Tomato Ketchup 64oz Seasonal Excess Offer',
+      status: 'active',
+      openCount: 2,
+      firstOpenedAt: new Date('2026-07-21T11:00:00Z'),
+      lastOpenedAt: new Date('2026-07-21T11:30:00Z'),
+      messages: [
+        {
+          messageId: 'msg-502-1',
+          senderType: 'supplier',
+          senderEmail: REAL_USER_EMAILS[1],
+          body: `Greetings Big Lots Purchasing,\n\nWe have 2,500 cases of Heinz Tomato Ketchup (SKU: KHC-KET-01) available. Offering 1,000 cases at $14.00/case.`,
+          sentAt: new Date('2026-07-21T10:30:00Z')
+        },
+        {
+          messageId: 'msg-502-2',
+          senderType: 'buyer',
+          senderEmail: REAL_USER_EMAILS[1],
+          body: `Offer accepted for 1,000 cases! Invoice INV-2026-1003 confirmed.`,
+          sentAt: new Date('2026-07-21T11:15:00Z')
+        }
+      ]
+    });
+
+    await EmailThread.create({
+      threadId: 'th-demo-503',
+      supplierId: mondelez._id.toString(),
+      buyerEmail: REAL_USER_EMAILS[2],
+      listingId: listing2._id.toString(),
+      subject: 'Triscuit Whole Wheat Original Crackers Bidding Auction',
       status: 'active',
       openCount: 1,
-      firstOpenedAt: new Date('2026-07-30T11:00:00Z'),
-      lastOpenedAt: new Date('2026-07-30T11:00:00Z'),
+      firstOpenedAt: new Date('2026-07-23T09:00:00Z'),
+      lastOpenedAt: new Date('2026-07-23T09:00:00Z'),
       messages: [
         {
-          messageId: 'msg-102-1',
+          messageId: 'msg-503-1',
           senderType: 'supplier',
-          senderEmail: 'eveline94@ethereal.email',
-          body: 'Greetings Misfits Market,\n\nWe are releasing a short-dated batch of Pure Leaf Almond Milk (450 cases). RSL: 18 days remaining. Bidding is open until tomorrow 5:00 PM.',
-          sentAt: new Date('2026-07-30T10:30:00Z')
+          senderEmail: REAL_USER_EMAILS[2],
+          body: `Hi Buyers,\n\n3,000 cases of Triscuit Whole Wheat Crackers (SKU: MDLZ-CRK-01) are open for stage-gate bidding auction. Floor price: $8.00/case. Standard sell: $16.00/case. Submit bids now!`,
+          sentAt: new Date('2026-07-23T08:30:00Z')
         }
       ]
     });
 
-    await EmailThread.create({
-      threadId: 'th-demo-103',
+    // 13. Create Email Dispatch Logs using Real User Emails
+    await EmailDispatchLog.create({
       supplierId: unilever._id.toString(),
-      buyerEmail: 'buyer@biglots.com',
-      listingId: 'lst-103',
-      subject: 'Award Notification: Triscuit & Cadbury Dry Goods Lot #402',
-      status: 'awarded',
-      openCount: 5,
-      firstOpenedAt: new Date('2026-07-25T08:00:00Z'),
-      lastOpenedAt: new Date('2026-07-26T16:45:00Z'),
-      messages: [
-        {
-          messageId: 'msg-103-1',
-          senderType: 'supplier',
-          senderEmail: 'eveline94@ethereal.email',
-          body: 'Congratulations! Your bid of $14.20/case for 800 cases of Triscuit Crackers has been awarded.',
-          sentAt: new Date('2026-07-25T07:50:00Z')
-        },
-        {
-          messageId: `msg-103-2`,
-          senderType: 'buyer',
-          senderEmail: 'buyer@biglots.com',
-          body: 'Thank you. Dock appointment scheduled for pickup on July 27th.',
-          sentAt: new Date('2026-07-25T09:10:00Z')
-        }
-      ]
-      });
-    }
+      recipientEmail: REAL_USER_EMAILS[0],
+      buyerId: buyers[0]._id,
+      subject: 'Surplus Dairy Liquidation Opportunity: 2 Lots Available',
+      bodyContent: 'Dear Whole Foods Market Regional,\n\nWe have surplus dairy inventory available for bidding...',
+      status: 'sent',
+      sentAt: new Date('2026-07-21T10:00:00Z')
+    });
 
-    console.log('Database seeding completed successfully with full demo dataset.');
+    await EmailDispatchLog.create({
+      supplierId: kraftHeinz._id.toString(),
+      recipientEmail: REAL_USER_EMAILS[1],
+      buyerId: buyers[33]._id,
+      subject: 'Heinz Ketchup Partial Sale Confirmation - Invoice #INV-2026-1003',
+      bodyContent: 'Dear Big Lots Food Disposals,\n\nYour order for 1,000 cases of Heinz Tomato Ketchup has been confirmed...',
+      status: 'sent',
+      sentAt: new Date('2026-07-21T11:15:00Z')
+    });
+
+    await EmailDispatchLog.create({
+      supplierId: mondelez._id.toString(),
+      recipientEmail: REAL_USER_EMAILS[2],
+      buyerId: buyers[1]._id,
+      subject: 'Triscuit Crackers Stage-Gate Auction Broadcast',
+      bodyContent: 'Dear Kroger Mid-Atlantic Hub,\n\n3,000 cases of Triscuit Whole Wheat Crackers are now open for bidding...',
+      status: 'sent',
+      sentAt: new Date('2026-07-23T08:30:00Z')
+    });
+
+    console.log('Database seeding completed successfully with high-quality 50-buyer dataset, 3 explicit inventory sales states, and real email integration!');
   } catch (error) {
     console.error('Error seeding database:', error);
+    throw error;
   }
 }
-

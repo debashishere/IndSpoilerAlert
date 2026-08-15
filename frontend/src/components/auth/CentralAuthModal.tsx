@@ -42,7 +42,9 @@ export const CentralAuthModal: React.FC<CentralAuthModalProps> = ({
       await loginWithGoogle(mode === 'signup' ? { buyer: isBuyer, supplier: isSupplier } : undefined);
       if (onSuccess) onSuccess();
     } catch (err: any) {
-      if (err?.message !== 'User closed the login popup') {
+      if (err?.message === 'User closed the login popup') {
+        setError('The Google login popup was closed before authentication completed. If you did not close it, check if popups are blocked or if your current domain (e.g. localhost) is added to Firebase Authorized Domains.');
+      } else {
         setError(err?.message || 'Google authentication failed.');
       }
     } finally {

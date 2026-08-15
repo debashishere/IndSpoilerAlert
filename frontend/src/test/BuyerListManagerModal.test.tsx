@@ -311,4 +311,37 @@ describe('BuyerListManagerModal — Slice 3 & 4: Two-Panel Member Assignment & D
     // Should now be on Secondary Tier Buyers
     expect(screen.getByText('Secondary Tier Buyers — Members')).toBeDefined();
   });
+
+  it('should render buyers that only have companyName (MongoDB format) and allow searching and adding them', () => {
+    store.dispatch(setBuyers([
+      { _id: 'db-1', companyName: 'Whole Foods Market Regional', email: 'debashis+wf@test.com', tier: 'tier1' },
+      { _id: 'db-2', companyName: 'Kroger Mid-Atlantic Hub', email: 'debashis+kroger@test.com', tier: 'tier1' },
+    ]));
+    store.dispatch(setBuyerLists([
+      {
+        _id: 'cust-99',
+        name: 'My Custom List',
+        type: 'custom',
+        buyerIds: [],
+      }
+    ]));
+
+    render(
+      <Provider store={store}>
+        <BuyerListManagerModal isOpen={true} onClose={vi.fn()} />
+      </Provider>
+    );
+
+    expect(screen.getByText('Whole Foods Market Regional')).toBeDefined();
+    expect(screen.getByText('Kroger Mid-Atlantic Hub')).toBeDefined();
+    expect(screen.getByTestId('add-member-db-1')).toBeDefined();
+    expect(screen.getByTestId('add-member-db-2')).toBeDefined();
+
+    // Test search by companyName
+    const availableSearch = screen.getByTestId('search-available-buyers');
+    fireEvent.change(availableSearch, { target: { value: 'Whole' } });
+    expect(screen.getByText('Whole Foods Market Regional')).toBeDefined();
+    expect(screen.queryByText('Kroger Mid-Atlantic Hub')).toBeNull();
+  });
 });
+

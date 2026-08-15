@@ -27,6 +27,9 @@ const BUYER_OPTIONS = [
   { value: 'minShelfLife', label: 'Min Shelf Life (Days)' },
   { value: 'categories', label: 'Categories' },
   { value: 'transportRadius', label: 'Transport Radius (Miles)' },
+  { value: 'excludedAllergens', label: 'Excluded Allergens' },
+  { value: 'phone', label: 'Phone Number' },
+  { value: 'address', label: 'Address' },
 ];
 
 export const BuyerRegistryPanel = () => {

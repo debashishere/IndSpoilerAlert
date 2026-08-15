@@ -11,7 +11,7 @@ describe('BuyerList Backend Model & REST APIs', () => {
 
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
-      const uri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ind-spoiler-alert';
+      const uri = process.env.MONGO_URI || process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ind-spoiler-alert-test';
       await mongoose.connect(uri);
     }
 

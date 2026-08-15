@@ -287,7 +287,7 @@ export const SendBroadcastView: React.FC<SendBroadcastViewProps> = ({
           <button
             className="btn btn-primary"
             onClick={handleDispatchBroadcast}
-            disabled={dispatching || !isConnected}
+            disabled={dispatching}
             style={{
               padding: '12px 20px',
               fontSize: '1rem',

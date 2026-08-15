@@ -4,7 +4,9 @@ import LiquidationAutomation from '../models/LiquidationAutomation';
 import InventoryLot from '../models/InventoryLot';
 import AutomationRun from '../models/AutomationRun';
 import Buyer from '../models/Buyer';
+import BuyerList from '../models/BuyerList';
 import Activity from '../models/Activity';
+import EmailDispatchLog from '../models/EmailDispatchLog';
 import { sendEmailHelper, syncEmailToThread } from './emailService';
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
@@ -199,40 +201,165 @@ export async function createAutomationRun(
 
   const buyerEmails: string[] = [];
   const evaluatedBuyerIds: any[] = [];
+  const resolvedBuyerMap = new Map<string, any>();
 
-  let allBuyers: any[] = [];
-  if (mongoose.connection.readyState === 1) {
-    try {
-      // Only include active buyers in workflow execution
-      allBuyers = await Buyer.find({ isActive: { $ne: false } });
-    } catch (e) {}
-  }
-
-
-  if (Array.isArray(automation.stages)) {
+  if (Array.isArray(automation.stages) && automation.stages.length > 0) {
     for (const stage of automation.stages) {
       // Determine stage type to enforce opt-in checks
       const stageType: string = (stage.type || stage.stageType || '').toLowerCase();
       const isBiddingStage = stageType.includes('bid') || stageType === 'bidding';
       const isSalesStage = stageType.includes('sale') || stageType === 'sales' || stageType === 'direct_sale';
 
-      if (stage.buyerMode === 'custom') {
-        if (Array.isArray(stage.customBuyers)) {
-          stage.customBuyers.forEach((b: any) => {
-            if (b.email && !buyerEmails.includes(b.email)) buyerEmails.push(b.email);
-          });
-        }
-      } else {
-        allBuyers.forEach((b: any) => {
-          // Skip buyers that have opted out of this stage type
-          if (isBiddingStage && b.optInBidding === false) return;
-          if (isSalesStage && b.optInSales === false) return;
+      const mode = stage.buyerMode || (Array.isArray(stage.customBuyers) && stage.customBuyers.length > 0 ? 'custom' : ((stage.buyerListId || stage.buyerSegment) ? 'list' : 'all'));
 
-          if (b.email && !buyerEmails.includes(b.email)) {
-            buyerEmails.push(b.email);
-            if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
+      if (mode === 'custom') {
+        if (Array.isArray(stage.customBuyers) && stage.customBuyers.length > 0) {
+          for (const b of stage.customBuyers) {
+            if (!b.email) continue;
+            const cleanEmail = b.email.trim().toLowerCase();
+            if (!buyerEmails.includes(cleanEmail)) {
+              buyerEmails.push(cleanEmail);
+              if (b.id || b._id) evaluatedBuyerIds.push(b.id || b._id);
+              resolvedBuyerMap.set(cleanEmail, {
+                _id: b.id || b._id,
+                companyName: b.name || b.companyName,
+                name: b.name || b.companyName,
+                email: cleanEmail
+              });
+            }
           }
-        });
+        }
+        if (Array.isArray(stage.customBuyerIds) && stage.customBuyerIds.length > 0 && mongoose.connection.readyState === 1) {
+          try {
+            const customBuyers = await Buyer.find({ _id: { $in: stage.customBuyerIds }, isActive: { $ne: false } });
+            for (const b of customBuyers) {
+              if (isBiddingStage && b.optInBidding === false) continue;
+              if (isSalesStage && b.optInSales === false) continue;
+              if (b.email) {
+                const cleanEmail = b.email.trim().toLowerCase();
+                if (!buyerEmails.includes(cleanEmail)) {
+                  buyerEmails.push(cleanEmail);
+                  if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
+                  resolvedBuyerMap.set(cleanEmail, b);
+                }
+              }
+            }
+          } catch (e) {}
+        }
+      } else if (mode === 'list' || (mode === 'segment' && (stage.buyerListId || (stage.buyerSegment && stage.buyerSegment !== 'all' && stage.buyerSegment !== 'all_buyers')))) {
+        const listRef = stage.buyerListId || stage.buyerSegment;
+        let buyerListDoc: any = null;
+
+        if (mongoose.connection.readyState === 1 && listRef) {
+          try {
+            if (mongoose.Types.ObjectId.isValid(listRef)) {
+              buyerListDoc = await BuyerList.findById(listRef);
+            }
+            if (!buyerListDoc && automation.supplierId) {
+              buyerListDoc = await BuyerList.findOne({
+                supplierId: automation.supplierId,
+                $or: [{ type: listRef }, { name: new RegExp(`^${listRef}$`, 'i') }]
+              });
+            }
+            if (!buyerListDoc) {
+              buyerListDoc = await BuyerList.findOne({
+                $or: [{ type: listRef }, { name: new RegExp(`^${listRef}$`, 'i') }]
+              });
+            }
+          } catch (e) {}
+        }
+
+        if (buyerListDoc && Array.isArray(buyerListDoc.buyerIds) && buyerListDoc.buyerIds.length > 0 && mongoose.connection.readyState === 1) {
+          try {
+            const listBuyers = await Buyer.find({
+              _id: { $in: buyerListDoc.buyerIds },
+              isActive: { $ne: false }
+            });
+            for (const b of listBuyers) {
+              if (isBiddingStage && b.optInBidding === false) continue;
+              if (isSalesStage && b.optInSales === false) continue;
+              if (b.email) {
+                const cleanEmail = b.email.trim().toLowerCase();
+                if (!buyerEmails.includes(cleanEmail)) {
+                  buyerEmails.push(cleanEmail);
+                  if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
+                  resolvedBuyerMap.set(cleanEmail, b);
+                }
+              }
+            }
+          } catch (e) {}
+        } else if (stage.buyerSegment && mongoose.connection.readyState === 1) {
+          // Fallback to direct segment/category attribute match on Buyer model if not found as BuyerList
+          try {
+            const segmentBuyers = await Buyer.find({
+              $or: [{ segment: stage.buyerSegment }, { buyerType: stage.buyerSegment }],
+              isActive: { $ne: false }
+            });
+            for (const b of segmentBuyers) {
+              if (isBiddingStage && b.optInBidding === false) continue;
+              if (isSalesStage && b.optInSales === false) continue;
+              if (b.email) {
+                const cleanEmail = b.email.trim().toLowerCase();
+                if (!buyerEmails.includes(cleanEmail)) {
+                  buyerEmails.push(cleanEmail);
+                  if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
+                  resolvedBuyerMap.set(cleanEmail, b);
+                }
+              }
+            }
+          } catch (e) {}
+        }
+      } else if (mode === 'all' || mode === 'all_buyers' || stage.buyerMode === 'all') {
+        if (mongoose.connection.readyState === 1) {
+          try {
+            const allDbBuyers = await Buyer.find({ isActive: { $ne: false } });
+            for (const b of allDbBuyers) {
+              if (isBiddingStage && b.optInBidding === false) continue;
+              if (isSalesStage && b.optInSales === false) continue;
+              if (b.email) {
+                const cleanEmail = b.email.trim().toLowerCase();
+                if (!buyerEmails.includes(cleanEmail)) {
+                  buyerEmails.push(cleanEmail);
+                  if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
+                  resolvedBuyerMap.set(cleanEmail, b);
+                }
+              }
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } else {
+    // If no stages defined, check top-level automation config
+    if (automation.emailTemplate?.customBuyerIds?.length > 0 && mongoose.connection.readyState === 1) {
+      try {
+        const customBuyers = await Buyer.find({ _id: { $in: automation.emailTemplate.customBuyerIds }, isActive: { $ne: false } });
+        for (const b of customBuyers) {
+          if (b.email) {
+            const cleanEmail = b.email.trim().toLowerCase();
+            if (!buyerEmails.includes(cleanEmail)) {
+              buyerEmails.push(cleanEmail);
+              if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
+              resolvedBuyerMap.set(cleanEmail, b);
+            }
+          }
+        }
+      } catch (e) {}
+    } else if (automation.targetBuyerSelection === 'all' || automation.emailTemplate?.targetBuyers === 'all_buyers') {
+      if (mongoose.connection.readyState === 1) {
+        try {
+          const allDbBuyers = await Buyer.find({ isActive: { $ne: false } });
+          for (const b of allDbBuyers) {
+            if (b.email) {
+              const cleanEmail = b.email.trim().toLowerCase();
+              if (!buyerEmails.includes(cleanEmail)) {
+                buyerEmails.push(cleanEmail);
+                if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
+                resolvedBuyerMap.set(cleanEmail, b);
+              }
+            }
+          }
+        } catch (e) {}
       }
     }
   }
@@ -296,25 +423,17 @@ export async function createAutomationRun(
   const emailSubject = automation.emailTemplate?.subject || `Distressed Inventory Liquidation Offer - ${automation.name || 'Clearance'}`;
   const emailText = `Surplus Inventory Liquidation Offer for ${matchedLots.length} lot(s). Total Cases: ${affectedInventoryLots.reduce((acc: number, l: any) => acc + (l.cases || 0), 0)}. Reply to place bid.`;
 
-  const EmailDispatchLog = mongoose.model('EmailDispatchLog');
-
   for (const email of buyerEmails) {
     try {
-      let buyerObj = allBuyers.find((b: any) => b.email === email);
-      if (!buyerObj && Array.isArray(automation.stages)) {
-        for (const st of automation.stages) {
-          if (Array.isArray(st.customBuyers)) {
-            const cb = st.customBuyers.find((b: any) => b.email === email);
-            if (cb) {
-              buyerObj = { _id: cb.id, companyName: cb.name, name: cb.name, email: cb.email } as any;
-              break;
-            }
-          }
-        }
+      let buyerObj = resolvedBuyerMap.get(email);
+      if (!buyerObj && mongoose.connection.readyState === 1) {
+        try {
+          buyerObj = await Buyer.findOne({ email: new RegExp(`^${email}$`, 'i') });
+        } catch (e) {}
       }
       const compiledBuyerName = (buyerObj as any)?.companyName || (buyerObj as any)?.name || 'Valued Buyer';
 
-      await sendEmailHelper(email, emailSubject, emailText);
+      await sendEmailHelper(email, emailSubject, emailText, undefined, undefined, automation.supplierId?.toString() || 'default');
 
       if (mongoose.connection.readyState === 1) {
         try {

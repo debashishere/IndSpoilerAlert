@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './coreService';
+import { firebaseAuthService } from './firebaseAuthService';
 import type { IngestionParsedResult, SemanticRule } from '../store/slices/ingestionSlice';
 
 const COMMON_HEADERS = {
@@ -236,10 +237,15 @@ export const ingestionService = {
     return await response.json();
   },
 
-  async fetchSalesRecords(): Promise<any[]> {
-    const res = await fetch(`${API_BASE_URL}/sales`, {
+  async fetchSalesRecords(supplierId?: string): Promise<any[]> {
+    const token = await firebaseAuthService.getCurrentIdToken();
+    const queryParam = supplierId ? `?supplierId=${encodeURIComponent(supplierId)}` : '';
+    const res = await fetch(`${API_BASE_URL}/sales${queryParam}`, {
       method: 'GET',
-      headers: COMMON_HEADERS,
+      headers: {
+        ...COMMON_HEADERS,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
     if (!res.ok) {
       throw new Error('Failed to fetch sales records');

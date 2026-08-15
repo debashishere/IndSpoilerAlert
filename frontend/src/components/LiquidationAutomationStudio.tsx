@@ -195,7 +195,7 @@ export function getStageBuyerCount(stage: Stage, buyerListsOrBuyers: any[] = [],
     matched = effectiveLists.find((l: any) => l.type === 'secondary') || effectiveLists[1] || effectiveLists[0];
   }
 
-  if (matched && Array.isArray(matched.buyerIds) && matched.buyerIds.length > 0) {
+  if (matched && Array.isArray(matched.buyerIds)) {
     return matched.buyerIds.length;
   }
 
@@ -621,7 +621,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
 
         const getListCount = (list: any) => {
           if (!list) return 0;
-          if (Array.isArray(list.buyerIds) && list.buyerIds.length > 0) return list.buyerIds.length;
+          if (Array.isArray(list.buyerIds)) return list.buyerIds.length;
           if (Array.isArray(allBuyers) && allBuyers.length > 0) {
             const isSec = list.type === 'secondary' || list._id === 'list-secondary' || (list.name || '').toLowerCase().includes('secondary');
             const isPrim = list.type === 'primary' || list._id === 'list-primary' || (list.name || '').toLowerCase().includes('primary');
@@ -643,6 +643,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
         };
 
         const listBuyerCount = selectedListObj ? getListCount(selectedListObj) : getStageBuyerCount(stage, effectiveBuyerLists, allBuyers);
+        const isListConfigured = !!(stage.buyerListId || stage.buyerSegment) && listBuyerCount > 0;
 
         return (
           <div>
@@ -693,9 +694,28 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
               <button
                 type="button"
                 className="btn btn-secondary"
-                onClick={() => onInspectSegment && onInspectSegment(stage.buyerListId || stage.buyerSegment || '')}
-                title="Inspect Buyer Data (Name, Email, Reg Date)"
-                style={{ padding: '7px 10px', display: 'inline-flex', alignItems: 'center', gap: '4px', height: '34px', background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '6px', color: 'hsl(var(--primary))', cursor: 'pointer' }}
+                disabled={!isListConfigured}
+                onClick={() => isListConfigured && onInspectSegment && onInspectSegment(stage.buyerListId || stage.buyerSegment || '')}
+                title={
+                  !(stage.buyerListId || stage.buyerSegment)
+                    ? 'No buyer list selected'
+                    : listBuyerCount === 0
+                    ? 'Selected buyer list has 0 buyers configured'
+                    : 'Inspect Buyer Data (Name, Email, Reg Date)'
+                }
+                style={{
+                  padding: '7px 10px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  height: '34px',
+                  background: 'hsl(var(--bg-card))',
+                  border: '1px solid hsl(var(--border-color))',
+                  borderRadius: '6px',
+                  color: 'hsl(var(--primary))',
+                  cursor: isListConfigured ? 'pointer' : 'not-allowed',
+                  opacity: isListConfigured ? 1 : 0.45,
+                }}
               >
                 <Eye size={15} />
               </button>
@@ -1538,21 +1558,6 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
         transition: 'all 0.25s ease-in-out'
       }}
     >
-      {oauth.status === 'expired' && (
-        <div style={{ padding: '16px 20px', borderRadius: '12px', background: 'hsl(var(--destructive)/0.1)', border: '1px solid hsl(var(--destructive)/0.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <AlertTriangle size={24} color="hsl(var(--destructive))" />
-            <div>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'hsl(var(--destructive))', margin: 0 }}>Your Mailbox Connection has Expired</h3>
-              <p style={{ fontSize: '13px', color: 'hsl(var(--text-muted))', margin: '4px 0 0' }}>Please re-authenticate to launch campaigns. You still have read-only access to historical data.</p>
-            </div>
-          </div>
-          <button type="button" onClick={oauth.connectMailbox} style={{ padding: '8px 16px', borderRadius: '8px', background: 'hsl(var(--destructive))', color: 'white', border: 'none', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
-            Re-authenticate Now
-          </button>
-        </div>
-      )}
-
       {/* ══ EDITING CAMPAIGN OVERLAY BANNER ═════════════════════════════════ */}
       {editingCampaignId && (
         <div style={{
@@ -1781,7 +1786,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             <button
               type="button"
               onClick={() => handleSaveCampaign('draft')}
-              disabled={isSubmitting || oauth.status === 'expired' || hasZeroBuyerStage}
+              disabled={isSubmitting || hasZeroBuyerStage}
               style={{
                 background: 'hsl(var(--bg-card))',
                 color: 'hsl(var(--text-primary))',
@@ -1790,8 +1795,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 padding: '10px 16px',
                 fontWeight: 700,
                 fontSize: '13px',
-                cursor: (isSubmitting || oauth.status === 'expired' || hasZeroBuyerStage) ? 'not-allowed' : 'pointer',
-                opacity: (oauth.status === 'expired' || hasZeroBuyerStage) ? 0.5 : 1,
+                cursor: (isSubmitting || hasZeroBuyerStage) ? 'not-allowed' : 'pointer',
+                opacity: hasZeroBuyerStage ? 0.5 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '7px',
@@ -1802,8 +1807,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               <Save size={15} color="hsl(var(--primary))" />
               <span>{isSubmitting ? 'Saving...' : 'Save'}</span>
             </button>
-            <button type="button" onClick={() => !hasZeroBuyerStage && setShowPreFlightModal(true)} disabled={impactMetrics.totalLots === 0 || oauth.status === 'expired' || hasZeroBuyerStage}
-              style={{ background: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: (oauth.status === 'expired' || hasZeroBuyerStage) ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? '0 4px 14px hsl(var(--primary)/0.35)' : 'none' }}>
+            <button type="button" onClick={() => !hasZeroBuyerStage && setShowPreFlightModal(true)} disabled={impactMetrics.totalLots === 0 || hasZeroBuyerStage}
+              style={{ background: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: hasZeroBuyerStage ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? '0 4px 14px hsl(var(--primary)/0.35)' : 'none' }}>
               <Play size={15} /> Run
             </button>
           </div>
@@ -2583,7 +2588,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             <button
               type="button"
               onClick={() => handleSaveCampaign('draft')}
-              disabled={isSubmitting || oauth.status === 'expired'}
+              disabled={isSubmitting}
               style={{
                 flex: 1,
                 background: 'hsl(var(--bg-card))',
@@ -2593,8 +2598,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 padding: '13px',
                 fontWeight: 700,
                 fontSize: '13px',
-                cursor: (isSubmitting || oauth.status === 'expired') ? 'not-allowed' : 'pointer',
-                opacity: (oauth.status === 'expired') ? 0.5 : 1,
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                opacity: 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -2607,8 +2612,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               <span>{isSubmitting ? 'Saving...' : 'Save'}</span>
             </button>
 
-            <button type="button" onClick={() => !hasZeroBuyerStage && setShowPreFlightModal(true)} disabled={impactMetrics.totalLots === 0 || oauth.status === 'expired' || hasZeroBuyerStage}
-              style={{ flex: 1, background: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: 'white', border: 'none', borderRadius: '10px', padding: '13px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: (oauth.status === 'expired' || hasZeroBuyerStage) ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && oauth.status !== 'expired' && !hasZeroBuyerStage) ? '0 6px 20px hsl(var(--primary)/0.3)' : 'none' }}>
+            <button type="button" onClick={() => !hasZeroBuyerStage && setShowPreFlightModal(true)} disabled={impactMetrics.totalLots === 0 || hasZeroBuyerStage}
+              style={{ flex: 1, background: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: 'white', border: 'none', borderRadius: '10px', padding: '13px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: hasZeroBuyerStage ? 0.5 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? '0 6px 20px hsl(var(--primary)/0.3)' : 'none' }}>
               <Play size={15} /> Run
             </button>
           </div>
@@ -2714,7 +2719,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 </div>
                 <div>
                   <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#FFFFFF', letterSpacing: '-0.01em' }}>
-                    Buyer Segment Data: {reduxBuyerLists.find(s => s._id === inspectingSegment || s.type === inspectingSegment)?.name || inspectingSegment}
+                    Buyer Segment Data: {reduxBuyerLists.find(s => s._id === inspectingSegment || s.type === inspectingSegment || s.name?.toLowerCase().includes(inspectingSegment.toLowerCase()))?.name || (inspectingSegment === 'primary' ? 'Primary Buyers' : inspectingSegment === 'secondary' ? 'Secondary Liquidators' : inspectingSegment)}
                   </h3>
                   <span style={{ fontSize: '11px', color: '#E3F2FD', fontWeight: 500 }}>
                     Target Buyer List Roster Inspection
@@ -2759,26 +2764,63 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 }}
               />
 
-              <div style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(33, 150, 243, 0.25)', boxShadow: '0 2px 8px rgba(13, 71, 161, 0.05)' }}>
+              <div
+                style={{
+                  maxHeight: '360px',
+                  overflowY: 'auto',
+                  overflowX: 'auto',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(33, 150, 243, 0.25)',
+                  boxShadow: '0 2px 8px rgba(13, 71, 161, 0.05)',
+                  background: '#FFFFFF',
+                }}
+              >
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem', background: '#FFFFFF' }}>
-                  <thead>
+                  <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                     <tr style={{ background: '#F0F7FF', borderBottom: '2px solid rgba(33, 150, 243, 0.3)', color: '#0D47A1', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      <th style={{ padding: '10px 12px', fontWeight: 700 }}>Name / Company</th>
-                      <th style={{ padding: '10px 12px', fontWeight: 700 }}>Email Address</th>
-                      <th style={{ padding: '10px 12px', fontWeight: 700 }}>Registration Date</th>
+                      <th style={{ padding: '10px 12px', fontWeight: 700, position: 'sticky', top: 0, background: '#F0F7FF', zIndex: 10 }}>Name / Company</th>
+                      <th style={{ padding: '10px 12px', fontWeight: 700, position: 'sticky', top: 0, background: '#F0F7FF', zIndex: 10 }}>Email Address</th>
+                      <th style={{ padding: '10px 12px', fontWeight: 700, position: 'sticky', top: 0, background: '#F0F7FF', zIndex: 10 }}>Registration Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(() => {
-                      const matchedList = reduxBuyerLists.find(s => s._id === inspectingSegment || s.type === inspectingSegment);
+                      const matchedList = reduxBuyerLists.find(s => s._id === inspectingSegment || s.type === inspectingSegment || s.name?.toLowerCase().includes(inspectingSegment.toLowerCase()));
                       
-                      const targetList = matchedList
-                        ? (matchedList.buyerIds || []).map((b: any) => {
+                      let targetList: any[] = [];
+                      if (matchedList) {
+                        if (Array.isArray(matchedList.buyerIds) && matchedList.buyerIds.length > 0) {
+                          targetList = matchedList.buyerIds.map((b: any) => {
                             if (typeof b === 'object' && b !== null) return b;
                             const bId = b?.toString();
                             return buyers.find(ub => (ub._id || ub.id)?.toString() === bId) || { _id: bId, name: 'Registered Buyer', email: bId };
-                          })
-                        : buyers;
+                          });
+                        } else if (Array.isArray(matchedList.buyerIds) && matchedList.buyerIds.length === 0) {
+                          targetList = [];
+                        } else if (matchedList.type === 'secondary' || matchedList._id === 'list-secondary' || (matchedList.name || '').toLowerCase().includes('secondary')) {
+                          targetList = buyers.filter((b: any) => {
+                            const t = (b.tier || '').toLowerCase();
+                            return t === 'tier2' || t === 'secondary' || t === 'liquidator' || t === 'all_liquidators';
+                          });
+                        } else if (matchedList.type === 'primary' || matchedList._id === 'list-primary' || (matchedList.name || '').toLowerCase().includes('primary')) {
+                          targetList = buyers.filter((b: any) => {
+                            const t = (b.tier || '').toLowerCase();
+                            return !t || t === 'tier1' || t === 'primary' || t === 'tier1_retailers';
+                          });
+                        }
+                      } else if (inspectingSegment === 'primary' || inspectingSegment === 'list-primary') {
+                        targetList = buyers.filter((b: any) => {
+                          const t = (b.tier || '').toLowerCase();
+                          return !t || t === 'tier1' || t === 'primary' || t === 'tier1_retailers';
+                        });
+                      } else if (inspectingSegment === 'secondary' || inspectingSegment === 'list-secondary') {
+                        targetList = buyers.filter((b: any) => {
+                          const t = (b.tier || '').toLowerCase();
+                          return t === 'tier2' || t === 'secondary' || t === 'liquidator' || t === 'all_liquidators';
+                        });
+                      } else {
+                        targetList = [];
+                      }
 
                       const filtered = targetList.filter((b: any) => {
                         if (!inspectSearch) return true;
@@ -2790,7 +2832,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                         return (
                           <tr>
                             <td colSpan={3} style={{ padding: '24px', textAlign: 'center', color: '#64748B', fontSize: '0.85rem' }}>
-                              {matchedList ? `No buyers assigned to ${matchedList.name} (0 members configured).` : 'No buyers found.'}
+                              {matchedList ? `No buyers assigned to ${matchedList.name} (0 members configured).` : 'No buyer list selected or configured.'}
                             </td>
                           </tr>
                         );

@@ -158,4 +158,34 @@ describe('SalesRegistryPanel Component', () => {
     expect(screen.getByText('LOT-ALM-2026-001')).toBeDefined();
     expect(screen.queryByText('LOT-YOG-999')).toBeNull();
   });
+
+  it('should include brand, description, totalValue, status, and buyerCompany in the mapping options dropdown', () => {
+    store.dispatch(
+      setSalesParsedResult({
+        documentId: 'doc-sales-options-test',
+        fileName: 'sales_test.csv',
+        rawGrid: [
+          ['HeaderCol'],
+          ['Val1'],
+        ],
+        suggestedMapping: {},
+      })
+    );
+
+    const { container } = render(
+      <Provider store={store}>
+        <SalesRegistryPanel />
+      </Provider>
+    );
+
+    const select = container.querySelector('select.mapping-select') as HTMLSelectElement;
+    expect(select).not.toBeNull();
+    const options = Array.from(select.querySelectorAll('option')).map((opt) => opt.textContent);
+    
+    expect(options).toContain('Brand');
+    expect(options).toContain('Description');
+    expect(options).toContain('Total Value');
+    expect(options).toContain('Status');
+    expect(options).toContain('Buyer Company');
+  });
 });

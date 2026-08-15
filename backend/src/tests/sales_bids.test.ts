@@ -500,5 +500,56 @@ describe('Sales & Bids Endpoints', () => {
     await Sale.findByIdAndDelete(existingSale._id);
     await mongoose.model('DocumentImport').findByIdAndDelete(dupDoc._id);
   });
+
+  it('should process mapped attributes brand, description, totalValue, status, and buyerCompany correctly', async () => {
+    const extendedDoc = await mongoose.model('DocumentImport').create({
+      fileName: 'extended_sales.csv',
+      status: 'parsed',
+      rawGrid: [
+        ['Item_No', 'Batch_No', 'Buyer_Co', 'Cases_Sold', 'Per_Case_Price', 'Date_Of_Sale', 'Brand_Name', 'Product_Desc', 'Net_Total', 'Sale_Status'],
+        ['SKU-EXT-01', 'LOT-EXT-01', 'Acme Market', '10', '15.00', '2026-08-01', 'Organic Valley', 'Organic Whole Milk 1 Gal', '150.00', 'confirmed']
+      ]
+    });
+
+    const res = await request(app)
+      .post('/api/ingest/confirm-sales')
+      .send({
+        documentId: extendedDoc._id.toString(),
+        supplierId: sellerId.toString(),
+        mappings: {
+          sku: 'Item_No',
+          lotNumber: 'Batch_No',
+          buyerCompany: 'Buyer_Co',
+          quantity: 'Cases_Sold',
+          price: 'Per_Case_Price',
+          saleDate: 'Date_Of_Sale',
+          brand: 'Brand_Name',
+          description: 'Product_Desc',
+          totalValue: 'Net_Total',
+          status: 'Sale_Status'
+        },
+        saveTemplate: false
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.countImported).toBe(1);
+
+    const SaleModel = mongoose.model('Sale');
+    const BuyerModel = mongoose.model('Buyer');
+
+    const createdSale = await SaleModel.findOne({ sku: 'SKU-EXT-01', brand: 'Organic Valley' });
+    expect(createdSale).toBeDefined();
+    expect(createdSale?.brand).toBe('Organic Valley');
+    expect(createdSale?.description).toBe('Organic Whole Milk 1 Gal');
+    expect(createdSale?.totalValue).toBe(150.00);
+    expect(createdSale?.status).toBe('confirmed');
+
+    const createdBuyer = await BuyerModel.findOne({ companyName: 'Acme Market' });
+    expect(createdBuyer).toBeDefined();
+
+    if (createdSale) await SaleModel.findByIdAndDelete(createdSale._id);
+    if (createdBuyer) await BuyerModel.findByIdAndDelete(createdBuyer._id);
+    await mongoose.model('DocumentImport').findByIdAndDelete(extendedDoc._id);
+  });
 });
 

@@ -516,6 +516,8 @@ export const selectFilteredInventoryLots = createSelector(
         !search ||
         (lot.productId?.description || lot.description || lot.productName || '').toLowerCase().includes(searchLower) ||
         (lot.productId?.sku || lot.sku || '').toLowerCase().includes(searchLower) ||
+        (lot.productId?.brand || lot.brand || '').toLowerCase().includes(searchLower) ||
+        (lot.productId?.subCategory || lot.subCategory || '').toLowerCase().includes(searchLower) ||
         (lot.lotNumber || lot.batchNumber || '').toLowerCase().includes(searchLower) ||
         (lot.distributionCenterId?.name || lot.warehouse || lot.location || '').toLowerCase().includes(searchLower);
 

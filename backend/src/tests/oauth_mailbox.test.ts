@@ -5,6 +5,12 @@ import app from '../index';
 describe('OAuth Mailbox Integration API', () => {
   jest.setTimeout(30000);
 
+  beforeAll(async () => {
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/indspoileralert_test');
+    }
+  });
+
   afterAll(async () => {
     await mongoose.disconnect();
   });
@@ -51,17 +57,14 @@ describe('OAuth Mailbox Integration API', () => {
     });
   });
 
-  describe('Campaign Dispatch Isolation', () => {
-    it('should throw an error if supplier has no connected OAuth mailbox', async () => {
-      // Import the service dynamically since we're testing a backend method, 
-      // but ideally we'd hit an API. Let's just import it at the top of the test.
+  describe('Campaign Dispatch Fallback', () => {
+    it('should successfully fallback to default SMTP when supplier has no connected OAuth mailbox', async () => {
       const emailService = require('../services/emailService');
-      
       const supplierId = 'supplier-no-oauth';
       
-      await expect(
-        emailService.sendCampaignEmail(supplierId, 'buyer@test.com', 'subject', 'body')
-      ).rejects.toThrow('OAuth Mailbox not connected for supplier');
+      const res = await emailService.sendCampaignEmail(supplierId, 'buyer@test.com', 'subject', 'body');
+      expect(res.success).toBe(true);
+      expect(res.compiledSubject).toBe('subject');
     });
   });
 });

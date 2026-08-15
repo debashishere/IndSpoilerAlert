@@ -2646,7 +2646,7 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
 
               {visualizerEmailDetails.previewUrl && (
                 <div style={{ padding: '12px 16px', backgroundColor: 'hsl(var(--primary) / 8%)', border: '1px solid hsl(var(--primary) / 30%)', borderRadius: '8px', fontSize: '0.82rem', color: 'hsl(var(--text-primary))', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
-                  <span>📬 <strong>Real Email Sent (Ethereal test inbox):</strong></span>
+                  <span>📬 <strong>Email Dispatched:</strong></span>
                   <a href={visualizerEmailDetails.previewUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'hsl(var(--primary))', fontWeight: 600, textDecoration: 'underline' }}>
                     Preview Sent Email Online
                   </a>
@@ -2655,7 +2655,7 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
 
               <div className="email-visualizer-envelope">
                 <div className="email-visualizer-header">
-                  <div><strong>From:</strong> IndSpoiler Alert Platform &lt;eveline94@ethereal.email&gt;</div>
+                  <div><strong>From:</strong> IndSpoiler Alert Platform</div>
                   <div><strong>To:</strong> Logistics Operations &lt;ops@{(visualizerEmailDetails.to || '').toLowerCase().replace(/\s+/g, '')}.com&gt;</div>
                   <div><strong>Date:</strong> {visualizerEmailDetails.date}</div>
                   <div><strong>Subject:</strong> {visualizerEmailDetails.subject}</div>

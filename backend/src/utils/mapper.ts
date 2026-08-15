@@ -27,6 +27,8 @@ export function suggestMappings(headers: string[]): Record<string, string> {
     mapping.categories = '';
     mapping.transportRadius = '';
     mapping.excludedAllergens = '';
+    mapping.phone = '';
+    mapping.address = '';
 
     const companyRegex = /^(company|company.*name|name|buyer.*name|buyer|retailer|business|store)$/i;
     const companyRegexFuzzy = /company|name|buyer|retailer|business|store/i;
@@ -52,6 +54,12 @@ export function suggestMappings(headers: string[]): Record<string, string> {
     const allergensRegex = /^(excluded.*allergens|allergens|allergen.*filter)$/i;
     const allergensRegexFuzzy = /allergen/i;
 
+    const phoneRegex = /^(phone|phone.*number|mobile|telephone|contact.*phone)$/i;
+    const phoneRegexFuzzy = /phone|mobile|tel/i;
+
+    const addressRegex = /^(address|street|location|full.*address)$/i;
+    const addressRegexFuzzy = /address|street/i;
+
     for (const header of cleanHeaders) {
       if (!header) continue;
       if (!mapping.companyName && companyRegex.test(header)) {
@@ -70,6 +78,10 @@ export function suggestMappings(headers: string[]): Record<string, string> {
         mapping.transportRadius = header;
       } else if (!mapping.excludedAllergens && allergensRegex.test(header)) {
         mapping.excludedAllergens = header;
+      } else if (!mapping.phone && phoneRegex.test(header)) {
+        mapping.phone = header;
+      } else if (!mapping.address && addressRegex.test(header)) {
+        mapping.address = header;
       }
     }
 
@@ -93,6 +105,10 @@ export function suggestMappings(headers: string[]): Record<string, string> {
         mapping.transportRadius = header;
       } else if (!mapping.excludedAllergens && allergensRegexFuzzy.test(header)) {
         mapping.excludedAllergens = header;
+      } else if (!mapping.phone && phoneRegexFuzzy.test(header)) {
+        mapping.phone = header;
+      } else if (!mapping.address && addressRegexFuzzy.test(header)) {
+        mapping.address = header;
       }
     }
 
@@ -117,21 +133,34 @@ export function suggestMappings(headers: string[]): Record<string, string> {
 
   if (isSales) {
     mapping.sku = '';
+    mapping.description = '';
+    mapping.brand = '';
     mapping.lotNumber = '';
     mapping.buyerEmail = '';
+    mapping.buyerCompany = '';
     mapping.quantity = '';
     mapping.price = '';
+    mapping.totalValue = '';
+    mapping.revenue = '';
     mapping.saleDate = '';
     mapping.invoiceNumber = '';
-    mapping.brand = '';
+    mapping.status = '';
     mapping.warehouse = '';
-    mapping.revenue = '';
 
-    const buyerEmailRegex = /^(buyer.*email|buyer|email|customer.*email)$/i;
-    const buyerEmailRegexFuzzy = /buyer|email|customer/i;
+    const descRegex = /^(desc|description|item.*name|product.*name|details)$/i;
+    const descRegexFuzzy = /desc|description|details/i;
+
+    const buyerEmailRegex = /^(buyer.*email|email|customer.*email)$/i;
+    const buyerEmailRegexFuzzy = /email/i;
+
+    const buyerCompanyRegex = /^(buyer.*company|buyer|company|company.*name|buyer.*name|customer|customer.*name)$/i;
+    const buyerCompanyRegexFuzzy = /buyer|company|customer/i;
 
     const priceRegex = /^(price|cost|original.*price|unit.*cost|rate|value|unit.*price|price.*case|sold.*price|unit.*price)$/i;
     const priceRegexFuzzy = /price|cost|rate|value/i;
+
+    const totalValueRegex = /^(total.*value|total.*amount|total.*revenue|value|total.*cost|net.*amount)$/i;
+    const totalValueRegexFuzzy = /total.*value|total.*amount|net.*amount/i;
 
     const saleDateRegex = /^(sale.*date|sold.*date|date|trans.*date|transaction.*date)$/i;
     const saleDateRegexFuzzy = /date|sold|trans/i;
@@ -142,6 +171,9 @@ export function suggestMappings(headers: string[]): Record<string, string> {
     const brandRegex = /^(brand|make|manufacturer|label|brand.*name)$/i;
     const brandRegexFuzzy = /brand|manufacturer|label/i;
 
+    const statusRegex = /^(status|sale.*status|order.*status|state)$/i;
+    const statusRegexFuzzy = /status|state/i;
+
     const revenueRegex = /^(revenue|total.*revenue|total.*value|total.*amount|amount|sales.*amount|turnover)$/i;
     const revenueRegexFuzzy = /revenue|amount|value|turnover/i;
 
@@ -151,20 +183,28 @@ export function suggestMappings(headers: string[]): Record<string, string> {
       const cleanHeader = header.trim();
       if (!mapping.sku && skuRegex.test(cleanHeader)) {
         mapping.sku = cleanHeader;
+      } else if (!mapping.description && descRegex.test(cleanHeader)) {
+        mapping.description = cleanHeader;
       } else if (!mapping.lotNumber && lotRegex.test(cleanHeader)) {
         mapping.lotNumber = cleanHeader;
       } else if (!mapping.buyerEmail && buyerEmailRegex.test(cleanHeader)) {
         mapping.buyerEmail = cleanHeader;
+      } else if (!mapping.buyerCompany && buyerCompanyRegex.test(cleanHeader)) {
+        mapping.buyerCompany = cleanHeader;
       } else if (!mapping.quantity && qtyRegex.test(cleanHeader)) {
         mapping.quantity = cleanHeader;
       } else if (!mapping.price && priceRegex.test(cleanHeader)) {
         mapping.price = cleanHeader;
+      } else if (!mapping.totalValue && totalValueRegex.test(cleanHeader)) {
+        mapping.totalValue = cleanHeader;
       } else if (!mapping.saleDate && saleDateRegex.test(cleanHeader)) {
         mapping.saleDate = cleanHeader;
       } else if (!mapping.invoiceNumber && invoiceRegex.test(cleanHeader)) {
         mapping.invoiceNumber = cleanHeader;
       } else if (!mapping.brand && brandRegex.test(cleanHeader)) {
         mapping.brand = cleanHeader;
+      } else if (!mapping.status && statusRegex.test(cleanHeader)) {
+        mapping.status = cleanHeader;
       } else if (!mapping.warehouse && warehouseRegex.test(cleanHeader)) {
         mapping.warehouse = cleanHeader;
       } else if (!mapping.revenue && revenueRegex.test(cleanHeader)) {
@@ -180,20 +220,28 @@ export function suggestMappings(headers: string[]): Record<string, string> {
 
       if (!mapping.sku && skuRegexFuzzy.test(cleanHeader)) {
         mapping.sku = cleanHeader;
+      } else if (!mapping.description && descRegexFuzzy.test(cleanHeader)) {
+        mapping.description = cleanHeader;
       } else if (!mapping.lotNumber && lotRegexFuzzy.test(cleanHeader)) {
         mapping.lotNumber = cleanHeader;
       } else if (!mapping.buyerEmail && buyerEmailRegexFuzzy.test(cleanHeader)) {
         mapping.buyerEmail = cleanHeader;
+      } else if (!mapping.buyerCompany && buyerCompanyRegexFuzzy.test(cleanHeader)) {
+        mapping.buyerCompany = cleanHeader;
       } else if (!mapping.quantity && qtyRegexFuzzy.test(cleanHeader)) {
         mapping.quantity = cleanHeader;
       } else if (!mapping.price && priceRegexFuzzy.test(cleanHeader)) {
         mapping.price = cleanHeader;
+      } else if (!mapping.totalValue && totalValueRegexFuzzy.test(cleanHeader)) {
+        mapping.totalValue = cleanHeader;
       } else if (!mapping.saleDate && saleDateRegexFuzzy.test(cleanHeader)) {
         mapping.saleDate = cleanHeader;
       } else if (!mapping.invoiceNumber && invoiceRegexFuzzy.test(cleanHeader)) {
         mapping.invoiceNumber = cleanHeader;
       } else if (!mapping.brand && brandRegexFuzzy.test(cleanHeader)) {
         mapping.brand = cleanHeader;
+      } else if (!mapping.status && statusRegexFuzzy.test(cleanHeader)) {
+        mapping.status = cleanHeader;
       } else if (!mapping.warehouse && warehouseRegexFuzzy.test(cleanHeader)) {
         mapping.warehouse = cleanHeader;
       } else if (!mapping.revenue && revenueRegexFuzzy.test(cleanHeader)) {
@@ -204,19 +252,28 @@ export function suggestMappings(headers: string[]): Record<string, string> {
     // Inventory mappings (original logic)
     mapping.sku = '';
     mapping.description = '';
+    mapping.brand = '';
     mapping.quantity = '';
     mapping.quantityCases = '';
+    mapping.availableQty = '';
     mapping.expirationDate = '';
     mapping.originalPrice = '';
     mapping.lotNumber = '';
     mapping.productionDate = '';
     mapping.category = '';
+    mapping.subCategory = '';
     mapping.standardSellPrice = '';
+    mapping.status = '';
+    mapping.temperatureMin = '';
+    mapping.temperatureMax = '';
     mapping.warehouse = '';
     mapping.comment = '';
 
     const descRegex = /^(desc|description|item.*name|product.*name|name|details)$/i;
     const descRegexFuzzy = /desc|description|item.*name|product.*name|name|details/i;
+
+    const brandRegex = /^(brand|make|manufacturer|label|brand.*name)$/i;
+    const brandRegexFuzzy = /brand|manufacturer|label/i;
     
     const expRegex = /^(exp|expiry|expiration|date|best.*before|exp.*date|expiration.*date)$/i;
     const expRegexFuzzy = /exp|expiry|expiration|date|best.*before/i;
@@ -229,6 +286,21 @@ export function suggestMappings(headers: string[]): Record<string, string> {
 
     const categoryRegex = /^(category|cat|type|group|dept|department)$/i;
     const categoryRegexFuzzy = /category|cat|type|group|dept/i;
+
+    const subCategoryRegex = /^(sub_?category|sub-category|subcategory|sub_?cat|subcat|product_type)$/i;
+    const subCategoryRegexFuzzy = /sub_?category|subcat|product_type/i;
+
+    const statusRegex = /^(status|lot_status|item_status|state)$/i;
+    const statusRegexFuzzy = /status|state/i;
+
+    const availableQtyRegex = /^(available_?qty|available_?quantity|rem_?qty|remaining_?qty)$/i;
+    const availableQtyRegexFuzzy = /available|remaining/i;
+
+    const tempMinRegex = /^(temp_?min|temperature_?min|min_?temp|min_?temperature|temp_?low|storage_?temp_?min)$/i;
+    const tempMinRegexFuzzy = /temp.*min|min.*temp|temp.*low/i;
+
+    const tempMaxRegex = /^(temp_?max|temperature_?max|max_?temp|max_?temperature|temp_?high|storage_?temp_?max)$/i;
+    const tempMaxRegexFuzzy = /temp.*max|max.*temp|temp.*high/i;
 
     const sellPriceRegex = /^(list.*price|sell.*price|standard.*price|standard.*sell.*price|retail.*price)$/i;
     const sellPriceRegexFuzzy = /list.*price|sell.*price|standard.*price|retail.*price/i;
@@ -244,6 +316,10 @@ export function suggestMappings(headers: string[]): Record<string, string> {
         mapping.sku = cleanHeader;
       } else if (!mapping.description && descRegex.test(cleanHeader)) {
         mapping.description = cleanHeader;
+      } else if (!mapping.brand && brandRegex.test(cleanHeader)) {
+        mapping.brand = cleanHeader;
+      } else if (!mapping.availableQty && availableQtyRegex.test(cleanHeader)) {
+        mapping.availableQty = cleanHeader;
       } else if (!mapping.quantity && qtyRegex.test(cleanHeader)) {
         mapping.quantity = cleanHeader;
         mapping.quantityCases = cleanHeader;
@@ -257,8 +333,16 @@ export function suggestMappings(headers: string[]): Record<string, string> {
         mapping.lotNumber = cleanHeader;
       } else if (!mapping.productionDate && mfgRegex.test(cleanHeader)) {
         mapping.productionDate = cleanHeader;
+      } else if (!mapping.subCategory && subCategoryRegex.test(cleanHeader)) {
+        mapping.subCategory = cleanHeader;
       } else if (!mapping.category && categoryRegex.test(cleanHeader)) {
         mapping.category = cleanHeader;
+      } else if (!mapping.status && statusRegex.test(cleanHeader)) {
+        mapping.status = cleanHeader;
+      } else if (!mapping.temperatureMin && tempMinRegex.test(cleanHeader)) {
+        mapping.temperatureMin = cleanHeader;
+      } else if (!mapping.temperatureMax && tempMaxRegex.test(cleanHeader)) {
+        mapping.temperatureMax = cleanHeader;
       } else if (!mapping.standardSellPrice && sellPriceRegex.test(cleanHeader)) {
         mapping.standardSellPrice = cleanHeader;
       } else if (!mapping.warehouse && warehouseRegex.test(cleanHeader)) {
@@ -279,6 +363,10 @@ export function suggestMappings(headers: string[]): Record<string, string> {
         mapping.sku = cleanHeader;
       } else if (!mapping.description && descRegexFuzzy.test(cleanHeader)) {
         mapping.description = cleanHeader;
+      } else if (!mapping.brand && brandRegexFuzzy.test(cleanHeader)) {
+        mapping.brand = cleanHeader;
+      } else if (!mapping.availableQty && availableQtyRegexFuzzy.test(cleanHeader)) {
+        mapping.availableQty = cleanHeader;
       } else if (!mapping.quantity && qtyRegexFuzzy.test(cleanHeader)) {
         mapping.quantity = cleanHeader;
         mapping.quantityCases = cleanHeader;
@@ -292,8 +380,16 @@ export function suggestMappings(headers: string[]): Record<string, string> {
         mapping.lotNumber = cleanHeader;
       } else if (!mapping.productionDate && mfgRegexFuzzy.test(cleanHeader)) {
         mapping.productionDate = cleanHeader;
+      } else if (!mapping.subCategory && subCategoryRegexFuzzy.test(cleanHeader)) {
+        mapping.subCategory = cleanHeader;
       } else if (!mapping.category && categoryRegexFuzzy.test(cleanHeader)) {
         mapping.category = cleanHeader;
+      } else if (!mapping.status && statusRegexFuzzy.test(cleanHeader)) {
+        mapping.status = cleanHeader;
+      } else if (!mapping.temperatureMin && tempMinRegexFuzzy.test(cleanHeader)) {
+        mapping.temperatureMin = cleanHeader;
+      } else if (!mapping.temperatureMax && tempMaxRegexFuzzy.test(cleanHeader)) {
+        mapping.temperatureMax = cleanHeader;
       } else if (!mapping.standardSellPrice && sellPriceRegexFuzzy.test(cleanHeader)) {
         mapping.standardSellPrice = cleanHeader;
       } else if (!mapping.warehouse && warehouseRegexFuzzy.test(cleanHeader)) {

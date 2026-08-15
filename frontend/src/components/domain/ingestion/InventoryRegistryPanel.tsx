@@ -43,13 +43,19 @@ import { ComplianceModal } from '../inventory/ComplianceModal';
 const INVENTORY_OPTIONS = [
   { value: 'sku', label: 'SKU' },
   { value: 'description', label: 'Description' },
+  { value: 'brand', label: 'Brand' },
+  { value: 'category', label: 'Category' },
+  { value: 'subCategory', label: 'Sub-Category' },
   { value: 'quantity', label: 'Quantity (Cases)' },
+  { value: 'availableQty', label: 'Available Qty' },
   { value: 'expirationDate', label: 'Expiration Date' },
   { value: 'originalPrice', label: 'Original Price' },
   { value: 'lotNumber', label: 'Lot Number' },
   { value: 'productionDate', label: 'Production Date' },
-  { value: 'category', label: 'Category' },
   { value: 'standardSellPrice', label: 'List Price' },
+  { value: 'status', label: 'Status (Active/Sold)' },
+  { value: 'temperatureMin', label: 'Min Temp (°F)' },
+  { value: 'temperatureMax', label: 'Max Temp (°F)' },
   { value: 'warehouse', label: 'Warehouse / DC' },
 ];
 

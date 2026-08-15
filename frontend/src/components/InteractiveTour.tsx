@@ -394,7 +394,7 @@ ULV-CR-32,ULVR Creamer 32oz,200,${new Date(Date.now() + 45 * 24 * 60 * 60 * 1000
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             buyerId: groceryOutlet?._id,
-            buyerEmail: groceryOutlet?.email || 'eveline94@ethereal.email',
+            buyerEmail: groceryOutlet?.email || 'buyer@example.com',
             quantity: 300,
             price: 2.75
           })

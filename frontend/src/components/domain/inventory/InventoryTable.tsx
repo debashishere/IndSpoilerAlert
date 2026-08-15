@@ -55,7 +55,7 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
           }}
         >
           <span>Registered Inventory ({filteredLots.length})</span>
-          <span style={{ color: 'hsl(var(--primary))' }}>SKU · Distribution Center · Expiration & RSL</span>
+          <span style={{ color: 'hsl(var(--primary))' }}>SKU · Brand · Sub-Category · Storage Temp · Expiration & RSL</span>
         </div>
         <div className="premium-table-container">
           <table className="premium-table">
@@ -72,6 +72,9 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
               </th>
               <th onClick={() => handleSort('expirationDate')} style={{ cursor: 'pointer', userSelect: 'none' }}>
                 Expiration & RSL {renderSortIcon('expirationDate')}
+              </th>
+              <th style={{ userSelect: 'none' }}>
+                Storage Temp
               </th>
               <th onClick={() => handleSort('availableQty')} style={{ cursor: 'pointer', userSelect: 'none', textAlign: 'right' }}>
                 Quantity Cases {renderSortIcon('availableQty')}
@@ -118,6 +121,10 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
               if (lot.status === 'donated' || lot.status === 'recycled') statusColor = 'hsl(var(--secondary))';
               if (lot.status === 'expired') statusColor = 'hsl(var(--error))';
 
+              const brandName = lot.productId?.brand || lot.brand;
+              const subCatName = lot.productId?.subCategory || lot.subCategory;
+              const listPriceVal = lot.standardSellPrice ?? lot.productId?.standardSellPrice;
+
               return (
                 <tr
                   key={lot._id}
@@ -137,6 +144,21 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
                         <span className="badge badge-outline-primary" style={{ fontSize: '0.65rem', padding: '1px 6px' }}>
                           {lot.productId?.sku || lot.sku || 'N/A'}
                         </span>
+                        {brandName && (
+                          <span
+                            className="badge"
+                            style={{
+                              fontSize: '0.65rem',
+                              padding: '1px 6px',
+                              backgroundColor: 'hsl(var(--primary) / 10%)',
+                              color: 'hsl(var(--primary))',
+                              border: '1px solid hsl(var(--primary) / 20%)',
+                              fontWeight: 600,
+                            }}
+                          >
+                            🏷️ {brandName}
+                          </span>
+                        )}
                         {(lot.productId?.category || lot.category) && (
                           <span
                             className="badge"
@@ -148,6 +170,20 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
                             }}
                           >
                             {lot.productId?.category || lot.category}
+                          </span>
+                        )}
+                        {subCatName && (
+                          <span
+                            className="badge"
+                            style={{
+                              fontSize: '0.65rem',
+                              padding: '1px 6px',
+                              backgroundColor: 'hsl(var(--bg-card-hover))',
+                              color: 'hsl(var(--text-muted))',
+                              border: '1px solid hsl(var(--border-color))',
+                            }}
+                          >
+                            📂 {subCatName}
                           </span>
                         )}
                         {(lot.lotNumber || lot.batchNumber) && (
@@ -170,9 +206,9 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
                   <td>{lot.supplierId?.name || lot.supplierName || '—'}</td>
                   <td>{lot.distributionCenterId?.name || lot.warehouse || lot.location || 'Central DC'}</td>
                   <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '160px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '150px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                        <span>{lot.expirationDate ? new Date(lot.expirationDate).toLocaleDateString() : 'N/A'}</span>
+                        <span>Exp: {lot.expirationDate ? new Date(lot.expirationDate).toLocaleDateString() : 'N/A'}</span>
                         <strong
                           style={{
                             color:
@@ -209,6 +245,22 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
                           }}
                         />
                       </div>
+                      {lot.productionDate && (
+                        <span style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))' }}>
+                          Mfg: {new Date(lot.productionDate).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', gap: '2px' }}>
+                      {typeof lot.temperatureMin === 'number' || typeof lot.temperatureMax === 'number' ? (
+                        <span style={{ fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
+                          ❄️ {lot.temperatureMin ?? '—'}°F to {lot.temperatureMax ?? '—'}°F
+                        </span>
+                      ) : (
+                        <span style={{ color: 'hsl(var(--text-muted))' }}>Ambient / Unspecified</span>
+                      )}
                     </div>
                   </td>
                   <td style={{ textAlign: 'right' }}>
@@ -224,7 +276,12 @@ export const InventoryTable: React.FC<InventoryTableProps> = ({ filteredLots, on
                       <span>
                         Cost: <strong>${(lot.costPerCase ?? 0).toFixed(2)}</strong>/cs
                       </span>
-                      <span style={{ color: 'hsl(var(--text-muted))' }}>
+                      {listPriceVal !== undefined && listPriceVal !== null && (
+                        <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-secondary))' }}>
+                          List: ${(listPriceVal ?? 0).toFixed(2)}/cs
+                        </span>
+                      )}
+                      <span style={{ color: 'hsl(var(--text-muted))', fontSize: '0.75rem' }}>
                         Total:{' '}
                         <strong>
                           ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

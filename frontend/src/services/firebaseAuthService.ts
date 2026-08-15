@@ -87,6 +87,7 @@ class FirebaseAuthService {
   }
 
   public async handleGoogleAuthError(error: any): Promise<never> {
+    console.error('[FirebaseAuthService] Google Sign-In Error:', error);
     if (error?.code === 'auth/popup-closed-by-user') {
       throw new Error('User closed the login popup');
     }
@@ -101,6 +102,12 @@ class FirebaseAuthService {
     }
     if (error?.code === 'auth/invalid-api-key') {
       throw new Error('Invalid Firebase API Key: Please verify VITE_FIREBASE_API_KEY in frontend/.env.');
+    }
+    if (error?.code === 'auth/cancelled-popup-request') {
+      throw new Error('Only one sign-in popup can be opened at a time.');
+    }
+    if (error?.code === 'auth/network-request-failed') {
+      throw new Error('Network error occurred during Google sign-in. Please check your internet connection.');
     }
     if (error instanceof Error) {
       throw error;

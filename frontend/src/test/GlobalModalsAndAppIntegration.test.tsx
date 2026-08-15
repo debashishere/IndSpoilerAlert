@@ -75,7 +75,7 @@ describe('Issue #38 Tracer Bullet 4: GlobalModals & Cross-Domain Modal Triggerin
       expect(screen.getByText('Transactional Email Sent Successfully!')).toBeInTheDocument();
     });
 
-    expect(screen.getByText(/Real Email Sent/i)).toBeInTheDocument();
+    expect(screen.getByText(/Email Dispatched/i)).toBeInTheDocument();
     expect(screen.getByText('Preview Sent Email Online')).toHaveAttribute(
       'href',
       'https://ethereal.email/message/test-preview-url'

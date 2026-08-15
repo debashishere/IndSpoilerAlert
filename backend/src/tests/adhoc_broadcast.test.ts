@@ -11,6 +11,12 @@ describe('Slice 5: POST /api/emails/dispatch-broadcast', () => {
   jest.setTimeout(30000);
   const testSupplierId = 'supplier-broadcast-test-1';
 
+  beforeAll(async () => {
+    if (mongoose.connection.readyState === 0) {
+      await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/indspoileralert_test');
+    }
+  });
+
   beforeEach(async () => {
     try {
       await SupplierOAuthMailbox.deleteMany({ supplierId: testSupplierId });
@@ -33,32 +39,47 @@ describe('Slice 5: POST /api/emails/dispatch-broadcast', () => {
     }
   });
 
-  it('should return 400 error if SupplierOAuthMailbox is missing or not connected', async () => {
-    // Ensure mailbox is not connected (e.g. status: 'expired')
+  it('should successfully dispatch via default SMTP fallback even if SupplierOAuthMailbox is expired or missing', async () => {
+    const testSupplierId1 = 'supplier-broadcast-test-1';
+    await SupplierOAuthMailbox.deleteMany({ supplierId: testSupplierId1 });
+    await EmailDispatchLog.deleteMany({ supplierId: testSupplierId1 });
+
+    // Ensure mailbox is expired or missing
     await SupplierOAuthMailbox.create({
-      supplierId: testSupplierId,
+      supplierId: testSupplierId1,
       status: 'expired',
       userEmail: 'ops@testsupplier.com'
+    });
+
+    const tempBuyer = await Buyer.create({
+      email: `broadcast-test-1-${Date.now()}@example.com`,
+      companyName: 'Test Buyer 1',
+      isActive: true,
+      acceptsShortDated: true
     });
 
     const response = await request(app)
       .post('/api/emails/dispatch-broadcast')
       .send({
-        supplierId: testSupplierId,
-        buyerSegment: 'all_buyers',
+        supplierId: testSupplierId1,
+        explicitBuyerIds: [tempBuyer._id.toString()],
         emailSubject: 'Test Subject',
         emailBodyHtml: '<p>Test Body</p>'
       });
 
-    expect(response.status).toBe(400);
-    expect(response.body.success).toBe(false);
-    expect(response.body.message).toMatch(/OAuth Mailbox not connected/i);
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    await Buyer.findByIdAndDelete(tempBuyer._id);
   });
 
   it('should execute broadcast, generate CTA tokens, send emails, and log dispatches when connected', async () => {
+    const testSupplierId2 = 'supplier-broadcast-test-2';
+    await SupplierOAuthMailbox.deleteMany({ supplierId: testSupplierId2 });
+    await EmailDispatchLog.deleteMany({ supplierId: testSupplierId2 });
+
     // 1. Create connected mailbox
     await SupplierOAuthMailbox.create({
-      supplierId: testSupplierId,
+      supplierId: testSupplierId2,
       status: 'connected',
       userEmail: 'ops@testsupplier.com',
       accessToken: 'mock-access-token',
@@ -97,7 +118,7 @@ describe('Slice 5: POST /api/emails/dispatch-broadcast', () => {
     const response = await request(app)
       .post('/api/emails/dispatch-broadcast')
       .send({
-        supplierId: testSupplierId,
+        supplierId: testSupplierId2,
         buyerSegment: 'all_buyers',
         explicitBuyerIds: [buyer1._id.toString(), buyer2._id.toString()],
         lotIds: [lot._id.toString()],
@@ -116,7 +137,7 @@ describe('Slice 5: POST /api/emails/dispatch-broadcast', () => {
     expect(tokens[0].token).toBeDefined();
 
     // 6. Verify EmailDispatchLogs were created
-    const logs = await EmailDispatchLog.find({ supplierId: testSupplierId });
+    const logs = await EmailDispatchLog.find({ supplierId: testSupplierId2 });
     expect(logs.length).toBe(2);
     expect(logs.map((l: any) => l.buyerEmail).sort()).toEqual([buyer1.email, buyer2.email].sort());
 

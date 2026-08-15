@@ -451,7 +451,7 @@ export async function awardBid(
     subject: targetSubject,
     content: emailSent || 'Bid awarded automatically.',
     recipient: buyer.email,
-    sender: 'eveline94@ethereal.email',
+    sender: process.env.SMTP_USER || 'noreply@spoileralert.com',
     metadata: {
       messageId: emailResult.messageId,
       previewUrl: emailResult.previewUrl,
@@ -980,10 +980,6 @@ export async function getSales(filters: any = {}) {
 
       if (supplier) {
         query.supplierId = supplier._id;
-      } else {
-        query.$or = [
-          { buyerEmail: userEmail }
-        ];
       }
     }
   }

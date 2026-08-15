@@ -58,7 +58,7 @@ const SendEmailModal: React.FC<{
   emailAddress?: string;
   onClose: () => void;
   onSent?: (threadId?: string) => void;
-}> = ({ supplierId, accountName = 'IndSpoiler Alert Platform', emailAddress = 'eveline94@ethereal.email', onClose, onSent }) => {
+}> = ({ supplierId, accountName = 'IndSpoiler Alert Platform', emailAddress = 'noreply@spoileralert.com', onClose, onSent }) => {
   const [to, setTo] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -324,7 +324,7 @@ export const EmailCommunicationsView: React.FC<EmailCommunicationsViewProps> = (
   supplierId = 'default',
   embedded = false,
   accountName: initialAccountName = 'IndSpoiler Alert Platform',
-  emailAddress: initialEmailAddress = 'eveline94@ethereal.email'
+  emailAddress: initialEmailAddress = 'noreply@spoileralert.com'
 }) => {
   const [threads, setThreads] = useState<EmailThread[]>([]);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);

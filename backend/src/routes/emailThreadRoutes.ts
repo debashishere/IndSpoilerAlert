@@ -64,7 +64,7 @@ router.get('/', async (req: Request, res: Response) => {
             {
               messageId: `msg-hist-${log.dispatchId}`,
               senderType: 'supplier',
-              senderEmail: 'eveline94@ethereal.email',
+              senderEmail: process.env.SMTP_USER || 'noreply@spoileralert.com',
               body: `Outbound email dispatched to ${log.compiledBuyerName || log.buyerEmail}.`,
               sentAt: log.dispatchedAt || log.createdAt || new Date()
             }
@@ -79,7 +79,7 @@ router.get('/', async (req: Request, res: Response) => {
           existingThread.messages.push({
             messageId: msgId,
             senderType: 'supplier',
-            senderEmail: 'eveline94@ethereal.email',
+            senderEmail: process.env.SMTP_USER || 'noreply@spoileralert.com',
             body: `Outbound email dispatched to ${log.compiledBuyerName || log.buyerEmail}.`,
             sentAt: log.dispatchedAt || log.createdAt || new Date()
           });
@@ -130,7 +130,7 @@ router.post('/:threadId/reply', async (req: Request, res: Response) => {
 
     // Look up supplier SMTP config to get sender identity
     const smtpConfig = await SupplierSmtpConfig.findOne({ supplierId });
-    const fromEmail = smtpConfig?.senderEmail || 'eveline94@ethereal.email';
+    const fromEmail = smtpConfig?.senderEmail || process.env.SMTP_USER || 'noreply@spoileralert.com';
     const fromName = smtpConfig?.senderName || 'IndSpoiler Alert Platform';
 
     // Send email via Nodemailer

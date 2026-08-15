@@ -1,7 +1,9 @@
 import crypto from 'crypto';
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import EmailTemplate from '../models/EmailTemplate';
 import Buyer from '../models/Buyer';
+import BuyerList from '../models/BuyerList';
 import InventoryLot from '../models/InventoryLot';
 import SupplierOAuthMailbox from '../models/SupplierOAuthMailbox';
 import QuickBidToken from '../models/QuickBidToken';
@@ -183,17 +185,35 @@ export async function compileEmailTemplate(req: Request, res: Response) {
 export async function generateBroadcastPreview(req: Request, res: Response) {
 
   try {
-    const { supplierId, buyerSegment, explicitBuyerIds, lotIds, templateId, emailSubject, emailBodyHtml } = req.body;
+    const { supplierId, buyerSegment, buyerListId, explicitBuyerIds, lotIds, templateId, emailSubject, emailBodyHtml } = req.body;
 
     let matchedBuyers: any[] = [];
     if (Array.isArray(explicitBuyerIds) && explicitBuyerIds.length > 0) {
       matchedBuyers = await Buyer.find({ _id: { $in: explicitBuyerIds }, isActive: { $ne: false } });
     }
-    if (matchedBuyers.length === 0) {
-      const query: any = { isActive: { $ne: false } };
-      if (buyerSegment && buyerSegment !== 'all_buyers') {
-        query.acceptsShortDated = true;
+    const targetListRef = buyerListId || (buyerSegment && buyerSegment !== 'all_buyers' ? buyerSegment : null);
+    if (matchedBuyers.length === 0 && targetListRef) {
+      let buyerListDoc: any = null;
+      if (mongoose.Types.ObjectId.isValid(targetListRef)) {
+        buyerListDoc = await BuyerList.findById(targetListRef);
       }
+      if (!buyerListDoc && supplierId) {
+        buyerListDoc = await BuyerList.findOne({
+          supplierId,
+          $or: [{ type: targetListRef }, { name: new RegExp(`^${targetListRef}$`, 'i') }]
+        });
+      }
+      if (!buyerListDoc) {
+        buyerListDoc = await BuyerList.findOne({
+          $or: [{ type: targetListRef }, { name: new RegExp(`^${targetListRef}$`, 'i') }]
+        });
+      }
+      if (buyerListDoc && Array.isArray(buyerListDoc.buyerIds) && buyerListDoc.buyerIds.length > 0) {
+        matchedBuyers = await Buyer.find({ _id: { $in: buyerListDoc.buyerIds }, isActive: { $ne: false } });
+      }
+    }
+    if (matchedBuyers.length === 0 && (buyerSegment === 'all_buyers' || (!buyerSegment && !buyerListId && (!explicitBuyerIds || explicitBuyerIds.length === 0)))) {
+      const query: any = { isActive: { $ne: false } };
       matchedBuyers = await Buyer.find(query).limit(50);
     }
 
@@ -206,7 +226,7 @@ export async function generateBroadcastPreview(req: Request, res: Response) {
     }
     const totalCases = selectedLots.reduce((sum, lot) => sum + (lot.availableQty || lot.quantityCases || 0), 0);
 
-    const sampleBuyer = matchedBuyers[0] || { companyName: 'Sample Wholesale Buyer', email: 'eveline94@ethereal.email' };
+    const sampleBuyer = matchedBuyers[0] || { companyName: 'Sample Wholesale Buyer', email: 'buyer@example.com' };
     const context = {
       buyer_name: sampleBuyer.companyName,
       supplier_name: 'Unilever Supply Operations',
@@ -233,31 +253,43 @@ export async function generateBroadcastPreview(req: Request, res: Response) {
 
 export async function dispatchBroadcast(req: Request, res: Response) {
   try {
-    const { supplierId, buyerSegment, explicitBuyerIds, lotIds, templateId, emailSubject, emailBodyHtml } = req.body;
+    const { supplierId, buyerSegment, buyerListId, explicitBuyerIds, lotIds, templateId, emailSubject, emailBodyHtml } = req.body;
 
     if (!supplierId) {
       return res.status(400).json({ success: false, message: 'supplierId is required' });
     }
 
-    // 1. Validate Supplier OAuth Mailbox connection status
-    const mailbox = await SupplierOAuthMailbox.findOne({ supplierId });
-    if (!mailbox || mailbox.status !== 'connected') {
-      return res.status(400).json({
-        success: false,
-        message: 'OAuth Mailbox not connected for supplier'
-      });
-    }
+    // Optional: Supplier OAuth Mailbox connection status check (if connected, OAuth will be used; otherwise SMTP)
+    const mailbox = await SupplierOAuthMailbox.findOne({ supplierId, status: 'connected' });
 
     // 2. Resolve targeted buyers
     let matchedBuyers: any[] = [];
     if (Array.isArray(explicitBuyerIds) && explicitBuyerIds.length > 0) {
       matchedBuyers = await Buyer.find({ _id: { $in: explicitBuyerIds }, isActive: { $ne: false } });
     }
-    if (matchedBuyers.length === 0) {
-      const query: any = { isActive: { $ne: false } };
-      if (buyerSegment && buyerSegment !== 'all_buyers') {
-        query.acceptsShortDated = true;
+    const targetListRef = buyerListId || (buyerSegment && buyerSegment !== 'all_buyers' ? buyerSegment : null);
+    if (matchedBuyers.length === 0 && targetListRef) {
+      let buyerListDoc: any = null;
+      if (mongoose.Types.ObjectId.isValid(targetListRef)) {
+        buyerListDoc = await BuyerList.findById(targetListRef);
       }
+      if (!buyerListDoc && supplierId) {
+        buyerListDoc = await BuyerList.findOne({
+          supplierId,
+          $or: [{ type: targetListRef }, { name: new RegExp(`^${targetListRef}$`, 'i') }]
+        });
+      }
+      if (!buyerListDoc) {
+        buyerListDoc = await BuyerList.findOne({
+          $or: [{ type: targetListRef }, { name: new RegExp(`^${targetListRef}$`, 'i') }]
+        });
+      }
+      if (buyerListDoc && Array.isArray(buyerListDoc.buyerIds) && buyerListDoc.buyerIds.length > 0) {
+        matchedBuyers = await Buyer.find({ _id: { $in: buyerListDoc.buyerIds }, isActive: { $ne: false } });
+      }
+    }
+    if (matchedBuyers.length === 0 && (buyerSegment === 'all_buyers' || (!buyerSegment && !buyerListId && (!explicitBuyerIds || explicitBuyerIds.length === 0)))) {
+      const query: any = { isActive: { $ne: false } };
       matchedBuyers = await Buyer.find(query).limit(100);
     }
 

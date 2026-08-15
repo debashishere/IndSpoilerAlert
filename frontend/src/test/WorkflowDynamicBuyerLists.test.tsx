@@ -167,6 +167,40 @@ describe('Issue #05 — Workflow Builder Dynamic Buyer Lists', () => {
 
       expect(listDropdown.value).toBe('list-custom-1');
     });
+
+    it('returns 0 buyers and disables Eye button when selected buyer list has empty buyerIds array', () => {
+      const emptyBuyerList = [
+        { _id: 'list-empty', name: 'Primary Buyers', type: 'primary', buyerIds: [] }
+      ];
+      const store = createMockStore({
+        core: {
+          buyerLists: emptyBuyerList,
+          buyers: [{ _id: 'b-1', name: 'Global Buyer', email: 'g@test.com', tier: 'tier1' }],
+          suppliers: [],
+          activeTab: 'workflows',
+        }
+      });
+
+      render(
+        <Provider store={store}>
+          <LiquidationAutomationStudio
+            supplierId={mockSupplierId}
+            inventoryLots={sampleLots}
+            buyers={[{ _id: 'b-1', name: 'Global Buyer', email: 'g@test.com', tier: 'tier1' }]}
+            apiBaseUrl="http://localhost:5000/api"
+          />
+        </Provider>
+      );
+
+      // Verify list count returns 0 (not 1 from global buyers fallback)
+      const stage = { stageIndex: 1, buyerMode: 'list' as const, buyerListId: 'list-empty', customBuyers: [] };
+      expect(getStageBuyerCount(stage as any, emptyBuyerList, [{ _id: 'b-1', name: 'Global Buyer', email: 'g@test.com', tier: 'tier1' }])).toBe(0);
+
+      // Verify Eye button is disabled
+      const eyeBtns = screen.getAllByTitle(/Selected buyer list has 0 buyers configured/i);
+      expect(eyeBtns.length).toBeGreaterThan(0);
+      expect((eyeBtns[0] as HTMLButtonElement).disabled).toBe(true);
+    });
   });
 
   describe('resolveStagesWithBuyerLists function', () => {

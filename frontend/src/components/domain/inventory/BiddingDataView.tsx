@@ -227,7 +227,7 @@ export const BiddingDataView: React.FC<{ onOpenLotHub?: (lot: any) => void }> = 
                         {buyer?.companyName || buyer?.name || 'Retail Buyer'}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>
-                        {buyer?.email || bid.buyerEmail || 'eveline94@ethereal.email'}
+                        {buyer?.email || bid.buyerEmail || 'buyer@example.com'}
                       </div>
                     </td>
                     <td>

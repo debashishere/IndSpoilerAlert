@@ -4,6 +4,8 @@ import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { 
   selectBuyerLists, 
   selectBuyers, 
+  fetchCoreReferenceData,
+  fetchBuyerLists,
   createBuyerListThunk, 
   updateBuyerListThunk, 
   deleteBuyerListThunk, 
@@ -24,12 +26,22 @@ export const BuyerListManagerModal: React.FC<BuyerListManagerModalProps> = ({
   supplierId
 }) => {
   const dispatch = useAppDispatch();
-  const buyerLists = useAppSelector(selectBuyerLists);
-  const allBuyers = useAppSelector(selectBuyers);
+  const rawBuyerLists = useAppSelector(selectBuyerLists);
+  const rawAllBuyers = useAppSelector(selectBuyers);
+  const buyerLists = Array.isArray(rawBuyerLists) ? rawBuyerLists : [];
+  const allBuyers = Array.isArray(rawAllBuyers) ? rawAllBuyers : [];
   const reduxSelectedSupplier = useAppSelector((state) => state.ingestion?.selectedSupplier || '');
   const effectiveSupplierId = supplierId || reduxSelectedSupplier;
 
   const [selectedListId, setSelectedListId] = useState<string | null>(initialSelectedListId || null);
+
+  // Fetch reference buyers & buyer lists when modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      dispatch(fetchCoreReferenceData({ all: true, supplierId: effectiveSupplierId }));
+      dispatch(fetchBuyerLists(effectiveSupplierId));
+    }
+  }, [isOpen, effectiveSupplierId, dispatch]);
 
   useEffect(() => {
     if (isOpen && initialSelectedListId) {
@@ -50,40 +62,47 @@ export const BuyerListManagerModal: React.FC<BuyerListManagerModalProps> = ({
   // Switch list confirmation state
   const [pendingSwitchListId, setPendingSwitchListId] = useState<string | null>(null);
 
-  const activeListId = selectedListId || buyerLists[0]?._id || null;
-  const currentList = buyerLists.find((l) => l._id === activeListId) || null;
-  const listToDelete = buyerLists.find((l) => l._id === deletingListId);
+  const normalizeId = (item: any): string => {
+    if (!item) return '';
+    if (typeof item === 'object') return (item._id || item.id || '').toString();
+    return item.toString();
+  };
+
+  const activeListId = selectedListId || (buyerLists.length > 0 ? normalizeId(buyerLists[0]) : null);
+  const currentList = buyerLists.find((l) => normalizeId(l) === activeListId) || (buyerLists.length > 0 ? buyerLists[0] : null);
+  const listToDelete = buyerLists.find((l) => normalizeId(l) === deletingListId);
 
   // Sync draftMemberIds when current list changes or updates
   useEffect(() => {
     if (currentList) {
-      const initialIds = (currentList.buyerIds || []).map((b: any) => (typeof b === 'object' ? b._id : b));
+      const initialIds = (currentList.buyerIds || []).map(normalizeId).filter(Boolean);
       setDraftMemberIds(initialIds);
     } else {
       setDraftMemberIds([]);
     }
-  }, [currentList?._id, currentList?.updatedAt, currentList?.buyerIds]);
+  }, [currentList?._id, (currentList as any)?.id, currentList?.updatedAt, currentList?.buyerIds]);
 
   // Compute dirty state
-  const originalIds = (currentList?.buyerIds || []).map((b: any) => (typeof b === 'object' ? b._id : b)).sort();
-  const currentDraftSorted = [...draftMemberIds].sort();
+  const originalIds = (currentList?.buyerIds || []).map(normalizeId).filter(Boolean).sort();
+  const currentDraftSorted = draftMemberIds.map(normalizeId).filter(Boolean).sort();
   const isDirty = currentList ? JSON.stringify(originalIds) !== JSON.stringify(currentDraftSorted) : false;
 
   const handleSelectList = (targetId: string) => {
-    if (targetId === currentList?._id) return;
+    const normTarget = normalizeId(targetId);
+    if (normTarget === normalizeId(currentList)) return;
     if (isDirty) {
-      setPendingSwitchListId(targetId);
+      setPendingSwitchListId(normTarget);
     } else {
-      setSelectedListId(targetId);
+      setSelectedListId(normTarget);
     }
   };
 
   const handleConfirmSwitchList = () => {
     if (pendingSwitchListId) {
       setSelectedListId(pendingSwitchListId);
-      const targetList = buyerLists.find((l) => l._id === pendingSwitchListId);
+      const targetList = buyerLists.find((l) => normalizeId(l) === pendingSwitchListId);
       if (targetList) {
-        const initialIds = (targetList.buyerIds || []).map((b: any) => (typeof b === 'object' ? b._id : b));
+        const initialIds = (targetList.buyerIds || []).map(normalizeId).filter(Boolean);
         setDraftMemberIds(initialIds);
       }
       setPendingSwitchListId(null);
@@ -98,8 +117,8 @@ export const BuyerListManagerModal: React.FC<BuyerListManagerModalProps> = ({
       supplierId: effectiveSupplierId || undefined 
     }));
     if (createBuyerListThunk.fulfilled.match(res)) {
-      if (res.payload && res.payload._id) {
-        setSelectedListId(res.payload._id);
+      if (res.payload && (res.payload._id || res.payload.id)) {
+        setSelectedListId(normalizeId(res.payload));
       }
       setNewListName('');
       setIsCreatingNew(false);
@@ -109,14 +128,14 @@ export const BuyerListManagerModal: React.FC<BuyerListManagerModalProps> = ({
   const handleSaveRename = async (id: string, e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!editingName.trim()) return;
-    await dispatch(updateBuyerListThunk({ id, name: editingName.trim() }));
+    await dispatch(updateBuyerListThunk({ id: normalizeId(id), name: editingName.trim() }));
     setEditingListId(null);
     setEditingName('');
   };
 
   const handleConfirmDelete = async () => {
     if (!deletingListId) return;
-    await dispatch(deleteBuyerListThunk(deletingListId));
+    await dispatch(deleteBuyerListThunk(normalizeId(deletingListId)));
     if (selectedListId === deletingListId) {
       setSelectedListId(null);
     }
@@ -124,32 +143,55 @@ export const BuyerListManagerModal: React.FC<BuyerListManagerModalProps> = ({
   };
 
   const handleAddMember = (buyerId: string) => {
-    if (!draftMemberIds.includes(buyerId)) {
-      setDraftMemberIds([...draftMemberIds, buyerId]);
+    const idStr = normalizeId(buyerId);
+    if (!idStr) return;
+    if (!draftMemberIds.some((id) => normalizeId(id) === idStr)) {
+      setDraftMemberIds([...draftMemberIds, idStr]);
     }
   };
 
   const handleRemoveMember = (buyerId: string) => {
-    setDraftMemberIds(draftMemberIds.filter((id) => id !== buyerId));
+    const idStr = normalizeId(buyerId);
+    if (!idStr) return;
+    setDraftMemberIds(draftMemberIds.filter((id) => normalizeId(id) !== idStr));
   };
 
   const handleSaveChanges = async () => {
-    if (!currentList) return;
-    await dispatch(updateBuyerListMembersThunk({ id: currentList._id, buyerIds: draftMemberIds }));
+    const listId = normalizeId(currentList);
+    if (!listId) return;
+    const cleanIds = draftMemberIds.map(normalizeId).filter(Boolean);
+    await dispatch(updateBuyerListMembersThunk({ id: listId, buyerIds: cleanIds }));
   };
 
   // Helper arrays for two-column rendering
-  const currentMembersList = allBuyers.filter((b) => b._id && draftMemberIds.includes(b._id));
-  const availableBuyersList = allBuyers.filter((b) => b._id && !draftMemberIds.includes(b._id));
+  const normalizedDraftMemberIds = new Set(draftMemberIds.map(normalizeId).filter(Boolean));
+
+  const currentMembersList = allBuyers.filter((b) => {
+    const bId = normalizeId(b);
+    return bId && normalizedDraftMemberIds.has(bId);
+  });
+
+  const availableBuyersList = allBuyers.filter((b) => {
+    const bId = normalizeId(b);
+    return bId && !normalizedDraftMemberIds.has(bId);
+  });
 
   const filteredCurrentMembers = currentMembersList.filter((b) => {
-    const q = currentMemberSearch.toLowerCase();
-    return !q || (b.name || '').toLowerCase().includes(q) || (b.email || '').toLowerCase().includes(q);
+    const q = currentMemberSearch.toLowerCase().trim();
+    if (!q) return true;
+    const name = (b.companyName || b.name || '').toLowerCase();
+    const email = (b.email || '').toLowerCase();
+    const tier = (b.tier || '').toLowerCase();
+    return name.includes(q) || email.includes(q) || tier.includes(q);
   });
 
   const filteredAvailableBuyers = availableBuyersList.filter((b) => {
-    const q = availableBuyerSearch.toLowerCase();
-    return !q || (b.name || '').toLowerCase().includes(q) || (b.email || '').toLowerCase().includes(q);
+    const q = availableBuyerSearch.toLowerCase().trim();
+    if (!q) return true;
+    const name = (b.companyName || b.name || '').toLowerCase();
+    const email = (b.email || '').toLowerCase();
+    const tier = (b.tier || '').toLowerCase();
+    return name.includes(q) || email.includes(q) || tier.includes(q);
   });
 
   if (!isOpen) return null;

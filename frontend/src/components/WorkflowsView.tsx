@@ -435,24 +435,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
   const activeRuns = filteredByWorkflow.filter(r => r.status === 'evaluating');
   const historicalRuns = filteredByWorkflow.filter(r => runsFilter === 'all' || r.status === runsFilter);
 
-  if (oauth.status === 'missing') {
-    return (
-      <div className="tab-pane active" style={{ padding: '24px 0' }}>
-        <div className="section-header" style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Cpu size={24} style={{ color: 'hsl(var(--primary))' }} />
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Liquidation Automations & Campaigns</h2>
-            </div>
-          </div>
-          <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-muted))', marginTop: '4px' }}>
-            Manage closeout campaigns, configure rule-based liquidation templates, and monitor automated bidding and disposal workflows.
-          </p>
-        </div>
-        <MailboxConnectionCanvas onConnect={oauth.connectMailbox} loading={oauth.loading} />
-      </div>
-    );
-  }
+
 
   return (
     <div className="tab-pane active" style={{ padding: '24px 0' }}>

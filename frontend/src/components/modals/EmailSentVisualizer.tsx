@@ -48,7 +48,7 @@ export const EmailSentVisualizer: React.FC = () => {
               }}
             >
               <span>
-                📬 <strong>Real Email Sent (Ethereal test inbox):</strong>
+                📬 <strong>Email Dispatched:</strong>
               </span>
               <a
                 href={visualizerEmailDetails.previewUrl}
@@ -64,7 +64,7 @@ export const EmailSentVisualizer: React.FC = () => {
           <div className="email-visualizer-envelope">
             <div className="email-visualizer-header">
               <div>
-                <strong>From:</strong> IndSpoiler Alert Platform &lt;eveline94@ethereal.email&gt;
+                <strong>From:</strong> IndSpoiler Alert Platform
               </div>
               <div>
                 <strong>To:</strong> Logistics Operations &lt;ops@

@@ -147,7 +147,7 @@ const allergenOptions = [
 
 const buyers = companyTemplates.map((item, idx) => {
   const cleanName = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.|\.$/g, '');
-  const email = `${cleanName}@ethereal.email`;
+  const email = `${cleanName}@buyerdomain.com`;
   const loc = locations[idx % locations.length];
   const latOffset = (Math.sin(idx) * 0.05).toFixed(4);
   const lngOffset = (Math.cos(idx) * 0.05).toFixed(4);

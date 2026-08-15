@@ -361,24 +361,36 @@ export async function confirmIngestion(
   const headers = docImport.rawGrid[0];
   const skuHeader = mappings.sku;
   const descHeader = mappings.description;
+  const brandHeader = mappings.brand;
   const qtyHeader = mappings.quantityCases || mappings.quantity;
+  const availableQtyHeader = mappings.availableQty;
   const expHeader = mappings.expirationDate;
   const priceHeader = mappings.originalPrice;
   const lotNumberHeader = mappings.lotNumber;
   const productionDateHeader = mappings.productionDate;
   const categoryHeader = mappings.category;
+  const subCategoryHeader = mappings.subCategory;
+  const statusHeader = mappings.status;
+  const tempMinHeader = mappings.temperatureMin;
+  const tempMaxHeader = mappings.temperatureMax;
   const standardSellPriceHeader = mappings.standardSellPrice;
   const warehouseHeader = mappings.warehouse;
   const commentHeader = mappings.comment;
 
   const skuIdx = skuHeader ? headers.indexOf(skuHeader) : -1;
   const descIdx = descHeader ? headers.indexOf(descHeader) : -1;
+  const brandIdx = brandHeader ? headers.indexOf(brandHeader) : -1;
   const qtyIdx = qtyHeader ? headers.indexOf(qtyHeader) : -1;
+  const availableQtyIdx = availableQtyHeader ? headers.indexOf(availableQtyHeader) : -1;
   const expIdx = expHeader ? headers.indexOf(expHeader) : -1;
   const priceIdx = priceHeader ? headers.indexOf(priceHeader) : -1;
   const lotNumberIdx = lotNumberHeader ? headers.indexOf(lotNumberHeader) : -1;
   const productionDateIdx = productionDateHeader ? headers.indexOf(productionDateHeader) : -1;
   const categoryIdx = categoryHeader ? headers.indexOf(categoryHeader) : -1;
+  const subCategoryIdx = subCategoryHeader ? headers.indexOf(subCategoryHeader) : -1;
+  const statusIdx = statusHeader ? headers.indexOf(statusHeader) : -1;
+  const tempMinIdx = tempMinHeader ? headers.indexOf(tempMinHeader) : -1;
+  const tempMaxIdx = tempMaxHeader ? headers.indexOf(tempMaxHeader) : -1;
   const standardSellPriceIdx = standardSellPriceHeader ? headers.indexOf(standardSellPriceHeader) : -1;
   const warehouseIdx = warehouseHeader ? headers.indexOf(warehouseHeader) : -1;
   const commentIdx = commentHeader ? headers.indexOf(commentHeader) : -1;
@@ -443,12 +455,14 @@ export async function confirmIngestion(
     const row = rows[i];
     const rawSku = skuIdx !== -1 ? row[skuIdx]?.trim() : '';
     const rawDesc = descIdx !== -1 ? row[descIdx]?.trim() : '';
+    const rawBrand = brandIdx !== -1 ? row[brandIdx]?.trim() : '';
     const rawQty = qtyIdx !== -1 ? row[qtyIdx]?.trim() : '';
     const rawExp = expIdx !== -1 ? row[expIdx]?.trim() : '';
     const rawPrice = priceIdx !== -1 ? row[priceIdx]?.trim() : '';
     const rawLotNumber = lotNumberIdx !== -1 ? row[lotNumberIdx]?.trim() : '';
     const rawProductionDate = productionDateIdx !== -1 ? row[productionDateIdx]?.trim() : '';
     const rawCategory = categoryIdx !== -1 ? row[categoryIdx]?.trim() : '';
+    const rawSubCategory = subCategoryIdx !== -1 ? row[subCategoryIdx]?.trim() : '';
     const rawListPrice = standardSellPriceIdx !== -1 ? row[standardSellPriceIdx]?.trim() : '';
     const rawWarehouse = warehouseIdx !== -1 ? row[warehouseIdx]?.trim() : '';
     const rawComment = commentIdx !== -1 ? row[commentIdx]?.trim() : '';
@@ -587,15 +601,19 @@ export async function confirmIngestion(
       product = new ProductMaster({
         supplierId,
         sku: finalSku,
+        brand: rawBrand || undefined,
         category,
+        subCategory: rawSubCategory || undefined,
         description: clean_name,
         shelfLifeDays: defaultCategoryShelfLife
       });
       await product.save();
     } else {
-      // update description/category if they have changed or to make sure it's up to date
+      // update description/category/brand/subCategory if changed
       product.description = clean_name;
       product.category = category;
+      if (rawBrand) product.brand = rawBrand;
+      if (rawSubCategory) product.subCategory = rawSubCategory;
       if (!product.shelfLifeDays || product.shelfLifeDays === 30) {
         product.shelfLifeDays = defaultCategoryShelfLife;
       }
@@ -620,6 +638,42 @@ export async function confirmIngestion(
     // Populate dynamic attributes via Dynamic Data Translator
     const rawUnmappedObject: Record<string, any> = {};
 
+    const rawStatus = statusIdx !== -1 ? row[statusIdx]?.trim().toLowerCase() : '';
+    const rawTempMinStr = tempMinIdx !== -1 ? row[tempMinIdx]?.trim() : '';
+    const rawTempMaxStr = tempMaxIdx !== -1 ? row[tempMaxIdx]?.trim() : '';
+    const rawAvailableQtyStr = availableQtyIdx !== -1 ? row[availableQtyIdx]?.trim() : '';
+
+    let parsedTempMin: number | undefined = undefined;
+    if (rawTempMinStr) {
+      const num = parseFloat(rawTempMinStr.replace(/[^\d\.\-]/g, ''));
+      if (!isNaN(num)) parsedTempMin = num;
+    }
+
+    let parsedTempMax: number | undefined = undefined;
+    if (rawTempMaxStr) {
+      const num = parseFloat(rawTempMaxStr.replace(/[^\d\.\-]/g, ''));
+      if (!isNaN(num)) parsedTempMax = num;
+    }
+
+    let lotAvailableQty = quantityCases;
+    if (rawAvailableQtyStr) {
+      const parsedAvail = parseInt(rawAvailableQtyStr.replace(/,/g, ''), 10);
+      if (!isNaN(parsedAvail)) lotAvailableQty = Math.max(0, parsedAvail);
+    }
+
+    const validStatuses = ['pending', 'active', 'sold', 'expired', 'donated', 'recycled'];
+    let lotStatus: 'pending' | 'active' | 'sold' | 'expired' | 'donated' | 'recycled' = 'pending';
+
+    if (validStatuses.includes(rawStatus)) {
+      lotStatus = rawStatus as any;
+    } else if (lotAvailableQty === 0) {
+      lotStatus = 'sold';
+    }
+
+    if (lotStatus === 'sold') {
+      lotAvailableQty = 0;
+    }
+
     for (const col of unmappedColumnIndices) {
       rawUnmappedObject[col.header] = row[col.idx]?.trim() || '';
     }
@@ -638,10 +692,12 @@ export async function confirmIngestion(
       expirationDate,
       remainingShelfLife,
       quantityCases,
-      availableQty: quantityCases,
+      availableQty: lotAvailableQty,
       costPerCase,
       standardSellPrice: listPrice,
-      status: 'pending',
+      status: lotStatus,
+      temperatureMin: parsedTempMin,
+      temperatureMax: parsedTempMax,
       comment: rawComment || '',
       attributes,
       rawAttributes
@@ -688,28 +744,36 @@ export async function confirmSalesIngestion(
 
   const headers = docImport.rawGrid[0];
   const skuHeader = mappings.sku;
+  const descriptionHeader = mappings.description || mappings.productName || mappings.product;
+  const brandHeader = mappings.brand || mappings.manufacturer;
   const lotNumberHeader = mappings.lotNumber;
-  const buyerEmailHeader = mappings.buyerEmail || mappings.buyerName || mappings.buyer;
+  const buyerEmailHeader = mappings.buyerEmail || mappings.buyer;
+  const buyerCompanyHeader = mappings.buyerCompany || mappings.buyerName || mappings.company;
   const quantityHeader = mappings.quantity || mappings.quantityCases || mappings.cases;
   const priceHeader = mappings.price || mappings.salePrice || mappings.unitPrice || mappings.cost;
+  const totalValueHeader = mappings.totalValue || mappings.revenue || mappings.totalRevenue;
   const saleDateHeader = mappings.saleDate || mappings.soldDate || mappings.date;
   const invoiceNumberHeader = mappings.invoiceNumber || mappings.invoice;
   const productNameHeader = mappings.productName || mappings.description || mappings.product;
+  const statusHeader = mappings.status || mappings.saleStatus || mappings.state;
   const warehouseHeader = mappings.warehouse || mappings.dc || mappings.location;
   const revenueHeader = mappings.revenue || mappings.totalRevenue || mappings.totalValue;
-  const brandHeader = mappings.brand || mappings.manufacturer;
 
   const skuIdx = skuHeader ? headers.indexOf(skuHeader) : -1;
+  const descriptionIdx = descriptionHeader ? headers.indexOf(descriptionHeader) : -1;
+  const brandIdx = brandHeader ? headers.indexOf(brandHeader) : -1;
   const lotNumberIdx = lotNumberHeader ? headers.indexOf(lotNumberHeader) : -1;
   const buyerEmailIdx = buyerEmailHeader ? headers.indexOf(buyerEmailHeader) : -1;
+  const buyerCompanyIdx = buyerCompanyHeader ? headers.indexOf(buyerCompanyHeader) : -1;
   const qtyIdx = quantityHeader ? headers.indexOf(quantityHeader) : -1;
   const priceIdx = priceHeader ? headers.indexOf(priceHeader) : -1;
+  const totalValueIdx = totalValueHeader ? headers.indexOf(totalValueHeader) : -1;
   const saleDateIdx = saleDateHeader ? headers.indexOf(saleDateHeader) : -1;
   const invoiceNumberIdx = invoiceNumberHeader ? headers.indexOf(invoiceNumberHeader) : -1;
   const productNameIdx = productNameHeader ? headers.indexOf(productNameHeader) : -1;
+  const statusIdx = statusHeader ? headers.indexOf(statusHeader) : -1;
   const warehouseIdx = warehouseHeader ? headers.indexOf(warehouseHeader) : -1;
   const revenueIdx = revenueHeader ? headers.indexOf(revenueHeader) : -1;
-  const brandIdx = brandHeader ? headers.indexOf(brandHeader) : -1;
 
   // Save column layout template if requested
   if (saveTemplate) {
@@ -733,16 +797,20 @@ export async function confirmSalesIngestion(
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
     const rawSku = skuIdx !== -1 ? row[skuIdx]?.trim() : '';
+    const rawDescription = descriptionIdx !== -1 ? row[descriptionIdx]?.trim() : '';
+    const rawBrand = brandIdx !== -1 ? row[brandIdx]?.trim() : '';
     const rawLotNumber = lotNumberIdx !== -1 ? row[lotNumberIdx]?.trim() : '';
     const rawBuyerEmail = buyerEmailIdx !== -1 ? row[buyerEmailIdx]?.trim() : '';
+    const rawBuyerCompany = buyerCompanyIdx !== -1 ? row[buyerCompanyIdx]?.trim() : '';
     const rawQty = qtyIdx !== -1 ? row[qtyIdx]?.trim() : '';
     const rawPrice = priceIdx !== -1 ? row[priceIdx]?.trim() : '';
+    const rawTotalValue = totalValueIdx !== -1 ? row[totalValueIdx]?.trim() : '';
     const rawSaleDate = saleDateIdx !== -1 ? row[saleDateIdx]?.trim() : '';
     const rawInvoiceNumber = invoiceNumberIdx !== -1 ? row[invoiceNumberIdx]?.trim() : '';
     const rawProductName = productNameIdx !== -1 ? row[productNameIdx]?.trim() : '';
+    const rawStatus = statusIdx !== -1 ? row[statusIdx]?.trim() : '';
     const rawWarehouse = warehouseIdx !== -1 ? row[warehouseIdx]?.trim() : '';
     const rawRevenue = revenueIdx !== -1 ? row[revenueIdx]?.trim() : '';
-    const rawBrand = brandIdx !== -1 ? row[brandIdx]?.trim() : '';
 
     if (!rawSku && !rawLotNumber) {
       continue; // Skip entirely empty row
@@ -755,8 +823,9 @@ export async function confirmSalesIngestion(
 
     const quantityCases = parseInt(rawQty ? rawQty.replace(/,/g, '') : '0', 10) || 0;
     const pricePerCase = parseFloat(rawPrice ? rawPrice.replace(/[$,]/g, '') : '0') || 0;
+    const parsedTotalValue = parseFloat(rawTotalValue ? rawTotalValue.replace(/[$,]/g, '') : '0') || 0;
     const parsedRevenue = parseFloat(rawRevenue ? rawRevenue.replace(/[$,]/g, '') : '0') || 0;
-    const totalValue = parsedRevenue > 0 ? parsedRevenue : quantityCases * pricePerCase;
+    const totalValue = parsedTotalValue > 0 ? parsedTotalValue : (parsedRevenue > 0 ? parsedRevenue : quantityCases * pricePerCase);
 
     let saleDate = new Date(rawSaleDate);
     if (isNaN(saleDate.getTime())) {
@@ -765,39 +834,46 @@ export async function confirmSalesIngestion(
 
     // 1. Resolve or Auto-register Buyer
     let buyerId = null;
-    let finalBuyerEmail = rawBuyerEmail || 'eveline94@ethereal.email';
+    let finalBuyerEmail = rawBuyerEmail || (rawBuyerCompany ? `${rawBuyerCompany.toLowerCase().replace(/[^a-z0-9]/g, '')}@retailer.com` : 'buyer@retailer.com');
     const emailLower = finalBuyerEmail.trim().toLowerCase();
     const isEmailFormat = emailLower.includes('@');
 
+    const buyerSearchTerm = (rawBuyerCompany || finalBuyerEmail).trim();
     const safeBuyerQuery = isEmailFormat
       ? { email: emailLower }
       : {
           $or: [
             { email: emailLower },
-            { companyName: new RegExp('^' + finalBuyerEmail.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }
+            { companyName: new RegExp('^' + buyerSearchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }
           ]
         };
 
     let buyer = await Buyer.findOne(safeBuyerQuery);
+    if (!buyer && rawBuyerCompany) {
+      buyer = await Buyer.findOne({ companyName: new RegExp('^' + rawBuyerCompany.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') });
+    }
+
     if (!buyer) {
       let emailToSave = emailLower;
-      let derivedName = '';
+      let derivedName = rawBuyerCompany || '';
 
-      if (isEmailFormat) {
-        const emailParts = emailLower.split('@');
-        const prefix = emailParts[0];
-        const domain = emailParts[1] ? emailParts[1].split('.')[0] : 'retailer';
-        derivedName = domain
-          .split('-')
-          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(' ');
-        if (['gmail', 'yahoo', 'outlook', 'hotmail', 'protonmail'].includes(derivedName.toLowerCase())) {
-          derivedName = prefix.charAt(0).toUpperCase() + prefix.slice(1) + ' Retail';
+      if (!derivedName) {
+        if (isEmailFormat) {
+          const emailParts = emailLower.split('@');
+          const prefix = emailParts[0];
+          const domain = emailParts[1] ? emailParts[1].split('.')[0] : 'retailer';
+          derivedName = domain
+            .split('-')
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          if (['gmail', 'yahoo', 'outlook', 'hotmail', 'protonmail'].includes(derivedName.toLowerCase())) {
+            derivedName = prefix.charAt(0).toUpperCase() + prefix.slice(1) + ' Retail';
+          }
+        } else {
+          derivedName = finalBuyerEmail;
+          const cleanPrefix = finalBuyerEmail.toLowerCase().replace(/[^a-z0-9]/g, '');
+          emailToSave = `${cleanPrefix || 'buyer'}@retailer.com`;
         }
-      } else {
-        derivedName = finalBuyerEmail;
-        const cleanPrefix = finalBuyerEmail.toLowerCase().replace(/[^a-z0-9]/g, '');
-        emailToSave = `${cleanPrefix || 'buyer'}@retailer.com`;
       }
 
       buyer = await Buyer.findOne({ email: emailToSave });
@@ -957,12 +1033,18 @@ export async function confirmSalesIngestion(
     });
 
     // 4. Create Sale record
-    let description = rawProductName || 'Ingested Closeout Lot';
-    if (!rawProductName && lot) {
+    let description = rawDescription || rawProductName || 'Ingested Closeout Lot';
+    if (!rawDescription && !rawProductName && lot) {
       const pm = await ProductMaster.findById(lot.productId);
       if (pm && pm.description) {
         description = pm.description;
       }
+    }
+
+    let saleStatus: 'scheduled' | 'confirmed' | 'in_transit' | 'delivered' = 'scheduled';
+    const validStatuses = ['scheduled', 'confirmed', 'in_transit', 'delivered'];
+    if (rawStatus && validStatuses.includes(rawStatus.toLowerCase())) {
+      saleStatus = rawStatus.toLowerCase() as any;
     }
 
     const sale = new Sale({
@@ -976,12 +1058,12 @@ export async function confirmSalesIngestion(
       pricePerCase,
       totalValue,
       saleDate,
-      status: 'scheduled',
+      status: saleStatus,
       buyerEmail: buyer.email,
       invoiceNumber: rawInvoiceNumber,
       brand: rawBrand,
       warehouse: rawWarehouse,
-      revenue: parsedRevenue,
+      revenue: parsedRevenue > 0 ? parsedRevenue : totalValue,
       reconciliationWarning: reconciliationWarning || undefined,
       metadata
     });
@@ -1040,6 +1122,8 @@ export async function confirmBuyerIngestion(
   const categoriesIdx = getColIndex('categories');
   const transportRadiusIdx = getColIndex('transportRadius');
   const excludedAllergensIdx = getColIndex('excludedAllergens');
+  const phoneIdx = getColIndex('phone');
+  const addressIdx = getColIndex('address');
 
   let createdCount = 0;
   let updatedCount = 0;
@@ -1087,6 +1171,9 @@ export async function confirmBuyerIngestion(
       excludedAllergens = row[excludedAllergensIdx].split(',').map((s: string) => s.trim()).filter(Boolean);
     }
 
+    const phone = phoneIdx >= 0 && row[phoneIdx] ? row[phoneIdx].trim() : undefined;
+    const address = addressIdx >= 0 && row[addressIdx] ? row[addressIdx].trim() : undefined;
+
     const tier = (tierIdx >= 0 && row[tierIdx] ? row[tierIdx].trim() : 'tier1');
 
     let isVerified = false;
@@ -1105,6 +1192,8 @@ export async function confirmBuyerIngestion(
       if (transportRadiusIdx >= 0) buyer.transportRadius = transportRadius;
       if (excludedAllergens.length > 0) buyer.excludedAllergens = excludedAllergens;
       if (isVerifiedIdx >= 0) buyer.isVerified = isVerified;
+      if (phoneIdx >= 0 && phone !== undefined) buyer.phone = phone;
+      if (addressIdx >= 0 && address !== undefined) buyer.address = address;
 
       await buyer.save();
       updatedCount++;
@@ -1120,6 +1209,8 @@ export async function confirmBuyerIngestion(
         categories,
         transportRadius,
         excludedAllergens,
+        ...(phone !== undefined ? { phone } : {}),
+        ...(address !== undefined ? { address } : {}),
         warehouseLocations: []
       });
       createdCount++;

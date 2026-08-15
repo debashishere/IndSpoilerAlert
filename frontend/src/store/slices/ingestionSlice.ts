@@ -446,10 +446,10 @@ export const confirmSalesThunk = createAsyncThunk(
 
 export const fetchSalesRecordsThunk = createAsyncThunk(
   'ingestion/fetchSalesRecords',
-  async (_, { dispatch, rejectWithValue }) => {
+  async (supplierId: string | undefined, { dispatch, rejectWithValue }) => {
     try {
       dispatch(setSalesRecordsLoading(true));
-      const records = await ingestionService.fetchSalesRecords();
+      const records = await ingestionService.fetchSalesRecords(supplierId);
       dispatch(setSalesRecords(records));
       dispatch(setSalesRecordsLoading(false));
       return records;

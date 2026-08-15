@@ -160,12 +160,12 @@ export function LiveDevicePreview({
         <div className="p-4 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 space-y-1.5 text-xs">
           <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
             <p>
-              <strong className="text-slate-900 dark:text-slate-200">From:</strong> {context.supplier_name || 'Unilever Operations'} &lt;eveline94@ethereal.email&gt;
+              <strong className="text-slate-900 dark:text-slate-200">From:</strong> {context.supplier_name || 'Unilever Operations'}
             </p>
             <span className="text-[10px] bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-700 dark:text-slate-400">100% Client Rendering</span>
           </div>
           <p className="text-slate-600 dark:text-slate-400">
-            <strong className="text-slate-900 dark:text-slate-200">To:</strong> {context.buyer_name || 'FreshMart Wholesale'} &lt;eveline94@ethereal.email&gt;
+            <strong className="text-slate-900 dark:text-slate-200">To:</strong> {context.buyer_name || 'FreshMart Wholesale'}
           </p>
           <p className="text-indigo-600 dark:text-indigo-400 font-bold font-mono pt-0.5">
             <strong className="text-slate-900 dark:text-slate-200">Subject:</strong> {compiledSubject}

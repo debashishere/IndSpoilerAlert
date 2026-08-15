@@ -202,4 +202,24 @@ describe('TDD Suite: Issues 0048-0051 (Campaign Validations, Buyer Segment Roste
     expect(screen.getByText('Matched Lots')).toBeInTheDocument();
     expect(screen.getByText('Total Cases')).toBeInTheDocument();
   });
+
+  it('should disable Eye button when no buyer list is selected or configured', async () => {
+    render(
+      <LiquidationAutomationStudio
+        supplierId="sup-101"
+        inventoryLots={mockInventoryLots}
+        buyers={[]} // No buyers registered
+        apiBaseUrl="http://localhost:3000/api"
+      />
+    );
+
+    // Expand stage 1 card
+    const stage1Circle = screen.getAllByText('1')[0];
+    fireEvent.click(stage1Circle);
+
+    // The Eye button should be disabled when selected list has 0 buyers
+    const eyeBtns = screen.getAllByTitle(/Selected buyer list has 0 buyers configured|No buyer list selected/i);
+    expect(eyeBtns.length).toBeGreaterThan(0);
+    expect((eyeBtns[0] as HTMLButtonElement).disabled).toBe(true);
+  });
 });
