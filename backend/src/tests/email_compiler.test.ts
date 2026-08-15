@@ -80,6 +80,16 @@ describe('Slice 2: Handlebars Compiler & Juice CSS Inliner Engine', () => {
       const compiled = compileTemplate(template, context);
       expect(compiled).toContain('href="https://indspoileralert.com/bid?token=signed_jwt_token_123"');
     });
+
+    it('should normalize CSS variables like hsl(var(--primary)) to email-safe hex colors for inbox Bid Now button rendering', () => {
+      const template = '<p style="text-align: center;"><a href="{{quick_bid_link}}" style="background-color: hsl(var(--primary)); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Bid Now</a></p>';
+      const context = { quick_bid_link: 'https://indspoileralert.com/bid?token=test-token' };
+
+      const compiled = compileTemplate(template, context);
+      expect(compiled).toContain('background-color: #2563eb');
+      expect(compiled).not.toContain('hsl(var(--primary))');
+      expect(compiled).toContain('Bid Now');
+    });
   });
 
   describe('Juice CSS Inlining Engine for Outlook/Gmail Compatibility', () => {

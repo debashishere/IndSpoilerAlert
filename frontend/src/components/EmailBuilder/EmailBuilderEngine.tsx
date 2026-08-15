@@ -91,12 +91,12 @@ export const EmailBuilderEngine: React.FC<EmailBuilderEngineProps> = ({
       resolveExt(TableRow),
       resolveExt(TableHeader).configure({
         HTMLAttributes: {
-          style: 'background-color: hsl(var(--bg-card-hover)); font-weight: 600; text-align: left; padding: 8px; border: 1px solid hsl(var(--border-color));',
+          style: 'background-color: #f1f5f9; font-weight: 600; text-align: left; padding: 8px; border: 1px solid #e2e8f0;',
         },
       }),
       resolveExt(TableCell).configure({
         HTMLAttributes: {
-          style: 'padding: 8px; border: 1px solid hsl(var(--border-color));',
+          style: 'padding: 8px; border: 1px solid #e2e8f0;',
         },
       }),
       InventoryTableToken,
@@ -111,7 +111,7 @@ export const EmailBuilderEngine: React.FC<EmailBuilderEngineProps> = ({
     <p>We have immediate distressed stock available for liquidation. Please review the itemized inventory below:</p>
     <span data-inventory-table-token="true" data-token="inventory_table">📊 Dynamic Inventory Table {{inventory_table}}</span>
     <p style="text-align: center; margin-top: 20px;">
-      <a href="{{quick_bid_link}}" style="background-color: hsl(var(--primary)); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Submit 1-Click Bid</a>
+      <a href="{{quick_bid_link}}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Bid Now</a>
     </p>
   `;
 

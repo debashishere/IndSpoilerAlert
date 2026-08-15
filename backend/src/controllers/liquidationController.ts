@@ -265,18 +265,23 @@ export async function triggerLiquidationAutomation(req: Request, res: Response) 
     }
 
     const filters = automation.inventoryFilters || {};
-    // Find active lots for this supplier
-    const lots = await InventoryLot.find({ 
-      supplierId: automation.supplierId, 
-      status: 'active' 
-    }).populate('productId');
+    const explicitIds = (filters.explicitLotIds || []).map((e: any) => e.toString());
+    const excludedIds = (filters.excludedLotIds || []).map((e: any) => e.toString());
+    const mode = filters.selectorMode || (explicitIds.length > 0 ? 'explicit' : 'automatic');
+
+    // Find matching inventory lots (query explicitly selected lots directly when in explicit mode)
+    let lots: any[] = [];
+    if (mode === 'explicit' && explicitIds.length > 0) {
+      lots = await InventoryLot.find({ _id: { $in: explicitIds } }).populate('productId');
+    } else {
+      lots = await InventoryLot.find({ 
+        supplierId: automation.supplierId, 
+        status: 'active' 
+      }).populate('productId');
+    }
 
     const matchedLots = lots.filter((lot: any) => {
       const id = lot._id.toString();
-      const explicitIds = (filters.explicitLotIds || []).map((e: any) => e.toString());
-      const excludedIds = (filters.excludedLotIds || []).map((e: any) => e.toString());
-      const mode = filters.selectorMode || (explicitIds.length > 0 ? 'explicit' : 'automatic');
-
       if (mode === 'explicit') {
         return explicitIds.includes(id);
       }
@@ -372,10 +377,19 @@ export async function previewEmail(req: Request, res: Response) {
     }
 
     const filters = inventoryFilters || {};
-    const lots = await InventoryLot.find({ 
-      supplierId, 
-      status: 'active' 
-    }).populate('productId');
+    const explicitIds = (filters.explicitLotIds || []).map((e: any) => e.toString());
+    const excludedIds = (filters.excludedLotIds || []).map((e: any) => e.toString());
+    const mode = filters.selectorMode || (explicitIds.length > 0 ? 'explicit' : 'automatic');
+
+    let lots: any[] = [];
+    if (mode === 'explicit' && explicitIds.length > 0) {
+      lots = await InventoryLot.find({ _id: { $in: explicitIds } }).populate('productId');
+    } else {
+      lots = await InventoryLot.find({ 
+        supplierId, 
+        status: 'active' 
+      }).populate('productId');
+    }
 
     const matchedLots = lots.filter((lot: any) => {
       const id = lot._id.toString();
@@ -409,10 +423,10 @@ export async function previewEmail(req: Request, res: Response) {
 
     if (matchedLots.length === 0) {
       const renderedBodyHtml = `
-        <div class="warning-banner" style="background-color: hsl(var(--warning) / 10%); border: 1px solid hsl(var(--warning)); color: hsl(var(--warning)); padding: 12px; border-radius: 6px; margin-bottom: 16px;">
+        <div class="warning-banner" style="background-color: #fef3c7; border: 1px solid #d97706; color: #b45309; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
           ⚠️ Your current selection filters match 0 active inventory lots. No email will be sent.
         </div>
-        ${body.replace('{{inventory_table}}', '<div style="color: hsl(var(--text-muted)); font-style: italic;">[No matching inventory lots found to generate table]</div>')
+        ${body.replace('{{inventory_table}}', '<div style="color: #64748b; font-style: italic;">[No matching inventory lots found to generate table]</div>')
               .replace('{{contact_name}}', 'Retail Partner')
               .replace('{{buyer_company}}', 'Matched Buyer Corp')
               .split('\n').join('<br/>')}

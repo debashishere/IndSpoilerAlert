@@ -141,6 +141,22 @@ export function compileSubject(subjectTemplate: string = '', context: EmailCompi
   return template(normCtx);
 }
 
+export function normalizeCssVariablesForEmail(html: string): string {
+  if (!html) return '';
+  return html
+    .replace(/hsl\(var\(--primary(?:-dark)?\)\)/gi, '#2563eb')
+    .replace(/hsl\(var\(--border(?:-color)?\)\)/gi, '#e2e8f0')
+    .replace(/hsl\(var\(--surface(?:-card)?\)\)/gi, '#ffffff')
+    .replace(/hsl\(var\(--bg-main\)\)/gi, '#f8fafc')
+    .replace(/hsl\(var\(--bg-card(?:-hover)?\)\)/gi, '#f1f5f9')
+    .replace(/hsl\(var\(--text-main|--text-primary\)\)/gi, '#1e293b')
+    .replace(/hsl\(var\(--text-secondary\)\)/gi, '#475569')
+    .replace(/hsl\(var\(--text-muted\)\)/gi, '#64748b')
+    .replace(/hsl\(var\(--success\)(?:\s*\/\s*[\d.]+%?)?\)/gi, '#16a34a')
+    .replace(/hsl\(var\(--warning\)(?:\s*\/\s*[\d.]+%?)?\)/gi, '#d97706')
+    .replace(/hsl\(var\(--error|--destructive\)(?:\s*\/\s*[\d.]+%?)?\)/gi, '#dc2626');
+}
+
 /**
  * Compile raw HTML template string with Handlebars token substitution and Juice CSS inlining
  */
@@ -151,8 +167,11 @@ export function compileTemplate(
 ): string {
   if (!htmlTemplate) return '';
 
+  // Normalize any web CSS variables (e.g. hsl(var(--primary))) into email-safe hex colors
+  const sanitizedHtml = normalizeCssVariablesForEmail(htmlTemplate);
+
   // Transform data-token UI pill elements into Handlebars placeholders (e.g. data-token="inventory_table" -> {{{inventory_table}}})
-  let preprocessedHtml = htmlTemplate.replace(
+  let preprocessedHtml = sanitizedHtml.replace(
     /<(?:span|div|button|a)[^>]*data-token=["']([^"']+)["'][^>]*>[\s\S]*?<\/(?:span|div|button|a)>/gi,
     (match, tokenName) => {
       if (tokenName === 'inventory_table' || tokenName === 'header') {

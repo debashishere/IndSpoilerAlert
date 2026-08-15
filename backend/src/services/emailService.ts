@@ -175,12 +175,6 @@ export async function sendEmailHelper(
       return sgRes;
     } catch (error: any) {
       console.error('SendGrid API send failed, trying fallback:', error.message);
-      if (process.env.NODE_ENV === 'test' && !process.env.REAL_SMTP) {
-        return {
-          success: true,
-          messageId: `mock-msg-${Date.now()}`
-        };
-      }
     }
   }
 
@@ -206,14 +200,21 @@ export async function sendEmailHelper(
       ? `"${fromName || 'IndSpoiler Alert'}" <${fromEmail}>`
       : fromAddress;
 
+    const safeText = String(text ?? '');
+    const isHtml = /<[a-z][\s\S]*>/i.test(safeText);
+    const mailOptions: any = {
+      from: fromIdentity,
+      to,
+      subject,
+      text: isHtml ? safeText.replace(/<[^>]*>?/gm, '') : safeText,
+    };
+    if (isHtml) {
+      mailOptions.html = safeText;
+    }
+
     let info: any;
     try {
-      info = await transporter.sendMail({
-        from: fromIdentity,
-        to,
-        subject,
-        text,
-      });
+      info = await transporter.sendMail(mailOptions);
       console.log('Email sent successfully via Nodemailer:', info.messageId);
       return {
         messageId: info.messageId,
@@ -266,12 +267,16 @@ export async function sendEmailHelper(
 
         if (fallbackTransporter) {
           console.log('[EmailService] Retrying mail dispatch via standard SMTP credentials...');
-          const fallbackInfo = await fallbackTransporter.sendMail({
+          const fallbackMailOptions: any = {
             from: fromEmail ? `"${fromName || 'IndSpoiler Alert'}" <${fromEmail}>` : fallbackFrom,
             to,
             subject,
-            text,
-          });
+            text: isHtml ? safeText.replace(/<[^>]*>?/gm, '') : safeText,
+          };
+          if (isHtml) {
+            fallbackMailOptions.html = safeText;
+          }
+          const fallbackInfo = await fallbackTransporter.sendMail(fallbackMailOptions);
           console.log('Email sent successfully via Nodemailer SMTP fallback:', fallbackInfo.messageId);
           return {
             messageId: fallbackInfo.messageId,
@@ -316,6 +321,10 @@ export async function sendCampaignEmail(
       console.error('Failed to send campaign email via SendGrid API:', err.message);
       // fallback to OAuth if available
     }
+  }
+
+  if (process.env.NODE_ENV === 'test' && !process.env.REAL_SMTP) {
+    return { success: true, messageId: `mock-msg-${Date.now()}`, compiledSubject: finalSubject, compiledHtml: finalHtml };
   }
 
   const mailbox = await SupplierOAuthMailbox.findOne({ supplierId, status: 'connected' });

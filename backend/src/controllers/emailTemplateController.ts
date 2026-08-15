@@ -26,7 +26,7 @@ export const DEFAULT_PLATFORM_TEMPLATES = [
       <br/>
       <p style="text-align: center;">
         <a href="{{quick_bid_link}}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-          Submit 1-Click Bid
+          Bid Now
         </a>
       </p>
     </div>`,

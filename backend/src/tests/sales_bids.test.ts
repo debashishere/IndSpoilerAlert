@@ -423,6 +423,7 @@ describe('Sales & Bids Endpoints', () => {
     await InventoryLot.findByIdAndDelete(lotA._id);
     await InventoryLot.findByIdAndDelete(lotB._id);
     await Sale.deleteOne({ _id: savedSale?._id });
+    await mongoose.model('Buyer').deleteMany({ email: 'fefo.buyer@example.com' });
     await mongoose.model('DocumentImport').findByIdAndDelete(fefoDoc._id);
   });
 
@@ -498,6 +499,7 @@ describe('Sales & Bids Endpoints', () => {
     expect(res.body.warnings.some((w: string) => w.includes('Skipped duplicate sale record'))).toBe(true);
 
     await Sale.findByIdAndDelete(existingSale._id);
+    await mongoose.model('Buyer').deleteMany({ email: 'dup.buyer@example.com' });
     await mongoose.model('DocumentImport').findByIdAndDelete(dupDoc._id);
   });
 

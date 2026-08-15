@@ -10,7 +10,7 @@ describe('Slice 2: Handlebars Token Compiler & Live Device Preview Pane', () => 
       <p>Dear {{buyer_name}},</p>
       <p>We have surplus inventory available: {{lot_title}}</p>
       {{inventory_table}}
-      <p><a href="{{quick_bid_link}}">Submit 1-Click Bid</a></p>
+      <p><a href="{{quick_bid_link}}">Bid Now</a></p>
     </div>
   `;
 

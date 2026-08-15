@@ -285,13 +285,13 @@ export function resolveStagesWithBuyerLists(stages: Stage[], buyerLists: any[]):
   });
 }
 
-export const DEFAULT_EMAIL_BODY_HTML = `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid hsl(var(--border-color)); border-radius: 8px; background: white;">
-<h2 style="color: hsl(var(--primary)); margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
+export const DEFAULT_EMAIL_BODY_HTML = `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+<h2 style="color: #2563eb; margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
 <p>Hello <strong>{{buyer_name}}</strong>,</p>
 <p>We have immediate surplus inventory available for liquidation. Stage offer: <strong>{{current_stage_discount}}</strong> (Response window: {{expiry_hours}}). Please review the itemized offer sheet below:</p>
 <div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
 <br/>
-<p style="text-align: center;"><a href="{{quick_bid_link}}" style="background-color: hsl(var(--primary)); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Submit 1-Click Bid</a></p>
+<p style="text-align: center;"><a href="{{quick_bid_link}}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Bid Now</a></p>
 </div>`;
 
 const DEFAULT_STAGES: Stage[] = [

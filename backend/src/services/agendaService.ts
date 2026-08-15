@@ -7,7 +7,8 @@ import Buyer from '../models/Buyer';
 import BuyerList from '../models/BuyerList';
 import Activity from '../models/Activity';
 import EmailDispatchLog from '../models/EmailDispatchLog';
-import { sendEmailHelper, syncEmailToThread } from './emailService';
+import { sendEmailHelper, syncEmailToThread, sendCampaignEmail } from './emailService';
+import { compileTemplate, compileSubject } from './emailTemplateService';
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
 
@@ -60,18 +61,23 @@ agenda.define('trigger-liquidation-workflow', async (job: any) => {
     if (!automation || !automation.isActive) return;
 
     const filters = automation.inventoryFilters || {};
+    const explicitIds = (filters.explicitLotIds || []).map((e: any) => e.toString());
+    const excludedIds = (filters.excludedLotIds || []).map((e: any) => e.toString());
+    const mode = filters.selectorMode || (explicitIds.length > 0 ? 'explicit' : 'automatic');
     
-    // Find matching active inventory lots
-    const lots = await InventoryLot.find({
-      supplierId: automation.supplierId,
-      status: 'active'
-    }).populate('productId');
+    // Find matching active inventory lots (query explicitly selected lots directly when in explicit mode)
+    let lots: any[] = [];
+    if (mode === 'explicit' && explicitIds.length > 0) {
+      lots = await InventoryLot.find({ _id: { $in: explicitIds } }).populate('productId');
+    } else {
+      lots = await InventoryLot.find({
+        supplierId: automation.supplierId,
+        status: 'active'
+      }).populate('productId');
+    }
 
     const matchedLots = lots.filter((lot: any) => {
       const id = lot._id.toString();
-      const explicitIds = (filters.explicitLotIds || []).map((e: any) => e.toString());
-      const excludedIds = (filters.excludedLotIds || []).map((e: any) => e.toString());
-      const mode = filters.selectorMode || (explicitIds.length > 0 ? 'explicit' : 'automatic');
 
       if (mode === 'explicit') {
         return explicitIds.includes(id);
@@ -219,7 +225,10 @@ export async function createAutomationRun(
             const cleanEmail = b.email.trim().toLowerCase();
             if (!buyerEmails.includes(cleanEmail)) {
               buyerEmails.push(cleanEmail);
-              if (b.id || b._id) evaluatedBuyerIds.push(b.id || b._id);
+              const bId = b._id || b.id;
+              if (bId && mongoose.Types.ObjectId.isValid(bId)) {
+                evaluatedBuyerIds.push(bId);
+              }
               resolvedBuyerMap.set(cleanEmail, {
                 _id: b.id || b._id,
                 companyName: b.name || b.companyName,
@@ -420,8 +429,53 @@ export async function createAutomationRun(
 
 
   // Dispatch emails and record Activity logs
-  const emailSubject = automation.emailTemplate?.subject || `Distressed Inventory Liquidation Offer - ${automation.name || 'Clearance'}`;
-  const emailText = `Surplus Inventory Liquidation Offer for ${matchedLots.length} lot(s). Total Cases: ${affectedInventoryLots.reduce((acc: number, l: any) => acc + (l.cases || 0), 0)}. Reply to place bid.`;
+  const rawSubject = automation.stages?.[0]?.emailSubject || automation.emailTemplate?.subject || `Distressed Inventory Liquidation Offer - ${automation.name || 'Clearance'}`;
+  const rawBodyHtml = automation.stages?.[0]?.emailBodyHtml || automation.emailTemplate?.body || `
+<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+  <h2 style="color: #4f46e5; margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
+  <p>Hello <strong>{{buyer_name}}</strong>,</p>
+  <p>We have immediate surplus inventory available for liquidation. Stage offer: <strong>{{current_stage_discount}}</strong> (Response window: {{expiry_hours}}). Please review the itemized offer sheet below:</p>
+  <div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
+  <br/>
+  <p style="text-align: center;">
+    <a href="{{quick_bid_link}}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+      Bid Now
+    </a>
+  </p>
+</div>
+  `;
+
+  const totalCases = affectedInventoryLots.reduce((acc: number, l: any) => acc + (l.cases || 0), 0);
+  const primaryLot = matchedLots[0];
+  const lotTitle = primaryLot ? ((primaryLot.productId as any)?.description || primaryLot.description || `${matchedLots.length} Surplus Inventory Lots`) : 'Surplus Inventory Lot';
+
+  const inventoryItems = matchedLots.map((lot: any) => {
+    const prodName = (lot.productId as any)?.description || lot.description || 'Surplus Item';
+    const rsl = typeof lot.remainingShelfLife === 'number' ? (lot.remainingShelfLife > 1 ? lot.remainingShelfLife : lot.remainingShelfLife * 100) : 14;
+    return {
+      sku: (lot.productId as any)?.sku || lot.sku || 'SKU-LOT',
+      description: prodName,
+      cases: lot.quantityCases || lot.availableQty || 0,
+      expiryDays: Math.round(rsl),
+      unitPrice: lot.standardSellPrice || lot.costPerCase || 0
+    };
+  });
+
+  const stageDiscount = automation.stages?.[0]?.discountValue ? `${automation.stages[0].discountValue}% OFF` : 'Special Clearance Price';
+  
+  const rawWaitHours = automation.stages?.[0]?.waitHours;
+  let stageExpiry = '24 Hours';
+  if (rawWaitHours !== undefined && rawWaitHours !== null) {
+    const num = typeof rawWaitHours === 'number' ? rawWaitHours : parseFloat(rawWaitHours);
+    if (!isNaN(num)) {
+      if (num < 1 && num > 0) {
+        const mins = Math.round(num * 60);
+        stageExpiry = `${mins} Minute${mins === 1 ? '' : 's'}`;
+      } else {
+        stageExpiry = Number.isInteger(num) ? `${num} Hours` : `${num.toFixed(1)} Hours`;
+      }
+    }
+  }
 
   for (const email of buyerEmails) {
     try {
@@ -432,8 +486,25 @@ export async function createAutomationRun(
         } catch (e) {}
       }
       const compiledBuyerName = (buyerObj as any)?.companyName || (buyerObj as any)?.name || 'Valued Buyer';
+      const quickBidLink = `https://indspoileralert.com/bid?supplierId=${automation.supplierId}&listingId=${primaryLot?._id || 'deal'}`;
 
-      await sendEmailHelper(email, emailSubject, emailText, undefined, undefined, automation.supplierId?.toString() || 'default');
+      const context = {
+        buyer_name: compiledBuyerName,
+        supplier_name: 'IndSpoiler Alert Operations',
+        lot_title: lotTitle,
+        total_cases: totalCases,
+        quick_bid_link: quickBidLink,
+        current_stage_discount: stageDiscount,
+        expiry_hours: stageExpiry,
+        inventory_table: inventoryItems,
+        inventoryItems
+      };
+
+      const emailSubject = compileSubject(rawSubject, context);
+      const emailBodyHtml = compileTemplate(rawBodyHtml, context);
+      const emailPlainText = `Surplus Inventory Liquidation Offer for ${matchedLots.length} lot(s). Total Cases: ${totalCases}. Reply to place bid. Link: ${quickBidLink}`;
+
+      await sendEmailHelper(email, emailSubject, emailBodyHtml || emailPlainText, undefined, undefined, automation.supplierId?.toString() || 'default');
 
       if (mongoose.connection.readyState === 1) {
         try {
@@ -441,7 +512,7 @@ export async function createAutomationRun(
             supplierId: automation.supplierId?.toString() || 'default',
             buyerEmail: email,
             subject: emailSubject,
-            body: emailText,
+            body: emailBodyHtml || emailPlainText,
             senderType: 'supplier',
             listingId: matchedLots.length > 0 ? matchedLots[0]._id?.toString() : undefined
           });
@@ -458,13 +529,12 @@ export async function createAutomationRun(
         } catch (e) {}
       }
 
-
       if (matchedLots.length > 0) {
         await Activity.create({
           lotId: matchedLots[0]._id,
           type: 'email',
           subject: emailSubject,
-          content: emailText,
+          content: emailBodyHtml || emailPlainText,
           recipient: email,
           sender: automation.createdBy || 'IndSpoilerAlert Engine',
           timestamp: new Date()

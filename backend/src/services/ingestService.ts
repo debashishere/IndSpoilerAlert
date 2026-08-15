@@ -885,7 +885,8 @@ export async function confirmSalesIngestion(
           minShelfLife: 5,
           categories: ['Dairy', 'Produce', 'Meat', 'Dry Goods', 'Beverages'],
           transportRadius: 150,
-          warehouseLocations: [{ lat: 41.8781, lng: -87.6298 }]
+          warehouseLocations: [{ lat: 41.8781, lng: -87.6298 }],
+          isActive: true
         });
         await buyer.save();
       }

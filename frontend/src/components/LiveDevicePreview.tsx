@@ -60,6 +60,24 @@ export function compileClientPreview(
   let compiledSubject = subject || '';
   let compiledBody = bodyHtml || '';
 
+  // If body is empty or plain text without HTML layout, wrap into standard rich email layout
+  if (!compiledBody || !/<[a-z][\s\S]*>/i.test(compiledBody)) {
+    const textContent = compiledBody
+      ? `<p style="margin-bottom: 14px; line-height: 1.5;">${compiledBody.replace(/\n/g, '<br/>')}</p>`
+      : `<h2 style="color: #1e40af; margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
+<p>Hello <strong>{{buyer_name}}</strong>,</p>
+<p>We have immediate surplus inventory available for liquidation. Stage offer: <strong>{{current_stage_discount}}</strong> (Response window: {{expiry_hours}}). Please review the itemized offer sheet below:</p>`;
+
+    const hasTable = /inventory_table|<table/i.test(compiledBody);
+    const hasButton = /quick_bid_link|Submit 1-Click Bid|Bid Now|Place.*Bid/i.test(compiledBody);
+
+    compiledBody = `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: white;">
+      ${textContent}
+      ${!hasTable ? '<div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>' : ''}
+      ${!hasButton ? '<br/><p style="text-align: center;"><a href="{{quick_bid_link}}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Bid Now</a></p>' : ''}
+    </div>`;
+  }
+
   // Replace data-token HTML pill components (e.g. <div data-token="inventory_table"...>...</div>)
   compiledBody = compiledBody.replace(
     /<(?:span|div|button|a)[^>]*data-token=["']([^"']+)["'][^>]*>[\s\S]*?<\/(?:span|div|button|a)>/gi,

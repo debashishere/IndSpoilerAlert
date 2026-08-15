@@ -39,6 +39,52 @@ export interface StageEmailModalProps {
   onClose: () => void;
 }
 
+export const STAGE_EMAIL_TEMPLATES: Record<string, { name: string; subject: string; bodyHtml: string }> = {
+  default: {
+    name: 'Standard Liquidation Offer Sheet',
+    subject: 'Distressed Stock Clearance: {{lot_title}}',
+    bodyHtml: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+<h2 style="color: #2563eb; margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
+<p>Hello <strong>{{buyer_name}}</strong>,</p>
+<p>We have immediate surplus inventory available for liquidation. Stage offer: <strong>{{current_stage_discount}}</strong> (Response window: {{expiry_hours}}). Please review the itemized offer sheet below:</p>
+<div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
+<br/>
+<p style="text-align: center;"><a href="{{quick_bid_link}}" style="background-color: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Bid Now</a></p>
+</div>`,
+  },
+  'short-dated-auction': {
+    name: 'Urgent Short-Dated Surplus Alert',
+    subject: '🔥 Urgent Auction Notice: {{lot_title}}',
+    bodyHtml: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #fecaca; border-radius: 8px; background: #fff5f5;">
+<div style="background-color: #dc2626; color: #ffffff; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 14px; text-align: center; margin-bottom: 16px;">
+⚡ LIMITED TIME LIQUIDATION AUCTION
+</div>
+<p>Hi <strong>{{buyer_name}}</strong>,</p>
+<p>The following short-dated inventory has been scheduled for priority liquidation (Discount: <strong>{{current_stage_discount}}</strong>). Bidding closes in {{expiry_hours}}:</p>
+<div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
+<br/>
+<div style="text-align: center; margin-top: 16px;">
+<a href="{{quick_bid_link}}" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+Place Auction Bid Now
+</a>
+</div>
+</div>`,
+  },
+  'direct-donation-notice': {
+    name: 'Food Bank Direct Transfer Notice',
+    subject: 'Community Donation Dispatch Notice: {{lot_title}}',
+    bodyHtml: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #bbf7d0; border-radius: 8px; background: #f0fdf4;">
+<h2 style="color: #166534; margin-top: 0;">🌱 Community Surplus Donation | {{supplier_name}}</h2>
+<p>Dear <strong>{{buyer_name}}</strong> partner,</p>
+<p>We are pleased to allocate the following fresh surplus products for zero-cost donation transfer:</p>
+<div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
+<p style="font-size: 13px; color: #15803d; text-align: center; margin-top: 20px; font-weight: 600;">
+Thank you for helping divert quality food from landfill to families in need.
+</p>
+</div>`,
+  },
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function StageEmailModal({
@@ -49,9 +95,12 @@ export function StageEmailModal({
   onClose,
 }: StageEmailModalProps) {
   // ── local draft state (not committed to parent until Save) ──
-  const [subject,    setSubject]    = useState(initialData.emailSubject);
-  const [bodyHtml,   setBodyHtml]   = useState(initialData.emailBodyHtml);
-  const [templateId, setTemplateId] = useState(initialData.emailTemplateId || 'default');
+  const initialTplId = initialData.emailTemplateId || 'default';
+  const fallbackTpl = STAGE_EMAIL_TEMPLATES[initialTplId] || STAGE_EMAIL_TEMPLATES.default;
+
+  const [subject,    setSubject]    = useState(initialData.emailSubject !== undefined && initialData.emailSubject !== '' ? initialData.emailSubject : (fallbackTpl.subject));
+  const [bodyHtml,   setBodyHtml]   = useState(initialData.emailBodyHtml && initialData.emailBodyHtml.trim() ? initialData.emailBodyHtml : fallbackTpl.bodyHtml);
+  const [templateId, setTemplateId] = useState(initialTplId);
 
   // ── section minimise states ──
   const [isBodyMinimised,    setIsBodyMinimised]    = useState(false);
@@ -71,9 +120,11 @@ export function StageEmailModal({
   // Reset draft whenever the modal is opened with new initial data
   useEffect(() => {
     if (open) {
-      setSubject(initialData.emailSubject);
-      setBodyHtml(initialData.emailBodyHtml);
-      setTemplateId(initialData.emailTemplateId || 'default');
+      const tId = initialData.emailTemplateId || 'default';
+      const tpl = STAGE_EMAIL_TEMPLATES[tId] || STAGE_EMAIL_TEMPLATES.default;
+      setSubject(initialData.emailSubject !== undefined ? initialData.emailSubject : tpl.subject);
+      setBodyHtml(initialData.emailBodyHtml && initialData.emailBodyHtml.trim() ? initialData.emailBodyHtml : tpl.bodyHtml);
+      setTemplateId(tId);
     }
   }, [open, initialData.emailSubject, initialData.emailBodyHtml, initialData.emailTemplateId]);
 
@@ -364,7 +415,15 @@ export function StageEmailModal({
               id="stage-email-modal-template-select"
               data-testid="stage-modal-template-select"
               value={templateId}
-              onChange={(e) => setTemplateId(e.target.value)}
+              onChange={(e) => {
+                const nextTplId = e.target.value;
+                setTemplateId(nextTplId);
+                const tpl = STAGE_EMAIL_TEMPLATES[nextTplId];
+                if (tpl) {
+                  setSubject(tpl.subject);
+                  setBodyHtml(tpl.bodyHtml);
+                }
+              }}
               style={{ ...dropSt, maxWidth: '480px' }}
             >
               <option value="default">Standard Liquidation Offer Sheet</option>

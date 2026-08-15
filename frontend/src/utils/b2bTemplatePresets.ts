@@ -23,7 +23,7 @@ export const B2B_TEMPLATE_PRESETS: B2BTemplatePreset[] = [
     name: 'B2B Inventory Offer Sheet',
     category: 'clearance',
     subject: 'Distressed Stock Clearance: {{lot_title}}',
-    bodyHtml: `<p>Dear {{buyer_name}},</p><p>We have immediate distressed stock available for liquidation. Please review the itemized inventory below:</p>{{inventory_table}}<p style="text-align: center; margin-top: 20px;"><a href="{{quick_bid_link}}" style="background-color: #2196f3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Submit 1-Click Bid</a></p><p style="font-size: 12px; color: #5d7a9e; margin-top: 16px;">Sent via IndSpoilerAlert Email Hub | {{supplier_name}}</p>`,
+    bodyHtml: `<p>Dear {{buyer_name}},</p><p>We have immediate distressed stock available for liquidation. Please review the itemized inventory below:</p>{{inventory_table}}<p style="text-align: center; margin-top: 20px;"><a href="{{quick_bid_link}}" style="background-color: #2196f3; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Bid Now</a></p><p style="font-size: 12px; color: #5d7a9e; margin-top: 16px;">Sent via IndSpoilerAlert Email Hub | {{supplier_name}}</p>`,
     availableTokens: DEFAULT_B2B_TOKENS,
     isDefault: true
   },
