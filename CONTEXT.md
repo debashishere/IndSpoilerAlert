@@ -45,6 +45,28 @@
 - **Context-Aware Stage Tokens**: Dynamic merge tokens (`{{current_stage_discount}}`, `{{expiry_hours}}`, `{{offer_expiration_time}}`, `{{disposal_deadline}}`, `{{inventory_table}}`) that adapt their resolution automatically based on the stage's operational type.
 - **Stage Validation Guardrails**: Type-specific validation enforcing that Liquidation stages have buyers + pricing rules, Donation stages have non-profit partners + allocated lots + expiration windows, and Landfill stages have disposal partners + removal deadline dates.
 
+## Workflow Run History & Audit Trail
+
+- **Workflow Run Group**: A grouped collection of all historical executions belonging to a specific saved Workflow Strategy, surfacing high-level aggregated health metrics (total run count, success/award rate, cumulative dollar recovery, and latest dispatch timestamp).
+- **Execution Run Record**: An individual historical execution instance of a workflow (dispatched manually or on schedule), capturing immutable snapshots of matched inventory lots, buyer dispatches, stage evaluation timeline, and final resolution outcome.
+- **Full-Screen Execution Audit Inspector**: A comprehensive modal overlay offering an end-to-end, "A-to-Z" chronological trace and granular breakdown of a single workflow execution run.
+- **Execution Audit Tabs**:
+  - **Summary & Timeline Tab**: High-level resolution overview and visual step-by-step stage escalation stepper tracking triggers, evaluations, and final resolutions.
+  - **Strategy Snapshot Tab**: Immutable record of workflow configuration, discount formulas, wait windows, and partner segments active at dispatch time.
+  - **Inventory Scope Tab**: Complete itemized roster of lots and SKUs evaluated during the execution window (quantities, expiration dates, RSL %, baseline valuation).
+  - **Communications Log Tab**: Itemized outbound email delivery ledger logging recipient addresses, timestamps, template snapshot, and OAuth mailbox dispatches.
+  - **Bids & Offers Ledger Tab**: Comprehensive log of all buyer bids received, comparative ranking, unit pricing, and awarding decisions.
+  - **Raw Telemetry & JSON Tab**: Complete machine-readable execution audit payload with search, filter, and JSON export capabilities.
+- **Audit Report Export**: Formatted JSON / CSV data generation containing full execution run telemetry, inventory snapshots, bidding logs, and resolution metrics for compliance and reporting.
+- **Evaluation Override**: Administrative control allowing immediate manual termination of an in-flight evaluation window to force immediate resolution (awarding top bid or cascading to next stage).
+- **Run Re-Trigger Dispatch**: On-demand action enabling an immediate fresh execution run using the parameters and scope of a saved workflow strategy or prior run.
+- **Stage Execution Window**: The configured duration (in Minutes, Hours, or Days) allocated for partner responses, bidding evaluations, or transfer actions in a specific stage.
+- **Active Stage Window Countdown**: A real-time countdown timer rendering the remaining time left within the currently active stage's configured evaluation window alongside total duration and elapsed time.
+- **Formatted Execution Window**: A human-readable representation of stage evaluation windows that preserves user input units (`Mins`, `Hours`, `Days`) and provides backward-compatible duration inference for legacy execution records.
+
+
+
+
 
 
 

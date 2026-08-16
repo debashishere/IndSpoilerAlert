@@ -185,5 +185,47 @@ describe('Issue #40 Integration: WorkflowsView & Campaign Studio', () => {
     expect(formatDurationShort(0.16666666666666666)).toBe('10m');
     expect(formatDurationShort(1.5)).toBe('1h 30m');
   });
+
+  it('should render modular WorkflowRunHistoryView when switching to Runs & History sub-tab', async () => {
+    const store = createTestStore();
+    store.dispatch({
+      type: 'workflow/setLiquidationAutomations',
+      payload: [
+        {
+          _id: 'camp-1',
+          name: 'Q3 Dairy Clearance',
+          templateName: 'short_dated_clearance',
+          status: 'active'
+        }
+      ]
+    });
+    store.dispatch({
+      type: 'workflow/setAutomationRuns',
+      payload: [
+        {
+          _id: 'run-99',
+          automationId: 'camp-1',
+          status: 'awarded',
+          dispatchedAt: new Date().toISOString(),
+          snapshotInventoryIds: ['lot-1'],
+          resolution: { totalValue: 5400 }
+        }
+      ]
+    });
+
+    render(
+      <Provider store={store}>
+        <WorkflowsView supplierId="sup-101" />
+      </Provider>
+    );
+
+    // Click Runs & History sub-tab
+    fireEvent.click(screen.getByText('Runs & History'));
+
+    // Should render WorkflowRunHistoryView
+    expect(screen.getByTestId('workflow-run-history-view')).toBeInTheDocument();
+    expect(screen.getByText('Q3 Dairy Clearance')).toBeInTheDocument();
+    expect(screen.getByText('1 Run')).toBeInTheDocument();
+  });
 });
 
