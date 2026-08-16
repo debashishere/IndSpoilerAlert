@@ -30,3 +30,25 @@
 
 - **Disallowed Mock Email Domain**: Any email domain address matching mock/test domain patterns (such as `@example.com`, `@mock.com`, `@test.com`, `@invalid`, `@localhost`, or containing `mock` in the domain name). Email addresses matching these patterns are strictly prohibited from authenticating or registering on the platform.
 
+## Stage-Gate Escalation Model
+
+- **Stage Type**: The operational classification (`liquidation` | `donation` | `landfill`) determining a stage's audience targeting, pricing, timing constraints, and inventory allocation rules.
+- **Liquidation Stage**: A commercial clearance stage targeting commercial buyers or liquidator tiers with algorithmic/fixed pricing discounts and response wait windows.
+- **Donation Stage**: A non-commercial philanthropic stage targeting charitable and non-profit partners with customizable offer expiration windows and dedicated inventory allocations (omitting pricing and discount logic).
+- **Landfill Stage**: A terminal disposal stage configured with mandatory disposal deadlines and inventory allocation for authorized waste/recycling partners.
+- **Master Inventory Pool**: The total collection of inventory lots matched by the workflow's Section 2 filters (category, RSL threshold, explicit lot IDs).
+- **Stage Inventory Allocation**: The granular subset of inventory lots (`allocatedLotIds`) assigned specifically to an individual stage, allowing distinct lots to be divided and offered among different buyers, donors, or disposal partners.
+- **Offer Expiration Window**: The response timeframe (duration in Days/Hours/Mins) configured on a Donation stage before the donation transfer offer expires or cascades.
+- **Disposal Deadline**: The mandatory removal/pickup cutoff date configured on a Landfill stage by which inventory must be collected or disposed of.
+- **Stage Type Switcher**: The interactive toggle control located in the stage card title bar replacing the static token binding badge, allowing direct switching between Liquidation, Donation, and Landfill stage types.
+- **Unified Partner Registry**: The centralized directory (managed via Buyer Registry & Buyer List Manager) serving as the single repository for commercial buyers, non-profit / food bank donation partners, and waste management / landfill operators.
+- **Context-Aware Stage Tokens**: Dynamic merge tokens (`{{current_stage_discount}}`, `{{expiry_hours}}`, `{{offer_expiration_time}}`, `{{disposal_deadline}}`, `{{inventory_table}}`) that adapt their resolution automatically based on the stage's operational type.
+- **Stage Validation Guardrails**: Type-specific validation enforcing that Liquidation stages have buyers + pricing rules, Donation stages have non-profit partners + allocated lots + expiration windows, and Landfill stages have disposal partners + removal deadline dates.
+
+
+
+
+
+
+
+

@@ -1,5 +1,26 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface IStageConfig {
+  stageIndex?: number;
+  name?: string;
+  stageType?: 'liquidation' | 'donation' | 'landfill' | string;
+  disposalDeadline?: string;
+  allocatedLotIds?: string[];
+  buyerMode?: string;
+  buyerListId?: string;
+  buyerListName?: string;
+  buyerSegment?: string;
+  customBuyers?: any[];
+  discountType?: 'yield' | 'fixed' | 'floor' | string;
+  discountValue?: number;
+  waitHours?: number;
+  waitUnit?: string;
+  emailTemplateId?: string;
+  emailSubject?: string;
+  emailBodyHtml?: string;
+  [key: string]: any;
+}
+
 export interface ILiquidationAutomation extends Document {
   supplierId: mongoose.Types.ObjectId;
   liquidationCycleId?: mongoose.Types.ObjectId;
@@ -32,7 +53,7 @@ export interface ILiquidationAutomation extends Document {
     minimumYieldRecoveryPercent?: number;
     minimumMatchScore?: number;
   };
-  stages?: Array<Record<string, any>>;
+  stages?: Array<IStageConfig | Record<string, any>>;
   donationConfig?: {
     enabled?: boolean;
     maxCases?: number;

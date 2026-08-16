@@ -31,6 +31,12 @@ export interface StageEmailModalProps {
   open: boolean;
   /** 1-based stage number displayed in the modal header */
   stageIndex: number;
+  /** Stage operational type */
+  stageType?: 'liquidation' | 'donation' | 'landfill';
+  /** Optional disposal deadline date */
+  disposalDeadline?: string;
+  /** Optional allocated lot IDs */
+  allocatedLotIds?: string[];
   /** Values pre-seeded from the stage's current state */
   initialData: StageEmailData;
   /** Called with the saved data when the user clicks "Save Email Config" */
@@ -71,15 +77,28 @@ Place Auction Bid Now
 </div>`,
   },
   'direct-donation-notice': {
-    name: 'Food Bank Direct Transfer Notice',
-    subject: 'Community Donation Dispatch Notice: {{lot_title}}',
+    name: 'Surplus Food Inventory Donation Transfer Offer',
+    subject: 'Surplus Inventory Donation Transfer Offer: {{lot_title}}',
     bodyHtml: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #bbf7d0; border-radius: 8px; background: #f0fdf4;">
-<h2 style="color: #166534; margin-top: 0;">🌱 Community Surplus Donation | {{supplier_name}}</h2>
+<h2 style="color: #166534; margin-top: 0;">🌱 Surplus Inventory Donation Transfer | {{supplier_name}}</h2>
 <p>Dear <strong>{{buyer_name}}</strong> partner,</p>
-<p>We are pleased to allocate the following fresh surplus products for zero-cost donation transfer:</p>
+<p>We are offering the following surplus food inventory as a zero-cost donation transfer (Offer window: {{expiry_hours}}). Please review the allocated items:</p>
 <div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
 <p style="font-size: 13px; color: #15803d; text-align: center; margin-top: 20px; font-weight: 600;">
-Thank you for helping divert quality food from landfill to families in need.
+Thank you for helping divert quality surplus food to our local communities.
+</p>
+</div>`,
+  },
+  'disposal-removal-notice': {
+    name: 'Scheduled Surplus Inventory Disposal & Removal Authorization',
+    subject: 'Disposal & Removal Authorization Notice: {{lot_title}}',
+    bodyHtml: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
+<h2 style="color: #475569; margin-top: 0;">🗑️ Scheduled Disposal & Removal Authorization | {{supplier_name}}</h2>
+<p>Dear <strong>{{buyer_name}}</strong> facility operator,</p>
+<p>The following surplus inventory has been authorized for scheduled disposal and bio-waste removal by {{disposal_deadline}}:</p>
+<div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
+<p style="font-size: 12px; color: #64748b; margin-top: 16px;">
+Please arrange collection and certified destruction documentation according to statutory guidelines.
 </p>
 </div>`,
   },
@@ -90,15 +109,29 @@ Thank you for helping divert quality food from landfill to families in need.
 export function StageEmailModal({
   open,
   stageIndex,
+  stageType = 'liquidation',
+  disposalDeadline,
+  allocatedLotIds,
   initialData,
   onSave,
   onClose,
 }: StageEmailModalProps) {
-  // ── local draft state (not committed to parent until Save) ──
-  const initialTplId = initialData.emailTemplateId || 'default';
-  const fallbackTpl = STAGE_EMAIL_TEMPLATES[initialTplId] || STAGE_EMAIL_TEMPLATES.default;
+  // Determine default template based on stageType
+  const defaultKeyForType = stageType === 'donation'
+    ? 'direct-donation-notice'
+    : stageType === 'landfill'
+    ? 'disposal-removal-notice'
+    : 'default';
 
-  const [subject,    setSubject]    = useState(initialData.emailSubject !== undefined && initialData.emailSubject !== '' ? initialData.emailSubject : (fallbackTpl.subject));
+  const initialTplId = initialData.emailTemplateId && initialData.emailTemplateId !== 'default'
+    ? initialData.emailTemplateId
+    : (stageType === 'donation' || stageType === 'landfill')
+    ? defaultKeyForType
+    : (initialData.emailTemplateId || 'default');
+
+  const fallbackTpl = STAGE_EMAIL_TEMPLATES[initialTplId] || STAGE_EMAIL_TEMPLATES[defaultKeyForType] || STAGE_EMAIL_TEMPLATES.default;
+
+  const [subject,    setSubject]    = useState(initialData.emailSubject && initialData.emailSubject.trim() ? initialData.emailSubject : fallbackTpl.subject);
   const [bodyHtml,   setBodyHtml]   = useState(initialData.emailBodyHtml && initialData.emailBodyHtml.trim() ? initialData.emailBodyHtml : fallbackTpl.bodyHtml);
   const [templateId, setTemplateId] = useState(initialTplId);
 
@@ -109,24 +142,45 @@ export function StageEmailModal({
   // ── dynamic token config modal state ──
   const [showDynamicTokenPanel, setShowDynamicTokenPanel] = useState(false);
   const [tokenContext, setTokenContext] = useState({
-    buyer_name: 'Apex Foods Corp',
+    buyer_name: stageType === 'donation' ? 'City Food Bank' : stageType === 'landfill' ? 'EcoWaste Facility' : 'Apex Foods Corp',
     supplier_name: 'SpoilerAlert Wholesale',
     lot_title: 'Organic Grade-A Produce Batch',
-    current_stage_discount: '25% OFF',
-    expiry_hours: '24 Hours',
+    current_stage_discount: stageType === 'donation' ? 'Surplus Donation Transfer (Complimentary)' : stageType === 'landfill' ? 'Scheduled Scrap & Disposal' : '25% OFF',
+    expiry_hours: stageType === 'landfill' ? (disposalDeadline || '2026-09-01') : '24 Hours',
+    disposal_deadline: disposalDeadline || '2026-09-01',
     quick_bid_link: 'https://bid.spoileralert.com/deal-884',
   });
 
   // Reset draft whenever the modal is opened with new initial data
   useEffect(() => {
     if (open) {
-      const tId = initialData.emailTemplateId || 'default';
-      const tpl = STAGE_EMAIL_TEMPLATES[tId] || STAGE_EMAIL_TEMPLATES.default;
-      setSubject(initialData.emailSubject !== undefined ? initialData.emailSubject : tpl.subject);
+      const defKey = stageType === 'donation'
+        ? 'direct-donation-notice'
+        : stageType === 'landfill'
+        ? 'disposal-removal-notice'
+        : 'default';
+
+      const tId = initialData.emailTemplateId && initialData.emailTemplateId !== 'default'
+        ? initialData.emailTemplateId
+        : (stageType === 'donation' || stageType === 'landfill')
+        ? defKey
+        : (initialData.emailTemplateId || 'default');
+
+      const tpl = STAGE_EMAIL_TEMPLATES[tId] || STAGE_EMAIL_TEMPLATES[defKey] || STAGE_EMAIL_TEMPLATES.default;
+      setSubject(initialData.emailSubject && initialData.emailSubject.trim() ? initialData.emailSubject : tpl.subject);
       setBodyHtml(initialData.emailBodyHtml && initialData.emailBodyHtml.trim() ? initialData.emailBodyHtml : tpl.bodyHtml);
       setTemplateId(tId);
+      setTokenContext({
+        buyer_name: stageType === 'donation' ? 'City Food Bank' : stageType === 'landfill' ? 'EcoWaste Facility' : 'Apex Foods Corp',
+        supplier_name: 'SpoilerAlert Wholesale',
+        lot_title: 'Organic Grade-A Produce Batch',
+        current_stage_discount: stageType === 'donation' ? 'Surplus Donation Transfer (Complimentary)' : stageType === 'landfill' ? 'Scheduled Scrap & Disposal' : '25% OFF',
+        expiry_hours: stageType === 'landfill' ? (disposalDeadline || '2026-09-01') : '24 Hours',
+        disposal_deadline: disposalDeadline || '2026-09-01',
+        quick_bid_link: 'https://bid.spoileralert.com/deal-884',
+      });
     }
-  }, [open, initialData.emailSubject, initialData.emailBodyHtml, initialData.emailTemplateId]);
+  }, [open, initialData.emailSubject, initialData.emailBodyHtml, initialData.emailTemplateId, stageType, disposalDeadline]);
 
   // Lock document body scroll when modal is open
   useEffect(() => {
@@ -428,7 +482,8 @@ export function StageEmailModal({
             >
               <option value="default">Standard Liquidation Offer Sheet</option>
               <option value="short-dated-auction">Urgent Short-Dated Surplus Alert</option>
-              <option value="direct-donation-notice">Food Bank Direct Transfer Notice</option>
+              <option value="direct-donation-notice">Surplus Food Inventory Donation Transfer Offer</option>
+              <option value="disposal-removal-notice">Scheduled Surplus Inventory Disposal & Removal Authorization</option>
             </select>
           </div>
 

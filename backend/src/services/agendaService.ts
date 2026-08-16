@@ -445,11 +445,25 @@ export async function createAutomationRun(
 </div>
   `;
 
-  const totalCases = affectedInventoryLots.reduce((acc: number, l: any) => acc + (l.cases || 0), 0);
-  const primaryLot = matchedLots[0];
-  const lotTitle = primaryLot ? ((primaryLot.productId as any)?.description || primaryLot.description || `${matchedLots.length} Surplus Inventory Lots`) : 'Surplus Inventory Lot';
+  const firstStage = automation.stages?.[0];
+  const stageType = (firstStage?.stageType || firstStage?.type || '').toLowerCase();
 
-  const inventoryItems = matchedLots.map((lot: any) => {
+  // Filter lots based on stage's allocatedLotIds if custom subset is configured
+  const stageAllocatedLotIds = Array.isArray(firstStage?.allocatedLotIds) && firstStage.allocatedLotIds.length > 0
+    ? firstStage.allocatedLotIds.map((id: any) => id.toString())
+    : null;
+
+  const targetLots = stageAllocatedLotIds
+    ? matchedLots.filter((lot: any) => stageAllocatedLotIds.includes(lot._id?.toString() || lot.id?.toString()))
+    : matchedLots;
+
+  const effectiveLots = targetLots.length > 0 ? targetLots : matchedLots;
+
+  const totalCases = effectiveLots.reduce((acc: number, l: any) => acc + (l.availableQty ?? l.quantityCases ?? l.cases ?? 0), 0);
+  const primaryLot = effectiveLots[0] || matchedLots[0];
+  const lotTitle = primaryLot ? ((primaryLot.productId as any)?.description || primaryLot.description || `${effectiveLots.length} Surplus Inventory Lots`) : 'Surplus Inventory Lot';
+
+  const inventoryItems = effectiveLots.map((lot: any) => {
     const prodName = (lot.productId as any)?.description || lot.description || 'Surplus Item';
     const rsl = typeof lot.remainingShelfLife === 'number' ? (lot.remainingShelfLife > 1 ? lot.remainingShelfLife : lot.remainingShelfLife * 100) : 14;
     return {
@@ -461,9 +475,14 @@ export async function createAutomationRun(
     };
   });
 
-  const stageDiscount = automation.stages?.[0]?.discountValue ? `${automation.stages[0].discountValue}% OFF` : 'Special Clearance Price';
+  let stageDiscount = firstStage?.discountValue ? `${firstStage.discountValue}% OFF` : 'Special Clearance Price';
+  if (stageType === 'donation') {
+    stageDiscount = 'Surplus Donation Transfer (Complimentary)';
+  } else if (stageType === 'landfill') {
+    stageDiscount = 'Scheduled Removal & Disposal';
+  }
   
-  const rawWaitHours = automation.stages?.[0]?.waitHours;
+  const rawWaitHours = firstStage?.waitHours;
   let stageExpiry = '24 Hours';
   if (rawWaitHours !== undefined && rawWaitHours !== null) {
     const num = typeof rawWaitHours === 'number' ? rawWaitHours : parseFloat(rawWaitHours);
@@ -476,6 +495,8 @@ export async function createAutomationRun(
       }
     }
   }
+
+  const disposalDeadlineStr = firstStage?.disposalDeadline || '';
 
   for (const email of buyerEmails) {
     try {
@@ -495,7 +516,9 @@ export async function createAutomationRun(
         total_cases: totalCases,
         quick_bid_link: quickBidLink,
         current_stage_discount: stageDiscount,
-        expiry_hours: stageExpiry,
+        expiry_hours: stageType === 'landfill' ? (disposalDeadlineStr || stageExpiry) : stageExpiry,
+        offer_expiration_time: stageExpiry,
+        disposal_deadline: disposalDeadlineStr,
         inventory_table: inventoryItems,
         inventoryItems
       };
@@ -529,16 +552,18 @@ export async function createAutomationRun(
         } catch (e) {}
       }
 
-      if (matchedLots.length > 0) {
-        await Activity.create({
-          lotId: matchedLots[0]._id,
-          type: 'email',
-          subject: emailSubject,
-          content: emailBodyHtml || emailPlainText,
-          recipient: email,
-          sender: automation.createdBy || 'IndSpoilerAlert Engine',
-          timestamp: new Date()
-        });
+      if (matchedLots.length > 0 && mongoose.connection.readyState === 1) {
+        try {
+          await Activity.create({
+            lotId: matchedLots[0]._id,
+            type: 'email',
+            subject: emailSubject,
+            content: emailBodyHtml || emailPlainText,
+            recipient: email,
+            sender: automation.createdBy || 'IndSpoilerAlert Engine',
+            timestamp: new Date()
+          });
+        } catch (e) {}
       }
     } catch (err: any) {
       console.error(`Failed to send email to ${email}:`, err.message || err);

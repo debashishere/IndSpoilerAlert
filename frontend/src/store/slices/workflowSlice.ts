@@ -18,6 +18,9 @@ import {
 export interface StageGate {
   stageNumber: number;
   name: string;
+  stageType?: 'liquidation' | 'donation' | 'landfill';
+  disposalDeadline?: string;
+  allocatedLotIds?: string[];
   discountType: 'fixed_price' | 'percentage_off_wholesale' | 'percentage_off_retail';
   discountValue: number;
   waitHours: number;

@@ -161,6 +161,9 @@ interface BuyerEntry {
 export interface Stage {
   stageIndex: number;
   name: string;
+  stageType?: 'liquidation' | 'donation' | 'landfill';
+  disposalDeadline?: string;
+  allocatedLotIds?: string[];
   buyerMode: BuyerMode;
   buyerListId?: string;      // BuyerList._id — used when buyerMode === 'list'
   buyerListName?: string;    // display label for the selected list
@@ -206,9 +209,9 @@ export function getStageBuyerCount(stage: Stage, buyerListsOrBuyers: any[] = [],
   if (candidateBuyers && candidateBuyers.length > 0) {
     const isSec = targetId === 'secondary' || (matched && matched.type === 'secondary');
     const filtered = candidateBuyers.filter((b: any) => {
-      const t = (b.tier || '').toLowerCase();
-      if (isSec) return t === 'tier2' || t === 'secondary' || t === 'liquidator' || t === 'all_liquidators';
-      return !t || t === 'tier1' || t === 'primary' || t === 'tier1_retailers';
+      const t = String(b.tier ?? '').toLowerCase();
+      if (isSec) return t === 'tier2' || t === 'secondary' || t === 'liquidator' || t === 'all_liquidators' || t === '2';
+      return !t || t === 'tier1' || t === 'primary' || t === 'tier1_retailers' || t === '1';
     });
     if (filtered.length > 0) return filtered.length;
     if (!isListArray) return candidateBuyers.length;
@@ -219,6 +222,58 @@ export function getStageBuyerCount(stage: Stage, buyerListsOrBuyers: any[] = [],
   }
 
   return 0;
+}
+
+export function getStageValidationErrors(
+  stage: Stage,
+  stageIndex: number,
+  reduxBuyerLists: any[] = [],
+  buyers: any[] = []
+): string[] {
+  const errors: string[] = [];
+  const sType = stage.stageType || 'liquidation';
+  const sNum = stage.stageIndex || stageIndex + 1;
+  const buyerCount = getStageBuyerCount(stage, reduxBuyerLists, buyers);
+
+  if (sType === 'donation') {
+    if (buyerCount === 0) {
+      errors.push(`Donation Stage ${sNum} requires at least 1 targeted charity or non-profit partner.`);
+    }
+    if (stage.allocatedLotIds !== undefined && Array.isArray(stage.allocatedLotIds) && stage.allocatedLotIds.length === 0) {
+      errors.push(`Donation Stage ${sNum} requires at least 1 allocated inventory lot.`);
+    }
+    if (typeof stage.waitHours !== 'number' || stage.waitHours <= 0) {
+      errors.push(`Donation Stage ${sNum} requires a valid response window (> 0 hours).`);
+    }
+  } else if (sType === 'landfill') {
+    if (buyerCount === 0) {
+      errors.push(`Landfill Stage ${sNum} requires at least 1 disposal contact or partner.`);
+    }
+    if (stage.allocatedLotIds !== undefined && Array.isArray(stage.allocatedLotIds) && stage.allocatedLotIds.length === 0) {
+      errors.push(`Landfill Stage ${sNum} requires at least 1 allocated inventory lot.`);
+    }
+    if (!stage.disposalDeadline || !stage.disposalDeadline.trim()) {
+      errors.push(`Landfill Stage ${sNum} requires a valid disposal deadline date.`);
+    }
+  } else {
+    // Liquidation
+    if (buyerCount === 0) {
+      errors.push(`Liquidation Stage ${sNum} requires at least 1 targeted buyer.`);
+    }
+    if (stage.discountType === 'fixed' || stage.discountType === 'floor') {
+      if (typeof stage.discountValue !== 'number' || stage.discountValue <= 0 || isNaN(stage.discountValue)) {
+        errors.push(`Liquidation Stage ${sNum} requires a valid discount value (> 0).`);
+      }
+    }
+    if (typeof stage.waitHours !== 'number' || stage.waitHours <= 0) {
+      errors.push(`Liquidation Stage ${sNum} requires a valid response window (> 0 hours).`);
+    }
+    if (stage.allocatedLotIds !== undefined && Array.isArray(stage.allocatedLotIds) && stage.allocatedLotIds.length === 0) {
+      errors.push(`Liquidation Stage ${sNum} requires at least 1 allocated inventory lot.`);
+    }
+  }
+
+  return errors;
 }
 
 // Email builder
@@ -585,6 +640,7 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
             <button
               key={mode}
               type="button"
+              data-testid={`stage-audience-mode-${mode}`}
               onClick={() => onChange({ buyerMode: mode })}
               style={{
                 flex: 1,
@@ -627,14 +683,14 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
             const isPrim = list.type === 'primary' || list._id === 'list-primary' || (list.name || '').toLowerCase().includes('primary');
             if (isSec) {
               const count = allBuyers.filter((b: any) => {
-                const t = (b.tier || '').toLowerCase();
-                return t === 'tier2' || t === 'secondary' || t === 'liquidator' || t === 'all_liquidators';
+                const t = String(b.tier ?? '').toLowerCase();
+                return t === 'tier2' || t === 'secondary' || t === 'liquidator' || t === 'all_liquidators' || t === '2';
               }).length;
               if (count > 0) return count;
             } else if (isPrim) {
               const count = allBuyers.filter((b: any) => {
-                const t = (b.tier || '').toLowerCase();
-                return !t || t === 'tier1' || t === 'primary' || t === 'tier1_retailers';
+                const t = String(b.tier ?? '').toLowerCase();
+                return !t || t === 'tier1' || t === 'primary' || t === 'tier1_retailers' || t === '1';
               }).length;
               if (count > 0) return count;
             }
@@ -1200,6 +1256,29 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     setStages(prev => prev.map((s, i) => i === idx ? { ...s, ...updates } : s));
   };
 
+  const handleStageTypeChange = (idx: number, nextType: 'liquidation' | 'donation' | 'landfill') => {
+    const current = stages[idx];
+    if (!current) return;
+    const isDefaultSubject = !current.emailSubject ||
+      current.emailSubject.includes('Clearance Offer') ||
+      current.emailSubject.includes('Clearance Blast') ||
+      current.emailSubject.includes('Donation Transfer Offer') ||
+      current.emailSubject.includes('Disposal & Removal Authorization Notice');
+
+    const isDefaultBody = !current.emailBodyHtml ||
+      current.emailBodyHtml === DEFAULT_EMAIL_BODY_HTML ||
+      !current.emailTemplateId ||
+      current.emailTemplateId === 'default' ||
+      current.emailTemplateId === 'direct-donation-notice' ||
+      current.emailTemplateId === 'disposal-removal-notice';
+
+    updateStage(idx, {
+      stageType: nextType,
+      ...(isDefaultSubject ? { emailSubject: undefined } : {}),
+      ...(isDefaultBody ? { emailBodyHtml: undefined, emailTemplateId: undefined } : {}),
+    });
+  };
+
   const activeLots = (Array.isArray(inventoryLots) && inventoryLots.length > 0)
     ? inventoryLots
     : (Array.isArray(fetchedLots) ? fetchedLots : []);
@@ -1280,9 +1359,11 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     return { totalLots, totalCases, totalValue, urgentLots, audienceCount: audienceSet.size };
   }, [matchedLots, stages, buyers, reduxBuyerLists]);
 
-  const hasZeroBuyerStage = useMemo(() => {
-    return stages.some(s => getStageBuyerCount(s, reduxBuyerLists, buyers) === 0);
+  const hasInvalidStage = useMemo(() => {
+    return stages.some((s, idx) => getStageValidationErrors(s, idx, reduxBuyerLists, buyers).length > 0);
   }, [stages, buyers, reduxBuyerLists]);
+
+  const hasZeroBuyerStage = hasInvalidStage;
 
   const toggleLot = (lotId: string, included: boolean) => {
     if (included) {
@@ -1326,6 +1407,14 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
       return;
     }
 
+    for (let i = 0; i < stages.length; i++) {
+      const errs = getStageValidationErrors(stages[i], i, reduxBuyerLists, buyers);
+      if (errs.length > 0) {
+        alert(`Validation Error: ${errs[0]}`);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       let cycleId = '';
@@ -1353,6 +1442,11 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
         ? 'hybrid'
         : (explicitLotIds.length > 0 ? 'explicit' : (selectorMode || 'automatic'));
 
+      const sanitizedStages = stages.map(s => ({
+        ...s,
+        stageType: s.stageType || 'liquidation'
+      }));
+
       const payload = {
         supplierId,
         liquidationCycleId: cycleId || undefined,
@@ -1369,7 +1463,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
           excludedLotIds,
           selectorMode: computedSelectorMode
         },
-        stages,
+        stages: sanitizedStages,
         rules: { evaluationWindowHours: typeof stages?.[0]?.waitHours === 'number' && stages[0].waitHours > 0 ? stages[0].waitHours : 48 },
         schedule: { type: executionType, cronExpression: cronExpression.trim() || compileFrontendCron(scheduleTime, cronDays), timeOfDay: scheduleTime, timezone: workflowTimezone, daysOfWeek: cronDays },
         emailTemplate: {
@@ -1442,6 +1536,14 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
       return;
     }
 
+    for (let i = 0; i < stages.length; i++) {
+      const errs = getStageValidationErrors(stages[i], i, reduxBuyerLists, buyers);
+      if (errs.length > 0) {
+        alert(`Validation Error: ${errs[0]}`);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       let cycleId = '';
@@ -1469,6 +1571,11 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
         ? 'hybrid'
         : (explicitLotIds.length > 0 ? 'explicit' : (selectorMode || 'automatic'));
 
+      const sanitizedStages = stages.map(s => ({
+        ...s,
+        stageType: s.stageType || 'liquidation'
+      }));
+
       const payload = {
         supplierId,
         liquidationCycleId: cycleId || undefined,
@@ -1485,7 +1592,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
           excludedLotIds,
           selectorMode: computedSelectorMode
         },
-        stages,
+        stages: sanitizedStages,
         rules: { evaluationWindowHours: typeof stages?.[0]?.waitHours === 'number' && stages[0].waitHours > 0 ? stages[0].waitHours : 48 },
         schedule: { type: executionType, cronExpression: cronExpression.trim() || compileFrontendCron(scheduleTime, cronDays), timeOfDay: scheduleTime, timezone: workflowTimezone, daysOfWeek: cronDays },
         emailTemplate: {
@@ -1647,7 +1754,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 <h2 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>New Workflow</h2>
                 <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '16px', lineHeight: 1 }} title="Required">*</span>
               </div>
-              <input type="text" value={workflowName} onChange={e => setWorkflowName(e.target.value)} placeholder="Enter workflow name…"
+              <input type="text" data-testid="workflow-name-input" value={workflowName} onChange={e => setWorkflowName(e.target.value)} placeholder="Enter workflow name…"
                 style={{ marginTop: '6px', ...inpSt, maxWidth: '200px', fontWeight: 500, fontSize: '13px' }} />
             </div>
           </div>
@@ -1785,8 +1892,9 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             {onCancel && <button type="button" onClick={onCancel} style={{ background: 'transparent', color: 'hsl(var(--text-secondary))', border: '1px solid hsl(var(--border-color))', borderRadius: '8px', padding: '10px 16px', fontWeight: 600, cursor: 'pointer', fontSize: '13px' }}>← Back</button>}
             <button
               type="button"
+              data-testid="save-campaign-btn"
               onClick={() => handleSaveCampaign('draft')}
-              disabled={isSubmitting || hasZeroBuyerStage}
+              disabled={isSubmitting}
               style={{
                 background: 'hsl(var(--bg-card))',
                 color: 'hsl(var(--text-primary))',
@@ -1795,8 +1903,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 padding: '10px 16px',
                 fontWeight: 700,
                 fontSize: '13px',
-                cursor: (isSubmitting || hasZeroBuyerStage) ? 'not-allowed' : 'pointer',
-                opacity: hasZeroBuyerStage ? 0.5 : 1,
+                cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                opacity: 1,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '7px',
@@ -1807,7 +1915,11 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
               <Save size={15} color="hsl(var(--primary))" />
               <span>{isSubmitting ? 'Saving...' : 'Save'}</span>
             </button>
-            <button type="button" onClick={() => !hasZeroBuyerStage && setShowPreFlightModal(true)} disabled={impactMetrics.totalLots === 0 || hasZeroBuyerStage}
+            <button
+              type="button"
+              data-testid="open-preflight-btn"
+              onClick={() => !hasZeroBuyerStage && setShowPreFlightModal(true)}
+              disabled={impactMetrics.totalLots === 0 || hasZeroBuyerStage}
               style={{ background: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--border-color))', color: 'white', border: 'none', borderRadius: '8px', padding: '10px 20px', fontWeight: 700, fontSize: '13px', cursor: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed', opacity: hasZeroBuyerStage ? 0.5 : 1, display: 'flex', alignItems: 'center', gap: '7px', boxShadow: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? '0 4px 14px hsl(var(--primary)/0.35)' : 'none' }}>
               <Play size={15} /> Run
             </button>
@@ -2059,7 +2171,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 const audienceSummary = isListMode ? listLabel : `${stage.customBuyers.length} custom buyer${stage.customBuyers.length !== 1 ? 's' : ''}`;
                 const pricingSummary = stage.discountType === 'yield' ? 'AI Yield' : stage.discountType === 'fixed' ? `${stage.discountValue}% Off` : `$${stage.discountValue} Floor`;
                 const stageBuyerCount = getStageBuyerCount(stage, reduxBuyerLists, buyers);
-                const isZeroBuyer = stageBuyerCount === 0;
+                const stageValidationErrors = getStageValidationErrors(stage, idx, reduxBuyerLists, buyers);
+                const isZeroBuyer = (!stage.stageType || stage.stageType === 'liquidation') && stageBuyerCount === 0;
 
                 return (
                   <div key={idx} style={{ display: 'flex', flexDirection: 'column', marginBottom: idx < stages.length - 1 ? '8px' : '0' }}>
@@ -2067,15 +2180,17 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
                     {/* Left spine: number + connector line */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '16px', flexShrink: 0 }}>
-                      <div style={{
-                        width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-                        background: isExpanded ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--bg-card))',
-                        border: `2px solid ${isExpanded ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '13px', fontWeight: 800,
-                        color: isExpanded ? 'white' : 'hsl(var(--text-muted))',
-                        transition: 'all 0.2s', cursor: 'pointer', zIndex: 1,
-                      }} onClick={() => setExpandedStageIdx(isExpanded ? null : idx)}>
+                      <div
+                        data-testid={`stage-${stage.stageIndex}-circle`}
+                        style={{
+                          width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+                          background: isExpanded ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--bg-card))',
+                          border: `2px solid ${isExpanded ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '13px', fontWeight: 800,
+                          color: isExpanded ? 'white' : 'hsl(var(--text-muted))',
+                          transition: 'all 0.2s', cursor: 'pointer', zIndex: 1,
+                        }} onClick={() => setExpandedStageIdx(isExpanded ? null : idx)}>
                         {stage.stageIndex}
                       </div>
                       {idx < stages.length - 1 && (
@@ -2088,6 +2203,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
                       {/* Collapsed summary row — always visible */}
                       <div
+                        data-testid={`stage-${stage.stageIndex}-header-row`}
                         onClick={() => setExpandedStageIdx(isExpanded ? null : idx)}
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -2111,22 +2227,118 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
                         {/* Centre: summary chips */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                          {/* Token Binding Indicator */}
-                          <span data-testid="buyer-name-token-binding-indicator" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'hsl(var(--primary) / 0.12)', border: '1px solid hsl(var(--primary) / 0.3)', color: 'hsl(var(--primary))', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                            🔗 Attached: {"{{buyer_name}}"} token bound to stage buyer selection
+                          {/* Stage Type Switcher Segmented Pills */}
+                          <div
+                            data-testid={`stage-${stage.stageIndex}-type-switcher`}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              background: 'hsl(var(--bg-card))',
+                              border: '1px solid hsl(var(--border-color))',
+                              borderRadius: '20px',
+                              padding: '2px',
+                              gap: '2px',
+                            }}
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <button
+                              type="button"
+                              data-testid={`stage-${stage.stageIndex}-type-liquidation`}
+                              onClick={() => handleStageTypeChange(idx, 'liquidation')}
+                              style={{
+                                background: (!stage.stageType || stage.stageType === 'liquidation') ? 'hsl(var(--primary))' : 'transparent',
+                                color: (!stage.stageType || stage.stageType === 'liquidation') ? 'white' : 'hsl(var(--text-muted))',
+                                border: 'none',
+                                borderRadius: '16px',
+                                padding: '2px 8px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                              }}
+                            >
+                              🏷️ Liquidation
+                            </button>
+                            <button
+                              type="button"
+                              data-testid={`stage-${stage.stageIndex}-type-donation`}
+                              onClick={() => handleStageTypeChange(idx, 'donation')}
+                              style={{
+                                background: stage.stageType === 'donation' ? 'hsl(var(--primary))' : 'transparent',
+                                color: stage.stageType === 'donation' ? 'white' : 'hsl(var(--text-muted))',
+                                border: 'none',
+                                borderRadius: '16px',
+                                padding: '2px 8px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                              }}
+                            >
+                              🎁 Donate
+                            </button>
+                            <button
+                              type="button"
+                              data-testid={`stage-${stage.stageIndex}-type-landfill`}
+                              onClick={() => handleStageTypeChange(idx, 'landfill')}
+                              style={{
+                                background: stage.stageType === 'landfill' ? 'hsl(var(--primary))' : 'transparent',
+                                color: stage.stageType === 'landfill' ? 'white' : 'hsl(var(--text-muted))',
+                                border: 'none',
+                                borderRadius: '16px',
+                                padding: '2px 8px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease',
+                              }}
+                            >
+                              🗑️ Landfill
+                            </button>
+                          </div>
+                          {/* Lot Allocation chip */}
+                          <span
+                            data-testid={`stage-${stage.stageIndex}-lot-allocation-chip`}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: 'hsl(var(--primary)/0.08)',
+                              border: '1px solid hsl(var(--border-color))',
+                              color: 'hsl(var(--text-primary))',
+                              borderRadius: '20px',
+                              padding: '3px 10px',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            <Table size={11} /> {stage.allocatedLotIds && stage.allocatedLotIds.length !== matchedLots.length ? `${stage.allocatedLotIds.length} of ${matchedLots.length} Lots Allocated` : `All Lots (${matchedLots.length})`}
                           </span>
                           {/* Audience chip */}
                           <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'hsl(var(--primary)/0.12)', border: '1px solid hsl(var(--primary)/0.25)', color: 'hsl(var(--primary))', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' }}>
                             <Users size={11} /> {audienceSummary}
                           </span>
-                          {/* Pricing chip */}
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'hsl(var(--secondary)/0.12)', border: '1px solid hsl(var(--secondary)/0.25)', color: 'hsl(var(--secondary))', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                            <Sliders size={11} /> {pricingSummary}
-                          </span>
-                          {/* Wait chip */}
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'hsl(var(--text-muted)/0.08)', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', whiteSpace: 'nowrap' }}>
-                            <Clock size={11} /> {formatWaitTime(stage.waitHours)} window
-                          </span>
+                          {/* Pricing / Mode chip */}
+                          {stage.stageType === 'donation' ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'hsl(var(--primary)/0.12)', border: '1px solid hsl(var(--primary)/0.25)', color: 'hsl(var(--primary))', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              <HeartHandshake size={11} /> Donation Transfer (Complimentary)
+                            </span>
+                          ) : stage.stageType === 'landfill' ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'hsl(var(--error)/0.12)', border: '1px solid hsl(var(--error)/0.25)', color: 'hsl(var(--error))', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              <Trash2 size={11} /> Disposal Deadline: {stage.disposalDeadline || 'Not set'}
+                            </span>
+                          ) : (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'hsl(var(--secondary)/0.12)', border: '1px solid hsl(var(--secondary)/0.25)', color: 'hsl(var(--secondary))', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                              <Sliders size={11} /> {pricingSummary}
+                            </span>
+                          )}
+                          {/* Wait chip - shown for liquidation and donation */}
+                          {stage.stageType !== 'landfill' && (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'hsl(var(--text-muted)/0.08)', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', whiteSpace: 'nowrap' }}>
+                              <Clock size={11} /> {formatWaitTime(stage.waitHours)} window
+                            </span>
+                          )}
                         </div>
 
                         {/* Right: controls */}
@@ -2172,6 +2384,122 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           {/* Divider */}
                           <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
 
+                          {/* Inventory Allocation Section */}
+                          <div data-testid={`stage-${stage.stageIndex}-inventory-allocation-section`}>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                              <Table size={13} /> Inventory Allocation
+                            </div>
+                            
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                              <button
+                                type="button"
+                                data-testid={`stage-${stage.stageIndex}-allocation-all-btn`}
+                                onClick={() => updateStage(idx, { allocatedLotIds: undefined })}
+                                style={{
+                                  padding: '6px 12px',
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  border: `1px solid ${!stage.allocatedLotIds ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`,
+                                  background: !stage.allocatedLotIds ? 'hsl(var(--primary)/0.12)' : 'hsl(var(--bg-card))',
+                                  color: !stage.allocatedLotIds ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+                                }}
+                              >
+                                All Matching Lots ({matchedLots.length})
+                              </button>
+                              <button
+                                type="button"
+                                data-testid={`stage-${stage.stageIndex}-allocation-custom-btn`}
+                                onClick={() => {
+                                  if (!stage.allocatedLotIds) {
+                                    updateStage(idx, { allocatedLotIds: matchedLots.map((l: any) => l._id?.toString() || l.id || '') });
+                                  }
+                                }}
+                                style={{
+                                  padding: '6px 12px',
+                                  borderRadius: '6px',
+                                  fontSize: '12px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  border: `1px solid ${stage.allocatedLotIds ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`,
+                                  background: stage.allocatedLotIds ? 'hsl(var(--primary)/0.12)' : 'hsl(var(--bg-card))',
+                                  color: stage.allocatedLotIds ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+                                }}
+                              >
+                                Custom Lot Subset
+                              </button>
+                            </div>
+
+                            {stage.allocatedLotIds && (
+                              <div style={{
+                                maxHeight: '180px',
+                                overflowY: 'auto',
+                                border: '1px solid hsl(var(--border-color))',
+                                borderRadius: '8px',
+                                padding: '8px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '6px',
+                                background: 'hsl(var(--bg-card))'
+                              }}>
+                                {matchedLots.length === 0 ? (
+                                  <div style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', padding: '8px', textAlign: 'center' }}>
+                                    No matching inventory lots found in Section 2 filters.
+                                  </div>
+                                ) : (
+                                  matchedLots.map((lot: any) => {
+                                    const lotId = lot._id?.toString() || lot.id || '';
+                                    const isSelected = (stage.allocatedLotIds || []).includes(lotId);
+                                    const cases = lot.availableQty ?? lot.quantityCases ?? 0;
+                                    const title = lot.productId?.description || lot.lotNumber || lot.title || 'Untitled Lot';
+                                    const sku = lot.productId?.sku || '';
+                                    const rsl = calculateLotRsl ? calculateLotRsl(lot) : (lot.remainingShelfLife ? Math.round(lot.remainingShelfLife * 100) : 0);
+
+                                    return (
+                                      <label
+                                        key={lotId}
+                                        style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'space-between',
+                                          padding: '6px 10px',
+                                          borderRadius: '6px',
+                                          background: isSelected ? 'hsl(var(--primary)/0.06)' : 'transparent',
+                                          border: `1px solid ${isSelected ? 'hsl(var(--primary)/0.2)' : 'transparent'}`,
+                                          cursor: 'pointer',
+                                          fontSize: '12px'
+                                        }}
+                                      >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                          <input
+                                            type="checkbox"
+                                            data-testid={`stage-${stage.stageIndex}-lot-checkbox-${lotId}`}
+                                            checked={isSelected}
+                                            onChange={() => {
+                                              const current = stage.allocatedLotIds || [];
+                                              const next = isSelected ? current.filter(id => id !== lotId) : [...current, lotId];
+                                              updateStage(idx, { allocatedLotIds: next });
+                                            }}
+                                          />
+                                          <span style={{ fontWeight: 600, color: 'hsl(var(--text-primary))' }}>{title}</span>
+                                          {sku && <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>({sku})</span>}
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'hsl(var(--text-muted))' }}>
+                                          <span>{cases} cs</span>
+                                          <span>{rsl}% RSL</span>
+                                        </div>
+                                      </label>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Divider */}
+                          <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
+
                           {/* Audience — full width */}
                           <div>
                             <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
@@ -2190,41 +2518,15 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           {/* Divider */}
                           <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
 
-                          {/* Pricing & Timing — three fields in a row */}
-                          <div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--secondary))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                              <Sliders size={13} /> Pricing & Timing
-                            </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
-                              <div>
-                                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '5px' }}>Pricing Rule</label>
-                                <select
-                                  value={stage.discountType}
-                                  onChange={e => updateStage(idx, { discountType: e.target.value as Stage['discountType'] })}
-                                  style={dropSt}
-                                >
-                                  <option value="yield">AI Yield Optimizer</option>
-                                  <option value="fixed">Fixed Markdown (% Off)</option>
-                                  <option value="floor">Minimum Bid Floor ($)</option>
-                                </select>
+                          {/* Polymorphic Pricing & Timing section */}
+                          {stage.stageType === 'donation' ? (
+                            <div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                                <Clock size={13} /> Offer Expiration Window
                               </div>
-                              <div>
-                                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '5px' }}>
-                                  {stage.discountType === 'fixed' ? 'Discount %' : stage.discountType === 'floor' ? 'Floor Price ($)' : 'Value (auto)'}
-                                </label>
-                                <input
-                                  type="number"
-                                  step="any"
-                                  disabled={stage.discountType === 'yield'}
-                                  value={stage.discountType === 'yield' ? '' : (stage.discountValue === 0 ? '' : stage.discountValue)}
-                                  onChange={e => updateStage(idx, { discountValue: e.target.value === '' ? 0 : parseFloat(e.target.value) || 0 })}
-                                  placeholder={stage.discountType === 'yield' ? 'AI-managed' : '0'}
-                                  style={{ ...inpSt, opacity: stage.discountType === 'yield' ? 0.45 : 1 }}
-                                />
-                              </div>
-                              <div>
+                              <div style={{ maxWidth: '320px' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
-                                  <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Response Window</label>
+                                  <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Acceptance Window</label>
                                   <span style={{ fontSize: '10px', color: 'hsl(var(--primary))', fontWeight: 600 }}>{formatWaitTime(stage.waitHours)}</span>
                                 </div>
                                 {(() => {
@@ -2266,14 +2568,114 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                   );
                                 })()}
                               </div>
+                              <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '8px' }}>
+                                🎁 Donation partners receive a complimentary surplus inventory transfer offer with {formatWaitTime(stage.waitHours)} to accept before cascading to the next stage.
+                              </p>
                             </div>
-                            <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '8px' }}>
-                              {stage.discountType === 'yield'
-                                ? '✦ AI will calculate the optimal yield price dynamically at send time.'
-                                : `Buyers receive a ${stage.discountType === 'fixed' ? `${stage.discountValue}% markdown` : `$${stage.discountValue} floor bid`} offer and have ${formatWaitTime(stage.waitHours)} to respond before the next stage triggers.`
-                              }
-                            </p>
-                          </div>
+                          ) : stage.stageType === 'landfill' ? (
+                            <div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--error))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                                <Trash2 size={13} /> Disposal & Removal Deadline
+                              </div>
+                              <div style={{ maxWidth: '320px' }}>
+                                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '5px' }}>Disposal Removal Cutoff Date</label>
+                                <input
+                                  type="date"
+                                  data-testid={`stage-${stage.stageIndex}-disposal-deadline-input`}
+                                  value={stage.disposalDeadline || ''}
+                                  onChange={e => updateStage(idx, { disposalDeadline: e.target.value })}
+                                  style={inpSt}
+                                />
+                              </div>
+                              <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '8px' }}>
+                                🗑️ Waste and bio-disposal partners will be notified of scheduled pickup and physical destruction instructions by the specified deadline.
+                              </p>
+                            </div>
+                          ) : (
+                            <div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--secondary))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                                <Sliders size={13} /> Pricing & Timing
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+                                <div>
+                                  <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '5px' }}>Pricing Rule</label>
+                                  <select
+                                    value={stage.discountType}
+                                    onChange={e => updateStage(idx, { discountType: e.target.value as Stage['discountType'] })}
+                                    style={dropSt}
+                                  >
+                                    <option value="yield">AI Yield Optimizer</option>
+                                    <option value="fixed">Fixed Markdown (% Off)</option>
+                                    <option value="floor">Minimum Bid Floor ($)</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '5px' }}>
+                                    {stage.discountType === 'fixed' ? 'Discount %' : stage.discountType === 'floor' ? 'Floor Price ($)' : 'Value (auto)'}
+                                  </label>
+                                  <input
+                                    type="number"
+                                    step="any"
+                                    disabled={stage.discountType === 'yield'}
+                                    value={stage.discountType === 'yield' ? '' : (stage.discountValue === 0 ? '' : stage.discountValue)}
+                                    onChange={e => updateStage(idx, { discountValue: e.target.value === '' ? 0 : parseFloat(e.target.value) || 0 })}
+                                    placeholder={stage.discountType === 'yield' ? 'AI-managed' : '0'}
+                                    style={{ ...inpSt, opacity: stage.discountType === 'yield' ? 0.45 : 1 }}
+                                  />
+                                </div>
+                                <div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                                    <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Response Window</label>
+                                    <span style={{ fontSize: '10px', color: 'hsl(var(--primary))', fontWeight: 600 }}>{formatWaitTime(stage.waitHours)}</span>
+                                  </div>
+                                  {(() => {
+                                    const currentUnit: 'd' | 'h' | 'm' = stage.waitUnit || (stage.waitHours >= 24 && stage.waitHours % 24 === 0 ? 'd' : stage.waitHours < 1 && stage.waitHours > 0 ? 'm' : 'h');
+                                    const rawVal = currentUnit === 'd'
+                                      ? Number((stage.waitHours / 24).toFixed(4))
+                                      : currentUnit === 'm'
+                                      ? Math.round(stage.waitHours * 60)
+                                      : Number(stage.waitHours.toFixed(4));
+                                    return (
+                                      <div style={{ display: 'flex', gap: '4px' }}>
+                                        <input
+                                          type="number"
+                                          min={0.01}
+                                          step="any"
+                                          value={isNaN(rawVal) || rawVal === 0 ? '' : rawVal}
+                                          onChange={e => {
+                                            const val = e.target.value === '' ? 0 : parseFloat(e.target.value) || 0;
+                                            updateStage(idx, {
+                                              waitHours: currentUnit === 'd' ? val * 24 : currentUnit === 'm' ? val / 60 : val,
+                                              waitUnit: currentUnit
+                                            });
+                                          }}
+                                          style={{ ...inpSt, flex: 1 }}
+                                        />
+                                        <select
+                                          value={currentUnit}
+                                          onChange={e => {
+                                            const newUnit = e.target.value as 'd' | 'h' | 'm';
+                                            updateStage(idx, { waitUnit: newUnit });
+                                          }}
+                                          style={{ ...dropSt, width: 'auto', padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }}
+                                        >
+                                          <option value="d">Days</option>
+                                          <option value="h">Hours</option>
+                                          <option value="m">Mins</option>
+                                        </select>
+                                      </div>
+                                    );
+                                  })()}
+                                </div>
+                              </div>
+                              <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '8px' }}>
+                                {stage.discountType === 'yield'
+                                  ? '✦ AI will calculate the optimal yield price dynamically at send time.'
+                                  : `Buyers receive a ${stage.discountType === 'fixed' ? `${stage.discountValue}% markdown` : `$${stage.discountValue} floor bid`} offer and have ${formatWaitTime(stage.waitHours)} to respond before the next stage triggers.`
+                                }
+                              </p>
+                            </div>
+                          )}
 
                           {/* Divider */}
                           <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
@@ -2318,6 +2720,9 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                             <StageEmailModal
                               open={openStageEmailModalIdx === idx}
                               stageIndex={stage.stageIndex}
+                              stageType={stage.stageType}
+                              disposalDeadline={stage.disposalDeadline}
+                              allocatedLotIds={stage.allocatedLotIds}
                               initialData={{
                                 emailSubject: stage.emailSubject || '',
                                 emailBodyHtml: stage.emailBodyHtml || '',
@@ -2338,6 +2743,32 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                       )}
                     </div>
                     </div>
+                    {stageValidationErrors.length > 0 && (
+                      <div
+                        data-testid={`stage-${stage.stageIndex}-validation-error`}
+                        style={{
+                          marginTop: '6px',
+                          marginLeft: '52px',
+                          padding: '10px 14px',
+                          background: 'hsl(var(--error) / 0.15)',
+                          border: '1px solid hsl(var(--error) / 0.4)',
+                          borderRadius: '8px',
+                          color: 'hsl(var(--error))',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '4px'
+                        }}
+                      >
+                        {stageValidationErrors.map((errMsg, errIdx) => (
+                          <div key={errIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <AlertTriangle size={15} color="hsl(var(--error))" />
+                            <span>⚠️ Validation Error: {errMsg}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {isZeroBuyer && (
                       <div data-testid="zero-buyer-error-banner" style={{ marginTop: '6px', marginLeft: '52px', padding: '10px 14px', background: 'hsl(var(--error) / 0.15)', border: '1px solid hsl(var(--error) / 0.4)', borderRadius: '8px', color: 'hsl(var(--error))', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <AlertTriangle size={15} color="hsl(var(--error))" />
