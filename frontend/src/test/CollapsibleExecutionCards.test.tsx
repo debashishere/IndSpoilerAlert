@@ -99,7 +99,7 @@ describe('TDD Suite: Unified Collapsible Workflow Execution Cards & Section Cont
     // Check summary contents in history card headers
     expect(screen.getAllByText(/Short-Dated Organic Dairy Clearance/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/awarded/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/\$8,325.00/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/\$8,325.00/i).length).toBeGreaterThan(0);
   });
 
   it('Test 2: should toggle individual workflow card collapse state when clicking collapse/expand toggle button', async () => {
@@ -112,20 +112,23 @@ describe('TDD Suite: Unified Collapsible Workflow Execution Cards & Section Cont
     );
 
     // Initially runs under the workflow are visible
-    expect(screen.getByText('run-historical-1')).toBeInTheDocument();
+    expect(screen.getAllByTestId('execution-run-row').length).toBe(2);
+    expect(screen.getByText('#ORICAL-1')).toBeInTheDocument();
 
     // Click collapse button on the workflow card
     const collapseToggle = screen.getByRole('button', { name: /Collapse workflow/i });
     fireEvent.click(collapseToggle);
 
     // Run item should not be visible
-    expect(screen.queryByText('run-historical-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('execution-run-row')).not.toBeInTheDocument();
+    expect(screen.queryByText('#ORICAL-1')).not.toBeInTheDocument();
 
     // Click expand button to restore
     const expandToggle = screen.getByRole('button', { name: /Expand workflow/i });
     fireEvent.click(expandToggle);
 
-    expect(screen.getByText('run-historical-1')).toBeInTheDocument();
+    expect(screen.getAllByTestId('execution-run-row').length).toBe(2);
+    expect(screen.getByText('#ORICAL-1')).toBeInTheDocument();
   });
 
   it('Test 3: should expand and collapse all workflow cards when clicking global section toolbar buttons', async () => {
@@ -142,11 +145,13 @@ describe('TDD Suite: Unified Collapsible Workflow Execution Cards & Section Cont
 
     // Click Collapse All
     fireEvent.click(collapseAllBtn);
-    expect(screen.queryByText('run-historical-1')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('execution-run-row')).not.toBeInTheDocument();
+    expect(screen.queryByText('#ORICAL-1')).not.toBeInTheDocument();
 
     // Click Expand All
     fireEvent.click(expandAllBtn);
-    expect(screen.getByText('run-historical-1')).toBeInTheDocument();
+    expect(screen.getAllByTestId('execution-run-row').length).toBe(2);
+    expect(screen.getByText('#ORICAL-1')).toBeInTheDocument();
   });
 
   it('Test 4: should open Full-Screen Audit Log modal and navigate tabs', async () => {
@@ -163,24 +168,24 @@ describe('TDD Suite: Unified Collapsible Workflow Execution Cards & Section Cont
     fireEvent.click(auditBtn);
 
     // Full-Screen Audit Inspector modal should be visible
-    expect(screen.getByText('Workflow Run Audit & Diagnostic Inspector')).toBeInTheDocument();
-    expect(screen.getByText('run-historical-1')).toBeInTheDocument();
+    expect(screen.getByTestId('workflow-run-audit-modal')).toBeInTheDocument();
+    expect(screen.getByText('ID: #ORICAL-1')).toBeInTheDocument();
 
-    // Click Target Lots tab
-    const lotsTabBtn = screen.getByRole('button', { name: /Target Lots/i });
+    // Click Inventory Scope tab
+    const lotsTabBtn = screen.getByRole('button', { name: /Inventory Scope/i });
     fireEvent.click(lotsTabBtn);
 
-    expect(screen.getByText(/Snapshot Lots Evaluated/i)).toBeInTheDocument();
-    expect(screen.getByText('lot-1')).toBeInTheDocument();
+    expect(screen.getByText(/Evaluated Inventory Lots/i)).toBeInTheDocument();
+    expect(screen.getByText('LOT-ot-1')).toBeInTheDocument();
 
-    // Click Stages & Bids tab
-    const stagesTabBtn = screen.getByRole('button', { name: /Stages & Bids/i });
+    // Click Strategy Snapshot tab
+    const stagesTabBtn = screen.getByRole('button', { name: /Strategy Snapshot/i });
     fireEvent.click(stagesTabBtn);
 
-    expect(screen.getByText(/Stage Execution Breakdown/i)).toBeInTheDocument();
+    expect(screen.getByText(/Strategy Configuration Active at Dispatch/i)).toBeInTheDocument();
 
-    // Click Raw JSON Audit tab
-    const auditTabBtn = screen.getByRole('button', { name: /Raw JSON Audit/i });
+    // Click Raw Telemetry tab
+    const auditTabBtn = screen.getByRole('button', { name: /Raw Telemetry/i });
     fireEvent.click(auditTabBtn);
 
     expect(screen.getByText(/auto_award/i)).toBeInTheDocument();

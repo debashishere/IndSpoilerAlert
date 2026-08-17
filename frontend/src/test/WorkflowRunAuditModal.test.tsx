@@ -1,8 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 import { WorkflowRunAuditModal } from '../components/WorkflowRunAuditModal';
-import { WorkflowRunTimelineStepper } from '../components/WorkflowRunTimelineStepper';
+import { WorkflowRunTimelineStepper, formatTimeRemaining } from '../components/WorkflowRunTimelineStepper';
 import { WorkflowRunHistoryView } from '../components/WorkflowRunHistoryView';
 
 describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', () => {
@@ -213,6 +213,43 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
       expect(screen.getByText('2')).toBeInTheDocument();
       expect(screen.getByText('3')).toBeInTheDocument();
     });
+
+    it('displays input-aware formatted execution windows for minutes, hours, and days in timeline stepper', () => {
+      const explicitUnitStages = [
+        {
+          stageNumber: 1,
+          name: 'Flash Minute Window',
+          stageType: 'liquidation',
+          waitHours: 0.5,
+          waitUnit: 'm' as const
+        },
+        {
+          stageNumber: 2,
+          name: 'Standard Day Window',
+          stageType: 'donation',
+          waitHours: 48,
+          waitUnit: 'd' as const
+        },
+        {
+          stageNumber: 3,
+          name: 'Explicit Hour Window',
+          stageType: 'landfill',
+          waitHours: 12,
+          waitUnit: 'h' as const
+        }
+      ];
+
+      render(
+        <WorkflowRunTimelineStepper
+          run={mockRunAwarded}
+          stages={explicitUnitStages}
+        />
+      );
+
+      expect(screen.getByText('30 Mins')).toBeInTheDocument();
+      expect(screen.getByText('2 Days')).toBeInTheDocument();
+      expect(screen.getByText('12 Hours')).toBeInTheDocument();
+    });
   });
 
   describe('Audit Tabs Navigation & Interactive Handlers', () => {
@@ -401,6 +438,47 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
         expect(screen.getByText(/\b8 hours/i)).toBeInTheDocument();
         expect(screen.getByText('Manual Approval')).toBeInTheDocument();
         expect(screen.getByText('Audience: 1 Custom Partner')).toBeInTheDocument();
+      });
+
+      it('renders input-aware formatted execution windows for minutes, days, and hours in Strategy Snapshot tab', () => {
+        const runWithExplicitUnits = {
+          _id: 'run-units-test',
+          status: 'evaluating',
+          dispatchedAt: '2026-08-16T10:00:00.000Z',
+          campaignSnapshot: {
+            name: 'Produce Express Clearance',
+            stages: [
+              {
+                stageNumber: 1,
+                name: 'Express Bidding Round',
+                stageType: 'liquidation',
+                discountValue: 10,
+                waitHours: 0.5,
+                waitUnit: 'm' as const
+              },
+              {
+                stageNumber: 2,
+                name: 'Extended Clearance',
+                stageType: 'donation',
+                discountValue: 0,
+                waitHours: 72,
+                waitUnit: 'd' as const
+              }
+            ]
+          }
+        };
+
+        render(
+          <WorkflowRunAuditModal
+            run={runWithExplicitUnits}
+            onClose={vi.fn()}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /strategy snapshot/i }));
+
+        expect(screen.getByText('30 Mins')).toBeInTheDocument();
+        expect(screen.getByText('3 Days')).toBeInTheDocument();
       });
     });
 
@@ -857,4 +935,213 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
       });
     });
   });
+
+  describe('Slice 3: Active Stage Live Countdown Timer & Progress Tracking (TDD)', () => {
+    describe('formatTimeRemaining helper', () => {
+      it('correctly formats remaining milliseconds into hh mm ss string', () => {
+        expect(formatTimeRemaining(3661000)).toBe('01h 01m 01s');
+        expect(formatTimeRemaining(72000000)).toBe('20h 00m 00s');
+        expect(formatTimeRemaining(45000)).toBe('00h 00m 45s');
+      });
+
+      it('returns 00h 00m 00s for zero or negative values', () => {
+        expect(formatTimeRemaining(0)).toBe('00h 00m 00s');
+        expect(formatTimeRemaining(-5000)).toBe('00h 00m 00s');
+      });
+    });
+
+    describe('WorkflowRunTimelineStepper Live Countdown & Expiration', () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('renders in-stepper live countdown badge on active stage with remaining time and ticks every second', () => {
+        const baseTime = new Date('2026-08-16T10:00:00.000Z').getTime();
+        vi.setSystemTime(baseTime);
+
+        const runEvaluating = {
+          _id: 'run-stepper-eval',
+          status: 'evaluating',
+          dispatchedAt: '2026-08-16T10:00:00.000Z',
+          evaluationEndsAt: '2026-08-16T12:00:00.000Z' // 2 hours window
+        };
+
+        const stages = [
+          {
+            stageNumber: 1,
+            name: 'Rapid Discount Stage',
+            stageType: 'liquidation',
+            waitHours: 2
+          },
+          {
+            stageNumber: 2,
+            name: 'Donation Stage',
+            stageType: 'donation',
+            waitHours: 4
+          }
+        ];
+
+        render(<WorkflowRunTimelineStepper run={runEvaluating} stages={stages} />);
+
+        // Stage 1 active badge with countdown
+        expect(screen.getByText(/Stage Window Countdown: 02h 00m 00s remaining/i)).toBeInTheDocument();
+
+        // Advance timer by 10 seconds inside act
+        React.act(() => {
+          vi.advanceTimersByTime(10000);
+        });
+
+        expect(screen.getByText(/Stage Window Countdown: 01h 59m 50s remaining/i)).toBeInTheDocument();
+      });
+
+      it('renders "Window Expired – Resolution / Escalation in Progress" when stage window expires', () => {
+        const baseTime = new Date('2026-08-16T12:05:00.000Z').getTime();
+        vi.setSystemTime(baseTime);
+
+        const runExpired = {
+          _id: 'run-stepper-expired',
+          status: 'evaluating',
+          dispatchedAt: '2026-08-16T10:00:00.000Z',
+          evaluationEndsAt: '2026-08-16T12:00:00.000Z' // expired 5 mins ago
+        };
+
+        const stages = [
+          {
+            stageNumber: 1,
+            name: 'Expired Liquidation Gate',
+            stageType: 'liquidation',
+            waitHours: 2
+          }
+        ];
+
+        render(<WorkflowRunTimelineStepper run={runExpired} stages={stages} />);
+
+        expect(screen.getByText('Window Expired – Resolution / Escalation in Progress')).toBeInTheDocument();
+      });
+    });
+
+    describe('WorkflowRunAuditModal Hero Countdown & Progress Bar', () => {
+      beforeEach(() => {
+        vi.useFakeTimers();
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it('renders ticking hero countdown card with progress percentage and updates on interval', () => {
+        const baseTime = new Date('2026-08-16T10:00:00.000Z').getTime();
+        vi.setSystemTime(baseTime);
+
+        const runEvaluating = {
+          _id: 'run-modal-eval-1',
+          status: 'evaluating',
+          runType: 'scheduled',
+          dispatchedAt: '2026-08-16T10:00:00.000Z',
+          evaluationEndsAt: '2026-08-16T12:00:00.000Z', // 2 hours = 120 mins
+          snapshotInventoryIds: ['lot-101'],
+          campaignSnapshot: {
+            name: 'Speed Clearance',
+            stages: [
+              {
+                stageNumber: 1,
+                name: 'Speed Bargain 1',
+                stageType: 'liquidation',
+                waitHours: 2,
+                waitUnit: 'h'
+              }
+            ]
+          }
+        };
+
+        render(
+          <WorkflowRunAuditModal
+            run={runEvaluating}
+            onClose={vi.fn()}
+          />
+        );
+
+        // Initial state at 10:00:00
+        const heroCard = screen.getByTestId('active-stage-countdown-card');
+        expect(heroCard).toBeInTheDocument();
+        expect(within(heroCard).getByText('Current Active Stage: Speed Bargain 1')).toBeInTheDocument();
+        expect(within(heroCard).getByText('02h 00m 00s')).toBeInTheDocument();
+        expect(within(heroCard).getByText('0%')).toBeInTheDocument();
+
+        // Advance by 1 hour (3600 seconds) -> 50% elapsed, 1 hour remaining
+        React.act(() => {
+          vi.advanceTimersByTime(3600000);
+        });
+
+        expect(within(heroCard).getByText('01h 00m 00s')).toBeInTheDocument();
+        expect(within(heroCard).getByText('50%')).toBeInTheDocument();
+      });
+
+      it('renders "00h 00m 00s (Expired)" and 100% progress when evaluationEndsAt has elapsed', () => {
+        const baseTime = new Date('2026-08-16T12:30:00.000Z').getTime();
+        vi.setSystemTime(baseTime);
+
+        const runExpired = {
+          _id: 'run-modal-expired-1',
+          status: 'evaluating',
+          runType: 'scheduled',
+          dispatchedAt: '2026-08-16T10:00:00.000Z',
+          evaluationEndsAt: '2026-08-16T12:00:00.000Z',
+          snapshotInventoryIds: ['lot-101'],
+          campaignSnapshot: {
+            name: 'Expired Blitz',
+            stages: [
+              {
+                stageNumber: 1,
+                name: 'Late Stage',
+                stageType: 'liquidation',
+                waitHours: 2
+              }
+            ]
+          }
+        };
+
+        render(
+          <WorkflowRunAuditModal
+            run={runExpired}
+            onClose={vi.fn()}
+          />
+        );
+
+        const heroCard = screen.getByTestId('active-stage-countdown-card');
+        expect(within(heroCard).getByText('00h 00m 00s (Expired)')).toBeInTheDocument();
+        expect(within(heroCard).getByText('100%')).toBeInTheDocument();
+      });
+
+      it('does not render active stage hero countdown card for awarded/completed runs', () => {
+        const runAwarded = {
+          _id: 'run-modal-awarded-1',
+          status: 'awarded',
+          runType: 'scheduled',
+          dispatchedAt: '2026-08-16T10:00:00.000Z',
+          snapshotInventoryIds: ['lot-101'],
+          resolution: {
+            action: 'auto_award',
+            winningPrice: 25,
+            totalCases: 100,
+            totalValue: 2500
+          }
+        };
+
+        render(
+          <WorkflowRunAuditModal
+            run={runAwarded}
+            onClose={vi.fn()}
+          />
+        );
+
+        expect(screen.queryByTestId('active-stage-countdown-card')).not.toBeInTheDocument();
+      });
+    });
+  });
 });
+
