@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Clock, Timer, ChevronDown, Users, Mail } from 'lucide-react';
+import { useAppSelector } from '../store/hooks';
+import { selectBuyerLists } from '../store/slices/coreSlice';
 
 export const formatExecutionWindow = (waitHours?: number, waitUnit?: 'd' | 'h' | 'm'): string => {
   if (waitHours == null || isNaN(waitHours) || waitHours <= 0) return 'Immediate';
@@ -135,20 +137,51 @@ export const resolveStageLots = (stg: any, inventoryList: any[], run: any): any[
   });
 };
 
-export const resolveStageBuyers = (stg: any, buyers: any[] = []): Array<{ id: string; name: string; email: string; tier: string }> => {
+export const resolveStageBuyers = (
+  stg: any,
+  buyers: any[] = [],
+  buyerLists: any[] = [],
+  run?: any
+): Array<{ id: string; name: string; email: string; tier: string }> => {
   if (!buyers) buyers = [];
+  if (!buyerLists) buyerLists = [];
 
+  // 1. Custom buyer mode
   if (stg.buyerMode === 'custom') {
-    const customList = Array.isArray(stg.customBuyers) ? stg.customBuyers : [];
+    const customList = Array.isArray(stg.customBuyers) && stg.customBuyers.length > 0
+      ? stg.customBuyers
+      : (Array.isArray(stg.customBuyerIds) ? stg.customBuyerIds : []);
+
+    if (customList.length === 0) {
+      if (Array.isArray(run?.evaluatedBuyerIds) && run.evaluatedBuyerIds.length > 0) {
+        return run.evaluatedBuyerIds.map((bId: any) => {
+          const id = typeof bId === 'string' ? bId : (bId._id || bId.id || bId.email);
+          const matched = buyers.find((b: any) => (b._id || b.id) === id || b.email === id);
+          return matched ? {
+            id: matched._id || matched.id || id,
+            name: matched.companyName || matched.name || id,
+            email: matched.email || '',
+            tier: matched.tier || 'custom',
+          } : {
+            id: String(id),
+            name: String(id),
+            email: '',
+            tier: 'custom',
+          };
+        });
+      }
+      return [];
+    }
+
     return customList.map((cb: any) => {
       const id = typeof cb === 'string' ? cb : (cb.id || cb._id || cb.email);
       const matched = buyers.find((b: any) => b._id === id || b.id === id || b.email === id);
       if (matched) {
         return {
           id: matched._id || matched.id || id,
-          name: matched.companyName || matched.name || (typeof cb === 'object' ? cb.name : '') || id,
-          email: matched.email || (typeof cb === 'object' ? cb.email : ''),
-          tier: matched.tier || (typeof cb === 'object' ? cb.tier : 'custom') || 'custom',
+          name: (typeof cb === 'object' && (cb.name || cb.companyName)) ? (cb.name || cb.companyName) : (matched.companyName || matched.name || id),
+          email: (typeof cb === 'object' && cb.email) ? cb.email : (matched.email || ''),
+          tier: (typeof cb === 'object' && cb.tier) ? cb.tier : (matched.tier || 'custom'),
         };
       }
       if (typeof cb === 'object') {
@@ -168,7 +201,48 @@ export const resolveStageBuyers = (stg: any, buyers: any[] = []): Array<{ id: st
     });
   }
 
-  if (stg.buyerMode === 'segment' || stg.buyerMode === 'list') {
+  // 2. Buyer List or Segment mode
+  if (stg.buyerMode === 'segment' || stg.buyerMode === 'list' || stg.buyerListId || stg.buyerSegment || stg.buyerListName) {
+    const targetId = stg.buyerListId || stg.buyerSegment;
+    const targetName = (stg.buyerListName || stg.buyerSegment || '').toLowerCase();
+
+    // Look for matching list in buyerLists
+    const matchedList = buyerLists.find((l: any) =>
+      (targetId && (l._id === targetId || l.id === targetId || l.type === targetId)) ||
+      (targetName && l.name && l.name.toLowerCase() === targetName) ||
+      (targetId && l.name && l.name.toLowerCase() === String(targetId).toLowerCase())
+    );
+
+    if (matchedList) {
+      const listBuyerIds = Array.isArray(matchedList.buyerIds) ? matchedList.buyerIds : [];
+      return listBuyerIds.map((b: any) => {
+        if (typeof b === 'object' && b !== null) {
+          return {
+            id: b._id || b.id || b.email,
+            name: b.companyName || b.name || b.email || 'Partner',
+            email: b.email || '',
+            tier: b.tier || 'tier1',
+          };
+        }
+        const matched = buyers.find((buyer: any) => (buyer._id || buyer.id) === b || buyer.email === b);
+        if (matched) {
+          return {
+            id: matched._id || matched.id || b,
+            name: matched.companyName || matched.name || b,
+            email: matched.email || '',
+            tier: matched.tier || 'tier1',
+          };
+        }
+        return {
+          id: String(b),
+          name: String(b),
+          email: '',
+          tier: 'tier1',
+        };
+      });
+    }
+
+    // Try finding in static segments or attributes on buyers
     const segName = (stg.buyerSegment || stg.buyerListName || stg.buyerListId || '').toLowerCase();
     const isPrimary = segName.includes('primary') || segName.includes('tier 1') || segName.includes('tier1');
     const isSecondary = segName.includes('secondary') || segName.includes('tier 2') || segName.includes('tier2') || segName.includes('liquidator');
@@ -176,7 +250,7 @@ export const resolveStageBuyers = (stg: any, buyers: any[] = []): Array<{ id: st
     const matched = buyers.filter((b: any) => {
       const bTier = String(b.tier ?? '').toLowerCase();
       const bSeg = String(b.segment ?? b.buyerSegment ?? '').toLowerCase();
-      if (stg.buyerSegment && (bSeg === stg.buyerSegment.toLowerCase() || b.buyerSegment === stg.buyerSegment)) {
+      if (stg.buyerSegment && (bSeg === stg.buyerSegment.toLowerCase() || b.buyerSegment === stg.buyerSegment || bTier === stg.buyerSegment.toLowerCase())) {
         return true;
       }
       if (isPrimary && (!bTier || bTier === 'tier1' || bTier === 'primary' || bTier === '1' || bTier === 'tier1_retailers')) {
@@ -196,9 +270,67 @@ export const resolveStageBuyers = (stg: any, buyers: any[] = []): Array<{ id: st
         tier: b.tier || 'tier1',
       }));
     }
+
+    // If list/segment was configured but no buyers matched from static segments or buyerLists:
+    // Check if the run has evaluatedBuyerIds / buyerEmails recorded during past execution
+    if (Array.isArray(run?.evaluatedBuyerIds) && run.evaluatedBuyerIds.length > 0) {
+      return run.evaluatedBuyerIds.map((bId: any) => {
+        const id = typeof bId === 'string' ? bId : (bId._id || bId.id || bId.email);
+        const matchedBuyer = buyers.find((b: any) => (b._id || b.id) === id || b.email === id);
+        return matchedBuyer ? {
+          id: matchedBuyer._id || matchedBuyer.id || id,
+          name: matchedBuyer.companyName || matchedBuyer.name || id,
+          email: matchedBuyer.email || '',
+          tier: matchedBuyer.tier || 'tier1',
+        } : {
+          id: String(id),
+          name: String(id),
+          email: '',
+          tier: 'tier1',
+        };
+      });
+    }
+
+    if (Array.isArray(run?.buyerEmails) && run.buyerEmails.length > 0) {
+      return run.buyerEmails.map((email: string) => {
+        const matchedBuyer = buyers.find((b: any) => b.email?.toLowerCase() === email.toLowerCase());
+        return matchedBuyer ? {
+          id: matchedBuyer._id || matchedBuyer.id || email,
+          name: matchedBuyer.companyName || matchedBuyer.name || email,
+          email: matchedBuyer.email || email,
+          tier: matchedBuyer.tier || 'tier1',
+        } : {
+          id: email,
+          name: email,
+          email,
+          tier: 'tier1',
+        };
+      });
+    }
+
+    // List mode was requested and no buyers found -> return empty list
+    return [];
   }
 
-  // Default / buyerMode === 'all'
+  // 3. BuyerMode === 'all' or default
+  if (stg.buyerMode !== 'all' && Array.isArray(run?.evaluatedBuyerIds) && run.evaluatedBuyerIds.length > 0) {
+    return run.evaluatedBuyerIds.map((bId: any) => {
+      const id = typeof bId === 'string' ? bId : (bId._id || bId.id || bId.email);
+      const matchedBuyer = buyers.find((b: any) => (b._id || b.id) === id || b.email === id);
+      return matchedBuyer ? {
+        id: matchedBuyer._id || matchedBuyer.id || id,
+        name: matchedBuyer.companyName || matchedBuyer.name || id,
+        email: matchedBuyer.email || '',
+        tier: matchedBuyer.tier || 'tier1',
+      } : {
+        id: String(id),
+        name: String(id),
+        email: '',
+        tier: 'tier1',
+      };
+    });
+  }
+
   return buyers.map((b: any) => ({
     id: b._id || b.id || b.email,
     name: b.companyName || b.name || b.email,
@@ -212,12 +344,13 @@ export const resolveEmailTokens = (
   stage: any,
   run: any,
   inventoryList: any[] = [],
-  allBuyers: any[] = []
+  allBuyers: any[] = [],
+  buyerLists: any[] = []
 ): string => {
   if (!template) return '';
 
   const stageLots = resolveStageLots(stage, inventoryList, run);
-  const stageBuyers = resolveStageBuyers(stage, allBuyers);
+  const stageBuyers = resolveStageBuyers(stage, allBuyers, buyerLists, run);
 
   // Target buyer / partner name
   let targetBuyerName: string | undefined = undefined;
@@ -553,6 +686,7 @@ interface WorkflowRunTimelineStepperProps {
   allBuyers?: any[];
   allBids?: any[];
   inventoryList?: any[];
+  buyerLists?: any[];
 }
 
 export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProps> = ({
@@ -561,7 +695,16 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
   allBuyers = [],
   allBids = [],
   inventoryList = [],
+  buyerLists = [],
 }) => {
+  let reduxBuyerLists: any[] = [];
+  try {
+    reduxBuyerLists = useAppSelector(selectBuyerLists) || [];
+  } catch (e) {
+    reduxBuyerLists = [];
+  }
+  const effectiveBuyerLists = (buyerLists && buyerLists.length > 0) ? buyerLists : reduxBuyerLists;
+
   const [nowTime, setNowTime] = useState(Date.now());
   const [expandedStages, setExpandedStages] = useState<Record<number, boolean>>({});
   const [expandedAudience, setExpandedAudience] = useState<Record<number, boolean>>({});
@@ -812,7 +955,7 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
                     <strong>Pricing Rule:</strong> {stage.discountValue != null ? `${stage.discountValue}% (${stage.discountType?.replace(/_/g, ' ') || 'Discount'})` : 'Fixed / Custom'}
                   </div>
                   <div>
-                    <strong>Audience Target:</strong> {stage.buyerMode === 'segment' ? (stage.buyerSegment || 'Targeted Segment') : stage.buyerMode === 'custom' ? `${stage.customBuyers?.length || 0} Custom Partners` : 'All Registered Partners'}
+                    <strong>Audience Target:</strong> {stage.buyerMode === 'custom' ? `${stage.customBuyers?.length || 0} Custom Partners` : (stage.buyerMode === 'segment' || stage.buyerMode === 'list') ? (stage.buyerSegment || stage.buyerListName || stage.buyerListId || 'Targeted Segment') : 'All Registered Partners'}
                   </div>
                   {stage.allocatedLotIds && stage.allocatedLotIds.length > 0 && (
                     <div>
@@ -948,7 +1091,7 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
 
                     {/* Audience Targeting Section */}
                     {(() => {
-                      const stageContacts = resolveStageBuyers(stage, allBuyers);
+                      const stageContacts = resolveStageBuyers(stage, allBuyers, effectiveBuyerLists, run);
                       const audienceLabel = stage.buyerMode === 'custom'
                         ? 'Custom List'
                         : (stage.buyerMode === 'segment' || stage.buyerMode === 'list')
@@ -1533,8 +1676,8 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
                       const rawBodyHtml = stage.emailBodyHtml || stage.emailConfig?.bodyHtml || stage.bodyHtml || '';
                       const hasEmail = Boolean(rawBodyHtml && rawBodyHtml.trim().length > 0);
 
-                      const resolvedSubject = resolveEmailTokens(rawSubject, stage, run, inventoryList, allBuyers);
-                      const resolvedBodyHtml = resolveEmailTokens(rawBodyHtml, stage, run, inventoryList, allBuyers);
+                      const resolvedSubject = resolveEmailTokens(rawSubject, stage, run, inventoryList, allBuyers, effectiveBuyerLists);
+                      const resolvedBodyHtml = resolveEmailTokens(rawBodyHtml, stage, run, inventoryList, allBuyers, effectiveBuyerLists);
 
                       return (
                         <div data-testid="stage-email-preview-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

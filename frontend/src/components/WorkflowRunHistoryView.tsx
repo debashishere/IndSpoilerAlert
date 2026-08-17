@@ -20,6 +20,8 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { WorkflowRunAuditModal } from './WorkflowRunAuditModal';
+import { useAppSelector } from '../store/hooks';
+import { selectBuyerLists } from '../store/slices/coreSlice';
 
 interface WorkflowRunHistoryViewProps {
   supplierId: string;
@@ -28,6 +30,7 @@ interface WorkflowRunHistoryViewProps {
   inventoryList?: any[];
   allBids?: any[];
   allBuyers?: any[];
+  buyerLists?: any[];
   loading?: boolean;
   onForceExpireRun?: (runId: string) => void;
   onEditCampaign?: (campaignId: string) => void;
@@ -42,12 +45,20 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
   inventoryList = [],
   allBids = [],
   allBuyers = [],
+  buyerLists = [],
   loading = false,
   onForceExpireRun,
   onEditCampaign,
   onSelectLot,
   onReTriggerRun
 }) => {
+  let reduxBuyerLists: any[] = [];
+  try {
+    reduxBuyerLists = useAppSelector(selectBuyerLists) || [];
+  } catch (e) {
+    reduxBuyerLists = [];
+  }
+  const effectiveBuyerLists = (buyerLists && buyerLists.length > 0) ? buyerLists : reduxBuyerLists;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<'all' | 'evaluating' | 'awarded' | 'fallback_executed' | 'failed'>('all');
   const [collapsedWorkflows, setCollapsedWorkflows] = useState<Record<string, boolean>>({});
@@ -552,6 +563,7 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
           inventoryList={inventoryList}
           allBids={allBids}
           allBuyers={allBuyers}
+          buyerLists={effectiveBuyerLists}
           onClose={() => setSelectedRunForAudit(null)}
           onForceExpire={onForceExpireRun}
           onReTrigger={onReTriggerRun}

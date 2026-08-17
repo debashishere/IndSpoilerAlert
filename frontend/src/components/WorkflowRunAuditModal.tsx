@@ -22,6 +22,8 @@ import {
   Timer
 } from 'lucide-react';
 import { WorkflowRunTimelineStepper, formatExecutionWindow, formatTimeRemaining } from './WorkflowRunTimelineStepper';
+import { useAppSelector } from '../store/hooks';
+import { selectBuyerLists } from '../store/slices/coreSlice';
 
 interface WorkflowRunAuditModalProps {
   run: any;
@@ -29,6 +31,7 @@ interface WorkflowRunAuditModalProps {
   inventoryList?: any[];
   allBids?: any[];
   allBuyers?: any[];
+  buyerLists?: any[];
   onClose: () => void;
   onReTrigger?: (run: any) => void;
   onForceExpire?: (runId: string) => void;
@@ -41,11 +44,19 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
   inventoryList = [],
   allBids = [],
   allBuyers = [],
+  buyerLists = [],
   onClose,
   onReTrigger,
   onForceExpire,
   onSelectLot
 }) => {
+  let reduxBuyerLists: any[] = [];
+  try {
+    reduxBuyerLists = useAppSelector(selectBuyerLists) || [];
+  } catch (e) {
+    reduxBuyerLists = [];
+  }
+  const effectiveBuyerLists = (buyerLists && buyerLists.length > 0) ? buyerLists : reduxBuyerLists;
   const [activeTab, setActiveTab] = useState<'summary' | 'inventory' | 'comms' | 'bids'>('summary');
   const [rawSearchQuery, setRawSearchQuery] = useState('');
   const [copiedSuccess, setCopiedSuccess] = useState(false);
@@ -493,6 +504,7 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
                   allBuyers={allBuyers}
                   allBids={allBids}
                   inventoryList={inventoryList}
+                  buyerLists={effectiveBuyerLists}
                 />
               </div>
 

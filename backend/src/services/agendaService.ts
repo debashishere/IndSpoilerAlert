@@ -259,21 +259,29 @@ export async function createAutomationRun(
         const listRef = stage.buyerListId || stage.buyerSegment;
         let buyerListDoc: any = null;
 
-        if (mongoose.connection.readyState === 1 && listRef) {
+        if (mongoose.connection.readyState === 1 && (listRef || stage.buyerListName)) {
           try {
-            if (mongoose.Types.ObjectId.isValid(listRef)) {
+            if (listRef && mongoose.Types.ObjectId.isValid(listRef)) {
               buyerListDoc = await BuyerList.findById(listRef);
             }
             if (!buyerListDoc && automation.supplierId) {
+              const conds: any[] = [];
+              if (listRef) conds.push({ type: listRef }, { name: new RegExp(`^${listRef}$`, 'i') });
+              if (stage.buyerListName) conds.push({ name: new RegExp(`^${stage.buyerListName}$`, 'i') });
               buyerListDoc = await BuyerList.findOne({
                 supplierId: automation.supplierId,
-                $or: [{ type: listRef }, { name: new RegExp(`^${listRef}$`, 'i') }]
+                $or: conds
               });
             }
             if (!buyerListDoc) {
-              buyerListDoc = await BuyerList.findOne({
-                $or: [{ type: listRef }, { name: new RegExp(`^${listRef}$`, 'i') }]
-              });
+              const conds: any[] = [];
+              if (listRef) conds.push({ type: listRef }, { name: new RegExp(`^${listRef}$`, 'i') });
+              if (stage.buyerListName) conds.push({ name: new RegExp(`^${stage.buyerListName}$`, 'i') });
+              if (conds.length > 0) {
+                buyerListDoc = await BuyerList.findOne({
+                  $or: conds
+                });
+              }
             }
           } catch (e) {}
         }

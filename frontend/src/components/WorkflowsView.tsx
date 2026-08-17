@@ -885,6 +885,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
           inventoryList={inventoryList}
           allBids={allBids}
           allBuyers={allBuyers}
+          buyerLists={buyerLists}
           loading={loading}
           onForceExpireRun={(runId) => {
             dispatch(forceExpireRunThunk({ supplierId, runId }));
