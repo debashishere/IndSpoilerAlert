@@ -47,7 +47,7 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
   onForceExpire,
   onSelectLot
 }) => {
-  const [activeTab, setActiveTab] = useState<'summary' | 'strategy' | 'inventory' | 'comms' | 'bids' | 'raw'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'strategy' | 'inventory' | 'comms' | 'bids'>('summary');
   const [rawSearchQuery, setRawSearchQuery] = useState('');
   const [copiedSuccess, setCopiedSuccess] = useState(false);
   const [nowTime, setNowTime] = useState(Date.now());
@@ -286,7 +286,6 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
           { id: 'inventory', label: `Inventory Scope (${matchedLots.length})`, icon: Package },
           { id: 'comms', label: `Communications Log (${run.buyerEmails?.length || run.evaluatedBuyerIds?.length || 0})`, icon: Send },
           { id: 'bids', label: `Bids & Offers Ledger (${runBids.length})`, icon: DollarSign },
-          { id: 'raw', label: 'Raw Telemetry & JSON', icon: FileText }
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -465,7 +464,13 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
 
               {/* Stage Execution Stepper */}
               <div className="card" style={{ padding: '24px' }}>
-                <WorkflowRunTimelineStepper run={run} stages={run.campaignSnapshot?.stages} />
+                <WorkflowRunTimelineStepper
+                  run={run}
+                  stages={run.campaignSnapshot?.stages}
+                  allBuyers={allBuyers}
+                  allBids={allBids}
+                  inventoryList={inventoryList}
+                />
               </div>
 
               {/* Resolution Audit Breakdown */}
@@ -821,77 +826,8 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
             )}
           </div>
         )}
-
-        {/* TAB 6: RAW TELEMETRY & JSON */}
-        {activeTab === 'raw' && (
-          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Search size={16} style={{ color: 'hsl(var(--text-muted))' }} />
-                <input
-                  type="text"
-                  placeholder="Filter JSON fields or values..."
-                  value={rawSearchQuery}
-                  onChange={(e) => setRawSearchQuery(e.target.value)}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    backgroundColor: 'hsl(var(--bg-card))',
-                    border: '1px solid hsl(var(--border-color))',
-                    color: 'hsl(var(--text-primary))',
-                    fontSize: '0.8rem',
-                    width: '260px'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleCopyJSON}
-                  style={{ fontSize: '0.75rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                >
-                  <Copy size={12} /> {copiedSuccess ? 'Copied!' : 'Copy JSON'}
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={handleExportJSON}
-                  style={{ fontSize: '0.75rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}
-                >
-                  <Download size={12} /> Download Payload
-                </button>
-              </div>
-            </div>
-
-            <pre style={{
-              margin: 0,
-              padding: '16px',
-              backgroundColor: 'hsl(var(--bg-card-hover) / 40%)',
-              borderRadius: '8px',
-              border: '1px solid hsl(var(--border-color))',
-              fontSize: '0.75rem',
-              color: 'hsl(var(--text-primary))',
-              whiteSpace: 'pre-wrap',
-              maxHeight: '480px',
-              overflowY: 'auto',
-              fontFamily: 'monospace'
-            }}>
-              {JSON.stringify(
-                rawSearchQuery
-                  ? Object.entries(run).filter(([k, v]) =>
-                      k.toLowerCase().includes(rawSearchQuery.toLowerCase()) ||
-                      JSON.stringify(v).toLowerCase().includes(rawSearchQuery.toLowerCase())
-                    ).reduce((acc, [k, v]) => ({ ...acc, [k]: v }), {})
-                  : run,
-                null,
-                2
-              )}
-            </pre>
-          </div>
-        )}
       </main>
+
     </div>
   );
 };

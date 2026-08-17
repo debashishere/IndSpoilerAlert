@@ -183,11 +183,5 @@ describe('TDD Suite: Unified Collapsible Workflow Execution Cards & Section Cont
     fireEvent.click(stagesTabBtn);
 
     expect(screen.getByText(/Strategy Configuration Active at Dispatch/i)).toBeInTheDocument();
-
-    // Click Raw Telemetry tab
-    const auditTabBtn = screen.getByRole('button', { name: /Raw Telemetry/i });
-    fireEvent.click(auditTabBtn);
-
-    expect(screen.getByText(/auto_award/i)).toBeInTheDocument();
   });
 });
