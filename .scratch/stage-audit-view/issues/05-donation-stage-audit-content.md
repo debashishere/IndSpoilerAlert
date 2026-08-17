@@ -10,6 +10,7 @@
 - [x] If resolved: actual acceptance timestamp is shown and elapsed time is computed and displayed
 - [x] If escalated/expired: "Expired — escalated to next stage" label is shown in amber
 - [x] `⬤ ALLOCATED LOTS` section lists lot identifiers and case counts assigned to this donation stage
+- [x] Allocated Lots table supports pagination with page size selector (options: 5, 10, 20, 30 max) and page navigation controls
 - [x] `⬤ ACCEPTANCE OUTCOME` section renders a status badge: Accepted (green) / Declined (red) / Escalated (amber)
 - [x] Accepted outcome shows the accepting partner's name alongside the badge
 - [x] No Pricing & Timing section and no Bids & Offers Ledger render for Donation stages

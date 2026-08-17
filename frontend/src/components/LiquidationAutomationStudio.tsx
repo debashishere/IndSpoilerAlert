@@ -38,11 +38,13 @@ import {
   Smartphone,
   Monitor,
   Table,
-  Info
+  Info,
+  Layers
 } from 'lucide-react';
 import { PreFlightAuditModal } from './domain/workflows/PreFlightAuditModal';
 import { useOAuthMailbox } from '../hooks/useOAuthMailbox';
 import { StageEmailModal } from './domain/workflows/StageEmailModal';
+import { InventoryScopeDiffModal } from './domain/workflows/InventoryScopeDiffModal';
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -124,6 +126,7 @@ export interface LiquidationAutomationStudioProps {
   buyers: any[];
   apiBaseUrl: string;
   editingCampaignId?: string | null;
+  automationRuns?: any[];
   initialEmailBuilderTab?: 'preview' | 'editor' | 'broadcast';
   onSuccess?: (mode?: 'saved' | 'launched') => void;
   onCancel?: () => void;
@@ -962,6 +965,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   buyers = [],
   apiBaseUrl = '/api',
   editingCampaignId = null,
+  automationRuns,
   initialEmailBuilderTab = 'preview',
   onSuccess,
   onCancel,
@@ -972,6 +976,12 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     reduxBuyerLists = useAppSelector(selectBuyerLists) || [];
   } catch {
     reduxBuyerLists = [];
+  }
+  let reduxAutomationRuns: any[] = [];
+  try {
+    reduxAutomationRuns = useAppSelector((state: any) => state.workflow?.automationRuns) || [];
+  } catch {
+    reduxAutomationRuns = [];
   }
   let dispatch: any;
   try {
@@ -1061,6 +1071,23 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   const [isSchedulePopoverOpen, setIsSchedulePopoverOpen] = useState<boolean>(false);
   const scheduleRef = useRef<HTMLDivElement>(null);
 
+  // Scope Mode Info Popover state
+  const [activeScopeInfoPopover, setActiveScopeInfoPopover] = useState<'dynamic' | 'pinned' | null>(null);
+  const scopeInfoRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activeScopeInfoPopover) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (scopeInfoRef.current && !scopeInfoRef.current.contains(event.target as Node)) {
+        setActiveScopeInfoPopover(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeScopeInfoPopover]);
+
   useEffect(() => {
     if (!isSchedulePopoverOpen) return;
 
@@ -1117,12 +1144,17 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   const [donationEmailCustomNotes, setDonationEmailCustomNotes]   = useState<string>('Please arrange logistics pickup within 48 hours of scheduled pickup date. Reply to confirm dock door appointment and receive 501(c)(3) tax attestation documentation.');
   const [showDonationEmailPreview, setShowDonationEmailPreview]   = useState<boolean>(false);
 
+  // Drift Detection & Breakdown Modal
+  const [dismissedDriftBanner, setDismissedDriftBanner] = useState(false);
+  const [showInventoryDiffModal, setShowInventoryDiffModal] = useState(false);
+
   // Pre-flight
   const [showPreFlightModal, setShowPreFlightModal] = useState(false);
   const [isSubmitting, setIsSubmitting]             = useState(false);
 
   // Hydration effect when editing an existing campaign
   useEffect(() => {
+    setDismissedDriftBanner(false);
     if (!editingCampaignId) {
       setSelectedTemplateKey('short_dated_clearance');
       setWorkflowName('Untitled Workflow');
@@ -1285,14 +1317,17 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
   const matchesAutoFilters = (lot: any) => {
     if (!lot) return false;
+    const lotCases = lot.availableQty ?? lot.quantityCases ?? lot.quantity ?? 0;
+    if (lotCases <= 0) return false;
+    if (lot.status === 'sold' || lot.status === 'liquidated' || lot.status === 'inactive' || lot.status === 'expired') return false;
+    const lotRsl = calculateLotRsl(lot);
+    if (lotRsl <= 0) return false;
     const lotCat = (typeof lot.productId === 'object' ? lot.productId?.category : '') || lot.category || lot.productCategory || '';
     if (categoryFilter && lotCat && lotCat.toLowerCase() !== categoryFilter.toLowerCase()) return false;
-    const lotRsl = calculateLotRsl(lot);
     const normalizedMaxRsl = (maxRslFilter !== undefined && maxRslFilter !== null && maxRslFilter !== 0)
       ? (maxRslFilter >= 100 ? 1.0 : (maxRslFilter >= 1 ? (maxRslFilter === 1 ? 1.0 : maxRslFilter / 100) : maxRslFilter))
       : null;
     if (normalizedMaxRsl !== null && normalizedMaxRsl < 1 && lotRsl > normalizedMaxRsl) return false;
-    const lotCases = lot.availableQty ?? lot.quantityCases ?? lot.quantity ?? 0;
     if (minCasesFilter > 0 && lotCases < minCasesFilter) return false;
     return true;
   };
@@ -1358,6 +1393,56 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
     });
     return { totalLots, totalCases, totalValue, urgentLots, audienceCount: audienceSet.size };
   }, [matchedLots, stages, buyers, reduxBuyerLists]);
+
+  const latestRun = useMemo(() => {
+    if (!editingCampaignId) return null;
+    const runs = automationRuns || reduxAutomationRuns;
+    if (!Array.isArray(runs) || runs.length === 0) return null;
+    const matches = runs.filter((r: any) => {
+      const aid = r.automationId?._id || r.automationId || r.campaignId?._id || r.campaignId;
+      return aid === editingCampaignId;
+    });
+    if (matches.length === 0) return null;
+    return [...matches].sort((a: any, b: any) => {
+      const tA = new Date(a.executedAt || a.createdAt || 0).getTime();
+      const tB = new Date(b.executedAt || b.createdAt || 0).getTime();
+      return tB - tA;
+    })[0];
+  }, [editingCampaignId, automationRuns, reduxAutomationRuns]);
+
+  const lastRunLotCount = latestRun?.snapshotInventoryIds?.length || 0;
+  const currentMatchedCount = matchedLots.length;
+  const hasDrift = Boolean(
+    editingCampaignId &&
+    latestRun &&
+    lastRunLotCount > 0 &&
+    lastRunLotCount !== currentMatchedCount &&
+    !dismissedDriftBanner
+  );
+
+  const formattedLastRunDate = useMemo(() => {
+    if (!latestRun?.executedAt && !latestRun?.createdAt) return 'the previous run';
+    const d = new Date(latestRun.executedAt || latestRun.createdAt);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }, [latestRun]);
+
+  const [stageSyncMessage, setStageSyncMessage] = useState<string | null>(null);
+
+  const handleSyncStageAllocations = () => {
+    const validMatchedIds = new Set(matchedLots.map((l: any) => l._id?.toString() || l.id));
+    setStages(prevStages => prevStages.map(stage => {
+      if (Array.isArray(stage.allocatedLotIds)) {
+        const purged = stage.allocatedLotIds.filter((id: string) => validMatchedIds.has(id));
+        return {
+          ...stage,
+          allocatedLotIds: purged
+        };
+      }
+      return stage;
+    }));
+    setStageSyncMessage('Stage allocations synchronized with live inventory.');
+    setTimeout(() => setStageSyncMessage(null), 4000);
+  };
 
   const hasInvalidStage = useMemo(() => {
     return stages.some((s, idx) => getStageValidationErrors(s, idx, reduxBuyerLists, buyers).length > 0);
@@ -1893,6 +1978,9 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             <button
               type="button"
               data-testid="save-campaign-btn"
+              data-test-action="save-strategy"
+              aria-label="Save Strategy"
+              id="studio-save-strategy-btn"
               onClick={() => handleSaveCampaign('draft')}
               disabled={isSubmitting}
               style={{
@@ -2031,6 +2119,139 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
       {/* ══ MAIN BODY: Full-Width 100% Canvas ════════════════════════════════ */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
 
+        {/* Drift Detection & Live Re-evaluation Alert Banner */}
+        {hasDrift && (
+          <div
+            data-testid="inventory-drift-banner"
+            style={{
+              backgroundColor: 'hsl(var(--warning) / 12%)',
+              border: '1px solid hsl(var(--warning) / 45%)',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              flexWrap: 'wrap',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)',
+              animation: 'fadeIn 0.2s ease-in-out'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: '280px' }}>
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  backgroundColor: 'hsl(var(--warning) / 20%)',
+                  border: '1px solid hsl(var(--warning) / 40%)',
+                  color: 'hsl(var(--warning))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'hsl(var(--warning))', letterSpacing: '-0.01em' }}>
+                    Inventory Scope Updated (Live Re-evaluation)
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.82rem', color: 'hsl(var(--text-muted))', marginTop: '3px', lineHeight: 1.45 }}>
+                  Inventory has changed since the last execution on {formattedLastRunDate}. Currently, <strong style={{ color: 'hsl(var(--text-primary))' }}>{currentMatchedCount} lot(s)</strong> are eligible based on active filter rules ({Math.abs(lastRunLotCount - currentMatchedCount)} previously processed lots are no longer active, have been liquidated, or aged out).
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                data-testid="sync-stage-allocations-btn"
+                onClick={handleSyncStageAllocations}
+                style={{
+                  background: 'hsl(var(--primary) / 20%)',
+                  color: 'hsl(var(--primary))',
+                  border: '1px solid hsl(var(--primary) / 40%)',
+                  borderRadius: '8px',
+                  padding: '7px 14px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Layers size={14} /> Sync Stage Allocations
+              </button>
+              <button
+                type="button"
+                data-testid="drift-review-breakdown-btn"
+                onClick={() => setShowInventoryDiffModal(true)}
+                style={{
+                  background: 'hsl(var(--warning) / 20%)',
+                  color: 'hsl(var(--warning))',
+                  border: '1px solid hsl(var(--warning) / 40%)',
+                  borderRadius: '8px',
+                  padding: '7px 14px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Table size={14} /> Review Lot Breakdown
+              </button>
+              <button
+                type="button"
+                data-testid="drift-dismiss-banner-btn"
+                onClick={() => setDismissedDriftBanner(true)}
+                style={{
+                  background: 'hsl(var(--bg-card))',
+                  color: 'hsl(var(--text-muted))',
+                  border: '1px solid hsl(var(--border-color))',
+                  borderRadius: '8px',
+                  padding: '7px 12px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px'
+                }}
+              >
+                <X size={14} /> Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
+        {stageSyncMessage && (
+          <div
+            style={{
+              backgroundColor: 'hsl(var(--success) / 12%)',
+              border: '1px solid hsl(var(--success) / 30%)',
+              borderRadius: '8px',
+              padding: '10px 16px',
+              color: 'hsl(var(--success))',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <Check size={14} /> {stageSyncMessage}
+          </div>
+        )}
+
         {/* SECTION 2: Inventory Selector */}
         <div style={card}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
@@ -2046,6 +2267,222 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   {showLotGrid ? 'Hide Grid' : `View (${matchedLots.length})`}
                 </button>
               </div>
+            </div>
+
+            {/* Scope Mode Selector */}
+            <div
+              ref={scopeInfoRef}
+              style={{
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '14px',
+                padding: '6px 10px',
+                background: 'hsl(var(--bg-app, var(--bg-card)))',
+                borderRadius: '8px',
+                border: '1px solid hsl(var(--border-color))',
+                width: 'fit-content'
+              }}
+            >
+              <span style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '4px' }}>
+                Scope Mode:
+              </span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', position: 'relative' }}>
+                <button
+                  type="button"
+                  data-testid="scope-mode-dynamic-btn"
+                  data-active={selectorMode === 'automatic' ? 'true' : 'false'}
+                  onClick={() => {
+                    setSelectorMode('automatic');
+                    setExplicitLotIds([]);
+                    setExcludedLotIds([]);
+                  }}
+                  style={{
+                    background: selectorMode === 'automatic' ? 'hsl(var(--primary))' : 'transparent',
+                    color: selectorMode === 'automatic' ? 'white' : 'hsl(var(--text-primary))',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: selectorMode === 'automatic' ? 700 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Dynamic Rule (Sweep Mode)
+                </button>
+                <button
+                  type="button"
+                  data-testid="info-dynamic-scope-btn"
+                  onClick={() => setActiveScopeInfoPopover(p => p === 'dynamic' ? null : 'dynamic')}
+                  title="Click to view description for Dynamic Rule (Sweep Mode)"
+                  aria-label="Explain Dynamic Rule (Sweep Mode)"
+                  style={{
+                    background: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary) / 20%)' : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+                    padding: '3px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '50%',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Info size={13} />
+                </button>
+              </div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', position: 'relative' }}>
+                <button
+                  type="button"
+                  data-testid="scope-mode-pinned-btn"
+                  data-active={selectorMode === 'explicit' ? 'true' : 'false'}
+                  onClick={() => {
+                    setSelectorMode('explicit');
+                    setExplicitLotIds(matchedLots.map((l: any) => l._id?.toString() || l.id).filter(Boolean));
+                  }}
+                  style={{
+                    background: selectorMode === 'explicit' ? 'hsl(var(--primary))' : 'transparent',
+                    color: selectorMode === 'explicit' ? 'white' : 'hsl(var(--text-primary))',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: selectorMode === 'explicit' ? 700 : 500,
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  Pinned Lot Scope (Snapshot Mode)
+                </button>
+                <button
+                  type="button"
+                  data-testid="info-pinned-scope-btn"
+                  onClick={() => setActiveScopeInfoPopover(p => p === 'pinned' ? null : 'pinned')}
+                  title="Click to view description for Pinned Lot Scope (Snapshot Mode)"
+                  aria-label="Explain Pinned Lot Scope (Snapshot Mode)"
+                  style={{
+                    background: activeScopeInfoPopover === 'pinned' ? 'hsl(var(--primary) / 20%)' : 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: activeScopeInfoPopover === 'pinned' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+                    padding: '3px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '50%',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Info size={13} />
+                </button>
+              </div>
+
+              {/* Floating Scope Mode Description Popover Window */}
+              {activeScopeInfoPopover && (
+                <div
+                  data-testid="scope-mode-info-popover"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 8px)',
+                    left: 0,
+                    zIndex: 60,
+                    width: '380px',
+                    maxWidth: '90vw',
+                    background: 'hsl(var(--bg-card))',
+                    border: '1px solid hsl(var(--border-color))',
+                    borderRadius: '10px',
+                    padding: '14px 16px',
+                    boxShadow: '0 12px 32px -4px rgba(0, 0, 0, 0.25)',
+                    backdropFilter: 'blur(8px)',
+                    animation: 'fadeIn 0.15s ease-out'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '6px',
+                          background: 'hsl(var(--primary) / 15%)',
+                          color: 'hsl(var(--primary))',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <Info size={14} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
+                          {activeScopeInfoPopover === 'dynamic'
+                            ? 'Dynamic Rule (Sweep Mode)'
+                            : 'Pinned Lot Scope (Snapshot Mode)'}
+                        </div>
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            fontSize: '0.68rem',
+                            fontWeight: 700,
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            background: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary) / 15%)' : 'hsl(var(--warning) / 15%)',
+                            color: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary))' : 'hsl(var(--warning))',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                            marginTop: '2px'
+                          }}
+                        >
+                          {activeScopeInfoPopover === 'dynamic' ? 'Live Dynamic Evaluation' : 'Locked Lot Snapshot'}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      data-testid="close-scope-info-popover-btn"
+                      onClick={() => setActiveScopeInfoPopover(null)}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'hsl(var(--text-muted))',
+                        cursor: 'pointer',
+                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '4px'
+                      }}
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+
+                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary, var(--text-primary)))', lineHeight: 1.5, marginTop: '8px' }}>
+                    {activeScopeInfoPopover === 'dynamic' ? (
+                      <>
+                        <p style={{ margin: '0 0 6px 0' }}>
+                          <strong>How it works:</strong> Evaluates filter criteria (RSL %, Category, Storage, Min Cases) dynamically against active warehouse stock at execution time.
+                        </p>
+                        <p style={{ margin: 0, color: 'hsl(var(--text-muted))' }}>
+                          <strong>Execution Behavior:</strong> Qualifying lots are continuously swept into the workflow as they degrade or new inventory arrives. In Edit view, lots are re-evaluated against today’s date.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p style={{ margin: '0 0 6px 0' }}>
+                          <strong>How it works:</strong> Freezes and pins a specific list of inventory lots at save time.
+                        </p>
+                        <p style={{ margin: 0, color: 'hsl(var(--text-muted))' }}>
+                          <strong>Execution Behavior:</strong> Future workflow executions target strictly these pinned lots, ignoring newly arriving inventory or shelf-life drift.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Filter row */}
@@ -3018,6 +3455,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
           <div style={{ display: 'flex', gap: '14px', marginTop: '4px' }}>
             <button
               type="button"
+              data-testid="studio-save-strategy-btn"
               onClick={() => handleSaveCampaign('draft')}
               disabled={isSubmitting}
               style={{
@@ -3067,6 +3505,15 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
         workflowTimezone={workflowTimezone}
         emailSubject={stages[0]?.emailSubject || 'Distressed Inventory Special Liquidation Offer'}
         previewHtml={stages[0]?.emailBodyHtml || DEFAULT_EMAIL_BODY_HTML}
+      />
+
+      {/* ══ INVENTORY SCOPE DIFF MODAL ═══════════════════════════════════════ */}
+      <InventoryScopeDiffModal
+        showModal={showInventoryDiffModal}
+        onClose={() => setShowInventoryDiffModal(false)}
+        historicalRun={latestRun}
+        matchedLots={matchedLots}
+        allInventoryLots={activeLots}
       />
 
       {/* ══ BUYER SEGMENT ROSTER INSPECTION MODAL ════════════════════════════ */}

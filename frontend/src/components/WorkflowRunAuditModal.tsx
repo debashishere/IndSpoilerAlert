@@ -13,7 +13,6 @@ import {
   Copy,
   Layers,
   Activity,
-  Sliders,
   ChevronRight,
   RefreshCw,
   ExternalLink,
@@ -47,7 +46,7 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
   onForceExpire,
   onSelectLot
 }) => {
-  const [activeTab, setActiveTab] = useState<'summary' | 'strategy' | 'inventory' | 'comms' | 'bids'>('summary');
+  const [activeTab, setActiveTab] = useState<'summary' | 'inventory' | 'comms' | 'bids'>('summary');
   const [rawSearchQuery, setRawSearchQuery] = useState('');
   const [copiedSuccess, setCopiedSuccess] = useState(false);
   const [nowTime, setNowTime] = useState(Date.now());
@@ -282,7 +281,6 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
       }}>
         {[
           { id: 'summary', label: 'Summary & Timeline', icon: Activity },
-          { id: 'strategy', label: 'Strategy Snapshot', icon: Sliders },
           { id: 'inventory', label: `Inventory Scope (${matchedLots.length})`, icon: Package },
           { id: 'comms', label: `Communications Log (${run.buyerEmails?.length || run.evaluatedBuyerIds?.length || 0})`, icon: Send },
           { id: 'bids', label: `Bids & Offers Ledger (${runBids.length})`, icon: DollarSign },
@@ -462,6 +460,31 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
                 </div>
               </div>
 
+              {/* Strategy Configuration Active at Dispatch */}
+              <div className="card" style={{ padding: '24px' }}>
+                <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem', fontWeight: 800, color: 'hsl(var(--text-primary))' }}>
+                  Strategy Configuration Active at Dispatch
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', fontSize: '0.84rem' }}>
+                  <div>
+                    <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.75rem' }}>Strategy Template Name</div>
+                    <div style={{ fontWeight: 700, marginTop: '2px' }}>{linkedAuto?.name || 'Automated Clearance Flow'}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.75rem' }}>Category Target</div>
+                    <div style={{ fontWeight: 700, marginTop: '2px' }}>{linkedAuto?.categoryFilter || 'All Categories'}</div>
+                  </div>
+                  <div>
+                    <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.75rem' }}>Max RSL % Threshold</div>
+                    <div style={{ fontWeight: 700, marginTop: '2px' }}>{linkedAuto?.maxRslFilter || linkedAuto?.maxRsl || 30}% Remaining Shelf Life</div>
+                  </div>
+                  <div>
+                    <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.75rem' }}>Minimum Case Count</div>
+                    <div style={{ fontWeight: 700, marginTop: '2px' }}>{linkedAuto?.minCasesFilter || linkedAuto?.minCases || 50} Cases</div>
+                  </div>
+                </div>
+              </div>
+
               {/* Stage Execution Stepper */}
               <div className="card" style={{ padding: '24px' }}>
                 <WorkflowRunTimelineStepper
@@ -517,92 +540,7 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
           );
         })()}
 
-        {/* TAB 2: STRATEGY SNAPSHOT */}
-        {activeTab === 'strategy' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div className="card" style={{ padding: '24px' }}>
-              <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem', fontWeight: 800, color: 'hsl(var(--text-primary))' }}>
-                Strategy Configuration Active at Dispatch
-              </h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', fontSize: '0.84rem' }}>
-                <div>
-                  <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.75rem' }}>Strategy Template Name</div>
-                  <div style={{ fontWeight: 700, marginTop: '2px' }}>{linkedAuto?.name || 'Automated Clearance Flow'}</div>
-                </div>
-                <div>
-                  <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.75rem' }}>Category Target</div>
-                  <div style={{ fontWeight: 700, marginTop: '2px' }}>{linkedAuto?.categoryFilter || 'All Categories'}</div>
-                </div>
-                <div>
-                  <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.75rem' }}>Max RSL % Threshold</div>
-                  <div style={{ fontWeight: 700, marginTop: '2px' }}>{linkedAuto?.maxRslFilter || linkedAuto?.maxRsl || 30}% Remaining Shelf Life</div>
-                </div>
-                <div>
-                  <div style={{ color: 'hsl(var(--text-muted))', fontSize: '0.75rem' }}>Minimum Case Count</div>
-                  <div style={{ fontWeight: 700, marginTop: '2px' }}>{linkedAuto?.minCasesFilter || linkedAuto?.minCases || 50} Cases</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="card" style={{ padding: '24px' }}>
-              <h4 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', fontWeight: 800 }}>
-                Configured Stage Gates Roster
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {(linkedAuto?.stages || [
-                  { stageNumber: 1, name: 'Tier 1 Wholesale Bargain', stageType: 'liquidation', discountValue: 15, waitHours: 24 },
-                  { stageNumber: 2, name: 'Broad Market Clearance', stageType: 'liquidation', discountValue: 35, waitHours: 48 },
-                  { stageNumber: 3, name: 'Donation Divert', stageType: 'donation', discountValue: 0, waitHours: 12 }
-                ]).map((st: any, idx: number) => {
-                  let discountLabel = `${st.discountValue}% discount`;
-                  if (st.discountType === 'percentage_off_wholesale') {
-                    discountLabel = `${st.discountValue}% (percentage off wholesale)`;
-                  } else if (st.discountType === 'fixed_price') {
-                    discountLabel = `Fixed Price $${(st.discountValue || 0).toFixed(2)}`;
-                  }
-
-                  let audienceLabel = 'Audience: Default Buyer Network';
-                  if (st.buyerMode === 'segment') {
-                    audienceLabel = `Audience: ${st.buyerSegment || 'Target Segment'}`;
-                  } else if (st.buyerMode === 'custom') {
-                    const count = st.customBuyers?.length || 0;
-                    audienceLabel = `Audience: ${count} Custom Partner${count === 1 ? '' : 's'}`;
-                  } else if (st.buyerMode === 'all') {
-                    audienceLabel = 'Audience: All Qualified Buyers';
-                  }
-
-                  return (
-                    <div key={idx} style={{ padding: '14px 18px', backgroundColor: 'hsl(var(--bg-card-hover) / 25%)', borderRadius: '8px', border: '1px solid hsl(var(--border-color))', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <strong>Stage {st.stageNumber || idx + 1}: {st.name}</strong>
-                          {st.stageType && (
-                            <span style={{ fontSize: '0.7rem', padding: '1px 6px', borderRadius: '4px', textTransform: 'capitalize', backgroundColor: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))' }}>
-                              {st.stageType}
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', marginTop: '4px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                          <span>Pricing: <strong style={{ color: 'hsl(var(--text-primary))' }}>{discountLabel}</strong></span>
-                          <span>Execution Window: <strong style={{ color: 'hsl(var(--text-primary))' }}>{formatExecutionWindow(st.waitHours, st.waitUnit)}</strong></span>
-                          <span>•</span>
-                          <span>Auto-Execute: <strong style={{ color: 'hsl(var(--text-primary))' }}>{st.autoExecute ? 'Enabled' : 'Manual Approval'}</strong></span>
-                          <span>•</span>
-                          <span>{audienceLabel}</span>
-                        </div>
-                      </div>
-                      <span style={{ fontSize: '0.72rem', padding: '2px 8px', borderRadius: '10px', backgroundColor: 'hsl(var(--primary) / 15%)', color: 'hsl(var(--primary))', fontWeight: 700 }}>
-                        Active
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: INVENTORY LOT SCOPE */}
+        {/* TAB 2: INVENTORY LOT SCOPE */}
         {activeTab === 'inventory' && (
           <div className="card" style={{ padding: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>

@@ -9,6 +9,7 @@
 - [x] `⬤ DISPOSAL & REMOVAL DEADLINE` section renders the configured `disposalDeadline` date in a human-readable format
 - [x] Status label adapts: "Scheduled" if deadline is future, "Overdue" (amber) if deadline is past, "Completed" (green) if pickup confirmed
 - [x] `⬤ ALLOCATED LOTS` section lists lot identifiers and case counts assigned to this landfill stage
+- [x] Allocated Lots table supports pagination with page size selector (options: 5, 10, 20, 30 max) and page navigation controls
 - [x] `⬤ PICKUP / EXECUTION STATUS` section renders an outcome badge: Pickup Confirmed (green) / Pending (blue) / Overdue (amber/red)
 - [x] Confirmed pickup shows the disposal partner's name alongside the badge
 - [x] No Pricing & Timing section and no Bids & Offers Ledger render for Landfill stages

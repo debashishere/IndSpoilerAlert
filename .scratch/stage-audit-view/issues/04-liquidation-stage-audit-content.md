@@ -13,5 +13,6 @@
 - [x] Winning bid row is highlighted with green background and ★ marker for completed/awarded stages
 - [x] Active stages show bids received so far with no winning bid highlight
 - [x] `⬤ ALLOCATED LOTS` section lists lot identifiers and case counts assigned to this stage
+- [x] Allocated Lots table supports pagination with page size selector (options: 5, 10, 20, 30 max) and page navigation controls
 - [x] Sections do not render for Donation or Landfill stage types
 - [x] If no bids were received, the ledger shows an appropriate empty state message

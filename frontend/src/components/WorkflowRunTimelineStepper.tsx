@@ -330,6 +330,223 @@ export const resolveEmailTokens = (
   return resolved;
 };
 
+export interface StageAllocatedLotsSectionProps {
+  stage: any;
+  inventoryList?: any[];
+  run?: any;
+  initialPageSize?: number;
+}
+
+export const StageAllocatedLotsSection: React.FC<StageAllocatedLotsSectionProps> = ({
+  stage,
+  inventoryList = [],
+  run,
+  initialPageSize = 10,
+}) => {
+  const stageLots = resolveStageLots(stage, inventoryList, run);
+  const [pageSize, setPageSize] = useState<number>(() => Math.min(30, Math.max(1, initialPageSize)));
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const totalLots = stageLots.length;
+  const totalPages = Math.max(1, Math.ceil(totalLots / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const handlePageSizeChange = (newSize: number) => {
+    const clamped = Math.min(30, Math.max(1, newSize));
+    setPageSize(clamped);
+    setCurrentPage(1);
+  };
+
+  const startIndex = totalLots === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
+  const endIndex = Math.min(totalLots, safeCurrentPage * pageSize);
+  const paginatedLots = stageLots.slice((safeCurrentPage - 1) * pageSize, safeCurrentPage * pageSize);
+
+  return (
+    <div data-testid="stage-allocated-lots-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div data-testid="stage-allocated-lots-header" style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+          <span style={{ fontSize: '9px' }}>⬤</span> ALLOCATED LOTS
+        </div>
+        <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))' }}>
+          {totalLots} {totalLots === 1 ? 'Lot Allocated' : 'Lots Allocated'}
+        </span>
+      </div>
+
+      {totalLots === 0 ? (
+        <div
+          data-testid="stage-lots-empty"
+          style={{
+            padding: '14px',
+            borderRadius: '8px',
+            backgroundColor: 'hsl(var(--bg-card-hover) / 40%)',
+            border: '1px dashed hsl(var(--border-color))',
+            fontSize: '0.78rem',
+            color: 'hsl(var(--text-muted))',
+            textAlign: 'center',
+          }}
+        >
+          No specific inventory lots allocated to this stage.
+        </div>
+      ) : (
+        <>
+          <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
+              <thead>
+                <tr style={{ background: 'hsl(var(--bg-card-hover) / 50%)', borderBottom: '1px solid hsl(var(--border-color))', textAlign: 'left', color: 'hsl(var(--text-muted))' }}>
+                  <th style={{ padding: '8px 12px', fontWeight: 700 }}>Lot Identifier</th>
+                  <th style={{ padding: '8px 12px', fontWeight: 700 }}>SKU</th>
+                  <th style={{ padding: '8px 12px', fontWeight: 700 }}>Description</th>
+                  <th style={{ padding: '8px 12px', fontWeight: 700 }}>Quantity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedLots.map((lot: any, lIdx: number) => {
+                  const lotId = lot._id || lot.id || `LOT-${(safeCurrentPage - 1) * pageSize + lIdx}`;
+                  const lotNum = lot.lotNumber || `LOT-${String(lotId).slice(-4)}`;
+                  const cases = lot.availableQty || lot.quantityCases || 0;
+
+                  return (
+                    <tr
+                      key={lotId}
+                      data-testid="stage-allocated-lot-row"
+                      style={{
+                        borderBottom: lIdx < paginatedLots.length - 1 ? '1px solid hsl(var(--border-color))' : 'none',
+                        backgroundColor: 'hsl(var(--bg-card))',
+                      }}
+                    >
+                      <td style={{ padding: '8px 12px', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
+                        {lotNum}
+                      </td>
+                      <td style={{ padding: '8px 12px', color: 'hsl(var(--text-muted))', fontFamily: 'monospace' }}>
+                        {lot.sku || 'N/A'}
+                      </td>
+                      <td style={{ padding: '8px 12px', color: 'hsl(var(--text-primary))' }}>
+                        {lot.description || 'Inventory Item'}
+                      </td>
+                      <td style={{ padding: '8px 12px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
+                        {cases.toLocaleString()} Cases
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div
+            data-testid="stage-allocated-lots-pagination"
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '10px',
+              padding: '8px 12px',
+              backgroundColor: 'hsl(var(--bg-card-hover) / 30%)',
+              borderRadius: '6px',
+              border: '1px solid hsl(var(--border-color))',
+              fontSize: '0.75rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <div data-testid="stage-allocated-lots-page-info" style={{ color: 'hsl(var(--text-secondary))' }}>
+                Showing <strong>{startIndex}</strong> to <strong>{endIndex}</strong> of <strong>{totalLots}</strong> lots
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'hsl(var(--text-muted))' }}>
+                <label htmlFor={`stage-page-size-${stage?.stageNumber || 'audit'}`} style={{ fontSize: '0.72rem' }}>Page size:</label>
+                <select
+                  id={`stage-page-size-${stage?.stageNumber || 'audit'}`}
+                  data-testid="stage-allocated-lots-page-size-select"
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  style={{
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    border: '1px solid hsl(var(--border-color))',
+                    backgroundColor: 'hsl(var(--bg-card))',
+                    color: 'hsl(var(--text-primary))',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={30}>30 (max)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button
+                data-testid="stage-allocated-lots-page-prev"
+                aria-label="Previous Page"
+                disabled={safeCurrentPage <= 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                style={{
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid hsl(var(--border-color))',
+                  backgroundColor: 'hsl(var(--bg-card))',
+                  color: safeCurrentPage <= 1 ? 'hsl(var(--text-muted))' : 'hsl(var(--text-primary))',
+                  cursor: safeCurrentPage <= 1 ? 'not-allowed' : 'pointer',
+                  fontSize: '0.72rem',
+                  opacity: safeCurrentPage <= 1 ? 0.6 : 1,
+                  fontWeight: 600,
+                }}
+              >
+                Prev
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  data-testid={`stage-allocated-lots-page-btn-${page}`}
+                  onClick={() => setCurrentPage(page)}
+                  style={{
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    border: '1px solid hsl(var(--border-color))',
+                    backgroundColor: safeCurrentPage === page ? 'hsl(var(--primary))' : 'hsl(var(--bg-card))',
+                    color: safeCurrentPage === page ? 'white' : 'hsl(var(--text-secondary))',
+                    fontWeight: safeCurrentPage === page ? 700 : 500,
+                    cursor: 'pointer',
+                    fontSize: '0.72rem',
+                    transition: 'all 0.15s ease-in-out',
+                  }}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                data-testid="stage-allocated-lots-page-next"
+                aria-label="Next Page"
+                disabled={safeCurrentPage >= totalPages || totalPages === 0}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                style={{
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid hsl(var(--border-color))',
+                  backgroundColor: 'hsl(var(--bg-card))',
+                  color: safeCurrentPage >= totalPages || totalPages === 0 ? 'hsl(var(--text-muted))' : 'hsl(var(--text-primary))',
+                  cursor: safeCurrentPage >= totalPages || totalPages === 0 ? 'not-allowed' : 'pointer',
+                  fontSize: '0.72rem',
+                  opacity: safeCurrentPage >= totalPages || totalPages === 0 ? 0.6 : 1,
+                  fontWeight: 600,
+                }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 interface WorkflowRunTimelineStepperProps {
   run: any;
   stages?: any[];
@@ -1041,83 +1258,7 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
                         <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
 
                         {/* Allocated Lots Section */}
-                        {(() => {
-                          const stageLots = resolveStageLots(stage, inventoryList, run);
-
-                          return (
-                            <div data-testid="stage-allocated-lots-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div data-testid="stage-allocated-lots-header" style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                                  <span style={{ fontSize: '9px' }}>⬤</span> ALLOCATED LOTS
-                                </div>
-                                <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))' }}>
-                                  {stageLots.length} {stageLots.length === 1 ? 'Lot Allocated' : 'Lots Allocated'}
-                                </span>
-                              </div>
-
-                              {stageLots.length === 0 ? (
-                                <div
-                                  data-testid="stage-lots-empty"
-                                  style={{
-                                    padding: '14px',
-                                    borderRadius: '8px',
-                                    backgroundColor: 'hsl(var(--bg-card-hover) / 40%)',
-                                    border: '1px dashed hsl(var(--border-color))',
-                                    fontSize: '0.78rem',
-                                    color: 'hsl(var(--text-muted))',
-                                    textAlign: 'center',
-                                  }}
-                                >
-                                  No specific inventory lots allocated to this stage.
-                                </div>
-                              ) : (
-                                <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
-                                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
-                                    <thead>
-                                      <tr style={{ background: 'hsl(var(--bg-card-hover) / 50%)', borderBottom: '1px solid hsl(var(--border-color))', textAlign: 'left', color: 'hsl(var(--text-muted))' }}>
-                                        <th style={{ padding: '8px 12px', fontWeight: 700 }}>Lot Identifier</th>
-                                        <th style={{ padding: '8px 12px', fontWeight: 700 }}>SKU</th>
-                                        <th style={{ padding: '8px 12px', fontWeight: 700 }}>Description</th>
-                                        <th style={{ padding: '8px 12px', fontWeight: 700 }}>Quantity</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {stageLots.map((lot: any, lIdx: number) => {
-                                        const lotId = lot._id || lot.id || `LOT-${lIdx}`;
-                                        const lotNum = lot.lotNumber || `LOT-${String(lotId).slice(-4)}`;
-                                        const cases = lot.availableQty || lot.quantityCases || 0;
-
-                                        return (
-                                          <tr
-                                            key={lotId}
-                                            data-testid="stage-allocated-lot-row"
-                                            style={{
-                                              borderBottom: lIdx < stageLots.length - 1 ? '1px solid hsl(var(--border-color))' : 'none',
-                                              backgroundColor: 'hsl(var(--bg-card))',
-                                            }}
-                                          >
-                                            <td style={{ padding: '8px 12px', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
-                                              {lotNum}
-                                            </td>
-                                            <td style={{ padding: '8px 12px', color: 'hsl(var(--text-muted))', fontFamily: 'monospace' }}>
-                                              {lot.sku || 'N/A'}
-                                            </td>
-                                            <td style={{ padding: '8px 12px', color: 'hsl(var(--text-primary))' }}>
-                                              {lot.description || 'Inventory Item'}
-                                            </td>
-                                            <td style={{ padding: '8px 12px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
-                                              {cases.toLocaleString()} Cases
-                                            </td>
-                                          </tr>
-                                        );
-                                      })}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })()}
+                        <StageAllocatedLotsSection stage={stage} inventoryList={inventoryList} run={run} />
                       </>
                     )}
 
@@ -1173,83 +1314,7 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
                           <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
 
                           {/* Allocated Lots Section */}
-                          {(() => {
-                            const stageLots = resolveStageLots(stage, inventoryList, run);
-
-                            return (
-                              <div data-testid="stage-allocated-lots-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <div data-testid="stage-allocated-lots-header" style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                                    <span style={{ fontSize: '9px' }}>⬤</span> ALLOCATED LOTS
-                                  </div>
-                                  <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))' }}>
-                                    {stageLots.length} {stageLots.length === 1 ? 'Lot Allocated' : 'Lots Allocated'}
-                                  </span>
-                                </div>
-
-                                {stageLots.length === 0 ? (
-                                  <div
-                                    data-testid="stage-lots-empty"
-                                    style={{
-                                      padding: '14px',
-                                      borderRadius: '8px',
-                                      backgroundColor: 'hsl(var(--bg-card-hover) / 40%)',
-                                      border: '1px dashed hsl(var(--border-color))',
-                                      fontSize: '0.78rem',
-                                      color: 'hsl(var(--text-muted))',
-                                      textAlign: 'center',
-                                    }}
-                                  >
-                                    No specific inventory lots allocated to this stage.
-                                  </div>
-                                ) : (
-                                  <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
-                                      <thead>
-                                        <tr style={{ background: 'hsl(var(--bg-card-hover) / 50%)', borderBottom: '1px solid hsl(var(--border-color))', textAlign: 'left', color: 'hsl(var(--text-muted))' }}>
-                                          <th style={{ padding: '8px 12px', fontWeight: 700 }}>Lot Identifier</th>
-                                          <th style={{ padding: '8px 12px', fontWeight: 700 }}>SKU</th>
-                                          <th style={{ padding: '8px 12px', fontWeight: 700 }}>Description</th>
-                                          <th style={{ padding: '8px 12px', fontWeight: 700 }}>Quantity</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {stageLots.map((lot: any, lIdx: number) => {
-                                          const lotId = lot._id || lot.id || `LOT-${lIdx}`;
-                                          const lotNum = lot.lotNumber || `LOT-${String(lotId).slice(-4)}`;
-                                          const cases = lot.availableQty || lot.quantityCases || 0;
-
-                                          return (
-                                            <tr
-                                              key={lotId}
-                                              data-testid="stage-allocated-lot-row"
-                                              style={{
-                                                borderBottom: lIdx < stageLots.length - 1 ? '1px solid hsl(var(--border-color))' : 'none',
-                                                backgroundColor: 'hsl(var(--bg-card))',
-                                              }}
-                                            >
-                                              <td style={{ padding: '8px 12px', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
-                                                {lotNum}
-                                              </td>
-                                              <td style={{ padding: '8px 12px', color: 'hsl(var(--text-muted))', fontFamily: 'monospace' }}>
-                                                {lot.sku || 'N/A'}
-                                              </td>
-                                              <td style={{ padding: '8px 12px', color: 'hsl(var(--text-primary))' }}>
-                                                {lot.description || 'Inventory Item'}
-                                              </td>
-                                              <td style={{ padding: '8px 12px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
-                                                {cases.toLocaleString()} Cases
-                                              </td>
-                                            </tr>
-                                          );
-                                        })}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
+                          <StageAllocatedLotsSection stage={stage} inventoryList={inventoryList} run={run} />
 
                           {/* Divider */}
                           <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
@@ -1383,83 +1448,7 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
                           <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
 
                           {/* Allocated Lots Section */}
-                          {(() => {
-                            const stageLots = resolveStageLots(stage, inventoryList, run);
-
-                            return (
-                              <div data-testid="stage-allocated-lots-section" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <div data-testid="stage-allocated-lots-header" style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                                    <span style={{ fontSize: '9px' }}>⬤</span> ALLOCATED LOTS
-                                  </div>
-                                  <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))' }}>
-                                    {stageLots.length} {stageLots.length === 1 ? 'Lot Allocated' : 'Lots Allocated'}
-                                  </span>
-                                </div>
-
-                                {stageLots.length === 0 ? (
-                                  <div
-                                    data-testid="stage-lots-empty"
-                                    style={{
-                                      padding: '14px',
-                                      borderRadius: '8px',
-                                      backgroundColor: 'hsl(var(--bg-card-hover) / 40%)',
-                                      border: '1px dashed hsl(var(--border-color))',
-                                      fontSize: '0.78rem',
-                                      color: 'hsl(var(--text-muted))',
-                                      textAlign: 'center',
-                                    }}
-                                  >
-                                    No specific inventory lots allocated to this stage.
-                                  </div>
-                                ) : (
-                                  <div style={{ overflowX: 'auto', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem' }}>
-                                      <thead>
-                                        <tr style={{ background: 'hsl(var(--bg-card-hover) / 50%)', borderBottom: '1px solid hsl(var(--border-color))', textAlign: 'left', color: 'hsl(var(--text-muted))' }}>
-                                          <th style={{ padding: '8px 12px', fontWeight: 700 }}>Lot Identifier</th>
-                                          <th style={{ padding: '8px 12px', fontWeight: 700 }}>SKU</th>
-                                          <th style={{ padding: '8px 12px', fontWeight: 700 }}>Description</th>
-                                          <th style={{ padding: '8px 12px', fontWeight: 700 }}>Quantity</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {stageLots.map((lot: any, lIdx: number) => {
-                                          const lotId = lot._id || lot.id || `LOT-${lIdx}`;
-                                          const lotNum = lot.lotNumber || `LOT-${String(lotId).slice(-4)}`;
-                                          const cases = lot.availableQty || lot.quantityCases || 0;
-
-                                          return (
-                                            <tr
-                                              key={lotId}
-                                              data-testid="stage-allocated-lot-row"
-                                              style={{
-                                                borderBottom: lIdx < stageLots.length - 1 ? '1px solid hsl(var(--border-color))' : 'none',
-                                                backgroundColor: 'hsl(var(--bg-card))',
-                                              }}
-                                            >
-                                              <td style={{ padding: '8px 12px', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
-                                                {lotNum}
-                                              </td>
-                                              <td style={{ padding: '8px 12px', color: 'hsl(var(--text-muted))', fontFamily: 'monospace' }}>
-                                                {lot.sku || 'N/A'}
-                                              </td>
-                                              <td style={{ padding: '8px 12px', color: 'hsl(var(--text-primary))' }}>
-                                                {lot.description || 'Inventory Item'}
-                                              </td>
-                                              <td style={{ padding: '8px 12px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
-                                                {cases.toLocaleString()} Cases
-                                              </td>
-                                            </tr>
-                                          );
-                                        })}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
+                          <StageAllocatedLotsSection stage={stage} inventoryList={inventoryList} run={run} />
 
                           {/* Divider */}
                           <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />

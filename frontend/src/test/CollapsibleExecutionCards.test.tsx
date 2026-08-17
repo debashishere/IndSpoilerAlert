@@ -178,9 +178,9 @@ describe('TDD Suite: Unified Collapsible Workflow Execution Cards & Section Cont
     expect(screen.getByText(/Evaluated Inventory Lots/i)).toBeInTheDocument();
     expect(screen.getByText('LOT-ot-1')).toBeInTheDocument();
 
-    // Click Strategy Snapshot tab
-    const stagesTabBtn = screen.getByRole('button', { name: /Strategy Snapshot/i });
-    fireEvent.click(stagesTabBtn);
+    // Click Summary & Timeline tab
+    const summaryTabBtn = screen.getByRole('button', { name: /Summary & Timeline/i });
+    fireEvent.click(summaryTabBtn);
 
     expect(screen.getByText(/Strategy Configuration Active at Dispatch/i)).toBeInTheDocument();
   });

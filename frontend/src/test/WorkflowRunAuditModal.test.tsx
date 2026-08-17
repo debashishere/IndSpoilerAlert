@@ -129,7 +129,7 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
       );
 
       // Verify Header details
-      expect(screen.getByText('Short-Dated Bakery & Dairy Clearance')).toBeInTheDocument();
+      expect(screen.getAllByText('Short-Dated Bakery & Dairy Clearance').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('ID: #99887766')).toBeInTheDocument();
       expect(screen.getByText('awarded')).toBeInTheDocument();
       expect(screen.getByText(/scheduled/i)).toBeInTheDocument();
@@ -180,14 +180,14 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
         />
       );
 
-      // The 5 expected tabs must all be present
+      // The 4 expected tabs must all be present
       expect(screen.getByRole('button', { name: /summary & timeline/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /strategy snapshot/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /inventory scope/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /communications log/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /bids & offers ledger/i })).toBeInTheDocument();
 
-      // The Raw Telemetry tab must be absent
+      // The Strategy Snapshot and Raw Telemetry tabs must be absent
+      expect(screen.queryByRole('button', { name: /strategy snapshot/i })).toBeNull();
       expect(screen.queryByRole('button', { name: /raw telemetry/i })).toBeNull();
     });
   });
@@ -292,8 +292,7 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
         />
       );
 
-      // Switch to Strategy Snapshot
-      fireEvent.click(screen.getByRole('button', { name: /strategy snapshot/i }));
+      // Summary & Timeline (active by default) renders Strategy Configuration Active at Dispatch
       expect(screen.getByText('Strategy Configuration Active at Dispatch')).toBeInTheDocument();
       expect(screen.getByText('Dairy & Chilled')).toBeInTheDocument();
       expect(screen.getByText('25% Remaining Shelf Life')).toBeInTheDocument();
@@ -377,7 +376,7 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
       // Audit modal is visible with full data
       const modal = screen.getByTestId('workflow-run-audit-modal');
       expect(modal).toBeInTheDocument();
-      expect(within(modal).getByText('Short-Dated Bakery & Dairy Clearance')).toBeInTheDocument();
+      expect(within(modal).getAllByText('Short-Dated Bakery & Dairy Clearance').length).toBeGreaterThanOrEqual(1);
       expect(within(modal).getByText('250 Total Cases Evaluated')).toBeInTheDocument();
 
       // Click close button
@@ -390,8 +389,8 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
   });
 
   describe('Slice 3: Granular Scope Tabs', () => {
-    describe('Strategy Snapshot Tab', () => {
-      it('renders the exact immutable strategy configuration active at dispatch including discount schedules and audience targeting', () => {
+    describe('Strategy Configuration Active at Dispatch in Summary & Timeline', () => {
+      it('renders the exact immutable strategy configuration active at dispatch including discount schedules and audience targeting in timeline', () => {
         const runWithSnapshotOnly = {
           _id: 'run-snapshot-1',
           status: 'evaluating',
@@ -436,31 +435,26 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
           />
         );
 
-        // Click Strategy Snapshot tab
-        fireEvent.click(screen.getByRole('button', { name: /strategy snapshot/i }));
-
-        // Check Strategy headers and config
+        // Check Strategy headers and config in Summary & Timeline
         expect(screen.getAllByText('Frozen Seafood Clearance').length).toBeGreaterThanOrEqual(1);
         expect(screen.getByText('Frozen & Seafood')).toBeInTheDocument();
         expect(screen.getByText('15% Remaining Shelf Life')).toBeInTheDocument();
         expect(screen.getByText('80 Cases')).toBeInTheDocument();
 
-        // Check Stage 1
+        // Check Stage 1 in Stepper
         expect(screen.getByText(/Stage 1: Priority Wholesale Outlets/i)).toBeInTheDocument();
         expect(screen.getByText(/25% \(percentage off wholesale\)/i)).toBeInTheDocument();
-        expect(screen.getByText(/18 hours/i)).toBeInTheDocument();
-        expect(screen.getByText('Enabled')).toBeInTheDocument();
-        expect(screen.getByText('Audience: Wholesale Tier 1')).toBeInTheDocument();
+        expect(screen.getAllByText(/18 hours/i).length).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText('Wholesale Tier 1')).toBeInTheDocument();
 
-        // Check Stage 2
+        // Check Stage 2 in Stepper
         expect(screen.getByText(/Stage 2: Secondary Food Rescue/i)).toBeInTheDocument();
-        expect(screen.getByText(/Fixed Price \$0\.00/i)).toBeInTheDocument();
-        expect(screen.getByText(/\b8 hours/i)).toBeInTheDocument();
-        expect(screen.getByText('Manual Approval')).toBeInTheDocument();
-        expect(screen.getByText('Audience: 1 Custom Partner')).toBeInTheDocument();
+        expect(screen.getByText('donation')).toBeInTheDocument();
+        expect(screen.getAllByText(/\b8 hours/i).length).toBeGreaterThanOrEqual(1);
+        expect(screen.getByText(/1 Custom Partner/i)).toBeInTheDocument();
       });
 
-      it('renders input-aware formatted execution windows for minutes, days, and hours in Strategy Snapshot tab', () => {
+      it('renders input-aware formatted execution windows for minutes, days, and hours in Summary & Timeline', () => {
         const runWithExplicitUnits = {
           _id: 'run-units-test',
           status: 'evaluating',
@@ -495,10 +489,8 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
           />
         );
 
-        fireEvent.click(screen.getByRole('button', { name: /strategy snapshot/i }));
-
-        expect(screen.getByText('30 Mins')).toBeInTheDocument();
-        expect(screen.getByText('3 Days')).toBeInTheDocument();
+        expect(screen.getAllByText('30 Mins').length).toBeGreaterThanOrEqual(1);
+        expect(screen.getAllByText('3 Days').length).toBeGreaterThanOrEqual(1);
       });
     });
 

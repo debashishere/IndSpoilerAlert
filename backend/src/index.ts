@@ -20,6 +20,7 @@ app.set('etag', false);
 app.use(cors({
   origin: true,
   credentials: true
+  
 }));
 app.use(express.json());
 
