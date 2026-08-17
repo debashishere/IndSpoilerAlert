@@ -81,17 +81,17 @@ describe('Slice 1: WorkflowRunHistoryView - Grouping, Health Metrics & Accordion
       />
     );
 
-    // Verify Strategy Cards rendered
+    // Verify Strategy Cards rendered for historical non-active workflows
     const strategyCards = screen.getAllByTestId('workflow-strategy-card');
-    expect(strategyCards).toHaveLength(3);
+    expect(strategyCards).toHaveLength(2); // auto-1 and ad-hoc (auto-2 is active so only in Active Evaluations)
 
     expect(screen.getByText('Dairy Quick Clearance')).toBeInTheDocument();
-    expect(screen.getAllByText('Bakery Batch Liquidation')).toHaveLength(2); // Banner + Card Header
+    expect(screen.getAllByText('Bakery Batch Liquidation')).toHaveLength(1); // Only in Active Evaluations Banner
     expect(screen.getByText('Ad-Hoc Holiday Blast')).toBeInTheDocument();
 
     // Verify run counts
     expect(screen.getByText('2 Runs')).toBeInTheDocument();
-    expect(screen.getAllByText('1 Run')).toHaveLength(2);
+    expect(screen.getByText('1 Run')).toBeInTheDocument();
 
     // Verify Cumulative Recovery metric ($3,500.00 for auto-1, $1,000.00 for ad-hoc)
     const cumulativeRecoveryElements = screen.getAllByTestId('strategy-cumulative-recovery');
@@ -282,7 +282,7 @@ describe('Slice 1: WorkflowRunHistoryView - Grouping, Health Metrics & Accordion
     expect(handleReTrigger).toHaveBeenCalledWith(mockRuns[2]);
   });
 
-  it('should render active workflows with highlighted warning color and unified list element details', () => {
+  it('should render active workflows with highlighted warning color and unified list element details without duplicating in history list', () => {
     render(
       <WorkflowRunHistoryView
         supplierId="sup-101"
@@ -293,16 +293,62 @@ describe('Slice 1: WorkflowRunHistoryView - Grouping, Health Metrics & Accordion
     );
 
     const runRows = screen.getAllByTestId('execution-run-row');
-    // Active run rows (RUN-003) should be present in top banner and in strategy group
+    // Active run rows (RUN-003) should only be present in top active evaluations banner and NOT duplicated in history cards
     const evaluatingRows = runRows.filter(r => r.textContent?.includes('RUN-003'));
-    expect(evaluatingRows.length).toBe(2);
+    expect(evaluatingRows.length).toBe(1);
 
-    // Check that both active rows render target lots, bids count, and audit button
+    // Check that the active row renders target lots, bids count, and audit button
     evaluatingRows.forEach(row => {
       expect(row).toHaveTextContent('1 Lots');
       expect(row).toHaveTextContent('Full-Screen Audit Log');
       expect(row).toHaveTextContent('evaluating');
     });
+  });
+
+  it('should render flow-8 only in Active Workflow Evaluations when active, without duplicate rendering in History list', () => {
+    const automations = [
+      { _id: 'flow-8', name: 'Workflow flow-8', status: 'active' },
+      { _id: 'flow-9', name: 'Workflow flow-9', status: 'active' }
+    ];
+    const runs = [
+      {
+        _id: 'run-flow-8',
+        automationId: 'flow-8',
+        status: 'evaluating',
+        runType: 'scheduled',
+        dispatchedAt: '2026-08-17T12:00:00.000Z',
+        snapshotInventoryIds: ['lot-8']
+      },
+      {
+        _id: 'run-flow-9',
+        automationId: 'flow-9',
+        status: 'awarded',
+        runType: 'scheduled',
+        dispatchedAt: '2026-08-16T12:00:00.000Z',
+        snapshotInventoryIds: ['lot-9'],
+        resolution: { totalValue: 1200 }
+      }
+    ];
+
+    render(
+      <WorkflowRunHistoryView
+        supplierId="sup-101"
+        liquidationAutomations={automations}
+        automationRuns={runs}
+      />
+    );
+
+    // flow-8 should appear in the Active Workflow Evaluations banner
+    expect(screen.getByText(/Active Workflow Evaluations In-Progress \(1\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/#N-FLOW-8/i)).toBeInTheDocument();
+
+    // In the History list below, only flow-9 (non-active) should be rendered as a strategy card
+    const strategyCards = screen.getAllByTestId('workflow-strategy-card');
+    expect(strategyCards).toHaveLength(1);
+    expect(screen.getByText('Workflow flow-9')).toBeInTheDocument();
+
+    // flow-8 should only have 1 instance in the entire document (in the Active banner)
+    expect(screen.getAllByText('Workflow flow-8')).toHaveLength(1);
   });
 });
 

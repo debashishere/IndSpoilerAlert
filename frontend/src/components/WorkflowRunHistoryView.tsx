@@ -64,12 +64,35 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
   const [collapsedWorkflows, setCollapsedWorkflows] = useState<Record<string, boolean>>({});
   const [selectedRunForAudit, setSelectedRunForAudit] = useState<any | null>(null);
 
-  // Group runs by Workflow Strategy
+  // Active in-flight evaluations
+  const activeRuns = useMemo(() => {
+    return automationRuns.filter(r => r.status === 'evaluating' || r.status === 'dispatched');
+  }, [automationRuns]);
+
+  // Group runs by Workflow Strategy for history section (excluding active evaluations)
   const groupedWorkflows = useMemo(() => {
-    // Filter runs by status and search
+    // Collect active workflow IDs / keys to prevent duplicate rendering in history
+    const activeWorkflowIds = new Set<string>();
+    activeRuns.forEach(run => {
+      const autoId = String(run.automationId?._id || run.automationId || '');
+      if (autoId) {
+        activeWorkflowIds.add(autoId);
+      } else {
+        const fallbackKey = `unlinked-${run.campaignSnapshot?.name || 'Standalone'}`;
+        activeWorkflowIds.add(fallbackKey);
+      }
+    });
+
+    // Filter runs by status and search (excluding active evaluations)
     const filteredRuns = automationRuns.filter(run => {
+      if (run.status === 'evaluating' || run.status === 'dispatched') return false;
+
+      const autoId = String(run.automationId?._id || run.automationId || '');
+      const fallbackKey = autoId || `unlinked-${run.campaignSnapshot?.name || 'Standalone'}`;
+      if (activeWorkflowIds.has(autoId) || activeWorkflowIds.has(fallbackKey)) return false;
+
       if (selectedStatusFilter !== 'all') {
-        if (selectedStatusFilter === 'evaluating' && run.status !== 'evaluating' && run.status !== 'dispatched') return false;
+        if (selectedStatusFilter === 'evaluating') return false;
         if (selectedStatusFilter === 'awarded' && run.status !== 'awarded') return false;
         if (selectedStatusFilter === 'fallback_executed' && run.status !== 'fallback_executed') return false;
         if (selectedStatusFilter === 'failed' && run.status !== 'failed' && run.status !== 'error') return false;
@@ -77,7 +100,6 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
 
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
-        const autoId = String(run.automationId?._id || run.automationId || '');
         const linkedWorkflow = liquidationAutomations.find(a => String(a._id) === autoId);
         const autoName = linkedWorkflow?.name || linkedWorkflow?.templateName || run.campaignSnapshot?.name || '';
         const runId = String(run._id || '').toLowerCase();
@@ -92,19 +114,26 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
     // Grouping map
     const map = new Map<string, { workflow: any; runs: any[] }>();
 
-    // First populate from existing saved workflows
+    // First populate from existing saved workflows (excluding active workflows)
     liquidationAutomations.forEach(auto => {
-      map.set(String(auto._id), { workflow: auto, runs: [] });
+      const autoId = String(auto._id);
+      if (!activeWorkflowIds.has(autoId)) {
+        map.set(autoId, { workflow: auto, runs: [] });
+      }
     });
 
     // Bucket runs into groups
     filteredRuns.forEach(run => {
       const autoId = String(run.automationId?._id || run.automationId || '');
+      if (activeWorkflowIds.has(autoId)) return;
+
       if (map.has(autoId)) {
         map.get(autoId)!.runs.push(run);
       } else {
         // Unlinked or standalone workflow run
         const fallbackKey = autoId || `unlinked-${run.campaignSnapshot?.name || 'Standalone'}`;
+        if (activeWorkflowIds.has(fallbackKey)) return;
+
         if (!map.has(fallbackKey)) {
           map.set(fallbackKey, {
             workflow: run.campaignSnapshot || { _id: fallbackKey, name: run.campaignSnapshot?.name || 'Ad-Hoc Workflow' },
@@ -125,12 +154,7 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
       if (selectedStatusFilter === 'all' && !searchQuery.trim()) return true;
       return group.runs.length > 0;
     });
-  }, [liquidationAutomations, automationRuns, selectedStatusFilter, searchQuery]);
-
-  // Active in-flight evaluations
-  const activeRuns = useMemo(() => {
-    return automationRuns.filter(r => r.status === 'evaluating' || r.status === 'dispatched');
-  }, [automationRuns]);
+  }, [liquidationAutomations, automationRuns, selectedStatusFilter, searchQuery, activeRuns]);
 
   const toggleWorkflowCollapse = (wfId: string) => {
     setCollapsedWorkflows(prev => ({
