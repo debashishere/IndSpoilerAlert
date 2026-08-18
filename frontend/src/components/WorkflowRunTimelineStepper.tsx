@@ -773,21 +773,60 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
     pending: { label: 'Pending', bg: 'hsl(var(--bg-card-hover))', color: 'hsl(var(--text-muted))', border: 'hsl(var(--border-color))' },
   };
 
-  const stageList = hasStageExecutions
-    ? [...run.stageExecutions]
-        .sort((a: any, b: any) => (a.stageIndex ?? 0) - (b.stageIndex ?? 0))
-        .map((exec: any, idx: number) => {
-          const stageIndex = exec.stageIndex ?? idx;
-          const stageDef = campaignStages[stageIndex] || stages[stageIndex] || run?.campaignSnapshot?.stages?.[stageIndex] || {
-            stageNumber: stageIndex + 1,
-            name: `Stage ${stageIndex + 1}`,
-            stageType: 'liquidation',
-            waitHours: 24,
-          };
+  const executedStageIndexes = new Set<number>();
+  const mappedStages = campaignStages.map((stageDef: any, idx: number) => {
+    const stageIndex = stageDef.stageIndex ?? idx;
+    executedStageIndexes.add(stageIndex);
+
+    const exec = Array.isArray(run?.stageExecutions)
+      ? run.stageExecutions.find(
+          (e: any) =>
+            (e.stageIndex != null && e.stageIndex === stageIndex) ||
+            (e.stageNumber != null && e.stageNumber === (stageDef.stageNumber || stageIndex + 1)) ||
+            (e.stageIndex == null && e.stageNumber == null && idx === 0)
+        )
+      : undefined;
+
+    if (exec) {
+      return {
+        ...stageDef,
+        ...exec,
+        stageNumber: stageDef.stageNumber || stageIndex + 1,
+        stageIndex,
+        isExecution: true,
+        executionStatus: exec.status,
+        buyerEmails: exec.buyerEmails || [],
+        lotsOffered: exec.lotsOffered || [],
+        firedAt: exec.firedAt,
+      };
+    }
+
+    return {
+      ...stageDef,
+      stageNumber: stageDef.stageNumber || stageIndex + 1,
+      stageIndex,
+      isExecution: false,
+      executionStatus: undefined,
+      buyerEmails: [],
+      lotsOffered: [],
+    };
+  });
+
+  const extraExecutions = Array.isArray(run?.stageExecutions)
+    ? run.stageExecutions
+        .filter((e: any) => {
+          const sIdx = e.stageIndex ?? -1;
+          const sNum = e.stageNumber ?? -1;
+          return !executedStageIndexes.has(sIdx) && !campaignStages.some((c: any, i: number) => (c.stageNumber === sNum || (c.stageIndex ?? i) === sIdx));
+        })
+        .map((exec: any, extraIdx: number) => {
+          const stageIndex = exec.stageIndex ?? (campaignStages.length + extraIdx);
           return {
-            ...stageDef,
+            stageNumber: exec.stageNumber || stageIndex + 1,
+            name: exec.name || `Stage ${stageIndex + 1}`,
+            stageType: exec.stageType || 'liquidation',
+            waitHours: exec.waitHours || 24,
             ...exec,
-            stageNumber: stageIndex + 1,
             stageIndex,
             isExecution: true,
             executionStatus: exec.status,
@@ -796,12 +835,11 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
             firedAt: exec.firedAt,
           };
         })
-    : campaignStages.map((stage: any, idx: number) => ({
-        ...stage,
-        stageNumber: stage.stageNumber || idx + 1,
-        stageIndex: idx,
-        isExecution: false,
-      }));
+    : [];
+
+  const stageList = [...mappedStages, ...extraExecutions].sort(
+    (a: any, b: any) => (a.stageIndex ?? 0) - (b.stageIndex ?? 0)
+  );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -811,7 +849,7 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
           Stage-Gate Execution Timeline & Escalation Trace
         </h4>
         <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>
-          {stageList.length} {hasStageExecutions ? 'Executed Stage Steps' : 'Configured Stage Gates'}
+          {stageList.length} Configured Stage Gates
         </span>
       </div>
 
@@ -821,9 +859,9 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
           const stageType = stage.stageType || (stage.name?.toLowerCase().includes('donat') ? 'donation' : stage.name?.toLowerCase().includes('landfill') ? 'landfill' : 'liquidation');
           
           let stageState: 'completed' | 'active' | 'skipped' | 'pending' = 'pending';
-          if (hasStageExecutions) {
+          if (stage.isExecution) {
             const execStat = stage.executionStatus || stage.status;
-            if (execStat === 'awarded' || execStat === 'partially_awarded' || execStat === 'expired') {
+            if (execStat === 'awarded' || execStat === 'partially_awarded' || execStat === 'expired' || execStat === 'completed') {
               stageState = 'completed';
             } else if (execStat === 'dispatched' || execStat === 'escalating' || (run?.currentStageIndex === stage.stageIndex && (isEvaluating || run?.status === 'escalating'))) {
               stageState = 'active';
@@ -834,11 +872,34 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
             }
           } else {
             if (isAwarded) {
-              stageState = idx === 0 ? 'completed' : 'skipped';
+              const currentIdx = run?.currentStageIndex ?? 0;
+              if (idx < currentIdx) {
+                stageState = 'completed';
+              } else if (idx === currentIdx && !hasStageExecutions) {
+                stageState = 'completed';
+              } else {
+                stageState = 'skipped';
+              }
             } else if (isFallback) {
-              stageState = idx < campaignStages.length - 1 ? 'completed' : 'active';
-            } else if (isEvaluating) {
-              stageState = idx === 0 ? 'active' : 'pending';
+              const fallbackIdx = run?.currentStageIndex ?? (campaignStages.length - 1);
+              if (idx < fallbackIdx) {
+                stageState = 'completed';
+              } else if (idx === fallbackIdx) {
+                stageState = 'active';
+              } else {
+                stageState = 'pending';
+              }
+            } else if (isEvaluating || run?.status === 'escalating') {
+              const currentIdx = run?.currentStageIndex ?? 0;
+              if (idx < currentIdx) {
+                stageState = 'completed';
+              } else if (idx === currentIdx) {
+                stageState = 'active';
+              } else {
+                stageState = 'pending';
+              }
+            } else {
+              stageState = 'pending';
             }
           }
 
@@ -858,9 +919,9 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
           // Calculate remaining window for active stage
           let remainingWindowMs = 0;
           let isWindowExpired = false;
-          const isNodeActive = hasStageExecutions
+          const isNodeActive = stage.isExecution
             ? (stageState === 'active' || stage.executionStatus === 'dispatched' || stage.executionStatus === 'escalating' || (run?.currentStageIndex === stage.stageIndex && isEvaluating))
-            : (stageState === 'active' && isEvaluating);
+            : (stageState === 'active' && (isEvaluating || run?.status === 'escalating'));
 
           if (isNodeActive) {
             const firedAtMs = stage.firedAt
@@ -931,7 +992,7 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
                       }}>
                         {stageType}
                       </span>
-                      {hasStageExecutions && stage.executionStatus && (
+                      {stage.isExecution && stage.executionStatus && (
                         <span
                           data-testid={`stage-status-badge-${stageNum}`}
                           style={{
@@ -1033,7 +1094,7 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
                     </div>
                   )}
 
-                  {hasStageExecutions ? (
+                  {stage.isExecution ? (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', fontSize: '0.78rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
                       {stage.firedAt && (
                         <div>

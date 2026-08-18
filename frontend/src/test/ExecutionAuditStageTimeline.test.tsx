@@ -84,6 +84,56 @@ describe('Issue 07: Execution Audit Inspector — Stage Timeline UI', () => {
       expect(stage1Node).toHaveTextContent('1 Buyer');
       expect(stage1Node).toHaveTextContent('1 Lot');
     });
+
+    it('renders all configured stages even when only the active stage has an entry in stageExecutions', () => {
+      const mockRunActiveStage0Only = {
+        _id: 'run-stage-active-0-only',
+        automationId: 'auto-101',
+        status: 'evaluating',
+        currentStageIndex: 0,
+        stageExecutions: [
+          {
+            stageIndex: 0,
+            firedAt: new Date('2026-08-18T08:00:00.000Z'),
+            buyerEmails: ['buyer1@liquidation.com'],
+            lotsOffered: [{ lotId: 'lot-1', awardedQty: 0, remainingQty: 100 }],
+            status: 'dispatched',
+          },
+        ],
+        snapshotInventoryIds: ['lot-1'],
+      };
+
+      const threeStages = [
+        ...mockStages,
+        {
+          stageNumber: 3,
+          name: 'Final Eco Landfill',
+          stageType: 'landfill',
+          waitHours: 6,
+          buyerMode: 'all',
+        },
+      ];
+
+      render(
+        <WorkflowRunTimelineStepper
+          run={mockRunActiveStage0Only}
+          stages={threeStages}
+        />
+      );
+
+      // Verify all 3 stages are rendered in the execution timeline
+      expect(screen.getByTestId('stage-step-1')).toBeInTheDocument();
+      expect(screen.getByTestId('stage-step-1')).toHaveTextContent('Primary Tier Bargain');
+      expect(screen.getByTestId('stage-step-1')).toHaveTextContent(/active window/i);
+
+      expect(screen.getByTestId('stage-step-2')).toBeInTheDocument();
+      expect(screen.getByTestId('stage-step-2')).toHaveTextContent('Donation Divert & Food Bank');
+      expect(screen.getByTestId('stage-step-2')).toHaveTextContent(/donation/i);
+
+      expect(screen.getByTestId('stage-step-3')).toBeInTheDocument();
+      expect(screen.getByTestId('stage-step-3')).toHaveTextContent('Final Eco Landfill');
+      expect(screen.getByTestId('stage-step-3')).toHaveTextContent(/landfill/i);
+    });
   });
 
   describe('Slice 2: Active stage countdown & escalation transition indicator', () => {
