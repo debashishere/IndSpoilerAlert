@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Clock, Timer, ChevronDown, Users, Mail } from 'lucide-react';
 import { useAppSelector } from '../store/hooks';
 import { selectBuyerLists } from '../store/slices/coreSlice';
+import { STAGE_EMAIL_TEMPLATES } from './domain/workflows/StageEmailModal';
 
 export const formatExecutionWindow = (waitHours?: number, waitUnit?: 'd' | 'h' | 'm'): string => {
   if (waitHours == null || isNaN(waitHours) || waitHours <= 0) return 'Immediate';
@@ -351,6 +352,7 @@ export const resolveEmailTokens = (
 
   const stageLots = resolveStageLots(stage, inventoryList, run);
   const stageBuyers = resolveStageBuyers(stage, allBuyers, buyerLists, run);
+  const stageTypeStr = (stage.stageType || stage.type || (stage.name?.toLowerCase().includes('donat') ? 'donation' : stage.name?.toLowerCase().includes('landfill') ? 'landfill' : 'liquidation')).toLowerCase();
 
   // Target buyer / partner name
   let targetBuyerName: string | undefined = undefined;
@@ -394,6 +396,8 @@ export const resolveEmailTokens = (
   let disposalDeadline: string | undefined = undefined;
   if (stage.disposalDeadline) {
     disposalDeadline = new Date(stage.disposalDeadline).toLocaleDateString();
+  } else {
+    disposalDeadline = new Date(Date.now() + 7 * 86400000).toLocaleDateString();
   }
 
   // Inventory Table
@@ -402,7 +406,7 @@ export const resolveEmailTokens = (
     const rows = stageLots.map((lot: any, idx: number) => {
       const lotNum = lot.lotNumber || `LOT-${String(lot._id || idx).slice(-4)}`;
       const sku = lot.sku || 'N/A';
-      const desc = lot.description || 'Inventory Item';
+      const desc = lot.description || lot.productName || 'Inventory Item';
       const cases = (lot.availableQty || lot.quantityCases || 0).toLocaleString();
       return `<tr style="border-bottom: 1px solid #e2e8f0;">
         <td style="padding: 8px 12px; font-weight: 600; color: #1e293b;">${lotNum}</td>
@@ -437,8 +441,9 @@ export const resolveEmailTokens = (
     disposal_deadline: disposalDeadline,
     inventory_table: inventoryTable,
     expiry_hours: formattedWindow,
-    supplier_name: run?.campaignSnapshot?.supplierName || run?.supplierName,
-    lot_title: stageLots[0]?.description || stageLots[0]?.lotNumber,
+    supplier_name: run?.campaignSnapshot?.supplierName || run?.supplierName || run?.supplierId?.companyName || run?.supplierId?.name || 'SpoilerAlert Wholesale',
+    lot_title: stageLots[0]?.description || stageLots[0]?.productName || stageLots[0]?.lotNumber || inventoryList[0]?.description || inventoryList[0]?.productName || inventoryList[0]?.lotNumber || 'Surplus Inventory Lot',
+    quick_bid_link: '#quick-bid',
   };
 
   let resolved = template;
@@ -725,38 +730,55 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
     custom: { bg: 'hsl(var(--success) / 15%)', color: 'hsl(var(--success))', label: 'Custom' },
   };
 
-  const campaignStages = stages.length > 0
+  const campaignStages = (Array.isArray(stages) && stages.length > 0)
     ? stages
-    : (run?.campaignSnapshot?.stages || [
-        {
-          stageNumber: 1,
-          name: 'Primary Tier Bargain',
-          stageType: 'liquidation',
-          discountType: 'percentage_off_wholesale',
-          discountValue: 15,
-          waitHours: 24,
-          buyerMode: 'segment',
-          buyerSegment: 'Tier 1 Wholesale'
-        },
-        {
-          stageNumber: 2,
-          name: 'Broad Market Clearance',
-          stageType: 'liquidation',
-          discountType: 'percentage_off_wholesale',
-          discountValue: 35,
-          waitHours: 48,
-          buyerMode: 'all'
-        },
-        {
-          stageNumber: 3,
-          name: 'Final Salvage / Donation Divert',
-          stageType: 'donation',
-          discountType: 'fixed_price',
-          discountValue: 1.0,
-          waitHours: 12,
-          buyerMode: 'all'
-        }
-      ]);
+    : ((Array.isArray(run?.campaignSnapshot?.stages) && run.campaignSnapshot.stages.length > 0)
+        ? run.campaignSnapshot.stages
+        : ((Array.isArray(run?.stages) && run.stages.length > 0)
+            ? run.stages
+            : ((Array.isArray(run?.workflow?.stages) && run.workflow.stages.length > 0)
+                ? run.workflow.stages
+                : (Array.isArray(run?.stageExecutions) && run.stageExecutions.length > 0
+                    ? run.stageExecutions.map((se: any, idx: number) => ({
+                        stageIndex: se.stageIndex ?? idx,
+                        stageNumber: se.stageNumber ?? (idx + 1),
+                        name: se.name || `Stage ${idx + 1}`,
+                        stageType: se.stageType || 'liquidation',
+                        waitHours: se.waitHours,
+                        waitUnit: se.waitUnit,
+                        buyerEmails: se.buyerEmails || [],
+                        lotsOffered: se.lotsOffered || []
+                      }))
+                    : [
+                        {
+                          stageNumber: 1,
+                          name: 'Primary Tier Bargain',
+                          stageType: 'liquidation',
+                          discountType: 'percentage_off_wholesale',
+                          discountValue: 15,
+                          waitHours: 24,
+                          buyerMode: 'segment',
+                          buyerSegment: 'Tier 1 Wholesale'
+                        },
+                        {
+                          stageNumber: 2,
+                          name: 'Broad Market Clearance',
+                          stageType: 'liquidation',
+                          discountType: 'percentage_off_wholesale',
+                          discountValue: 35,
+                          waitHours: 48,
+                          buyerMode: 'all'
+                        },
+                        {
+                          stageNumber: 3,
+                          name: 'Final Salvage / Donation Divert',
+                          stageType: 'donation',
+                          discountType: 'fixed_price',
+                          discountValue: 1.0,
+                          waitHours: 12,
+                          buyerMode: 'all'
+                        }
+                      ]))));
 
   const isAwarded = run?.status === 'awarded';
   const isFallback = run?.status === 'fallback_executed';
@@ -773,26 +795,52 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
     pending: { label: 'Pending', bg: 'hsl(var(--bg-card-hover))', color: 'hsl(var(--text-muted))', border: 'hsl(var(--border-color))' },
   };
 
+  const matchedExecutions = new Set<any>();
   const executedStageIndexes = new Set<number>();
   const mappedStages = campaignStages.map((stageDef: any, idx: number) => {
     const stageIndex = stageDef.stageIndex ?? idx;
     executedStageIndexes.add(stageIndex);
+    executedStageIndexes.add(idx);
+    if (stageDef.stageIndex != null) {
+      executedStageIndexes.add(stageDef.stageIndex - 1);
+      executedStageIndexes.add(stageDef.stageIndex + 1);
+    }
 
     const exec = Array.isArray(run?.stageExecutions)
       ? run.stageExecutions.find(
           (e: any) =>
-            (e.stageIndex != null && e.stageIndex === stageIndex) ||
-            (e.stageNumber != null && e.stageNumber === (stageDef.stageNumber || stageIndex + 1)) ||
-            (e.stageIndex == null && e.stageNumber == null && idx === 0)
+            !matchedExecutions.has(e) && (
+              (e.stageIndex != null && (
+                e.stageIndex === stageIndex ||
+                e.stageIndex === idx ||
+                (stageDef.stageIndex != null && e.stageIndex === stageDef.stageIndex - 1) ||
+                (stageDef.stageIndex != null && e.stageIndex === stageDef.stageIndex + 1)
+              )) ||
+              (e.stageNumber != null && (
+                e.stageNumber === (stageDef.stageNumber || stageIndex + 1) ||
+                e.stageNumber === idx + 1 ||
+                (stageDef.stageIndex != null && e.stageNumber === stageDef.stageIndex)
+              )) ||
+              (e.stageIndex == null && e.stageNumber == null && idx === 0)
+            )
         )
       : undefined;
 
     if (exec) {
+      matchedExecutions.add(exec);
+      if (exec.stageIndex != null) executedStageIndexes.add(exec.stageIndex);
+      if (exec.stageNumber != null) executedStageIndexes.add(exec.stageNumber);
       return {
         ...stageDef,
         ...exec,
-        stageNumber: stageDef.stageNumber || stageIndex + 1,
-        stageIndex,
+        stageType: stageDef.stageType || exec.stageType || 'liquidation',
+        emailSubject: stageDef.emailSubject || exec.emailSubject || stageDef.emailConfig?.subject || stageDef.subject,
+        emailBodyHtml: stageDef.emailBodyHtml || exec.emailBodyHtml || stageDef.emailConfig?.bodyHtml || stageDef.emailConfig?.body || stageDef.bodyHtml || stageDef.body,
+        emailTemplateId: stageDef.emailTemplateId || exec.emailTemplateId,
+        waitHours: stageDef.waitHours ?? exec.waitHours,
+        waitUnit: stageDef.waitUnit ?? exec.waitUnit,
+        stageNumber: stageDef.stageNumber || idx + 1,
+        stageIndex: idx,
         isExecution: true,
         executionStatus: exec.status,
         buyerEmails: exec.buyerEmails || [],
@@ -803,8 +851,8 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
 
     return {
       ...stageDef,
-      stageNumber: stageDef.stageNumber || stageIndex + 1,
-      stageIndex,
+      stageNumber: stageDef.stageNumber || idx + 1,
+      stageIndex: idx,
       isExecution: false,
       executionStatus: undefined,
       buyerEmails: [],
@@ -815,9 +863,10 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
   const extraExecutions = Array.isArray(run?.stageExecutions)
     ? run.stageExecutions
         .filter((e: any) => {
+          if (matchedExecutions.has(e)) return false;
           const sIdx = e.stageIndex ?? -1;
           const sNum = e.stageNumber ?? -1;
-          return !executedStageIndexes.has(sIdx) && !campaignStages.some((c: any, i: number) => (c.stageNumber === sNum || (c.stageIndex ?? i) === sIdx));
+          return !executedStageIndexes.has(sIdx) && !executedStageIndexes.has(sNum) && !campaignStages.some((c: any, i: number) => (c.stageNumber === sNum || (c.stageIndex ?? i) === sIdx || (c.stageIndex != null && c.stageIndex - 1 === sIdx) || i === sIdx || c.stageNumber === sIdx + 1));
         })
         .map((exec: any, extraIdx: number) => {
           const stageIndex = exec.stageIndex ?? (campaignStages.length + extraIdx);
@@ -914,8 +963,6 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
               ? 'hsl(var(--warning))' 
               : 'hsl(var(--success))';
 
-          const formattedWindow = formatExecutionWindow(stage.waitHours, stage.waitUnit);
-
           // Calculate remaining window for active stage
           let remainingWindowMs = 0;
           let isWindowExpired = false;
@@ -923,13 +970,25 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
             ? (stageState === 'active' || stage.executionStatus === 'dispatched' || stage.executionStatus === 'escalating' || (run?.currentStageIndex === stage.stageIndex && isEvaluating))
             : (stageState === 'active' && (isEvaluating || run?.status === 'escalating'));
 
+          let effectiveWaitHours = stage.waitHours;
+          if ((effectiveWaitHours == null || isNaN(effectiveWaitHours)) && isNodeActive && run?.evaluationEndsAt) {
+            const startMs = stage.firedAt ? new Date(stage.firedAt).getTime() : (run.dispatchedAt ? new Date(run.dispatchedAt).getTime() : Date.now());
+            const endMs = new Date(run.evaluationEndsAt).getTime();
+            const diffHours = (endMs - startMs) / 3600000;
+            if (diffHours > 0) {
+              effectiveWaitHours = diffHours;
+            }
+          }
+
+          const formattedWindow = formatExecutionWindow(effectiveWaitHours, stage.waitUnit);
+
           if (isNodeActive) {
             const firedAtMs = stage.firedAt
               ? new Date(stage.firedAt).getTime()
-              : (run.evaluationEndsAt ? new Date(run.evaluationEndsAt).getTime() - (stage.waitHours || 24) * 3600000 : new Date(run.dispatchedAt || run.createdAt || Date.now()).getTime());
+              : (run.evaluationEndsAt ? new Date(run.evaluationEndsAt).getTime() - (effectiveWaitHours || 24) * 3600000 : new Date(run.dispatchedAt || run.createdAt || Date.now()).getTime());
             const endsAtMs = stage.firedAt
-              ? (firedAtMs + (stage.waitHours || 24) * 3600000)
-              : (run.evaluationEndsAt ? new Date(run.evaluationEndsAt).getTime() : firedAtMs + (stage.waitHours || 24) * 3600000);
+              ? (firedAtMs + (effectiveWaitHours || 24) * 3600000)
+              : (run.evaluationEndsAt ? new Date(run.evaluationEndsAt).getTime() : firedAtMs + (effectiveWaitHours || 24) * 3600000);
             remainingWindowMs = endsAtMs - nowTime;
             isWindowExpired = remainingWindowMs <= 0;
           }
@@ -1835,8 +1894,18 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
 
                     {/* Email Preview Section (All Stage Types) */}
                     {(() => {
-                      const rawSubject = stage.emailSubject || stage.emailConfig?.subject || stage.subject || '';
-                      const rawBodyHtml = stage.emailBodyHtml || stage.emailConfig?.bodyHtml || stage.bodyHtml || '';
+                      const stageType = (stage.stageType || stage.type || (stage.name?.toLowerCase().includes('donat') ? 'donation' : stage.name?.toLowerCase().includes('landfill') ? 'landfill' : 'liquidation')).toLowerCase();
+                      const defaultKeyForType = stageType === 'donation'
+                        ? 'direct-donation-notice'
+                        : stageType === 'landfill'
+                        ? 'disposal-removal-notice'
+                        : 'default';
+                      const tplKey = stage.emailTemplateId === 'none' ? 'none' : (stage.emailTemplateId || defaultKeyForType);
+                      const stageTpl = stage.emailTemplateId === 'none' || !STAGE_EMAIL_TEMPLATES
+                        ? null
+                        : (STAGE_EMAIL_TEMPLATES[tplKey] || STAGE_EMAIL_TEMPLATES[defaultKeyForType] || STAGE_EMAIL_TEMPLATES.default);
+                      const rawSubject = stage.emailSubject || stage.emailConfig?.subject || stage.subject || (run?.emailTemplate?.subject || run?.campaignSnapshot?.emailTemplate?.subject) || stageTpl?.subject || '';
+                      const rawBodyHtml = stage.emailBodyHtml || stage.emailConfig?.bodyHtml || stage.emailConfig?.body || stage.bodyHtml || stage.body || (run?.emailTemplate?.body || run?.campaignSnapshot?.emailTemplate?.body) || stageTpl?.bodyHtml || '';
                       const hasEmail = Boolean(rawBodyHtml && rawBodyHtml.trim().length > 0);
 
                       const resolvedSubject = resolveEmailTokens(rawSubject, stage, run, inventoryList, allBuyers, effectiveBuyerLists);

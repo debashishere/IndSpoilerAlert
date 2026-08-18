@@ -359,7 +359,11 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
         {/* TAB 1: SUMMARY & TIMELINE */}
         {activeTab === 'summary' && (() => {
           const isEvaluating = run.status === 'evaluating' || run.status === 'dispatched';
-          const activeStage = (run.campaignSnapshot?.stages || linkedAuto?.stages || [])[0] || { name: 'Stage 1: Primary Clearance', waitHours: 24 };
+          const effectiveStages = (Array.isArray(run.campaignSnapshot?.stages) && run.campaignSnapshot.stages.length > 0)
+            ? run.campaignSnapshot.stages
+            : (Array.isArray(linkedAuto?.stages) && linkedAuto.stages.length > 0 ? linkedAuto.stages : []);
+          const currStageIdx = run.currentStageIndex ?? 0;
+          const activeStage = effectiveStages[currStageIdx] || effectiveStages[0] || { name: `Stage ${currStageIdx + 1}`, waitHours: 24 };
           const stageWindowFormatted = formatExecutionWindow(activeStage.waitHours, activeStage.waitUnit);
           const dispatchTimeMs = new Date(run.dispatchedAt || run.createdAt || Date.now()).getTime();
           const endsAtMs = run.evaluationEndsAt ? new Date(run.evaluationEndsAt).getTime() : (dispatchTimeMs + (activeStage.waitHours || 24) * 3600000);
@@ -519,7 +523,7 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
               <div className="card" style={{ padding: '24px' }}>
                 <WorkflowRunTimelineStepper
                   run={run}
-                  stages={run.campaignSnapshot?.stages}
+                  stages={run.campaignSnapshot?.stages || workflow?.stages || linkedAuto?.stages || run.stages}
                   allBuyers={allBuyers}
                   allBids={allBids}
                   inventoryList={inventoryList}

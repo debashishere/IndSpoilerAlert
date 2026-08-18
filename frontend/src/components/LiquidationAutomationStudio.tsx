@@ -163,6 +163,7 @@ interface BuyerEntry {
 
 export interface Stage {
   stageIndex: number;
+  stageNumber?: number;
   name: string;
   stageType?: 'liquidation' | 'donation' | 'landfill';
   disposalDeadline?: string;
@@ -185,7 +186,7 @@ export function getStageBuyerCount(stage: Stage, buyerListsOrBuyers: any[] = [],
   if (stage.buyerMode === 'custom') {
     return stage.customBuyers ? stage.customBuyers.length : 0;
   }
-  const targetId = stage.buyerListId || stage.buyerSegment || (stage.stageIndex === 2 ? 'secondary' : 'primary');
+  const targetId = stage.buyerListId || stage.buyerSegment || (stage.stageIndex === 1 || stage.stageIndex === 2 || stage.stageNumber === 2 ? 'secondary' : 'primary');
   if (!targetId || targetId === 'empty_segment') {
     return 0;
   }
@@ -235,7 +236,7 @@ export function getStageValidationErrors(
 ): string[] {
   const errors: string[] = [];
   const sType = stage.stageType || 'liquidation';
-  const sNum = stage.stageIndex || stageIndex + 1;
+  const sNum = stage.stageNumber || (stage.stageIndex != null ? (stage.stageIndex === 0 || stage.stageIndex > 0 && stage.stageIndex <= stageIndex ? stage.stageIndex + 1 : stage.stageIndex) : stageIndex + 1);
   const buyerCount = getStageBuyerCount(stage, reduxBuyerLists, buyers);
 
   if (sType === 'donation') {
@@ -354,7 +355,8 @@ export const DEFAULT_EMAIL_BODY_HTML = `<div style="font-family: sans-serif; pad
 
 const DEFAULT_STAGES: Stage[] = [
   {
-    stageIndex: 1,
+    stageIndex: 0,
+    stageNumber: 1,
     name: 'Stage 1: Primary Buyers',
     buyerMode: 'list',
     buyerListId: 'primary',
@@ -367,7 +369,8 @@ const DEFAULT_STAGES: Stage[] = [
     emailBodyHtml: DEFAULT_EMAIL_BODY_HTML
   },
   {
-    stageIndex: 2,
+    stageIndex: 1,
+    stageNumber: 2,
     name: 'Stage 2: Secondary Liquidators',
     buyerMode: 'list',
     buyerListId: 'secondary',
@@ -412,8 +415,8 @@ const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     ],
     defaultFilters: { category: 'Dairy', maxRsl: 0.25, minCases: 5 },
     defaultStages: [
-      { stageIndex: 1, name: 'Stage 1: Category Preferred Buyers', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'yield', discountValue: 0, waitHours: 36 },
-      { stageIndex: 2, name: 'Stage 2: Open Market Jobbers', buyerMode: 'list', buyerListId: 'secondary', buyerListName: 'Secondary Liquidators', customBuyers: [], discountType: 'fixed', discountValue: 30, waitHours: 24 },
+      { stageIndex: 0, stageNumber: 1, name: 'Stage 1: Category Preferred Buyers', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'yield', discountValue: 0, waitHours: 36 },
+      { stageIndex: 1, stageNumber: 2, name: 'Stage 2: Open Market Jobbers', buyerMode: 'list', buyerListId: 'secondary', buyerListName: 'Secondary Liquidators', customBuyers: [], discountType: 'fixed', discountValue: 30, waitHours: 24 },
     ],
     defaultRules: { onSuccess: 'auto_award', onFallback: 'auto_donate', minimumBidFloorPrice: 8.0, minimumYieldRecoveryPercent: 40 },
   },
@@ -431,8 +434,8 @@ const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     ],
     defaultFilters: { category: '', maxRsl: 0.35, minCases: 10 },
     defaultStages: [
-      { stageIndex: 1, name: 'Stage 1: COA-Verified Primary Buyers', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'fixed', discountValue: 15, waitHours: 48 },
-      { stageIndex: 2, name: 'Stage 2: Secondary Wholesale Buyers', buyerMode: 'list', buyerListId: 'secondary', buyerListName: 'Secondary Liquidators', customBuyers: [], discountType: 'fixed', discountValue: 35, waitHours: 24 },
+      { stageIndex: 0, stageNumber: 1, name: 'Stage 1: COA-Verified Primary Buyers', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'fixed', discountValue: 15, waitHours: 48 },
+      { stageIndex: 1, stageNumber: 2, name: 'Stage 2: Secondary Wholesale Buyers', buyerMode: 'list', buyerListId: 'secondary', buyerListName: 'Secondary Liquidators', customBuyers: [], discountType: 'fixed', discountValue: 35, waitHours: 24 },
     ],
     defaultRules: { onSuccess: 'auto_award', onFallback: 'auto_donate', minimumBidFloorPrice: 10.0, minimumYieldRecoveryPercent: 45 },
   },
@@ -450,9 +453,9 @@ const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     ],
     defaultFilters: { category: '', maxRsl: 0.40, minCases: 15 },
     defaultStages: [
-      { stageIndex: 1, name: 'Stage 1: Week 1 Primary Tier', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'fixed', discountValue: 10, waitHours: 72 },
-      { stageIndex: 2, name: 'Stage 2: Week 2 Secondary Tier', buyerMode: 'list', buyerListId: 'secondary', buyerListName: 'Secondary Liquidators', customBuyers: [], discountType: 'fixed', discountValue: 25, waitHours: 72 },
-      { stageIndex: 3, name: 'Stage 3: Final Salvage Markdown', buyerMode: 'list', buyerListId: 'secondary', buyerListName: 'Secondary Liquidators', customBuyers: [], discountType: 'fixed', discountValue: 50, waitHours: 48 },
+      { stageIndex: 0, stageNumber: 1, name: 'Stage 1: Week 1 Primary Tier', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'fixed', discountValue: 10, waitHours: 72 },
+      { stageIndex: 1, stageNumber: 2, name: 'Stage 2: Week 2 Secondary Tier', buyerMode: 'list', buyerListId: 'secondary', buyerListName: 'Secondary Liquidators', customBuyers: [], discountType: 'fixed', discountValue: 25, waitHours: 72 },
+      { stageIndex: 2, stageNumber: 3, name: 'Stage 3: Final Salvage Markdown', buyerMode: 'list', buyerListId: 'secondary', buyerListName: 'Secondary Liquidators', customBuyers: [], discountType: 'fixed', discountValue: 50, waitHours: 48 },
     ],
     defaultRules: { onSuccess: 'auto_award', onFallback: 'auto_donate', minimumBidFloorPrice: 6.0, minimumYieldRecoveryPercent: 35 },
   },
@@ -470,8 +473,8 @@ const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     ],
     defaultFilters: { category: '', maxRsl: 0.30, minCases: 20 },
     defaultStages: [
-      { stageIndex: 1, name: 'Stage 1: Private Bidding Auction Round', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'yield', discountValue: 0, waitHours: 48 },
-      { stageIndex: 2, name: 'Stage 2: Backup Flash Offer', buyerMode: 'list', buyerListId: 'secondary', buyerListName: 'Secondary Liquidators', customBuyers: [], discountType: 'fixed', discountValue: 35, waitHours: 24 },
+      { stageIndex: 0, stageNumber: 1, name: 'Stage 1: Private Bidding Auction Round', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'yield', discountValue: 0, waitHours: 48 },
+      { stageIndex: 1, stageNumber: 2, name: 'Stage 2: Backup Flash Offer', buyerMode: 'list', buyerListId: 'secondary', buyerListName: 'Secondary Liquidators', customBuyers: [], discountType: 'fixed', discountValue: 35, waitHours: 24 },
     ],
     defaultRules: { onSuccess: 'auto_award', onFallback: 'escalate_review', minimumBidFloorPrice: 7.5, minimumYieldRecoveryPercent: 50 },
   },
@@ -489,7 +492,7 @@ const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     ],
     defaultFilters: { category: '', maxRsl: 0.25, minCases: 10 },
     defaultStages: [
-      { stageIndex: 1, name: 'Stage 1: Flash Broadcast to All Buyers', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'fixed', discountValue: 25, waitHours: 48 },
+      { stageIndex: 0, stageNumber: 1, name: 'Stage 1: Flash Broadcast to All Buyers', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'fixed', discountValue: 25, waitHours: 48 },
     ],
     defaultRules: { onSuccess: 'auto_award', onFallback: 'auto_donate', minimumBidFloorPrice: 5.0, minimumYieldRecoveryPercent: 30 },
   },
@@ -507,7 +510,7 @@ const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     ],
     defaultFilters: { category: '', maxRsl: 0.10, minCases: 1 },
     defaultStages: [
-      { stageIndex: 1, name: 'Stage 1: Food Rescue & Bank Transfer', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'fixed', discountValue: 100, waitHours: 12 },
+      { stageIndex: 0, stageNumber: 1, name: 'Stage 1: Food Rescue & Bank Transfer', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'fixed', discountValue: 100, waitHours: 12 },
     ],
     defaultRules: { onSuccess: 'auto_award', onFallback: 'auto_donate', minimumBidFloorPrice: 0.0, minimumYieldRecoveryPercent: 0 },
   },
@@ -525,7 +528,7 @@ const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     ],
     defaultFilters: { category: '', maxRsl: 0.50, minCases: 100 },
     defaultStages: [
-      { stageIndex: 1, name: 'Stage 1: All Wholesale Buyers', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'fixed', discountValue: 30, waitHours: 48 },
+      { stageIndex: 0, stageNumber: 1, name: 'Stage 1: All Wholesale Buyers', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'fixed', discountValue: 30, waitHours: 48 },
     ],
     defaultRules: { onSuccess: 'auto_award', onFallback: 'auto_recycle', minimumBidFloorPrice: 4.0, minimumYieldRecoveryPercent: 25 },
   },
@@ -542,7 +545,7 @@ const TEMPLATE_DEFINITIONS: TemplateDefinition[] = [
     ],
     defaultFilters: { category: '', maxRsl: 0.30, minCases: 0 },
     defaultStages: [
-      { stageIndex: 1, name: 'Stage 1: Custom Buyers', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'yield', discountValue: 0, waitHours: 24 },
+      { stageIndex: 0, stageNumber: 1, name: 'Stage 1: Custom Buyers', buyerMode: 'list', buyerListId: 'primary', buyerListName: 'Primary Buyers', customBuyers: [], discountType: 'yield', discountValue: 0, waitHours: 24 },
     ],
     defaultRules: { onSuccess: 'auto_award', onFallback: 'auto_donate', minimumBidFloorPrice: 5.0, minimumYieldRecoveryPercent: 30 },
   },
@@ -2602,6 +2605,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             {/* Visual timeline spine */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
               {stages.map((stage, idx) => {
+                const stageNumber = stage.stageNumber || idx + 1;
                 const isExpanded = expandedStageIdx === idx;
                 const isListMode = stage.buyerMode === 'list' || stage.buyerMode === 'segment';
                 const listLabel = stage.buyerListName || stage.buyerListId || stage.buyerSegment || 'Target List';
@@ -2618,7 +2622,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     {/* Left spine: number + connector line */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '16px', flexShrink: 0 }}>
                       <div
-                        data-testid={`stage-${stage.stageIndex}-circle`}
+                        data-testid={`stage-${stageNumber}-circle`}
                         style={{
                           width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
                           background: isExpanded ? 'linear-gradient(135deg,hsl(var(--primary)),hsl(var(--secondary)))' : 'hsl(var(--bg-card))',
@@ -2628,7 +2632,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           color: isExpanded ? 'white' : 'hsl(var(--text-muted))',
                           transition: 'all 0.2s', cursor: 'pointer', zIndex: 1,
                         }} onClick={() => setExpandedStageIdx(isExpanded ? null : idx)}>
-                        {stage.stageIndex}
+                        {stageNumber}
                       </div>
                       {idx < stages.length - 1 && (
                         <div style={{ width: '2px', flex: 1, minHeight: '20px', background: 'hsl(var(--border-color))', margin: '4px 0' }} />
@@ -2640,7 +2644,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
                       {/* Collapsed summary row — always visible */}
                       <div
-                        data-testid={`stage-${stage.stageIndex}-header-row`}
+                        data-testid={`stage-${stageNumber}-header-row`}
                         onClick={() => setExpandedStageIdx(isExpanded ? null : idx)}
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -2666,7 +2670,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                           {/* Stage Type Switcher Segmented Pills */}
                           <div
-                            data-testid={`stage-${stage.stageIndex}-type-switcher`}
+                            data-testid={`stage-${stageNumber}-type-switcher`}
                             style={{
                               display: 'inline-flex',
                               alignItems: 'center',
@@ -2680,7 +2684,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           >
                             <button
                               type="button"
-                              data-testid={`stage-${stage.stageIndex}-type-liquidation`}
+                              data-testid={`stage-${stageNumber}-type-liquidation`}
                               onClick={() => handleStageTypeChange(idx, 'liquidation')}
                               style={{
                                 background: (!stage.stageType || stage.stageType === 'liquidation') ? 'hsl(var(--primary))' : 'transparent',
@@ -2698,7 +2702,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                             </button>
                             <button
                               type="button"
-                              data-testid={`stage-${stage.stageIndex}-type-donation`}
+                              data-testid={`stage-${stageNumber}-type-donation`}
                               onClick={() => handleStageTypeChange(idx, 'donation')}
                               style={{
                                 background: stage.stageType === 'donation' ? 'hsl(var(--primary))' : 'transparent',
@@ -2716,7 +2720,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                             </button>
                             <button
                               type="button"
-                              data-testid={`stage-${stage.stageIndex}-type-landfill`}
+                              data-testid={`stage-${stageNumber}-type-landfill`}
                               onClick={() => handleStageTypeChange(idx, 'landfill')}
                               style={{
                                 background: stage.stageType === 'landfill' ? 'hsl(var(--primary))' : 'transparent',
@@ -2735,7 +2739,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           </div>
                           {/* Lot Allocation chip */}
                           <span
-                            data-testid={`stage-${stage.stageIndex}-lot-allocation-chip`}
+                            data-testid={`stage-${stageNumber}-lot-allocation-chip`}
                             style={{
                               display: 'flex',
                               alignItems: 'center',
@@ -2822,7 +2826,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
 
                           {/* Inventory Allocation Section */}
-                          <div data-testid={`stage-${stage.stageIndex}-inventory-allocation-section`}>
+                          <div data-testid={`stage-${stageNumber}-inventory-allocation-section`}>
                             <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                               <Table size={13} /> Inventory Allocation
                             </div>
@@ -2830,7 +2834,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                               <button
                                 type="button"
-                                data-testid={`stage-${stage.stageIndex}-allocation-all-btn`}
+                                data-testid={`stage-${stageNumber}-allocation-all-btn`}
                                 onClick={() => updateStage(idx, { allocatedLotIds: undefined })}
                                 style={{
                                   padding: '6px 12px',
@@ -2847,7 +2851,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                               </button>
                               <button
                                 type="button"
-                                data-testid={`stage-${stage.stageIndex}-allocation-custom-btn`}
+                                data-testid={`stage-${stageNumber}-allocation-custom-btn`}
                                 onClick={() => {
                                   if (!stage.allocatedLotIds) {
                                     updateStage(idx, { allocatedLotIds: matchedLots.map((l: any) => l._id?.toString() || l.id || '') });
@@ -2911,7 +2915,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                           <input
                                             type="checkbox"
-                                            data-testid={`stage-${stage.stageIndex}-lot-checkbox-${lotId}`}
+                                            data-testid={`stage-${stageNumber}-lot-checkbox-${lotId}`}
                                             checked={isSelected}
                                             onChange={() => {
                                               const current = stage.allocatedLotIds || [];
@@ -2993,7 +2997,12 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                         value={currentUnit}
                                         onChange={e => {
                                           const newUnit = e.target.value as 'd' | 'h' | 'm';
-                                          updateStage(idx, { waitUnit: newUnit });
+                                          const currentNumeric = isNaN(rawVal) || rawVal === 0 ? (newUnit === 'm' ? 30 : newUnit === 'd' ? 1 : 24) : rawVal;
+                                          const calculatedHours = newUnit === 'd' ? currentNumeric * 24 : newUnit === 'm' ? currentNumeric / 60 : currentNumeric;
+                                          updateStage(idx, {
+                                            waitUnit: newUnit,
+                                            waitHours: calculatedHours
+                                          });
                                         }}
                                         style={{ ...dropSt, width: 'auto', padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }}
                                       >
@@ -3018,7 +3027,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                 <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '5px' }}>Disposal Removal Cutoff Date</label>
                                 <input
                                   type="date"
-                                  data-testid={`stage-${stage.stageIndex}-disposal-deadline-input`}
+                                  data-testid={`stage-${stageNumber}-disposal-deadline-input`}
                                   value={stage.disposalDeadline || ''}
                                   onChange={e => updateStage(idx, { disposalDeadline: e.target.value })}
                                   style={inpSt}
@@ -3092,7 +3101,12 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                           value={currentUnit}
                                           onChange={e => {
                                             const newUnit = e.target.value as 'd' | 'h' | 'm';
-                                            updateStage(idx, { waitUnit: newUnit });
+                                            const currentNumeric = isNaN(rawVal) || rawVal === 0 ? (newUnit === 'm' ? 30 : newUnit === 'd' ? 1 : 24) : rawVal;
+                                            const calculatedHours = newUnit === 'd' ? currentNumeric * 24 : newUnit === 'm' ? currentNumeric / 60 : currentNumeric;
+                                            updateStage(idx, {
+                                              waitUnit: newUnit,
+                                              waitHours: calculatedHours
+                                            });
                                           }}
                                           style={{ ...dropSt, width: 'auto', padding: '4px 8px', fontSize: '11px', borderRadius: '6px' }}
                                         >
@@ -3118,7 +3132,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                           <div style={{ borderTop: '1px solid hsl(var(--border-color))' }} />
 
                           {/* Stage Email — Configure button + badge + modal */}
-                          <div data-testid={`stage-${stage.stageIndex}-email-editor-section`}>
+                          <div data-testid={`stage-${stageNumber}-email-editor-section`}>
                             <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                               <Mail size={13} /> Stage Email
                             </div>
@@ -3126,7 +3140,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                               <button
                                 type="button"
-                                data-testid={`configure-stage-email-btn-${stage.stageIndex}`}
+                                data-testid={`configure-stage-email-btn-${stageNumber}`}
                                 onClick={() => setOpenStageEmailModalIdx(idx)}
                                 style={{ background: 'hsl(var(--primary)/0.12)', border: '1px solid hsl(var(--primary)/0.4)', color: 'hsl(var(--primary))', borderRadius: '8px', padding: '7px 14px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                               >
@@ -3135,7 +3149,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
                               {(stage.emailSubject || stage.emailBodyHtml) && (
                                 <span
-                                  data-testid={`email-configured-badge-${stage.stageIndex}`}
+                                  data-testid={`email-configured-badge-${stageNumber}`}
                                   style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--success))', background: 'hsl(var(--success)/0.12)', border: '1px solid hsl(var(--success)/0.3)', borderRadius: '12px', padding: '4px 10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 >
                                   <CheckCircle size={12} /> Email Configured ✓
@@ -3156,14 +3170,14 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                             {/* Per-stage email modal */}
                             <StageEmailModal
                               open={openStageEmailModalIdx === idx}
-                              stageIndex={stage.stageIndex}
+                              stageIndex={stageNumber}
                               stageType={stage.stageType}
                               disposalDeadline={stage.disposalDeadline}
                               allocatedLotIds={stage.allocatedLotIds}
                               initialData={{
                                 emailSubject: stage.emailSubject || '',
                                 emailBodyHtml: stage.emailBodyHtml || '',
-                                emailTemplateId: stage.emailTemplateId || 'default',
+                                emailTemplateId: stage.emailTemplateId || (stage.stageType === 'donation' ? 'direct-donation-notice' : stage.stageType === 'landfill' ? 'disposal-removal-notice' : 'default'),
                               }}
                               onSave={(data) => {
                                 updateStage(idx, {
@@ -3182,7 +3196,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     </div>
                     {stageValidationErrors.length > 0 && (
                       <div
-                        data-testid={`stage-${stage.stageIndex}-validation-error`}
+                        data-testid={`stage-${stageNumber}-validation-error`}
                         style={{
                           marginTop: '6px',
                           marginLeft: '52px',
@@ -3209,7 +3223,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                     {isZeroBuyer && (
                       <div data-testid="zero-buyer-error-banner" style={{ marginTop: '6px', marginLeft: '52px', padding: '10px 14px', background: 'hsl(var(--error) / 0.15)', border: '1px solid hsl(var(--error) / 0.4)', borderRadius: '8px', color: 'hsl(var(--error))', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <AlertTriangle size={15} color="hsl(var(--error))" />
-                        <span>⚠️ Zero-Buyer Selection Error: Stage {stage.stageIndex} has 0 targeted buyers. At least 1 valid buyer must be selected for this stage.</span>
+                        <span>⚠️ Zero-Buyer Selection Error: Stage {stageNumber} has 0 targeted buyers. At least 1 valid buyer must be selected for this stage.</span>
                       </div>
                     )}
                   </div>
@@ -3223,7 +3237,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 const newIdx = stages.length;
                 const secList = reduxBuyerLists.find((l: any) => l.type === 'secondary') || reduxBuyerLists[1] || reduxBuyerLists[0];
                 setStages(p => [...p, {
-                  stageIndex: p.length + 1,
+                  stageIndex: p.length,
+                  stageNumber: p.length + 1,
                   name: `Stage ${p.length + 1}: Escalation`,
                   buyerMode: 'list',
                   buyerListId: secList ? secList._id : 'secondary',
@@ -3440,7 +3455,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
               {stages.map((s, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'hsl(var(--bg-card))', padding: '6px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))', fontSize: '11px' }}>
-                  <span style={{ background: 'hsl(var(--primary))', color: 'white', fontSize: '9px', fontWeight: 800, borderRadius: '4px', padding: '2px 6px' }}>S{s.stageIndex}</span>
+                  <span style={{ background: 'hsl(var(--primary))', color: 'white', fontSize: '9px', fontWeight: 800, borderRadius: '4px', padding: '2px 6px' }}>S{s.stageNumber || i + 1}</span>
                   <span style={{ color: 'hsl(var(--text-secondary))', fontWeight: 600 }}>{s.name.replace(/Stage \d+:\s*/, '')}</span>
                   {s.buyerMode === 'list' || s.buyerMode === 'segment'
                     ? <span style={{ color: 'hsl(var(--primary))', fontWeight: 600 }}>{s.buyerListName || s.buyerListId || s.buyerSegment || 'Target List'}</span>

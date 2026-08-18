@@ -17,7 +17,7 @@ export interface ResolvedStageBuyers {
  */
 export async function resolveStageBuyers(
   stage: any,
-  automationContext?: { supplierId?: any }
+  automationContext?: { supplierId?: any; donationConfig?: any; [key: string]: any }
 ): Promise<ResolvedStageBuyers> {
   const buyerEmails: string[] = [];
   const evaluatedBuyerIds: (mongoose.Types.ObjectId | string)[] = [];
@@ -47,6 +47,20 @@ export async function resolveStageBuyers(
   const stageType: string = (stage.type || stage.stageType || '').toLowerCase();
   const isBiddingStage = stageType.includes('bid') || stageType === 'bidding';
   const isSalesStage = stageType.includes('sale') || stageType === 'sales' || stageType === 'direct_sale' || stageType === 'liquidation';
+
+  // Automatically resolve donating entities if stage is donation and donationConfig is provided
+  if (stageType === 'donation' && Array.isArray(automationContext?.donationConfig?.donatingEntities)) {
+    for (const ent of automationContext.donationConfig.donatingEntities) {
+      if (ent && ent.email) {
+        addBuyer(ent.email, {
+          _id: ent.id || ent._id,
+          companyName: ent.name || 'Donation Partner',
+          name: ent.name || 'Donation Partner',
+          email: ent.email.trim().toLowerCase()
+        });
+      }
+    }
+  }
 
   const mode = stage.buyerMode || (
     Array.isArray(stage.customBuyers) && stage.customBuyers.length > 0

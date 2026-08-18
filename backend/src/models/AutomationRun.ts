@@ -4,6 +4,8 @@ export interface IStageExecution {
   stageIndex: number;
   firedAt: Date;
   buyerEmails: string[];
+  waitHours?: number;
+  waitUnit?: string;
   lotsOffered?: Array<{
     lotId: mongoose.Types.ObjectId | string;
     awardedQty?: number;
@@ -56,7 +58,7 @@ const AutomationRunSchema: Schema = new Schema({
   errorReason: { type: String },
   snapshotInventoryIds: [{ type: Schema.Types.ObjectId, ref: 'InventoryLot' }],
 
-  evaluatedBuyerIds: [{ type: Schema.Types.ObjectId, ref: 'Buyer' }],
+  evaluatedBuyerIds: [Schema.Types.Mixed],
   fallbackJobId: { type: String },
   dispatchedAt: { type: Date, default: Date.now },
   executedAt: { type: Date, default: Date.now },

@@ -134,6 +134,46 @@ describe('Issue 07: Execution Audit Inspector — Stage Timeline UI', () => {
       expect(screen.getByTestId('stage-step-3')).toHaveTextContent('Final Eco Landfill');
       expect(screen.getByTestId('stage-step-3')).toHaveTextContent(/landfill/i);
     });
+
+    it('renders exactly 4 stages without creating an extra 5th dynamic stage when 4 stages are configured and stageExecutions has stageIndex 0', () => {
+      const fourStages = [
+        { stageIndex: 1, name: 'Stage 1: Primary Buyers', waitHours: 24, stageType: 'liquidation' },
+        { stageIndex: 2, name: 'Stage 2: Secondary Liquidators', waitHours: 48, stageType: 'liquidation' },
+        { stageIndex: 3, name: 'Stage 3: Salvage Markdown', waitHours: 24, stageType: 'liquidation' },
+        { stageIndex: 4, name: 'Stage 4: Final Eco Disposal', waitHours: 12, stageType: 'landfill' },
+      ];
+
+      const mockRun = {
+        _id: 'run-4-stages',
+        automationId: 'auto-404',
+        status: 'evaluating',
+        currentStageIndex: 0,
+        stageExecutions: [
+          {
+            stageIndex: 0,
+            firedAt: new Date('2026-08-18T08:00:00.000Z'),
+            buyerEmails: ['buyer1@example.com'],
+            lotsOffered: [{ lotId: 'lot-1' }],
+            status: 'dispatched',
+          }
+        ],
+        snapshotInventoryIds: ['lot-1'],
+      };
+
+      render(
+        <WorkflowRunTimelineStepper
+          run={mockRun}
+          stages={fourStages}
+        />
+      );
+
+      expect(screen.getByTestId('stage-step-1')).toBeInTheDocument();
+      expect(screen.getByTestId('stage-step-2')).toBeInTheDocument();
+      expect(screen.getByTestId('stage-step-3')).toBeInTheDocument();
+      expect(screen.getByTestId('stage-step-4')).toBeInTheDocument();
+      expect(screen.queryByTestId('stage-step-5')).not.toBeInTheDocument();
+      expect(screen.getByText(/4 Configured Stage Gates/i)).toBeInTheDocument();
+    });
   });
 
   describe('Slice 2: Active stage countdown & escalation transition indicator', () => {

@@ -10,6 +10,7 @@ import EmailDispatchLog from '../models/EmailDispatchLog';
 import { sendEmailHelper, syncEmailToThread, sendCampaignEmail } from './emailService';
 import { compileTemplate, compileSubject } from './emailTemplateService';
 import { resolveStageBuyers } from './stageResolver';
+import { PLATFORM_TEMPLATE_MAP } from '../controllers/emailTemplateController';
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
 
@@ -245,6 +246,8 @@ export async function executeWorkflowStage({ runId, stageIndex }: { runId: strin
     stageIndex,
     firedAt: new Date(),
     buyerEmails,
+    waitHours: currentStage.waitHours,
+    waitUnit: currentStage.waitUnit,
     lotsOffered: stageLots.map(item => ({
       lotId: item.lotId,
       remainingQty: item.remainingQty,
@@ -267,8 +270,16 @@ export async function executeWorkflowStage({ runId, stageIndex }: { runId: strin
 
   // Prepare email dispatching for Stage N buyers
   const stageType = (currentStage.stageType || currentStage.type || '').toLowerCase();
-  const rawSubject = currentStage.emailSubject || automation.emailTemplate?.subject || `Distressed Inventory Liquidation Offer - ${automation.name || 'Clearance'}`;
-  const rawBodyHtml = currentStage.emailBodyHtml || automation.emailTemplate?.body || `
+  const defaultKeyForType = stageType === 'donation'
+    ? 'direct-donation-notice'
+    : stageType === 'landfill'
+    ? 'disposal-removal-notice'
+    : 'default';
+  const tplKey = currentStage.emailTemplateId || defaultKeyForType;
+  const stageTpl = PLATFORM_TEMPLATE_MAP ? (PLATFORM_TEMPLATE_MAP[tplKey] || PLATFORM_TEMPLATE_MAP[defaultKeyForType] || PLATFORM_TEMPLATE_MAP.default) : null;
+
+  const rawSubject = currentStage.emailSubject || (stageType === 'donation' || stageType === 'landfill' ? stageTpl?.subject : (automation.emailTemplate?.subject || stageTpl?.subject || `Distressed Inventory Liquidation Offer - ${automation.name || 'Clearance'}`));
+  const rawBodyHtml = currentStage.emailBodyHtml || (stageType === 'donation' || stageType === 'landfill' ? stageTpl?.bodyHtml : (automation.emailTemplate?.body || stageTpl?.bodyHtml || `
 <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
   <h2 style="color: #4f46e5; margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
   <p>Hello <strong>{{buyer_name}}</strong>,</p>
@@ -281,7 +292,7 @@ export async function executeWorkflowStage({ runId, stageIndex }: { runId: strin
     </a>
   </p>
 </div>
-  `;
+  `));
 
   const effectiveMatchedLots = stageLots.map(item => item.lot);
   const totalCases = stageLots.reduce((acc: number, item: any) => acc + item.remainingQty, 0);
@@ -436,9 +447,17 @@ agenda.define('execute-workflow-fallback', async (job: any) => {
   const automation = await LiquidationAutomation.findById(run.automationId);
   if (!automation) return;
 
-  const onFallback = automation.rules?.onFallback || 'escalate_review';
+  const lastStage = Array.isArray(automation.stages) && automation.stages.length > 0
+    ? automation.stages[automation.stages.length - 1]
+    : null;
+  const lastStageType = (lastStage?.stageType || lastStage?.type || '').toLowerCase();
 
-  if (onFallback === 'auto_donate') {
+  let onFallback = automation.rules?.onFallback || 'escalate_review';
+  if (lastStageType === 'donation' && onFallback !== 'yield_markdown_retry') {
+    onFallback = 'auto_donate';
+  }
+
+  if (onFallback === 'auto_donate' || lastStageType === 'donation') {
     const { donateInventory } = require('./inventoryService');
     const donationConfig = automation.donationConfig || {};
     const entities = donationConfig.donatingEntities || [];
@@ -476,6 +495,13 @@ agenda.define('execute-workflow-fallback', async (job: any) => {
     await LiquidationAutomation.findByIdAndUpdate(automation._id, {
       $inc: { 'stats.totalDonated': 1 }
     });
+  } else if (onFallback === 'auto_recycle' || lastStageType === 'landfill') {
+    run.status = 'fallback_executed';
+    run.resolution = {
+      action: 'landfill_dispatched',
+      resolvedAt: new Date()
+    };
+    await run.save();
   } else if (onFallback === 'yield_markdown_retry') {
     run.status = 'fallback_executed';
     run.resolution = {
@@ -605,6 +631,8 @@ export async function createAutomationRun(
           stageIndex: 0,
           firedAt: new Date(),
           buyerEmails,
+          waitHours: firstStage?.waitHours,
+          waitUnit: firstStage?.waitUnit,
           lotsOffered: effectiveLots.map((l: any) => ({
             lotId: l._id || l.id,
             remainingQty: l.availableQty !== undefined ? l.availableQty : (l.quantityCases || l.cases || 0),
@@ -660,13 +688,23 @@ export async function createAutomationRun(
   if (mongoose.connection.readyState === 1) {
     try {
       await run.save();
-    } catch (e) {}
+    } catch (e: any) {
+      console.error('RUN SAVE ERROR in createAutomationRun:', e.message || e);
+    }
   }
 
 
   // Dispatch emails and record Activity logs
-  const rawSubject = automation.stages?.[0]?.emailSubject || automation.emailTemplate?.subject || `Distressed Inventory Liquidation Offer - ${automation.name || 'Clearance'}`;
-  const rawBodyHtml = automation.stages?.[0]?.emailBodyHtml || automation.emailTemplate?.body || `
+  const defaultKeyForType = stageType === 'donation'
+    ? 'direct-donation-notice'
+    : stageType === 'landfill'
+    ? 'disposal-removal-notice'
+    : 'default';
+  const tplKey = firstStage?.emailTemplateId || defaultKeyForType;
+  const stageTpl = PLATFORM_TEMPLATE_MAP ? (PLATFORM_TEMPLATE_MAP[tplKey] || PLATFORM_TEMPLATE_MAP[defaultKeyForType] || PLATFORM_TEMPLATE_MAP.default) : null;
+
+  const rawSubject = automation.stages?.[0]?.emailSubject || (stageType === 'donation' || stageType === 'landfill' ? stageTpl?.subject : (automation.emailTemplate?.subject || stageTpl?.subject || `Distressed Inventory Liquidation Offer - ${automation.name || 'Clearance'}`));
+  const rawBodyHtml = automation.stages?.[0]?.emailBodyHtml || (stageType === 'donation' || stageType === 'landfill' ? stageTpl?.bodyHtml : (automation.emailTemplate?.body || stageTpl?.bodyHtml || `
 <div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
   <h2 style="color: #4f46e5; margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
   <p>Hello <strong>{{buyer_name}}</strong>,</p>
@@ -679,7 +717,7 @@ export async function createAutomationRun(
     </a>
   </p>
 </div>
-  `;
+  `));
 
   const totalCases = effectiveLots.reduce((acc: number, l: any) => acc + (l.availableQty ?? l.quantityCases ?? l.cases ?? 0), 0);
   const primaryLot = effectiveLots[0] || matchedLots[0];

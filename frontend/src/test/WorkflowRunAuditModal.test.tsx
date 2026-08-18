@@ -154,7 +154,7 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
       );
 
       // 4-Card Metric Overview
-      expect(screen.getByText('2 Lots')).toBeInTheDocument();
+      expect(screen.getAllByText('2 Lots')[0]).toBeInTheDocument();
       expect(screen.getByText('250 Total Cases Evaluated')).toBeInTheDocument();
       expect(screen.getByText('$24.50/case')).toBeInTheDocument();
       expect(screen.getByText('Winning Bid Price')).toBeInTheDocument();
@@ -2568,13 +2568,40 @@ describe('Slice 2: Full-Screen Execution Audit Inspector & Stage-Gate Stepper', 
         expect(iframe.getAttribute('srcdoc')).toContain('Hello Buyer');
       });
 
-      it('renders "No email configured for this stage" empty state when no email body is configured', () => {
+      it('renders default canonical template preview when emailTemplateId and emailBodyHtml are unset for liquidation stage', () => {
         const stage = [
           {
             stageNumber: 1,
             name: 'Wholesale Markdown',
             stageType: 'liquidation'
-            // No emailSubject or emailBodyHtml
+            // No emailSubject or emailBodyHtml or emailTemplateId - defaults to standard liquidation offer template
+          }
+        ];
+
+        render(
+          <WorkflowRunTimelineStepper
+            run={mockRunAwarded}
+            stages={stage}
+          />
+        );
+
+        const card = screen.getByTestId('stage-step-1');
+        fireEvent.click(card.querySelector('[data-testid="expand-audit-btn"]') as HTMLElement);
+
+        const emailSection = card.querySelector('[data-testid="stage-email-preview-section"]') as HTMLElement;
+        expect(emailSection).toBeInTheDocument();
+        const iframe = within(emailSection).getByTestId('stage-email-preview-frame') as HTMLIFrameElement;
+        expect(iframe).toBeInTheDocument();
+        expect(iframe.getAttribute('srcdoc')).toContain('Clearance Opportunity');
+      });
+
+      it('renders "No email configured for this stage" empty state when emailTemplateId is none and no email body is configured', () => {
+        const stage = [
+          {
+            stageNumber: 1,
+            name: 'Manual Offline Markdown',
+            stageType: 'liquidation',
+            emailTemplateId: 'none'
           }
         ];
 

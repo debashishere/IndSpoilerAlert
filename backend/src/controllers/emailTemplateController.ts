@@ -58,7 +58,7 @@ export const DEFAULT_PLATFORM_TEMPLATES = [
     templateId: 'direct-donation-notice',
     name: 'Food Bank Direct Donation Transfer Notice',
     category: 'award',
-    subject: 'Community Donation Dispatch Notice: {{lot_title}}',
+    subject: 'Surplus Inventory Donation Transfer Offer: {{lot_title}}',
     bodyHtml: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #bbf7d0; border-radius: 8px; background: #f0fdf4;">
       <h2 style="color: #166534; margin-top: 0;">🌱 Community Surplus Donation | {{supplier_name}}</h2>
       <p>Dear <strong>{{buyer_name}}</strong> partner,</p>
@@ -70,8 +70,44 @@ export const DEFAULT_PLATFORM_TEMPLATES = [
     </div>`,
     availableTokens: ['buyer_name', 'lot_title', 'inventory_table', 'quick_bid_link', 'supplier_name'],
     isDefault: true
+  },
+  {
+    templateId: 'disposal-removal-notice',
+    name: 'Scheduled Surplus Inventory Disposal & Removal Authorization',
+    category: 'disposal',
+    subject: 'Disposal & Removal Authorization Notice: {{lot_title}}',
+    bodyHtml: `<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc;">
+      <h2 style="color: #475569; margin-top: 0;">🗑️ Scheduled Disposal & Removal Authorization | {{supplier_name}}</h2>
+      <p>Dear <strong>{{buyer_name}}</strong> facility operator,</p>
+      <p>The following surplus inventory has been authorized for scheduled disposal and bio-waste removal by {{disposal_deadline}}:</p>
+      <div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
+      <p style="font-size: 12px; color: #64748b; margin-top: 16px;">
+        Please arrange collection and certified destruction documentation according to statutory guidelines.
+      </p>
+    </div>`,
+    availableTokens: ['buyer_name', 'lot_title', 'inventory_table', 'quick_bid_link', 'supplier_name', 'disposal_deadline'],
+    isDefault: true
   }
 ];
+
+export const PLATFORM_TEMPLATE_MAP: Record<string, { subject: string; bodyHtml: string }> = {
+  default: {
+    subject: DEFAULT_PLATFORM_TEMPLATES[0].subject,
+    bodyHtml: DEFAULT_PLATFORM_TEMPLATES[0].bodyHtml
+  },
+  'short-dated-auction': {
+    subject: DEFAULT_PLATFORM_TEMPLATES[1].subject,
+    bodyHtml: DEFAULT_PLATFORM_TEMPLATES[1].bodyHtml
+  },
+  'direct-donation-notice': {
+    subject: DEFAULT_PLATFORM_TEMPLATES[2].subject,
+    bodyHtml: DEFAULT_PLATFORM_TEMPLATES[2].bodyHtml
+  },
+  'disposal-removal-notice': {
+    subject: DEFAULT_PLATFORM_TEMPLATES[3].subject,
+    bodyHtml: DEFAULT_PLATFORM_TEMPLATES[3].bodyHtml
+  }
+};
 
 export async function getEmailTemplates(req: Request, res: Response) {
   try {
