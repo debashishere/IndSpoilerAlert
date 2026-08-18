@@ -761,6 +761,47 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
   const isAwarded = run?.status === 'awarded';
   const isFallback = run?.status === 'fallback_executed';
   const isEvaluating = run?.status === 'evaluating' || run?.status === 'dispatched';
+  const hasStageExecutions = Array.isArray(run?.stageExecutions) && run.stageExecutions.length > 0;
+
+  const executionStatusBadgeMap: Record<string, { label: string; bg: string; color: string; border: string }> = {
+    dispatched: { label: 'Dispatched', bg: 'hsl(var(--primary) / 15%)', color: 'hsl(var(--primary))', border: 'hsl(var(--primary) / 40%)' },
+    evaluating: { label: 'Evaluating', bg: 'hsl(var(--warning) / 15%)', color: 'hsl(var(--warning))', border: 'hsl(var(--warning) / 40%)' },
+    partially_awarded: { label: 'Partially Awarded', bg: 'hsl(var(--primary) / 15%)', color: 'hsl(var(--primary))', border: 'hsl(var(--primary) / 40%)' },
+    awarded: { label: 'Awarded', bg: 'hsl(var(--success) / 15%)', color: 'hsl(var(--success))', border: 'hsl(var(--success) / 40%)' },
+    expired: { label: 'Expired', bg: 'hsl(var(--text-muted) / 15%)', color: 'hsl(var(--text-muted))', border: 'hsl(var(--text-muted) / 40%)' },
+    escalating: { label: 'Escalating', bg: 'hsl(var(--warning) / 20%)', color: 'hsl(var(--warning))', border: 'hsl(var(--warning) / 50%)' },
+    pending: { label: 'Pending', bg: 'hsl(var(--bg-card-hover))', color: 'hsl(var(--text-muted))', border: 'hsl(var(--border-color))' },
+  };
+
+  const stageList = hasStageExecutions
+    ? [...run.stageExecutions]
+        .sort((a: any, b: any) => (a.stageIndex ?? 0) - (b.stageIndex ?? 0))
+        .map((exec: any, idx: number) => {
+          const stageIndex = exec.stageIndex ?? idx;
+          const stageDef = campaignStages[stageIndex] || stages[stageIndex] || run?.campaignSnapshot?.stages?.[stageIndex] || {
+            stageNumber: stageIndex + 1,
+            name: `Stage ${stageIndex + 1}`,
+            stageType: 'liquidation',
+            waitHours: 24,
+          };
+          return {
+            ...stageDef,
+            ...exec,
+            stageNumber: stageIndex + 1,
+            stageIndex,
+            isExecution: true,
+            executionStatus: exec.status,
+            buyerEmails: exec.buyerEmails || [],
+            lotsOffered: exec.lotsOffered || [],
+            firedAt: exec.firedAt,
+          };
+        })
+    : campaignStages.map((stage: any, idx: number) => ({
+        ...stage,
+        stageNumber: stage.stageNumber || idx + 1,
+        stageIndex: idx,
+        isExecution: false,
+      }));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -770,22 +811,35 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
           Stage-Gate Execution Timeline & Escalation Trace
         </h4>
         <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>
-          {campaignStages.length} Configured Stage Gates
+          {stageList.length} {hasStageExecutions ? 'Executed Stage Steps' : 'Configured Stage Gates'}
         </span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative' }}>
-        {campaignStages.map((stage: any, idx: number) => {
+        {stageList.map((stage: any, idx: number) => {
           const stageNum = stage.stageNumber || idx + 1;
           const stageType = stage.stageType || (stage.name?.toLowerCase().includes('donat') ? 'donation' : stage.name?.toLowerCase().includes('landfill') ? 'landfill' : 'liquidation');
           
           let stageState: 'completed' | 'active' | 'skipped' | 'pending' = 'pending';
-          if (isAwarded) {
-            stageState = idx === 0 ? 'completed' : 'skipped';
-          } else if (isFallback) {
-            stageState = idx < campaignStages.length - 1 ? 'completed' : 'active';
-          } else if (isEvaluating) {
-            stageState = idx === 0 ? 'active' : 'pending';
+          if (hasStageExecutions) {
+            const execStat = stage.executionStatus || stage.status;
+            if (execStat === 'awarded' || execStat === 'partially_awarded' || execStat === 'expired') {
+              stageState = 'completed';
+            } else if (execStat === 'dispatched' || execStat === 'escalating' || (run?.currentStageIndex === stage.stageIndex && (isEvaluating || run?.status === 'escalating'))) {
+              stageState = 'active';
+            } else if (execStat === 'pending') {
+              stageState = 'pending';
+            } else {
+              stageState = 'pending';
+            }
+          } else {
+            if (isAwarded) {
+              stageState = idx === 0 ? 'completed' : 'skipped';
+            } else if (isFallback) {
+              stageState = idx < campaignStages.length - 1 ? 'completed' : 'active';
+            } else if (isEvaluating) {
+              stageState = idx === 0 ? 'active' : 'pending';
+            }
           }
 
           const badgeBg = stageType === 'donation' 
@@ -804,165 +858,213 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
           // Calculate remaining window for active stage
           let remainingWindowMs = 0;
           let isWindowExpired = false;
-          if (stageState === 'active' && isEvaluating) {
-            const endsAtMs = run.evaluationEndsAt ? new Date(run.evaluationEndsAt).getTime() : (new Date(run.dispatchedAt || run.createdAt).getTime() + (stage.waitHours || 24) * 3600000);
+          const isNodeActive = hasStageExecutions
+            ? (stageState === 'active' || stage.executionStatus === 'dispatched' || stage.executionStatus === 'escalating' || (run?.currentStageIndex === stage.stageIndex && isEvaluating))
+            : (stageState === 'active' && isEvaluating);
+
+          if (isNodeActive) {
+            const firedAtMs = stage.firedAt
+              ? new Date(stage.firedAt).getTime()
+              : (run.evaluationEndsAt ? new Date(run.evaluationEndsAt).getTime() - (stage.waitHours || 24) * 3600000 : new Date(run.dispatchedAt || run.createdAt || Date.now()).getTime());
+            const endsAtMs = stage.firedAt
+              ? (firedAtMs + (stage.waitHours || 24) * 3600000)
+              : (run.evaluationEndsAt ? new Date(run.evaluationEndsAt).getTime() : firedAtMs + (stage.waitHours || 24) * 3600000);
             remainingWindowMs = endsAtMs - nowTime;
             isWindowExpired = remainingWindowMs <= 0;
           }
 
           return (
-            <div
-              key={idx}
-              data-testid={`stage-step-${stageNum}`}
-              style={{
-                display: 'flex',
-                gap: '16px',
-                padding: '16px 20px',
-                backgroundColor: stageState === 'active' && isEvaluating ? 'hsl(var(--warning) / 8%)' : 'hsl(var(--bg-card))',
-                borderRadius: '10px',
-                border: stageState === 'active' && isEvaluating ? '1px solid hsl(var(--warning) / 50%)' : '1px solid hsl(var(--border-color))',
-                position: 'relative',
-                boxShadow: stageState === 'active' && isEvaluating ? '0 0 16px hsl(var(--warning) / 15%)' : undefined
-              }}
-            >
-              {/* Step indicator */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                <div
-                  style={{
-                    width: '34px',
-                    height: '34px',
-                    borderRadius: '50%',
-                    backgroundColor: stageState === 'completed' 
-                      ? 'hsl(var(--success))' 
-                      : stageState === 'active' 
-                        ? (isEvaluating ? 'hsl(var(--warning))' : 'hsl(var(--primary))') 
-                        : 'hsl(var(--bg-card-hover))',
-                    color: stageState === 'completed' || stageState === 'active' ? '#fff' : 'hsl(var(--text-muted))',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: '0.85rem',
-                    border: stageState === 'active' && isEvaluating ? '2px solid hsl(var(--warning))' : '2px solid hsl(var(--border-color))'
-                  }}
-                >
-                  {stageState === 'completed' ? <CheckCircle2 size={16} /> : stageNum}
+            <React.Fragment key={idx}>
+              <div
+                data-testid={`stage-step-${stageNum}`}
+                style={{
+                  display: 'flex',
+                  gap: '16px',
+                  padding: '16px 20px',
+                  backgroundColor: stageState === 'active' && isEvaluating ? 'hsl(var(--warning) / 8%)' : 'hsl(var(--bg-card))',
+                  borderRadius: '10px',
+                  border: stageState === 'active' && isEvaluating ? '1px solid hsl(var(--warning) / 50%)' : '1px solid hsl(var(--border-color))',
+                  position: 'relative',
+                  boxShadow: stageState === 'active' && isEvaluating ? '0 0 16px hsl(var(--warning) / 15%)' : undefined
+                }}
+              >
+                {/* Step indicator */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                  <div
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '50%',
+                      backgroundColor: stageState === 'completed' 
+                        ? (stage.executionStatus === 'expired' ? 'hsl(var(--text-muted))' : 'hsl(var(--success))')
+                        : stageState === 'active' 
+                          ? (isEvaluating ? 'hsl(var(--warning))' : 'hsl(var(--primary))') 
+                          : 'hsl(var(--bg-card-hover))',
+                      color: stageState === 'completed' || stageState === 'active' ? '#fff' : 'hsl(var(--text-muted))',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '0.85rem',
+                      border: stageState === 'active' && isEvaluating ? '2px solid hsl(var(--warning))' : '2px solid hsl(var(--border-color))'
+                    }}
+                  >
+                    {stageState === 'completed' && stage.executionStatus !== 'expired' ? <CheckCircle2 size={16} /> : stageNum}
+                  </div>
                 </div>
-              </div>
 
-              {/* Step body */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    <span style={{ fontWeight: 800, fontSize: '0.92rem', color: 'hsl(var(--text-primary))' }}>
-                      Stage {stageNum}: {stage.name || `Stage Gate ${stageNum}`}
-                    </span>
-                    <span style={{
-                      fontSize: '0.68rem',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      padding: '2px 8px',
-                      borderRadius: '10px',
-                      backgroundColor: badgeBg,
-                      color: badgeColor
-                    }}>
-                      {stageType}
-                    </span>
-                    {stageState === 'active' && isEvaluating && (
+                {/* Step body */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.92rem', color: 'hsl(var(--text-primary))' }}>
+                        Stage {stageNum}: {stage.name || `Stage Gate ${stageNum}`}
+                      </span>
                       <span style={{
                         fontSize: '0.68rem',
-                        fontWeight: 800,
+                        fontWeight: 700,
                         textTransform: 'uppercase',
                         padding: '2px 8px',
                         borderRadius: '10px',
-                        backgroundColor: 'hsl(var(--warning) / 20%)',
-                        color: 'hsl(var(--warning))',
-                        border: '1px solid hsl(var(--warning) / 40%)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px'
+                        backgroundColor: badgeBg,
+                        color: badgeColor
                       }}>
-                        <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'hsl(var(--warning))', animation: 'pulse 1.5s infinite' }} />
-                        Active Window
+                        {stageType}
                       </span>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ fontSize: '0.74rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Clock size={13} style={{ color: 'hsl(var(--primary))' }} />
-                      <span>Execution Window: <strong style={{ color: 'hsl(var(--text-primary))' }}>{formattedWindow}</strong></span>
-                    </div>
-                    {(stageState === 'completed' || stageState === 'active') && (
-                      <button
-                        data-testid="expand-audit-btn"
-                        aria-label={expandedStages[stageNum] ? 'Collapse audit panel' : 'Expand audit panel'}
-                        onClick={() => setExpandedStages(prev => ({ ...prev, [stageNum]: !prev[stageNum] }))}
-                        style={{
-                          background: 'none',
-                          border: '1px solid hsl(var(--border-color))',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          padding: '4px 6px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          color: 'hsl(var(--text-muted))',
-                          transition: 'background 0.15s, color 0.15s',
-                        }}
-                      >
-                        <ChevronDown
-                          size={15}
+                      {hasStageExecutions && stage.executionStatus && (
+                        <span
+                          data-testid={`stage-status-badge-${stageNum}`}
                           style={{
-                            transition: 'transform 0.25s',
-                            transform: expandedStages[stageNum] ? 'rotate(180deg)' : 'rotate(0deg)',
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            padding: '2px 8px',
+                            borderRadius: '10px',
+                            backgroundColor: executionStatusBadgeMap[stage.executionStatus]?.bg || 'hsl(var(--bg-card-hover))',
+                            color: executionStatusBadgeMap[stage.executionStatus]?.color || 'hsl(var(--text-muted))',
+                            border: `1px solid ${executionStatusBadgeMap[stage.executionStatus]?.border || 'hsl(var(--border-color))'}`
                           }}
-                        />
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Live timer badge for in-progress stage */}
-                {stageState === 'active' && isEvaluating && (
-                  <div style={{
-                    padding: '8px 14px',
-                    borderRadius: '8px',
-                    backgroundColor: 'hsl(var(--warning) / 12%)',
-                    border: '1px solid hsl(var(--warning) / 35%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '8px',
-                    fontSize: '0.78rem'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'hsl(var(--warning))' }}>
-                      <Timer size={15} />
-                      <span>
-                        {isWindowExpired
-                          ? 'Window Expired – Resolution / Escalation in Progress'
-                          : `Stage Window Countdown: ${formatTimeRemaining(remainingWindowMs)} remaining`}
-                      </span>
+                        >
+                          {executionStatusBadgeMap[stage.executionStatus]?.label || String(stage.executionStatus).replace(/_/g, ' ')}
+                        </span>
+                      )}
+                      {stageState === 'active' && isEvaluating && (
+                        <span style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          padding: '2px 8px',
+                          borderRadius: '10px',
+                          backgroundColor: 'hsl(var(--warning) / 20%)',
+                          color: 'hsl(var(--warning))',
+                          border: '1px solid hsl(var(--warning) / 40%)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'hsl(var(--warning))', animation: 'pulse 1.5s infinite' }} />
+                          Active Window
+                        </span>
+                      )}
                     </div>
-                    <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))' }}>
-                      Total Window: {formattedWindow}
-                    </span>
-                  </div>
-                )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', fontSize: '0.78rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                  <div>
-                    <strong>Pricing Rule:</strong> {stage.discountValue != null ? `${stage.discountValue}% (${stage.discountType?.replace(/_/g, ' ') || 'Discount'})` : 'Fixed / Custom'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ fontSize: '0.74rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <Clock size={13} style={{ color: 'hsl(var(--primary))' }} />
+                        <span>Execution Window: <strong style={{ color: 'hsl(var(--text-primary))' }}>{formattedWindow}</strong></span>
+                      </div>
+                      {(stageState === 'completed' || stageState === 'active' || isNodeActive) && (
+                        <button
+                          data-testid="expand-audit-btn"
+                          aria-label={expandedStages[stageNum] ? 'Collapse audit panel' : 'Expand audit panel'}
+                          onClick={() => setExpandedStages(prev => ({ ...prev, [stageNum]: !prev[stageNum] }))}
+                          style={{
+                            background: 'none',
+                            border: '1px solid hsl(var(--border-color))',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            padding: '4px 6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: 'hsl(var(--text-muted))',
+                            transition: 'background 0.15s, color 0.15s',
+                          }}
+                        >
+                          <ChevronDown
+                            size={15}
+                            style={{
+                              transition: 'transform 0.25s',
+                              transform: expandedStages[stageNum] ? 'rotate(180deg)' : 'rotate(0deg)',
+                            }}
+                          />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <strong>Audience Target:</strong> {stage.buyerMode === 'custom' ? `${stage.customBuyers?.length || 0} Custom Partners` : (stage.buyerMode === 'segment' || stage.buyerMode === 'list') ? (stage.buyerSegment || stage.buyerListName || stage.buyerListId || 'Targeted Segment') : 'All Registered Partners'}
-                  </div>
-                  {stage.allocatedLotIds && stage.allocatedLotIds.length > 0 && (
-                    <div>
-                      <strong>Allocated Lots:</strong> {stage.allocatedLotIds.length} Lots
+
+                  {/* Live timer badge for in-progress stage */}
+                  {isNodeActive && (
+                    <div
+                      data-testid={`stage-countdown-timer-${stageNum}`}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        backgroundColor: 'hsl(var(--warning) / 12%)',
+                        border: '1px solid hsl(var(--warning) / 35%)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                        fontSize: '0.78rem'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: 'hsl(var(--warning))' }}>
+                        <Timer size={15} />
+                        <span>
+                          {isWindowExpired
+                            ? 'Window Expired – Resolution / Escalation in Progress'
+                            : `Stage Window Countdown: ${formatTimeRemaining(remainingWindowMs)} remaining`}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))' }}>
+                        Total Window: {formattedWindow}
+                      </span>
                     </div>
                   )}
-                </div>
+
+                  {hasStageExecutions ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', fontSize: '0.78rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
+                      {stage.firedAt && (
+                        <div>
+                          <strong>Fired:</strong> {new Date(stage.firedAt).toLocaleString()}
+                        </div>
+                      )}
+                      <div>
+                        <strong>Buyers:</strong> {stage.buyerEmails.length} {stage.buyerEmails.length === 1 ? 'Buyer' : 'Buyers'}
+                      </div>
+                      <div>
+                        <strong>Lots:</strong> {stage.lotsOffered.length} {stage.lotsOffered.length === 1 ? 'Lot' : 'Lots'}
+                      </div>
+                      <div>
+                        <strong>Pricing Rule:</strong> {stage.discountValue != null ? `${stage.discountValue}% (${stage.discountType?.replace(/_/g, ' ') || 'Discount'})` : 'Fixed / Custom'}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px', fontSize: '0.78rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
+                      <div>
+                        <strong>Pricing Rule:</strong> {stage.discountValue != null ? `${stage.discountValue}% (${stage.discountType?.replace(/_/g, ' ') || 'Discount'})` : 'Fixed / Custom'}
+                      </div>
+                      <div>
+                        <strong>Audience Target:</strong> {stage.buyerMode === 'custom' ? `${stage.customBuyers?.length || 0} Custom Partners` : (stage.buyerMode === 'segment' || stage.buyerMode === 'list') ? (stage.buyerSegment || stage.buyerListName || stage.buyerListId || 'Targeted Segment') : 'All Registered Partners'}
+                      </div>
+                      {stage.allocatedLotIds && stage.allocatedLotIds.length > 0 && (
+                        <div>
+                          <strong>Allocated Lots:</strong> {stage.allocatedLotIds.length} Lots
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                 {/* Expanded Stage Audit Accordion Panel */}
                 {expandedStages[stageNum] && (
@@ -1763,8 +1865,30 @@ export const WorkflowRunTimelineStepper: React.FC<WorkflowRunTimelineStepperProp
                 )}
               </div>
             </div>
-          );
-        })}
+            {run?.status === 'escalating' && idx === (run.currentStageIndex ?? 0) && (
+              <div
+                data-testid="stage-escalating-indicator"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  backgroundColor: 'hsl(var(--warning) / 10%)',
+                  border: '1px dashed hsl(var(--warning) / 50%)',
+                  color: 'hsl(var(--warning))',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  margin: '4px 0',
+                }}
+              >
+                <Clock size={15} />
+                <span>Escalating to Stage {stageNum + 1}...</span>
+              </div>
+            )}
+          </React.Fragment>
+        );
+      })}
       </div>
     </div>
   );

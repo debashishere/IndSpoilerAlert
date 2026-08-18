@@ -143,6 +143,25 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
     setTimeout(() => setCopiedSuccess(false), 2000);
   };
 
+  const isLotAwarded = (lot: any): boolean => {
+    const lotId = lot._id || lot.id;
+    if (run.status === 'awarded') return true;
+    if (Array.isArray(run.stageExecutions)) {
+      for (const exec of run.stageExecutions) {
+        if (Array.isArray(exec.lotsOffered)) {
+          const found = exec.lotsOffered.find((lo: any) => {
+            const lId = typeof lo.lotId === 'object' ? (lo.lotId?._id || lo.lotId?.id) : lo.lotId;
+            return lId === lotId || String(lId) === String(lotId);
+          });
+          if (found && ((found.awardedQty && found.awardedQty > 0) || found.remainingQty === 0 || exec.status === 'awarded')) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  };
+
   return (
     <div
       data-testid="workflow-run-audit-modal"
@@ -578,6 +597,7 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
                       <th style={{ padding: '10px' }}>Description</th>
                       <th style={{ padding: '10px' }}>Quantity Cases</th>
                       <th style={{ padding: '10px' }}>Remaining Shelf Life</th>
+                      <th style={{ padding: '10px' }}>Status</th>
                       <th style={{ padding: '10px' }}>Valuation</th>
                       <th style={{ padding: '10px' }}>Action</th>
                     </tr>
@@ -589,18 +609,48 @@ export const WorkflowRunAuditModal: React.FC<WorkflowRunAuditModalProps> = ({
                       const cases = lot.availableQty || lot.quantityCases || 0;
                       const lotPrice = lot.pricePerCase ?? lot.costPerCase ?? lot.unitPrice ?? 0;
                       const lotValuation = lot.valuation ?? (lotPrice > 0 ? lotPrice * cases : (lot.estimatedValue || 0));
+                      const isAwarded = isLotAwarded(lot);
 
                       return (
-                        <tr key={lotId || idx} style={{ borderBottom: '1px solid hsl(var(--border-color) / 30%)' }}>
-                          <td style={{ padding: '10px', fontWeight: 700, fontFamily: 'monospace', color: 'hsl(var(--primary))' }}>
+                        <tr
+                          key={lotId || idx}
+                          data-testid={isAwarded ? 'lot-row-awarded' : 'lot-row-remaining'}
+                          style={{
+                            borderBottom: '1px solid hsl(var(--border-color) / 30%)',
+                            opacity: isAwarded ? 0.65 : 1,
+                            backgroundColor: isAwarded ? 'hsl(var(--bg-card-hover) / 30%)' : 'transparent',
+                          }}
+                        >
+                          <td style={{
+                            padding: '10px',
+                            fontWeight: 700,
+                            fontFamily: 'monospace',
+                            color: isAwarded ? 'hsl(var(--text-muted))' : 'hsl(var(--primary))',
+                            textDecoration: isAwarded ? 'line-through' : 'none'
+                          }}>
                             {lotNum}
                           </td>
-                          <td style={{ padding: '10px', fontWeight: 600 }}>{lot.sku || 'SKU-SNAPSHOT'}</td>
-                          <td style={{ padding: '10px', color: 'hsl(var(--text-muted))' }}>{lot.description || lot.productName || 'Inventory Item'}</td>
+                          <td style={{ padding: '10px', fontWeight: 600, textDecoration: isAwarded ? 'line-through' : 'none' }}>{lot.sku || 'SKU-SNAPSHOT'}</td>
+                          <td style={{ padding: '10px', color: 'hsl(var(--text-muted))', textDecoration: isAwarded ? 'line-through' : 'none' }}>{lot.description || lot.productName || 'Inventory Item'}</td>
                           <td style={{ padding: '10px', fontWeight: 700 }}>{cases.toLocaleString()} cases</td>
                           <td style={{ padding: '10px' }}>
                             <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '0.72rem', backgroundColor: 'hsl(var(--warning) / 15%)', color: 'hsl(var(--warning))', fontWeight: 700 }}>
                               {lot.rsl != null ? `${lot.rsl}% RSL` : 'Expiring Soon'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '10px' }}>
+                            <span
+                              data-testid="lot-status-badge"
+                              style={{
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                backgroundColor: isAwarded ? 'hsl(var(--success) / 15%)' : 'hsl(var(--primary) / 15%)',
+                                color: isAwarded ? 'hsl(var(--success))' : 'hsl(var(--primary))'
+                              }}
+                            >
+                              {isAwarded ? 'Awarded' : 'Remaining'}
                             </span>
                           </td>
                           <td style={{ padding: '10px', fontWeight: 700, color: lotValuation > 0 ? 'hsl(var(--text-primary))' : 'hsl(var(--text-muted))' }}>

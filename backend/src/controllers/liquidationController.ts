@@ -310,6 +310,9 @@ export async function triggerLiquidationAutomation(req: Request, res: Response) 
     const run = await createAutomationRun(automation, matchedLots, 'manual');
     return res.status(201).json(run);
   } catch (error: any) {
+    if (error.message === 'A run is already in progress for this workflow') {
+      return res.status(409).json({ error: error.message });
+    }
     return res.status(500).json({ error: error.message });
   }
 }

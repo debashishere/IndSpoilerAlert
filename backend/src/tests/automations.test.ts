@@ -503,7 +503,7 @@ describe('Liquidation Automations API Endpoints', () => {
     // 2. Submit a qualifying bid on the listing
     const bidData = {
       buyerId: buyerId.toString(),
-      quantity: 50,
+      quantity: 100,
       price: 11.50 // Meets floor price of 10.0
     };
 

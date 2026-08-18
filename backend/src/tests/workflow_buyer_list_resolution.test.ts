@@ -137,20 +137,21 @@ describe('Workflow Stage Buyer List Isolation & Resolution', () => {
 
     expect(run).toBeDefined();
     expect(run?.status).toBe('evaluating');
-    expect(run?.buyerEmails).toHaveLength(2);
+    expect(run?.buyerEmails).toHaveLength(1);
     expect(run?.buyerEmails).toContain(buyer1.email.toLowerCase());
-    expect(run?.buyerEmails).toContain(buyer2.email.toLowerCase());
+    expect(run?.buyerEmails).not.toContain(buyer2.email.toLowerCase());
     expect(run?.buyerEmails).not.toContain('autoreg@buyercompany.com');
 
     // Verify spy calls
     const dispatchedEmails = sendEmailHelperSpy.mock.calls.map(c => c[0]);
+    expect(dispatchedEmails).toHaveLength(1);
     expect(dispatchedEmails).toContain(buyer1.email.toLowerCase());
-    expect(dispatchedEmails).toContain(buyer2.email.toLowerCase());
+    expect(dispatchedEmails).not.toContain(buyer2.email.toLowerCase());
     expect(dispatchedEmails).not.toContain('autoreg@buyercompany.com');
 
     // Verify EmailDispatchLog
     const logs = await EmailDispatchLog.find({ supplierId: supplierId.toString() });
-    expect(logs.length).toBe(2);
+    expect(logs.length).toBe(1);
     expect(logs.some(l => l.buyerEmail === 'autoreg@buyercompany.com')).toBe(false);
     expect(logs.some(l => l.buyerEmail === buyer1.email.toLowerCase() && l.compiledBuyerName === 'Alpha Retail Corp')).toBe(true);
   });

@@ -4,6 +4,8 @@ export interface IBuyer extends Document {
   companyName: string;
   email: string;
   tier?: string;
+  segment?: string;
+  buyerType?: string;
   isVerified?: boolean;
   acceptsShortDated: boolean;
   minShelfLife: number; // in days
@@ -28,6 +30,8 @@ const BuyerSchema: Schema = new Schema({
   companyName: { type: String, required: true },
   email: { type: String, required: true, unique: true, lowercase: true },
   tier: { type: String, default: 'tier1' },
+  segment: { type: String },
+  buyerType: { type: String },
   isVerified: { type: Boolean, default: false },
   acceptsShortDated: { type: Boolean, default: true },
   minShelfLife: { type: Number, default: 7 },

@@ -9,6 +9,7 @@ import Activity from '../models/Activity';
 import EmailDispatchLog from '../models/EmailDispatchLog';
 import { sendEmailHelper, syncEmailToThread, sendCampaignEmail } from './emailService';
 import { compileTemplate, compileSubject } from './emailTemplateService';
+import { resolveStageBuyers } from './stageResolver';
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
 
@@ -103,7 +104,18 @@ agenda.define('trigger-liquidation-workflow', async (job: any) => {
       return true;
     });
 
-    await createAutomationRun(automation, matchedLots, 'scheduled');
+    try {
+      await createAutomationRun(automation, matchedLots, 'scheduled');
+    } catch (runErr: any) {
+      if (runErr.message === 'A run is already in progress for this workflow') {
+        console.warn(`[trigger-liquidation-workflow] Skipping workflow ${automationId}: A run is already in progress`);
+        if (job.attrs && job.attrs.nextRunAt) {
+          await LiquidationAutomation.findByIdAndUpdate(automationId, { nextRunAt: job.attrs.nextRunAt });
+        }
+        return;
+      }
+      throw runErr;
+    }
 
     if (job.attrs && job.attrs.nextRunAt) {
       await LiquidationAutomation.findByIdAndUpdate(automationId, { nextRunAt: job.attrs.nextRunAt });
@@ -112,6 +124,308 @@ agenda.define('trigger-liquidation-workflow', async (job: any) => {
     console.error('Error executing trigger-liquidation-workflow job:', err.message || err);
   }
 });
+
+// Define trigger-workflow-stage job
+agenda.define('trigger-workflow-stage', async (job: any) => {
+  try {
+    const { runId, stageIndex } = job.attrs.data;
+    await executeWorkflowStage({ runId, stageIndex });
+  } catch (err: any) {
+    console.error('Error executing trigger-workflow-stage job:', err.message || err);
+  }
+});
+
+// Helper to execute subsequent workflow stages
+export async function executeWorkflowStage({ runId, stageIndex }: { runId: string; stageIndex: number }) {
+  if (mongoose.connection.readyState !== 1) {
+    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
+    await mongoose.connect(mongoUri);
+  }
+
+  const run = await AutomationRun.findById(runId);
+  if (!run) return;
+  if (run.status === 'awarded' || run.status === 'fallback_executed') return;
+
+  // Idempotency: Prevent duplicate execution of the same stage
+  if (Array.isArray(run.stageExecutions) && run.stageExecutions.some((se: any) => se.stageIndex === stageIndex)) {
+    return;
+  }
+
+  const automation = await LiquidationAutomation.findById(run.automationId);
+  if (!automation || !automation.isActive) return;
+
+  const stages = automation.stages || [];
+  const currentStage = stages[stageIndex];
+  if (!currentStage) return;
+
+  // Compute awarded quantities across all prior stage executions
+  const lotAwardedMap = new Map<string, number>();
+  if (Array.isArray(run.stageExecutions)) {
+    for (const execution of run.stageExecutions) {
+      if (Array.isArray(execution.lotsOffered)) {
+        for (const offer of execution.lotsOffered) {
+          const lId = offer.lotId?.toString();
+          if (lId) {
+            lotAwardedMap.set(lId, (lotAwardedMap.get(lId) || 0) + (offer.awardedQty || 0));
+          }
+        }
+      }
+    }
+  }
+
+  // Find all matched lots from snapshot/inventory
+  let snapshotLots: any[] = [];
+  if (run.snapshotInventoryIds && run.snapshotInventoryIds.length > 0) {
+    try {
+      snapshotLots = await InventoryLot.find({ _id: { $in: run.snapshotInventoryIds } }).populate('productId');
+    } catch (e) {}
+  }
+
+  // Fallback to affectedInventoryLots if query empty or unpopulated
+  const lotSourceList = (snapshotLots.length > 0)
+    ? snapshotLots
+    : (run.affectedInventoryLots || []).map((l: any) => ({
+        _id: l.lotId,
+        lotNumber: l.lotNumber,
+        sku: l.sku,
+        description: l.description,
+        availableQty: l.cases,
+        quantityCases: l.cases,
+        remainingShelfLife: l.rsl
+      }));
+
+  // Build remaining pool with partial quantity carry-forward
+  const totalUnsoldLots: any[] = [];
+  for (const lot of lotSourceList) {
+    const lId = (lot._id || lot.lotId)?.toString();
+    const totalQty = lot.availableQty !== undefined ? lot.availableQty : (lot.quantityCases || lot.cases || 0);
+    const awardedQty = lotAwardedMap.get(lId) || 0;
+    const remainingQty = Math.max(0, totalQty - awardedQty);
+    if (remainingQty > 0) {
+      totalUnsoldLots.push({
+        lot,
+        lotId: lot._id || lot.lotId,
+        remainingQty
+      });
+    }
+  }
+
+  // If remaining lot pool is completely empty, cancel cascade and close run as awarded
+  if (totalUnsoldLots.length === 0) {
+    run.status = 'awarded';
+    await run.save();
+    return;
+  }
+
+  // Filter for stage-allocated lots if allocatedLotIds is configured
+  const stageAllocatedLotIds = Array.isArray(currentStage.allocatedLotIds) && currentStage.allocatedLotIds.length > 0
+    ? currentStage.allocatedLotIds.map((id: any) => id.toString())
+    : null;
+
+  const stageLots = stageAllocatedLotIds
+    ? totalUnsoldLots.filter(item => stageAllocatedLotIds.includes(item.lotId.toString()))
+    : totalUnsoldLots;
+
+  if (stageLots.length === 0 && totalUnsoldLots.length === 0) {
+    run.status = 'awarded';
+    await run.save();
+    return;
+  }
+
+  // Resolve Stage N buyers
+  const { buyerEmails, evaluatedBuyerIds, resolvedBuyerMap } = await resolveStageBuyers(currentStage, automation);
+
+  // Set run status to escalating
+  run.status = 'escalating';
+  run.currentStageIndex = stageIndex;
+  await run.save();
+
+  // Create stageExecution record
+  const stageExecutionRecord: any = {
+    stageIndex,
+    firedAt: new Date(),
+    buyerEmails,
+    lotsOffered: stageLots.map(item => ({
+      lotId: item.lotId,
+      remainingQty: item.remainingQty,
+      awardedQty: 0
+    })),
+    status: 'dispatched'
+  };
+
+  if (!run.stageExecutions) {
+    run.stageExecutions = [];
+  }
+  run.stageExecutions.push(stageExecutionRecord);
+
+  // Calculate stage wait time and window
+  const stageWaitHours = typeof currentStage.waitHours === 'number' && currentStage.waitHours > 0
+    ? currentStage.waitHours
+    : 24;
+  const stageEvaluationEndsAt = new Date(Date.now() + stageWaitHours * 60 * 60 * 1000);
+  run.evaluationEndsAt = stageEvaluationEndsAt;
+
+  // Prepare email dispatching for Stage N buyers
+  const stageType = (currentStage.stageType || currentStage.type || '').toLowerCase();
+  const rawSubject = currentStage.emailSubject || automation.emailTemplate?.subject || `Distressed Inventory Liquidation Offer - ${automation.name || 'Clearance'}`;
+  const rawBodyHtml = currentStage.emailBodyHtml || automation.emailTemplate?.body || `
+<div style="font-family: sans-serif; padding: 20px; color: #1e293b; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+  <h2 style="color: #4f46e5; margin-top: 0;">Clearance Opportunity | {{supplier_name}}</h2>
+  <p>Hello <strong>{{buyer_name}}</strong>,</p>
+  <p>We have immediate surplus inventory available for liquidation. Stage offer: <strong>{{current_stage_discount}}</strong> (Response window: {{expiry_hours}}). Please review the itemized offer sheet below:</p>
+  <div data-token="inventory_table" style="margin: 16px 0;">{{inventory_table}}</div>
+  <br/>
+  <p style="text-align: center;">
+    <a href="{{quick_bid_link}}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+      Bid Now
+    </a>
+  </p>
+</div>
+  `;
+
+  const effectiveMatchedLots = stageLots.map(item => item.lot);
+  const totalCases = stageLots.reduce((acc: number, item: any) => acc + item.remainingQty, 0);
+  const primaryLot = effectiveMatchedLots[0] || (snapshotLots[0] || {});
+  const lotTitle = primaryLot ? ((primaryLot.productId as any)?.description || primaryLot.description || `${stageLots.length} Surplus Inventory Lots`) : 'Surplus Inventory Lot';
+
+  const inventoryItems = stageLots.map(item => {
+    const lot = item.lot;
+    const prodName = (lot.productId as any)?.description || lot.description || 'Surplus Item';
+    const rsl = typeof lot.remainingShelfLife === 'number' ? (lot.remainingShelfLife > 1 ? lot.remainingShelfLife : lot.remainingShelfLife * 100) : 14;
+    return {
+      sku: (lot.productId as any)?.sku || lot.sku || 'SKU-LOT',
+      description: prodName,
+      cases: item.remainingQty,
+      expiryDays: Math.round(rsl),
+      unitPrice: lot.standardSellPrice || lot.costPerCase || 0
+    };
+  });
+
+  let stageDiscount = currentStage.discountValue ? `${currentStage.discountValue}% OFF` : 'Special Clearance Price';
+  if (stageType === 'donation') {
+    stageDiscount = 'Surplus Donation Transfer (Complimentary)';
+  } else if (stageType === 'landfill') {
+    stageDiscount = 'Scheduled Removal & Disposal';
+  }
+
+  let stageExpiry = '24 Hours';
+  if (currentStage.waitHours !== undefined && currentStage.waitHours !== null) {
+    const num = typeof currentStage.waitHours === 'number' ? currentStage.waitHours : parseFloat(currentStage.waitHours);
+    if (!isNaN(num)) {
+      if (num < 1 && num > 0) {
+        const mins = Math.round(num * 60);
+        stageExpiry = `${mins} Minute${mins === 1 ? '' : 's'}`;
+      } else {
+        stageExpiry = Number.isInteger(num) ? `${num} Hours` : `${num.toFixed(1)} Hours`;
+      }
+    }
+  }
+
+  const disposalDeadlineStr = currentStage.disposalDeadline || '';
+  const uniqueBuyerEmails = Array.from(new Set(buyerEmails.map((e: string) => e.trim().toLowerCase())));
+
+  for (const email of uniqueBuyerEmails) {
+    try {
+      let buyerObj = resolvedBuyerMap.get(email);
+      if (!buyerObj && mongoose.connection.readyState === 1) {
+        try {
+          buyerObj = await Buyer.findOne({ email: new RegExp(`^${email}$`, 'i') });
+        } catch (e) {}
+      }
+      const compiledBuyerName = (buyerObj as any)?.companyName || (buyerObj as any)?.name || 'Valued Buyer';
+      const quickBidLink = `https://indspoileralert.com/bid?supplierId=${automation.supplierId}&listingId=${primaryLot?._id || 'deal'}`;
+
+      const context = {
+        buyer_name: compiledBuyerName,
+        supplier_name: 'IndSpoiler Alert Operations',
+        lot_title: lotTitle,
+        total_cases: totalCases,
+        quick_bid_link: quickBidLink,
+        current_stage_discount: stageDiscount,
+        expiry_hours: stageType === 'landfill' ? (disposalDeadlineStr || stageExpiry) : stageExpiry,
+        offer_expiration_time: stageExpiry,
+        disposal_deadline: disposalDeadlineStr,
+        inventory_table: inventoryItems,
+        inventoryItems
+      };
+
+      const emailSubject = compileSubject(rawSubject, context);
+      const emailBodyHtml = compileTemplate(rawBodyHtml, context);
+      const emailPlainText = `Surplus Inventory Liquidation Offer for ${stageLots.length} lot(s). Total Cases: ${totalCases}. Reply to place bid. Link: ${quickBidLink}`;
+
+      await sendEmailHelper(email, emailSubject, emailBodyHtml || emailPlainText, undefined, undefined, automation.supplierId?.toString() || 'default');
+
+      if (mongoose.connection.readyState === 1) {
+        try {
+          await syncEmailToThread({
+            supplierId: automation.supplierId?.toString() || 'default',
+            buyerEmail: email,
+            subject: emailSubject,
+            body: emailBodyHtml || emailPlainText,
+            senderType: 'supplier',
+            listingId: effectiveMatchedLots.length > 0 ? effectiveMatchedLots[0]._id?.toString() : undefined
+          });
+
+          await EmailDispatchLog.create({
+            dispatchId: `dispatch-${run._id}-${stageIndex}-${email.replace(/[^a-zA-Z0-9]/g, '_')}`,
+            supplierId: automation.supplierId?.toString(),
+            buyerEmail: email,
+            buyerId: buyerObj?._id?.toString() || (buyerObj as any)?.id,
+            compiledBuyerName,
+            status: 'sent',
+            dispatchedAt: new Date()
+          });
+        } catch (e) {}
+      }
+    } catch (err: any) {
+      console.error(`Failed to send email to ${email} for stage ${stageIndex}:`, err.message || err);
+    }
+  }
+
+  // Cascade termination rules & scheduling
+  const nextStageIndex = stageIndex + 1;
+  const hasNextStage = nextStageIndex < stages.length;
+
+  if (hasNextStage) {
+    try {
+      const nextStageJob = await agenda.schedule(
+        stageEvaluationEndsAt,
+        'trigger-workflow-stage',
+        { runId: run._id, stageIndex: nextStageIndex }
+      );
+      if (nextStageJob && nextStageJob.attrs && nextStageJob.attrs._id) {
+        stageExecutionRecord.agendaJobId = nextStageJob.attrs._id.toString();
+      }
+    } catch (e) {}
+  } else {
+    // Stage N is last stage
+    if (stageType === 'landfill') {
+      run.status = 'fallback_executed';
+      run.resolution = {
+        action: 'landfill_dispatched',
+        resolvedAt: new Date()
+      };
+      run.markModified('stageExecutions');
+      await run.save();
+      return;
+    } else {
+      try {
+        const fallbackJob = await agenda.schedule(
+          stageEvaluationEndsAt,
+          'execute-workflow-fallback',
+          { runId: run._id }
+        );
+        if (fallbackJob && fallbackJob.attrs && fallbackJob.attrs._id) {
+          run.fallbackJobId = fallbackJob.attrs._id.toString();
+        }
+      } catch (e) {}
+    }
+  }
+
+  run.status = 'evaluating';
+  run.markModified('stageExecutions');
+  await run.save();
+}
 
 // Define execute-workflow-fallback timeout job
 agenda.define('execute-workflow-fallback', async (job: any) => {
@@ -185,6 +499,16 @@ export async function createAutomationRun(
   matchedLots: any[], 
   runType: 'scheduled' | 'manual'
 ) {
+  if (mongoose.connection.readyState === 1 && automation?._id) {
+    const activeRun = await AutomationRun.findOne({
+      automationId: automation._id,
+      status: { $in: ['evaluating', 'partially_awarded', 'escalating'] }
+    });
+    if (activeRun) {
+      throw new Error('A run is already in progress for this workflow');
+    }
+  }
+
   let windowHours = automation.rules?.evaluationWindowHours;
   if (Array.isArray(automation.stages) && automation.stages.length > 0) {
     const stage1Wait = automation.stages[0]?.waitHours;
@@ -205,147 +529,16 @@ export async function createAutomationRun(
     rsl: l.remainingShelfLife !== undefined ? l.remainingShelfLife : 0.10
   }));
 
-  const buyerEmails: string[] = [];
-  const evaluatedBuyerIds: any[] = [];
-  const resolvedBuyerMap = new Map<string, any>();
+  let buyerEmails: string[] = [];
+  let evaluatedBuyerIds: any[] = [];
+  let resolvedBuyerMap = new Map<string, any>();
 
   if (Array.isArray(automation.stages) && automation.stages.length > 0) {
-    for (const stage of automation.stages) {
-      // Determine stage type to enforce opt-in checks
-      const stageType: string = (stage.type || stage.stageType || '').toLowerCase();
-      const isBiddingStage = stageType.includes('bid') || stageType === 'bidding';
-      const isSalesStage = stageType.includes('sale') || stageType === 'sales' || stageType === 'direct_sale';
-
-      const mode = stage.buyerMode || (Array.isArray(stage.customBuyers) && stage.customBuyers.length > 0 ? 'custom' : ((stage.buyerListId || stage.buyerSegment) ? 'list' : 'all'));
-
-      if (mode === 'custom') {
-        if (Array.isArray(stage.customBuyers) && stage.customBuyers.length > 0) {
-          for (const b of stage.customBuyers) {
-            if (!b.email) continue;
-            const cleanEmail = b.email.trim().toLowerCase();
-            if (!buyerEmails.includes(cleanEmail)) {
-              buyerEmails.push(cleanEmail);
-              const bId = b._id || b.id;
-              if (bId && mongoose.Types.ObjectId.isValid(bId)) {
-                evaluatedBuyerIds.push(bId);
-              }
-              resolvedBuyerMap.set(cleanEmail, {
-                _id: b.id || b._id,
-                companyName: b.name || b.companyName,
-                name: b.name || b.companyName,
-                email: cleanEmail
-              });
-            }
-          }
-        }
-        if (Array.isArray(stage.customBuyerIds) && stage.customBuyerIds.length > 0 && mongoose.connection.readyState === 1) {
-          try {
-            const customBuyers = await Buyer.find({ _id: { $in: stage.customBuyerIds }, isActive: { $ne: false } });
-            for (const b of customBuyers) {
-              if (isBiddingStage && b.optInBidding === false) continue;
-              if (isSalesStage && b.optInSales === false) continue;
-              if (b.email) {
-                const cleanEmail = b.email.trim().toLowerCase();
-                if (!buyerEmails.includes(cleanEmail)) {
-                  buyerEmails.push(cleanEmail);
-                  if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
-                  resolvedBuyerMap.set(cleanEmail, b);
-                }
-              }
-            }
-          } catch (e) {}
-        }
-      } else if (mode === 'list' || (mode === 'segment' && (stage.buyerListId || (stage.buyerSegment && stage.buyerSegment !== 'all' && stage.buyerSegment !== 'all_buyers')))) {
-        const listRef = stage.buyerListId || stage.buyerSegment;
-        let buyerListDoc: any = null;
-
-        if (mongoose.connection.readyState === 1 && (listRef || stage.buyerListName)) {
-          try {
-            if (listRef && mongoose.Types.ObjectId.isValid(listRef)) {
-              buyerListDoc = await BuyerList.findById(listRef);
-            }
-            if (!buyerListDoc && automation.supplierId) {
-              const conds: any[] = [];
-              if (listRef) conds.push({ type: listRef }, { name: new RegExp(`^${listRef}$`, 'i') });
-              if (stage.buyerListName) conds.push({ name: new RegExp(`^${stage.buyerListName}$`, 'i') });
-              buyerListDoc = await BuyerList.findOne({
-                supplierId: automation.supplierId,
-                $or: conds
-              });
-            }
-            if (!buyerListDoc) {
-              const conds: any[] = [];
-              if (listRef) conds.push({ type: listRef }, { name: new RegExp(`^${listRef}$`, 'i') });
-              if (stage.buyerListName) conds.push({ name: new RegExp(`^${stage.buyerListName}$`, 'i') });
-              if (conds.length > 0) {
-                buyerListDoc = await BuyerList.findOne({
-                  $or: conds
-                });
-              }
-            }
-          } catch (e) {}
-        }
-
-        if (buyerListDoc && Array.isArray(buyerListDoc.buyerIds) && buyerListDoc.buyerIds.length > 0 && mongoose.connection.readyState === 1) {
-          try {
-            const listBuyers = await Buyer.find({
-              _id: { $in: buyerListDoc.buyerIds },
-              isActive: { $ne: false }
-            });
-            for (const b of listBuyers) {
-              if (isBiddingStage && b.optInBidding === false) continue;
-              if (isSalesStage && b.optInSales === false) continue;
-              if (b.email) {
-                const cleanEmail = b.email.trim().toLowerCase();
-                if (!buyerEmails.includes(cleanEmail)) {
-                  buyerEmails.push(cleanEmail);
-                  if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
-                  resolvedBuyerMap.set(cleanEmail, b);
-                }
-              }
-            }
-          } catch (e) {}
-        } else if (stage.buyerSegment && mongoose.connection.readyState === 1) {
-          // Fallback to direct segment/category attribute match on Buyer model if not found as BuyerList
-          try {
-            const segmentBuyers = await Buyer.find({
-              $or: [{ segment: stage.buyerSegment }, { buyerType: stage.buyerSegment }],
-              isActive: { $ne: false }
-            });
-            for (const b of segmentBuyers) {
-              if (isBiddingStage && b.optInBidding === false) continue;
-              if (isSalesStage && b.optInSales === false) continue;
-              if (b.email) {
-                const cleanEmail = b.email.trim().toLowerCase();
-                if (!buyerEmails.includes(cleanEmail)) {
-                  buyerEmails.push(cleanEmail);
-                  if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
-                  resolvedBuyerMap.set(cleanEmail, b);
-                }
-              }
-            }
-          } catch (e) {}
-        }
-      } else if (mode === 'all' || mode === 'all_buyers' || stage.buyerMode === 'all') {
-        if (mongoose.connection.readyState === 1) {
-          try {
-            const allDbBuyers = await Buyer.find({ isActive: { $ne: false } });
-            for (const b of allDbBuyers) {
-              if (isBiddingStage && b.optInBidding === false) continue;
-              if (isSalesStage && b.optInSales === false) continue;
-              if (b.email) {
-                const cleanEmail = b.email.trim().toLowerCase();
-                if (!buyerEmails.includes(cleanEmail)) {
-                  buyerEmails.push(cleanEmail);
-                  if (!evaluatedBuyerIds.includes(b._id)) evaluatedBuyerIds.push(b._id);
-                  resolvedBuyerMap.set(cleanEmail, b);
-                }
-              }
-            }
-          } catch (e) {}
-        }
-      }
-    }
+    const stage1 = automation.stages[0];
+    const resolved = await resolveStageBuyers(stage1, automation);
+    buyerEmails = resolved.buyerEmails;
+    evaluatedBuyerIds = resolved.evaluatedBuyerIds as any[];
+    resolvedBuyerMap = resolved.resolvedBuyerMap;
   } else {
     // If no stages defined, check top-level automation config
     if (automation.emailTemplate?.customBuyerIds?.length > 0 && mongoose.connection.readyState === 1) {
@@ -391,6 +584,37 @@ export async function createAutomationRun(
     donationConfig: automation.donationConfig
   };
 
+  const hasStages = Array.isArray(automation.stages) && automation.stages.length > 0;
+  const firstStage = hasStages ? automation.stages[0] : null;
+  const stageType = (firstStage?.stageType || firstStage?.type || '').toLowerCase();
+
+  // Filter lots based on stage's allocatedLotIds if custom subset is configured
+  const stageAllocatedLotIds = Array.isArray(firstStage?.allocatedLotIds) && firstStage.allocatedLotIds.length > 0
+    ? firstStage.allocatedLotIds.map((id: any) => id.toString())
+    : null;
+
+  const targetLots = stageAllocatedLotIds
+    ? matchedLots.filter((lot: any) => stageAllocatedLotIds.includes(lot._id?.toString() || lot.id?.toString()))
+    : matchedLots;
+
+  const effectiveLots = targetLots.length > 0 ? targetLots : matchedLots;
+
+  const initialStageExecutions = hasStages
+    ? [
+        {
+          stageIndex: 0,
+          firedAt: new Date(),
+          buyerEmails,
+          lotsOffered: effectiveLots.map((l: any) => ({
+            lotId: l._id || l.id,
+            remainingQty: l.availableQty !== undefined ? l.availableQty : (l.quantityCases || l.cases || 0),
+            awardedQty: 0
+          })),
+          status: 'dispatched' as const
+        }
+      ]
+    : undefined;
+
   if (buyerEmails.length === 0) {
     const run = new AutomationRun({
       automationId: automation._id,
@@ -404,7 +628,9 @@ export async function createAutomationRun(
       buyerEmails: [],
       affectedInventoryLots,
       campaignSnapshot,
-      evaluationEndsAt
+      evaluationEndsAt,
+      currentStageIndex: hasStages ? 0 : undefined,
+      stageExecutions: initialStageExecutions
     });
 
     if (mongoose.connection.readyState === 1) {
@@ -426,7 +652,9 @@ export async function createAutomationRun(
     buyerEmails,
     affectedInventoryLots,
     campaignSnapshot,
-    evaluationEndsAt
+    evaluationEndsAt,
+    currentStageIndex: hasStages ? 0 : undefined,
+    stageExecutions: initialStageExecutions
   });
 
   if (mongoose.connection.readyState === 1) {
@@ -452,20 +680,6 @@ export async function createAutomationRun(
   </p>
 </div>
   `;
-
-  const firstStage = automation.stages?.[0];
-  const stageType = (firstStage?.stageType || firstStage?.type || '').toLowerCase();
-
-  // Filter lots based on stage's allocatedLotIds if custom subset is configured
-  const stageAllocatedLotIds = Array.isArray(firstStage?.allocatedLotIds) && firstStage.allocatedLotIds.length > 0
-    ? firstStage.allocatedLotIds.map((id: any) => id.toString())
-    : null;
-
-  const targetLots = stageAllocatedLotIds
-    ? matchedLots.filter((lot: any) => stageAllocatedLotIds.includes(lot._id?.toString() || lot.id?.toString()))
-    : matchedLots;
-
-  const effectiveLots = targetLots.length > 0 ? targetLots : matchedLots;
 
   const totalCases = effectiveLots.reduce((acc: number, l: any) => acc + (l.availableQty ?? l.quantityCases ?? l.cases ?? 0), 0);
   const primaryLot = effectiveLots[0] || matchedLots[0];
@@ -505,8 +719,9 @@ export async function createAutomationRun(
   }
 
   const disposalDeadlineStr = firstStage?.disposalDeadline || '';
+  const uniqueBuyerEmails = Array.from(new Set(buyerEmails.map((e: string) => e.trim().toLowerCase())));
 
-  for (const email of buyerEmails) {
+  for (const email of uniqueBuyerEmails) {
     try {
       let buyerObj = resolvedBuyerMap.get(email);
       if (!buyerObj && mongoose.connection.readyState === 1) {
@@ -580,14 +795,38 @@ export async function createAutomationRun(
 
   if (mongoose.connection.readyState === 1) {
     try {
-      const fallbackJob = await agenda.schedule(
-        evaluationEndsAt,
-        'execute-workflow-fallback',
-        { runId: run._id }
-      );
-      if (fallbackJob && fallbackJob.attrs && fallbackJob.attrs._id) {
-        run.fallbackJobId = fallbackJob.attrs._id.toString();
+      if (hasStages && automation.stages.length > 1) {
+        const nextStageJob = await agenda.schedule(
+          evaluationEndsAt,
+          'trigger-workflow-stage',
+          { runId: run._id, stageIndex: 1 }
+        );
+        if (nextStageJob && nextStageJob.attrs && nextStageJob.attrs._id) {
+          if (Array.isArray(run.stageExecutions) && run.stageExecutions.length > 0) {
+            run.stageExecutions[0].agendaJobId = nextStageJob.attrs._id.toString();
+            run.markModified('stageExecutions');
+            await run.save();
+          }
+        }
+      } else if (hasStages && stageType === 'landfill') {
+        run.status = 'fallback_executed';
+        run.resolution = {
+          action: 'landfill_dispatched',
+          resolvedAt: new Date()
+        };
+        run.markModified('stageExecutions');
         await run.save();
+        return run;
+      } else {
+        const fallbackJob = await agenda.schedule(
+          evaluationEndsAt,
+          'execute-workflow-fallback',
+          { runId: run._id }
+        );
+        if (fallbackJob && fallbackJob.attrs && fallbackJob.attrs._id) {
+          run.fallbackJobId = fallbackJob.attrs._id.toString();
+          await run.save();
+        }
       }
     } catch (agendaErr) {}
   }
@@ -608,10 +847,10 @@ export async function createAutomationRun(
 
 // Hook to check marketplace bids against active workflow runs
 export async function checkBidAgainstActiveWorkflows(lot: any, offer: any, listing: any) {
-  // Find active evaluating run containing this lot
+  // Find active evaluating or partially_awarded run containing this lot
   const activeRun = await AutomationRun.findOne({
     snapshotInventoryIds: lot._id,
-    status: 'evaluating'
+    status: { $in: ['evaluating', 'partially_awarded'] }
   });
 
   if (!activeRun) return;
@@ -635,35 +874,11 @@ export async function checkBidAgainstActiveWorkflows(lot: any, offer: any, listi
   const onSuccess = automation.rules?.onSuccess || 'auto_award';
 
   if (onSuccess === 'auto_award') {
-    // 1. Cancel fallback job
-    if (activeRun.fallbackJobId) {
-      try {
-        await agenda.cancel({ _id: new mongoose.Types.ObjectId(activeRun.fallbackJobId) } as any);
-      } catch (err: any) {
-        console.error('Failed to cancel Agenda fallback job:', err.message || err);
-      }
-    }
-
-    // 2. Execute auto-award logic
+    // Execute auto-award logic via awardBid (which manages partial/full status & job cancellation)
     const { awardBid } = require('./inventoryService');
-    await awardBid(lot._id.toString(), offer._id.toString(), offer.quantity, 'Auto-awarded by workflow.');
-
-    // 3. Resolve run status
-    activeRun.status = 'awarded';
-    activeRun.resolution = {
-      action: 'auto_award',
-      targetBuyerId: offer.buyerId,
-      winningOfferId: offer._id,
-      resolvedAt: new Date()
-    };
-    await activeRun.save();
-
-    await LiquidationAutomation.findByIdAndUpdate(automation._id, {
-      $inc: { 'stats.totalAwarded': 1 }
-    });
+    await awardBid(lot._id.toString(), offer._id.toString(), 'Auto-awarded by workflow.', undefined, offer.quantity);
   } else {
     // onSuccess === 'hold_confirmation'
-    activeRun.status = 'awarded';
     activeRun.resolution = {
       action: 'hold_confirmation',
       targetBuyerId: offer.buyerId,

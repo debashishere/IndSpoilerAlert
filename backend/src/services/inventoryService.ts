@@ -16,6 +16,8 @@ import Donation from '../models/Donation';
 import Disposal from '../models/Disposal';
 import ComplianceDocument from '../models/ComplianceDocument';
 import Sale from '../models/Sale';
+import AutomationRun from '../models/AutomationRun';
+import LiquidationAutomation from '../models/LiquidationAutomation';
 import { uploadToS3 } from '../utils/aws';
 import fs from 'fs';
 import { sendEmailHelper } from './emailService';
@@ -494,6 +496,91 @@ export async function awardBid(
   await lot.save();
   await listing.save();
   await opportunity.save();
+
+  // Check and update any active AutomationRun for this lot
+  const activeRun = await AutomationRun.findOne({
+    snapshotInventoryIds: lot._id,
+    status: { $in: ['evaluating', 'partially_awarded', 'dispatched'] }
+  });
+
+  if (activeRun) {
+    const currentStageIdx = activeRun.currentStageIndex ?? 0;
+    const stageExec = (activeRun.stageExecutions || []).find(
+      (s: any) => s.stageIndex === currentStageIdx
+    ) || (activeRun.stageExecutions && activeRun.stageExecutions[currentStageIdx]);
+
+    if (stageExec) {
+      if (!stageExec.lotsOffered) {
+        stageExec.lotsOffered = [];
+      }
+      const lotEntry = stageExec.lotsOffered.find(
+        (l: any) => l.lotId.toString() === lot._id.toString()
+      );
+      if (lotEntry) {
+        lotEntry.awardedQty = (lotEntry.awardedQty || 0) + finalAwardedQty;
+        lotEntry.remainingQty = remainingQty;
+      } else {
+        stageExec.lotsOffered.push({
+          lotId: lot._id,
+          awardedQty: finalAwardedQty,
+          remainingQty
+        });
+      }
+    }
+
+    // Check if any lots in snapshotInventoryIds remain unsold
+    const unsoldLots = await InventoryLot.find({
+      _id: { $in: activeRun.snapshotInventoryIds },
+      availableQty: { $gt: 0 }
+    });
+
+    const trulyUnsoldLots = unsoldLots.filter(l => {
+      if (l._id.toString() === lot._id.toString()) {
+        return remainingQty > 0;
+      }
+      return l.availableQty > 0;
+    });
+
+    if (trulyUnsoldLots.length === 0) {
+      // Full award - all lots in workflow pool are awarded
+      activeRun.status = 'awarded';
+      if (stageExec) {
+        stageExec.status = 'awarded';
+      }
+      activeRun.resolution = {
+        action: 'auto_award',
+        targetBuyerId: buyer._id,
+        winningOfferId: offer._id,
+        resolvedAt: new Date()
+      };
+
+      // Cancel agenda jobs
+      const { agenda } = require('./agendaService');
+      if (stageExec?.agendaJobId) {
+        try {
+          await agenda.cancel({ _id: new mongoose.Types.ObjectId(stageExec.agendaJobId) });
+        } catch (e) {}
+      }
+      if (activeRun.fallbackJobId) {
+        try {
+          await agenda.cancel({ _id: new mongoose.Types.ObjectId(activeRun.fallbackJobId) });
+        } catch (e) {}
+      }
+
+      await LiquidationAutomation.findByIdAndUpdate(activeRun.automationId, {
+        $inc: { 'stats.totalAwarded': 1 }
+      });
+    } else {
+      // Partial award - unsold lots remain to carry forward to next stage
+      activeRun.status = 'partially_awarded';
+      if (stageExec) {
+        stageExec.status = 'partially_awarded';
+      }
+    }
+
+    activeRun.markModified('stageExecutions');
+    await activeRun.save();
+  }
 
   return {
     offer,

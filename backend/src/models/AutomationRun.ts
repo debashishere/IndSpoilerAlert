@@ -1,9 +1,24 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
+export interface IStageExecution {
+  stageIndex: number;
+  firedAt: Date;
+  buyerEmails: string[];
+  lotsOffered?: Array<{
+    lotId: mongoose.Types.ObjectId | string;
+    awardedQty?: number;
+    remainingQty?: number;
+  }>;
+  agendaJobId?: string;
+  status: 'pending' | 'dispatched' | 'partially_awarded' | 'awarded' | 'expired';
+}
+
 export interface IAutomationRun extends Document {
   automationId: mongoose.Types.ObjectId;
   runType: 'scheduled' | 'manual';
-  status: 'dispatched' | 'evaluating' | 'awarded' | 'fallback_executed' | 'failed' | 'error';
+  status: 'dispatched' | 'evaluating' | 'partially_awarded' | 'escalating' | 'awarded' | 'fallback_executed' | 'failed' | 'error';
+  currentStageIndex?: number;
+  stageExecutions?: IStageExecution[];
   errorReason?: string;
   snapshotInventoryIds: mongoose.Types.ObjectId[];
   evaluatedBuyerIds: mongoose.Types.ObjectId[];
@@ -22,7 +37,7 @@ export interface IAutomationRun extends Document {
   campaignSnapshot?: any;
   evaluationEndsAt: Date;
   resolution?: {
-    action: 'auto_award' | 'hold_confirmation' | 'auto_donate' | 'yield_markdown' | 'escalate_review' | 'auto_recycle' | string;
+    action: 'auto_award' | 'hold_confirmation' | 'auto_donate' | 'yield_markdown' | 'escalate_review' | 'auto_recycle' | 'landfill_dispatched' | string;
     targetBuyerId?: mongoose.Types.ObjectId;
     winningOfferId?: mongoose.Types.ObjectId;
     donationConfigSummary?: any;
@@ -35,7 +50,9 @@ export interface IAutomationRun extends Document {
 const AutomationRunSchema: Schema = new Schema({
   automationId: { type: Schema.Types.ObjectId, ref: 'LiquidationAutomation', required: true },
   runType: { type: String, enum: ['scheduled', 'manual'], required: true },
-  status: { type: String, enum: ['dispatched', 'evaluating', 'awarded', 'fallback_executed', 'failed', 'error'], default: 'evaluating' },
+  status: { type: String, enum: ['dispatched', 'evaluating', 'partially_awarded', 'escalating', 'awarded', 'fallback_executed', 'failed', 'error'], default: 'evaluating' },
+  currentStageIndex: { type: Number },
+  stageExecutions: [Schema.Types.Mixed],
   errorReason: { type: String },
   snapshotInventoryIds: [{ type: Schema.Types.ObjectId, ref: 'InventoryLot' }],
 
@@ -48,7 +65,7 @@ const AutomationRunSchema: Schema = new Schema({
   campaignSnapshot: { type: Schema.Types.Mixed },
   evaluationEndsAt: { type: Date, required: true },
   resolution: {
-    action: { type: String, enum: ['auto_award', 'hold_confirmation', 'auto_donate', 'yield_markdown', 'escalate_review', 'auto_recycle'] },
+    action: { type: String, enum: ['auto_award', 'hold_confirmation', 'auto_donate', 'yield_markdown', 'escalate_review', 'auto_recycle', 'landfill_dispatched'] },
     targetBuyerId: { type: Schema.Types.ObjectId, ref: 'Buyer' },
     winningOfferId: { type: Schema.Types.ObjectId, ref: 'Offer' },
     donationConfigSummary: { type: Schema.Types.Mixed },
