@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IBuyer extends Document {
+  supplierId?: mongoose.Types.ObjectId;
   companyName: string;
   email: string;
   tier?: string;
@@ -27,8 +28,9 @@ export interface IBuyer extends Document {
 }
 
 const BuyerSchema: Schema = new Schema({
+  supplierId: { type: Schema.Types.ObjectId, ref: 'Supplier' },
   companyName: { type: String, required: true },
-  email: { type: String, required: true, unique: true, lowercase: true },
+  email: { type: String, required: true, lowercase: true },
   tier: { type: String, default: 'tier1' },
   segment: { type: String },
   buyerType: { type: String },
@@ -54,5 +56,8 @@ const BuyerSchema: Schema = new Schema({
   deactivatedAt: { type: Date },
   deactivatedReason: { type: String }
 }, { timestamps: true });
+
+BuyerSchema.index({ supplierId: 1, email: 1 });
+BuyerSchema.index({ supplierId: 1, isActive: 1 });
 
 export default mongoose.model<IBuyer>('Buyer', BuyerSchema);
