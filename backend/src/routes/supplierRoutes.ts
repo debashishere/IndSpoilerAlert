@@ -6,13 +6,17 @@ import * as ingestController from '../controllers/ingestController';
 
 import * as marketplaceController from '../controllers/marketplaceController';
 
+import { optionalAuthToken } from '../middleware/authMiddleware';
+
 const supplierRouter = Router();
 
 supplierRouter.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', namespace: 'supplier' });
 });
 
-supplierRouter.get('/suppliers', generalController.getSuppliers);
+supplierRouter.get('/current', optionalAuthToken, generalController.getCurrentSupplier);
+supplierRouter.get('/suppliers', optionalAuthToken, generalController.getSuppliers);
+
 supplierRouter.get('/inventory', inventoryController.getInventory);
 supplierRouter.get('/inventory/facets', inventoryController.getInventoryFacets);
 supplierRouter.get('/liquidation-cycles', liquidationController.getLiquidationCycles);
@@ -26,3 +30,7 @@ supplierRouter.post('/lots/:id/publish-marketplace', marketplaceController.publi
 
 export default supplierRouter;
 
+
+
+// Test 
+console.log("--------------------------------loaded Suppliers Routes")

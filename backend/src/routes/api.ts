@@ -19,7 +19,7 @@ import emailThreadRoutes from './emailThreadRoutes';
 import oauthRoutes from './oauthRoutes';
 import emailTemplateRoutes from './emailTemplateRoutes';
 import * as emailTemplateController from '../controllers/emailTemplateController';
-import { authenticateToken } from '../middleware/authMiddleware';
+import { authenticateToken, optionalAuthToken } from '../middleware/authMiddleware';
 
 
 
@@ -35,6 +35,7 @@ const router = Router();
 // Route Namespaces (0083)
 router.use('/v1/supplier', supplierRouter);
 router.use('/v1/marketplace', marketplaceRouter);
+router.use('/marketplace', marketplaceRouter);
 router.use('/buyer-lists', buyerListRoutes);
 
 
@@ -72,9 +73,10 @@ const upload = multer({
 // General
 router.get('/health', generalController.getHealth);
 router.post('/seed', generalController.seedDataController);
-router.get('/suppliers', generalController.getSuppliers);
-router.get('/buyers', generalController.getBuyers);
-router.post('/buyers', generalController.createBuyer);
+router.get('/supplier/current', optionalAuthToken, generalController.getCurrentSupplier);
+router.get('/suppliers', optionalAuthToken, generalController.getSuppliers);
+router.get('/buyers', optionalAuthToken, generalController.getBuyers);
+router.post('/buyers', optionalAuthToken, generalController.createBuyer);
 router.get('/buyers/:id', generalController.getBuyerById);
 router.put('/buyers/:id', generalController.updateBuyer);
 router.patch('/buyers/:id/deactivate', generalController.deactivateBuyer);
@@ -108,13 +110,13 @@ router.get('/ingest/jobs/:id', ingestController.getJobStatus);
 router.post('/ingest/callback', ingestController.ingestCallback);
 router.post('/ingest/confirm', ingestController.confirmIngest);
 router.post('/ingest/confirm-sales', ingestController.confirmSalesIngest);
-router.post('/ingest/confirm-buyer', ingestController.confirmBuyerIngest);
+router.post('/ingest/confirm-buyer', optionalAuthToken, ingestController.confirmBuyerIngest);
 
 
 
 // Inventory
-router.get('/inventory', inventoryController.getInventory);
-router.get('/inventory/facets', inventoryController.getInventoryFacets);
+router.get('/inventory', optionalAuthToken, inventoryController.getInventory);
+router.get('/inventory/facets', optionalAuthToken, inventoryController.getInventoryFacets);
 router.get('/sales', authenticateToken, inventoryController.getSales);
 router.put('/inventory/lot/:id', inventoryController.updateLot);
 

@@ -7,12 +7,13 @@ import {
   deleteBuyerList,
   updateBuyerListMembers,
 } from '../controllers/buyerListController';
+import { optionalAuthToken } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/', getBuyerLists);
+router.get('/', optionalAuthToken, getBuyerLists);
 router.get('/:id', getBuyerListById);
-router.post('/', createBuyerList);
+router.post('/', optionalAuthToken, createBuyerList);
 router.put('/:id', updateBuyerList);
 router.delete('/:id', deleteBuyerList);
 router.put('/:id/members', updateBuyerListMembers);

@@ -1,9 +1,23 @@
 import { Request, Response } from 'express';
 import BuyerList from '../models/BuyerList';
+import Supplier from '../models/Supplier';
 
 export async function getBuyerLists(req: Request, res: Response): Promise<void> {
   try {
-    const { supplierId } = req.query;
+    const authReq = req as any;
+    let supplierId = req.query.supplierId as string;
+
+    if (!supplierId && (authReq.user?.email || req.query.email)) {
+      const email = String(authReq.user?.email || req.query.email).trim().toLowerCase();
+      const userSupplier = await Supplier.findOne({ email });
+      if (userSupplier) {
+        supplierId = userSupplier._id.toString();
+      } else {
+        res.status(200).json([]);
+        return;
+      }
+    }
+
     const query: any = {};
     if (supplierId) {
       query.supplierId = supplierId;
@@ -31,7 +45,17 @@ export async function getBuyerListById(req: Request, res: Response): Promise<voi
 
 export async function createBuyerList(req: Request, res: Response): Promise<void> {
   try {
-    const { name, description, supplierId, buyerIds, type } = req.body;
+    const authReq = req as any;
+    let supplierId = req.body.supplierId || req.query.supplierId;
+    if (!supplierId && (authReq.user?.email || req.query.email)) {
+      const email = String(authReq.user?.email || req.query.email).trim().toLowerCase();
+      const userSupplier = await Supplier.findOne({ email });
+      if (userSupplier) {
+        supplierId = userSupplier._id.toString();
+      }
+    }
+
+    const { name, description, buyerIds, type } = req.body;
     if (!name) {
       res.status(400).json({ error: 'Name is required' });
       return;
