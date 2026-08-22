@@ -1090,7 +1090,8 @@ export async function confirmSalesIngestion(
 export async function confirmBuyerIngestion(
   documentId: string,
   mappings: Record<string, string>,
-  buyerListId?: string
+  buyerListId?: string,
+  supplierIdParam?: string
 ) {
   const docImport = await findDocumentImport(documentId);
   if (!docImport) {
@@ -1099,6 +1100,8 @@ export async function confirmBuyerIngestion(
   if (docImport.status === 'imported') {
     throw new Error('Document has already been imported.');
   }
+
+  const supplierId = supplierIdParam || docImport.supplierId;
 
   const grid = docImport.rawGrid || [];
   if (grid.length < 2) {
@@ -1183,7 +1186,11 @@ export async function confirmBuyerIngestion(
       isVerified = val === 'true' || val === 'yes' || val === '1';
     }
 
-    let buyer = await Buyer.findOne({ email });
+    const buyerQuery: any = { email };
+    if (supplierId) {
+      buyerQuery.supplierId = supplierId;
+    }
+    let buyer = await Buyer.findOne(buyerQuery);
     if (buyer) {
       if (companyName) buyer.companyName = companyName;
       if (tier) buyer.tier = tier;
@@ -1195,6 +1202,7 @@ export async function confirmBuyerIngestion(
       if (isVerifiedIdx >= 0) buyer.isVerified = isVerified;
       if (phoneIdx >= 0 && phone !== undefined) buyer.phone = phone;
       if (addressIdx >= 0 && address !== undefined) buyer.address = address;
+      if (supplierId && !buyer.supplierId) buyer.supplierId = supplierId as any;
 
       await buyer.save();
       updatedCount++;
@@ -1212,7 +1220,8 @@ export async function confirmBuyerIngestion(
         excludedAllergens,
         ...(phone !== undefined ? { phone } : {}),
         ...(address !== undefined ? { address } : {}),
-        warehouseLocations: []
+        warehouseLocations: [],
+        ...(supplierId ? { supplierId } : {})
       });
       createdCount++;
       buyerIds.push(buyer._id.toString());

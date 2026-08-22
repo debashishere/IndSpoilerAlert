@@ -1,10 +1,30 @@
 import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import * as inventoryService from '../services/inventoryService';
+import Supplier from '../models/Supplier';
 
 export async function getInventory(req: Request, res: Response) {
   try {
-    const lots = await inventoryService.getInventoryLots(req.query);
+    const authReq = req as any;
+    let supplierId = req.query.supplierId as string;
+
+    if (!supplierId && (authReq.user?.email || req.query.email)) {
+      const email = String(authReq.user?.email || req.query.email).trim().toLowerCase();
+      const userSupplier = await Supplier.findOne({ email });
+      if (userSupplier) {
+        supplierId = userSupplier._id.toString();
+      } else {
+        // If user is authenticated but has no inventory or supplier provisioned yet, return empty list
+        return res.json([]);
+      }
+    }
+
+    const filters: any = {
+      ...req.query,
+      ...(supplierId ? { supplierId } : {})
+    };
+
+    const lots = await inventoryService.getInventoryLots(filters);
     return res.json(lots);
   } catch (error: any) {
     return res.status(500).json({ error: error.message });
@@ -224,7 +244,25 @@ export async function getShipmentById(req: Request, res: Response) {
 
 export async function getInventoryFacets(req: Request, res: Response) {
   try {
-    const facets = await inventoryService.getInventoryFacets(req.query);
+    const authReq = req as any;
+    let supplierId = req.query.supplierId as string;
+
+    if (!supplierId && (authReq.user?.email || req.query.email)) {
+      const email = String(authReq.user?.email || req.query.email).trim().toLowerCase();
+      const userSupplier = await Supplier.findOne({ email });
+      if (userSupplier) {
+        supplierId = userSupplier._id.toString();
+      } else {
+        return res.json([]);
+      }
+    }
+
+    const filter: any = {
+      ...req.query,
+      ...(supplierId ? { supplierId } : {})
+    };
+
+    const facets = await inventoryService.getInventoryFacets(filter);
     return res.json(facets);
   } catch (error: any) {
     return res.status(500).json({ error: error.message });

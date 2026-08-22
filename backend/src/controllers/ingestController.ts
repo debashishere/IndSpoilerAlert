@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as ingestService from '../services/ingestService';
+import Supplier from '../models/Supplier';
 
 export async function uploadIngestFile(req: Request, res: Response) {
   const file = req.file;
@@ -112,6 +113,15 @@ export async function confirmSalesIngest(req: Request, res: Response) {
 
 export async function confirmBuyerIngest(req: Request, res: Response) {
   const documentId = req.body.documentId || req.body._id || req.body.ingestionJobId || req.body.jobId;
+  const authReq = req as any;
+  let supplierId = req.body.supplierId || req.query.supplierId;
+  if (!supplierId && (authReq.user?.email || req.query.email)) {
+    const email = String(authReq.user?.email || req.query.email).trim().toLowerCase();
+    const userSupplier = await Supplier.findOne({ email });
+    if (userSupplier) {
+      supplierId = userSupplier._id.toString();
+    }
+  }
   const { mappings, buyerListId } = req.body;
   if (!documentId) {
     return res.status(400).json({ error: 'documentId is required.' });
@@ -124,7 +134,8 @@ export async function confirmBuyerIngest(req: Request, res: Response) {
     const result = await ingestService.confirmBuyerIngestion(
       documentId,
       mappings,
-      buyerListId
+      buyerListId,
+      supplierId
     );
 
     return res.status(200).json(result);

@@ -12,8 +12,96 @@ export async function getHealth(req: Request, res: Response) {
   }
 }
 
+export async function getCurrentSupplier(req: Request, res: Response) {
+  try {
+    const authReq = req as any;
+    const emailParam = (req.query.email as string) || req.body?.email || authReq.user?.email;
+    const userId = authReq.user?.uid;
+
+    if (!emailParam) {
+      return res.status(400).json({ error: 'User email or authentication token is required to resolve current supplier.' });
+    }
+
+    const email = String(emailParam).trim().toLowerCase();
+    let supplier = await Supplier.findOne({ email });
+
+    if (!supplier) {
+      // Format friendly supplier name from email
+      const localPart = email.split('@')[0] || 'Supplier';
+      const cleanName = localPart
+        .replace(/[._-]+/g, ' ')
+        .split(' ')
+        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+      const name = cleanName || 'Supplier';
+
+      // Generate a unique company code
+      const prefix = localPart.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'SUP';
+      let companyCode = `SUP-${prefix}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      let isUnique = false;
+      let attempts = 0;
+      while (!isUnique && attempts < 10) {
+        const existing = await Supplier.findOne({ companyCode });
+        if (!existing) {
+          isUnique = true;
+        } else {
+          companyCode = `SUP-${prefix}-${Math.floor(1000 + Math.random() * 9000)}-${Date.now().toString().slice(-4)}`;
+          attempts++;
+        }
+      }
+
+      supplier = new Supplier({
+        name,
+        companyCode,
+        preferredDisposition: 'sell',
+        active: true,
+        email,
+        userId: userId || undefined
+      });
+
+      await supplier.save();
+    }
+
+    return res.status(200).json(supplier);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+
 export async function getSuppliers(req: Request, res: Response) {
   try {
+    console.log("--------------------------------Getting Suppliers In Method")
+    const authReq = req as any;
+    const emailParam = (req.query.email as string) || authReq.user?.email;
+
+    let userSupplier = null;
+    if (emailParam) {
+      const email = String(emailParam).trim().toLowerCase();
+      userSupplier = await Supplier.findOne({ email });
+      if (!userSupplier) {
+        const localPart = email.split('@')[0] || 'Supplier';
+        const cleanName = localPart
+          .replace(/[._-]+/g, ' ')
+          .split(' ')
+          .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+        const name = cleanName || 'Supplier';
+        const prefix = localPart.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) || 'SUP';
+        const companyCode = `SUP-${prefix}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        userSupplier = new Supplier({
+          name,
+          companyCode,
+          preferredDisposition: 'sell',
+          active: true,
+          email,
+          userId: authReq.user?.uid || undefined
+        });
+        await userSupplier.save();
+      }
+    }
+
     let suppliers = await Supplier.find({ active: true });
     if (!suppliers || suppliers.length === 0) {
       suppliers = await Supplier.find({});
@@ -28,6 +116,15 @@ export async function getSuppliers(req: Request, res: Response) {
       ];
       suppliers = await Supplier.insertMany(defaultData);
     }
+
+    if (userSupplier) {
+      const existsIndex = suppliers.findIndex(s => s._id.toString() === userSupplier!._id.toString());
+      if (existsIndex > -1) {
+        suppliers.splice(existsIndex, 1);
+      }
+      suppliers.unshift(userSupplier);
+    }
+
     console.log("-------- ------- -------- -------Found Suppliers ", suppliers && suppliers.length ? suppliers.length : 0);
     return res.json(suppliers);
   } catch (error: any) {
@@ -37,8 +134,25 @@ export async function getSuppliers(req: Request, res: Response) {
 
 export async function getBuyers(req: Request, res: Response) {
   try {
+    const authReq = req as any;
+    let supplierId = req.query.supplierId as string;
+
+    if (!supplierId && (authReq.user?.email || req.query.email)) {
+      const email = String(authReq.user?.email || req.query.email).trim().toLowerCase();
+      const userSupplier = await Supplier.findOne({ email });
+      if (userSupplier) {
+        supplierId = userSupplier._id.toString();
+      } else {
+        // If user is authenticated but has no supplier provisioned yet, return empty list
+        return res.json([]);
+      }
+    }
+
     const showAll = req.query.all === 'true';
-    const query = showAll ? {} : { isActive: { $ne: false } };
+    const query: any = showAll ? {} : { isActive: { $ne: false } };
+    if (supplierId) {
+      query.supplierId = supplierId;
+    }
     const buyers = await Buyer.find(query);
     return res.json(buyers);
   } catch (error: any) {
@@ -145,13 +259,28 @@ export async function reactivateBuyer(req: Request, res: Response) {
 
 export async function createBuyer(req: Request, res: Response) {
   try {
-    const { companyName, email, tier, acceptsShortDated, minShelfLife, categories, transportRadius, warehouseLocations, excludedAllergens } = req.body;
+    const authReq = req as any;
+    let supplierId = req.body.supplierId || req.query.supplierId;
+    if (!supplierId && (authReq.user?.email || req.query.email)) {
+      const email = String(authReq.user?.email || req.query.email).trim().toLowerCase();
+      const userSupplier = await Supplier.findOne({ email });
+      if (userSupplier) {
+        supplierId = userSupplier._id.toString();
+      }
+    }
+
+    const {
+      companyName, email, tier, acceptsShortDated, minShelfLife,
+      categories, transportRadius, warehouseLocations, excludedAllergens,
+      phone, address, notes, optInBidding, optInSales
+    } = req.body;
+
     if (!companyName || !email) {
       return res.status(400).json({ error: 'companyName and email are required.' });
     }
     const newBuyer = new Buyer({
       companyName,
-      email,
+      email: email.trim().toLowerCase(),
       tier: tier || 'tier1',
       isVerified: true,
       acceptsShortDated: acceptsShortDated !== undefined ? acceptsShortDated : true,
@@ -159,7 +288,13 @@ export async function createBuyer(req: Request, res: Response) {
       categories: categories || ['Dairy', 'Produce', 'Dry Goods'],
       transportRadius: transportRadius || 100,
       warehouseLocations: warehouseLocations || [{ lat: 40.7128, lng: -74.0060 }],
-      excludedAllergens: excludedAllergens || []
+      excludedAllergens: excludedAllergens || [],
+      phone,
+      address,
+      notes,
+      optInBidding: optInBidding !== undefined ? optInBidding : true,
+      optInSales: optInSales !== undefined ? optInSales : true,
+      ...(supplierId ? { supplierId } : {})
     });
     await newBuyer.save();
     return res.status(201).json(newBuyer);
