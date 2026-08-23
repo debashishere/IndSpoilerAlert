@@ -62,13 +62,46 @@ export const DEFAULT_SUPPLIERS: Supplier[] = [
   { _id: '60c72b2f9b1d8b0015f8e005', name: 'Nestlé USA', companyCode: 'NESTLE', preferredDisposition: 'sell', active: true },
 ];
 
-export async function getSuppliers(): Promise<Supplier[]> {
+export async function getCurrentSupplier(email?: string, token?: string): Promise<Supplier> {
+  const headers: Record<string, string> = {
+    ...defaultHeaders,
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const url = email
+    ? `${API_BASE_URL}/v1/supplier/current?email=${encodeURIComponent(email)}`
+    : `${API_BASE_URL}/v1/supplier/current`;
+
+  const response = await fetch(url, {
+    method: 'GET',
+    cache: 'no-store',
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to resolve current supplier profile: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function getSuppliers(email?: string, token?: string): Promise<Supplier[]> {
   try {
-    const url = `${API_BASE_URL}/suppliers`;
+    const headers: Record<string, string> = {
+      ...defaultHeaders,
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const url = email
+      ? `${API_BASE_URL}/suppliers?email=${encodeURIComponent(email)}`
+      : `${API_BASE_URL}/suppliers`;
+
     const response = await fetch(url, {
       method: 'GET',
       cache: 'no-store',
-      headers: defaultHeaders,
+      headers,
     });
 
     if (response.ok) {
@@ -84,13 +117,36 @@ export async function getSuppliers(): Promise<Supplier[]> {
   }
 }
 
-export async function getBuyers(params?: { all?: boolean } | boolean): Promise<Buyer[]> {
-  const isAll = typeof params === 'boolean' ? params : params?.all;
-  const url = `${API_BASE_URL}/buyers${isAll ? '?all=true' : ''}`;
+export async function getBuyers(params?: { all?: boolean; supplierId?: string; token?: string } | boolean | string): Promise<Buyer[]> {
+  let isAll = false;
+  let supplierId: string | undefined;
+  let token: string | undefined;
+
+  if (typeof params === 'boolean') {
+    isAll = params;
+  } else if (typeof params === 'string') {
+    supplierId = params;
+  } else if (typeof params === 'object' && params !== null) {
+    isAll = !!params.all;
+    supplierId = params.supplierId;
+    token = params.token;
+  }
+
+  const queryParams = new URLSearchParams();
+  if (isAll) queryParams.append('all', 'true');
+  if (supplierId) queryParams.append('supplierId', supplierId);
+  const qs = queryParams.toString() ? `?${queryParams.toString()}` : '';
+
+  const headers: Record<string, string> = { ...defaultHeaders };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const url = `${API_BASE_URL}/buyers${qs}`;
   const response = await fetch(url, {
     method: 'GET',
     cache: 'no-store',
-    headers: defaultHeaders,
+    headers,
   });
 
   if (!response.ok && response.status !== 304) {
@@ -127,6 +183,7 @@ export const coreService = {
   API_BASE_URL,
   SIDECAR_BASE_URL,
   checkHealth,
+  getCurrentSupplier,
   getSuppliers,
   getBuyers,
   fetchAnalyticsSummary,

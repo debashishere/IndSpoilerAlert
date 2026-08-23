@@ -239,15 +239,21 @@ export const ingestionService = {
 
   async fetchSalesRecords(supplierId?: string): Promise<any[]> {
     const token = await firebaseAuthService.getCurrentIdToken();
+    if (!token) {
+      return [];
+    }
     const queryParam = supplierId ? `?supplierId=${encodeURIComponent(supplierId)}` : '';
     const res = await fetch(`${API_BASE_URL}/sales${queryParam}`, {
       method: 'GET',
       headers: {
         ...COMMON_HEADERS,
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        Authorization: `Bearer ${token}`,
       },
     });
     if (!res.ok) {
+      if (res.status === 401) {
+        return [];
+      }
       throw new Error('Failed to fetch sales records');
     }
     return await res.json();
@@ -257,6 +263,7 @@ export const ingestionService = {
     companyName: string;
     email: string;
     tier?: string;
+    supplierId?: string;
   }): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/buyers`, {
       method: 'POST',
@@ -374,6 +381,7 @@ export const ingestionService = {
     documentId: string;
     mappings: Record<string, string>;
     buyerListId?: string;
+    supplierId?: string;
   }): Promise<{ createdCount: number; updatedCount: number; buyerIds: string[]; [key: string]: any }> {
     const response = await fetch(`${API_BASE_URL}/ingest/confirm-buyer`, {
       method: 'POST',

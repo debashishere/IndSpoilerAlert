@@ -42,18 +42,40 @@ export async function apiFetch<T = any>(
 }
 
 /**
- * Fetch all buyers from the backend API.
+ * Fetch all buyers from the backend API with optional supplier scoping and auth.
  * Prevents 304 Not Modified status errors by requesting fresh data.
  */
-export async function getBuyers(): Promise<any[]> {
-  return apiFetch<any[]>('/buyers', { method: 'GET' });
+export async function getBuyers(options?: { all?: boolean; supplierId?: string; token?: string } | string): Promise<any[]> {
+  let isAll = false;
+  let supplierId: string | undefined;
+  let token: string | undefined;
+
+  if (typeof options === 'string') {
+    supplierId = options;
+  } else if (typeof options === 'object' && options !== null) {
+    isAll = !!options.all;
+    supplierId = options.supplierId;
+    token = options.token;
+  }
+
+  const queryParams = new URLSearchParams();
+  if (isAll) queryParams.append('all', 'true');
+  if (supplierId) queryParams.append('supplierId', supplierId);
+  const qs = queryParams.toString() ? `?${queryParams.toString()}` : '';
+
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return apiFetch<any[]>(`/buyers${qs}`, { method: 'GET', headers });
 }
 
 /**
  * Fetch all buyers including deactivated ones (for two-panel assignment).
  */
-export async function getAllBuyers(): Promise<any[]> {
-  return apiFetch<any[]>('/buyers?all=true', { method: 'GET' });
+export async function getAllBuyers(supplierId?: string, token?: string): Promise<any[]> {
+  return getBuyers({ all: true, supplierId, token });
 }
 
 /**
@@ -142,9 +164,13 @@ export async function updateProductAllergens(
 
 // ─── Buyer Lists ─────────────────────────────────────────────────────────────
 
-export async function getBuyerLists(supplierId?: string): Promise<any[]> {
+export async function getBuyerLists(supplierId?: string, token?: string): Promise<any[]> {
   const url = supplierId ? `/buyer-lists?supplierId=${encodeURIComponent(supplierId)}` : '/buyer-lists';
-  return apiFetch<any[]>(url, { method: 'GET' });
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return apiFetch<any[]>(url, { method: 'GET', headers });
 }
 
 export async function createBuyerList(payload: { name: string; description?: string; type?: string; supplierId?: string }): Promise<any> {
