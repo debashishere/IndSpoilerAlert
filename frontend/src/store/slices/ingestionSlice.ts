@@ -463,13 +463,18 @@ export const fetchSalesRecordsThunk = createAsyncThunk(
 export const addBuyerThunk = createAsyncThunk(
   'ingestion/addBuyer',
   async (
-    payload: { companyName: string; email: string; tier?: string },
-    { dispatch, rejectWithValue }
+    payload: { companyName: string; email: string; tier?: string; supplierId?: string },
+    { dispatch, getState, rejectWithValue }
   ) => {
     try {
       dispatch(setBuyerSaving(true));
       dispatch(setBuyerStatusMessage({ success: '', error: '' }));
-      const result = await ingestionService.addBuyer(payload);
+      const state = getState() as any;
+      const supplierId = payload.supplierId || state?.ingestion?.selectedSupplier;
+      const result = await ingestionService.addBuyer({
+        ...payload,
+        ...(supplierId ? { supplierId } : {})
+      });
       dispatch(
         setBuyerStatusMessage({
           success: `✓ ${payload.companyName} added successfully!`,
@@ -495,14 +500,16 @@ export const uploadBuyerThunk = createAsyncThunk(
   'ingestion/uploadBuyer',
   async (
     payload: { file: File; supplierId?: string },
-    { dispatch, rejectWithValue }
+    { dispatch, getState, rejectWithValue }
   ) => {
     try {
       dispatch(setBuyerLoading(true));
       dispatch(setBuyerStatusMessage({ success: '', error: '' }));
+      const state = getState() as any;
+      const supplierId = payload.supplierId || state?.ingestion?.selectedSupplier || undefined;
       const result = await ingestionService.uploadBuyerFile(
         payload.file,
-        payload.supplierId,
+        supplierId,
         (step) => dispatch(setBuyerLoadingStep(step))
       );
       dispatch(setBuyerParsedResult(result));
@@ -525,13 +532,19 @@ export const confirmBuyerThunk = createAsyncThunk(
       documentId: string;
       mappings: Record<string, string>;
       buyerListId?: string;
+      supplierId?: string;
     },
-    { dispatch, rejectWithValue }
+    { dispatch, getState, rejectWithValue }
   ) => {
     try {
       dispatch(setBuyerLoading(true));
       dispatch(setBuyerLoadingStep('Ingesting buyers and resolving duplicate records...'));
-      const result = await ingestionService.confirmBuyerIngestion(payload);
+      const state = getState() as any;
+      const supplierId = payload.supplierId || state?.ingestion?.selectedSupplier;
+      const result = await ingestionService.confirmBuyerIngestion({
+        ...payload,
+        ...(supplierId ? { supplierId } : {})
+      });
       dispatch(
         setBuyerImportSuccess({
           count: result.createdCount || 0,

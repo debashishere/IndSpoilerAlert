@@ -394,6 +394,15 @@ export const inventorySlice = createSlice({
         }
       });
     },
+    clearInventoryState: (state) => {
+      state.inventoryList = [];
+      state.allBids = [];
+      state.selectedLot = null;
+      state.selectedLotHubId = null;
+      state.error = null;
+      state.lotHubData = initialState.lotHubData;
+      state.modals = initialState.modals;
+    },
   },
 });
 
@@ -452,6 +461,7 @@ export const {
   setActivityRecipientInput,
   setIsTypingSimulated,
   updateProductAllergensInList,
+  clearInventoryState,
 } = inventorySlice.actions;
 
 // Reselect Memoized Selectors

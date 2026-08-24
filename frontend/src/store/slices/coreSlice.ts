@@ -8,6 +8,8 @@ export interface Supplier {
   name: string;
   companyCode: string;
   preferredDisposition: string;
+  email?: string;
+  userId?: string;
   [key: string]: any;
 }
 
@@ -82,19 +84,31 @@ export const checkSystemHealth = createAsyncThunk(
 
 export const fetchCoreReferenceData = createAsyncThunk(
   'core/fetchCoreReferenceData',
-  async (params: { all?: boolean; supplierId?: string } | boolean | string | undefined = undefined, { rejectWithValue }) => {
+  async (params: { all?: boolean; supplierId?: string; token?: string } | boolean | string | undefined = undefined, { rejectWithValue, getState }) => {
     try {
       let supplierId: string | undefined;
+      let token: string | undefined;
+      let all: boolean | undefined;
+
       if (typeof params === 'object' && params !== null) {
         supplierId = params.supplierId;
+        token = params.token;
+        all = params.all;
       } else if (typeof params === 'string') {
         supplierId = params;
+      } else if (typeof params === 'boolean') {
+        all = params;
+      }
+
+      if (!supplierId) {
+        const state = getState() as any;
+        supplierId = state?.ingestion?.selectedSupplier || undefined;
       }
 
       const [suppliers, buyers, buyerLists] = await Promise.all([
         coreService.getSuppliers(),
-        coreService.getBuyers(params),
-        networkService.getBuyerLists(supplierId),
+        coreService.getBuyers({ all, supplierId, token }),
+        networkService.getBuyerLists(supplierId, token),
       ]);
       return { suppliers, buyers, buyerLists };
     } catch (err: any) {
@@ -105,9 +119,24 @@ export const fetchCoreReferenceData = createAsyncThunk(
 
 export const fetchBuyerLists = createAsyncThunk(
   'core/fetchBuyerLists',
-  async (supplierId: string | undefined = undefined, { rejectWithValue }) => {
+  async (supplierIdOrOptions: { supplierId?: string; token?: string } | string | undefined = undefined, { rejectWithValue, getState }) => {
     try {
-      const lists = await networkService.getBuyerLists(supplierId);
+      let supplierId: string | undefined;
+      let token: string | undefined;
+
+      if (typeof supplierIdOrOptions === 'object' && supplierIdOrOptions !== null) {
+        supplierId = supplierIdOrOptions.supplierId;
+        token = supplierIdOrOptions.token;
+      } else if (typeof supplierIdOrOptions === 'string') {
+        supplierId = supplierIdOrOptions;
+      }
+
+      if (!supplierId) {
+        const state = getState() as any;
+        supplierId = state?.ingestion?.selectedSupplier || undefined;
+      }
+
+      const lists = await networkService.getBuyerLists(supplierId, token);
       return lists;
     } catch (err: any) {
       return rejectWithValue(err.message || 'Failed to fetch buyer lists');
@@ -271,6 +300,12 @@ export const coreSlice = createSlice({
     setBuyerLists: (state, action: PayloadAction<BuyerList[]>) => {
       state.buyerLists = ensureDefaultBuyerLists(action.payload);
     },
+    clearSupplierState: (state) => {
+      state.suppliers = DEFAULT_SUPPLIERS;
+      state.buyerLists = [];
+      state.buyers = [];
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -348,6 +383,7 @@ export const {
   setSuppliers,
   setBuyers,
   setBuyerLists,
+  clearSupplierState,
 } = coreSlice.actions;
 
 const selectRawBuyerLists = (state: RootState) => state.core.buyerLists;
