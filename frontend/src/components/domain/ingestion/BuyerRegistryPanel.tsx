@@ -15,6 +15,7 @@ import {
   confirmBuyerThunk,
 } from '../../../store/slices/ingestionSlice';
 import { fetchCoreReferenceData, fetchBuyerLists, type Buyer } from '../../../store/slices/coreSlice';
+import { useAuth } from '../../../context/AuthContext';
 import { BuyerDetailDrawer } from './BuyerDetailDrawer';
 import { BuyerListManagerModal } from './BuyerListManagerModal';
 import { BuyerTable } from '../inventory/BuyerTable';
@@ -34,6 +35,7 @@ const BUYER_OPTIONS = [
 
 export const BuyerRegistryPanel = () => {
   const dispatch = useAppDispatch();
+  const { user, token } = useAuth();
   const buyers = useAppSelector((state) => state.core.buyers);
   const selectedSupplier = useAppSelector((state) => state.ingestion?.selectedSupplier || '');
 
@@ -44,9 +46,9 @@ export const BuyerRegistryPanel = () => {
   const [statusFilter, setStatusFilter] = useState('');
 
   useEffect(() => {
-    dispatch(fetchCoreReferenceData({ all: showInactive, supplierId: selectedSupplier }));
-    dispatch(fetchBuyerLists(selectedSupplier));
-  }, [dispatch, showInactive, selectedSupplier]);
+    dispatch(fetchCoreReferenceData({ all: showInactive, supplierId: selectedSupplier, token: token || undefined, email: user?.email }));
+    dispatch(fetchBuyerLists({ supplierId: selectedSupplier, token: token || undefined }));
+  }, [dispatch, showInactive, selectedSupplier, token, user?.email]);
 
   const search = useAppSelector((state) => state.ingestion.buyerSearch);
   const tierFilter = useAppSelector((state) => state.ingestion.buyerTierFilter);

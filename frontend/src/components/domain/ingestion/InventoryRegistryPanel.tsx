@@ -35,6 +35,7 @@ import {
   setFilterStatus,
   selectFilteredInventoryLots,
 } from '../../../store/slices/inventorySlice';
+import { useAuth } from '../../../context/AuthContext';
 import { SemanticRulesEditor } from './SemanticRulesEditor';
 import { InventoryTable } from '../inventory/InventoryTable';
 import { RiskAssessmentModal } from '../inventory/RiskAssessmentModal';
@@ -61,6 +62,7 @@ const INVENTORY_OPTIONS = [
 
 export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => void }> = ({ onOpenLotHub }) => {
   const dispatch = useAppDispatch();
+  const { user, token } = useAuth();
 
   const suppliers = useAppSelector((state) => state.core.suppliers);
   const selectedSupplier = useAppSelector((state) => state.ingestion.selectedSupplier);
@@ -98,9 +100,9 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
   const effectiveSupplierId = selectedSupplier || (availableSuppliers.length > 0 ? (availableSuppliers[0]._id || '') : '');
 
   useEffect(() => {
-    dispatch(fetchCoreReferenceData());
-    dispatch(fetchInventoryLotsThunk(undefined));
-  }, [dispatch]);
+    dispatch(fetchCoreReferenceData({ supplierId: effectiveSupplierId, token: token || undefined, email: user?.email }));
+    dispatch(fetchInventoryLotsThunk({ supplierId: effectiveSupplierId, token: token || undefined }));
+  }, [dispatch, effectiveSupplierId, token, user?.email]);
 
   const getMappedField = (headerName: string): string => {
     return Object.entries(inventoryMappings).find(([, h]) => h === headerName)?.[0] || '';
@@ -169,18 +171,16 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
     setIsFullscreen(false);
   };
 
-  // Build filter dropdown lists with default presets & dynamic values from inventoryList
-  const defaultSuppliers = ['Unilever'];
+  // Build filter dropdown lists with available suppliers & dynamic values from inventoryList
   const dynamicSuppliers = (inventoryList || []).map((lot: any) => lot.supplierId?.name || lot.supplier).filter(Boolean);
-  const uniqueSuppliers = Array.from(new Set([...defaultSuppliers, ...dynamicSuppliers]));
+  const supplierNames = availableSuppliers.map((s) => s.name).filter(Boolean);
+  const uniqueSuppliers = Array.from(new Set([...supplierNames, ...dynamicSuppliers]));
 
-  const defaultDCs = ['Unilever Midwest DC', 'Kraft Heinz Midwest DC', 'Mondelez Midwest DC', 'Danone Midwest DC', 'Conagra Midwest DC'];
   const dynamicDCs = (inventoryList || []).map((lot: any) => lot.distributionCenterId?.name || lot.warehouse || lot.location).filter(Boolean);
-  const uniqueDCs = Array.from(new Set([...defaultDCs, ...dynamicDCs]));
+  const uniqueDCs = Array.from(new Set(dynamicDCs));
 
-  const defaultCategories = ['Dairy', 'Dry Goods', 'Beverages', 'Meat'];
   const dynamicCategories = (inventoryList || []).map((lot: any) => lot.productId?.category || lot.category).filter(Boolean);
-  const uniqueCategories = Array.from(new Set([...defaultCategories, ...dynamicCategories]));
+  const uniqueCategories = Array.from(new Set(dynamicCategories.length > 0 ? dynamicCategories : ['Dairy', 'Dry Goods', 'Beverages', 'Meat']));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
