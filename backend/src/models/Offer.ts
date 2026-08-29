@@ -9,7 +9,9 @@ export interface IMessage {
 }
 
 export interface IOffer extends Document {
-  listingId: mongoose.Types.ObjectId;
+  listingId?: mongoose.Types.ObjectId;   // Optional — may be absent for unlisted private-stage bids
+  lotId?: mongoose.Types.ObjectId;       // Direct lot scoping for private liquidation bids
+  runId?: mongoose.Types.ObjectId;       // AutomationRun scoping for private liquidation bids
   buyerId: mongoose.Types.ObjectId;
   quantity: number;
   price: number;
@@ -20,7 +22,9 @@ export interface IOffer extends Document {
 }
 
 const OfferSchema: Schema = new Schema({
-  listingId: { type: Schema.Types.ObjectId, ref: 'MarketplaceListing', required: true },
+  listingId: { type: Schema.Types.ObjectId, ref: 'MarketplaceListing', required: false },
+  lotId: { type: Schema.Types.ObjectId, ref: 'InventoryLot' },
+  runId: { type: Schema.Types.ObjectId, ref: 'AutomationRun' },
   buyerId: { type: Schema.Types.ObjectId, ref: 'Buyer', required: true },
   quantity: { type: Number, required: true },
   price: { type: Number, required: true },
