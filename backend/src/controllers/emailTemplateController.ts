@@ -357,7 +357,8 @@ export async function dispatchBroadcast(req: Request, res: Response) {
       });
       createdTokens.push(tokenDoc);
 
-      const quickBidLink = `https://indspoileralert.com/bid?token=${tokenString}`;
+      const frontendUrl = process.env.FRONTEND_URL || 'https://indspoileralert.com';
+      const quickBidLink = `${frontendUrl}/bid?token=${encodeURIComponent(tokenString)}`;
 
       const context = {
         buyer_name: buyer.companyName || 'Valued Buyer',
