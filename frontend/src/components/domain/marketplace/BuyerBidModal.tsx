@@ -128,7 +128,12 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
     setSubmitting(true);
     setErrorMsg(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/marketplace/bids`, {
+      const cleanBase = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+      const endpoint = cleanBase.endsWith('/marketplace')
+        ? `${cleanBase}/bids`
+        : `${cleanBase}/marketplace/bids`;
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

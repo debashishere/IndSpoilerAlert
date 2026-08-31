@@ -121,7 +121,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    const currentUser = firebaseAuthService.getCurrentUser();
+    return {
+      user: currentUser,
+      token: null,
+      isAuthenticated: Boolean(currentUser),
+      isLoading: false,
+      login: async (email, password) => firebaseAuthService.loginWithEmail(email, password),
+      loginWithGoogle: async (profiles) => firebaseAuthService.signInWithGoogle(profiles),
+      signup: async (email, password, profiles) => firebaseAuthService.signupWithEmail(email, password, profiles),
+      logout: async () => firebaseAuthService.logoutUser(),
+      updateProfiles: async (profiles) => firebaseAuthService.updateUserProfiles(profiles),
+    };
   }
   return context;
 };
