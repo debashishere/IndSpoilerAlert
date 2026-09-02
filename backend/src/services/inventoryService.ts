@@ -173,20 +173,38 @@ export async function enableBidding(lotId: string) {
     throw new Error('Opportunity not found for this lot.');
   }
 
-  let listing = await MarketplaceListing.findOne({ opportunityId: opportunity._id });
+  const ProductMaster = (await import('../models/ProductMaster')).default;
+  const product = lot.productId ? await ProductMaster.findById(lot.productId) : null;
+
+  let listing = await MarketplaceListing.findOne({ $or: [{ opportunityId: opportunity._id }, { lotId: lot._id }] });
   if (!listing) {
     listing = new MarketplaceListing({
       opportunityId: opportunity._id,
+      lotId: lot._id,
       sellerId: lot.supplierId,
+      supplierId: lot.supplierId,
+      publicTitle: product?.description || product?.brand || `Lot #${lot.lotNumber}`,
+      category: product?.category || 'General Surplus',
+      remainingShelfLife: lot.remainingShelfLife,
+      availableQuantity: lot.availableQty ?? lot.quantityCases,
+      publicPrice: lot.standardSellPrice || lot.costPerCase,
+      startingPrice: lot.standardSellPrice || lot.costPerCase,
+      minimumPrice: Math.round((lot.standardSellPrice || lot.costPerCase) * 0.5 * 100) / 100,
+      coaVerified: true,
+      sanitized: true,
       allowBidding: true,
-      startingPrice: lot.costPerCase,
-      minimumPrice: Math.round(lot.costPerCase * 0.5 * 100) / 100,
       status: 'active',
       expiresAt: lot.expirationDate
     });
   } else {
     listing.allowBidding = true;
-    listing.status = 'active';
+    listing.status = listing.status || 'active';
+    if (!listing.lotId) listing.lotId = lot._id;
+    if (!listing.publicTitle) listing.publicTitle = product?.description || product?.brand || `Lot #${lot.lotNumber}`;
+    if (!listing.category) listing.category = product?.category || 'General Surplus';
+    if (!listing.availableQuantity) listing.availableQuantity = lot.availableQty ?? lot.quantityCases;
+    if (!listing.publicPrice) listing.publicPrice = lot.standardSellPrice || lot.costPerCase;
+    if (!listing.remainingShelfLife) listing.remainingShelfLife = lot.remainingShelfLife;
   }
   await listing.save();
 
@@ -344,15 +362,12 @@ export async function awardBid(
     throw new Error('Buyer not found.');
   }
 
+  // Resolve Opportunity and Listing — both are optional for private-stage (unlisted) lots
   const opportunity = await Opportunity.findOne({ lotId: lot._id });
-  if (!opportunity) {
-    throw new Error('Opportunity not found.');
-  }
-
-  const listing = await MarketplaceListing.findOne({ opportunityId: opportunity._id });
-  if (!listing) {
-    throw new Error('Listing not found.');
-  }
+  const listing = opportunity
+    ? await MarketplaceListing.findOne({ opportunityId: opportunity._id })
+    : await MarketplaceListing.findOne({ lotId: lot._id });
+  // Note: listing and opportunity may be null for private liquidation stages — this is expected
 
   const product = await ProductMaster.findById(lot.productId);
 
@@ -379,7 +394,8 @@ export async function awardBid(
   await offer.save();
 
   const award = new Award({
-    listingId: listing._id,
+    listingId: listing?._id,
+    lotId: lot._id,
     offerId: offer._id,
     buyerId: buyer._id,
     awardedQty: finalAwardedQty,
@@ -466,41 +482,57 @@ export async function awardBid(
   });
   await activity.save();
 
-  // Determine quantity remaining
+  // Determine quantity remaining and update lot
   const remainingQty = Math.max(0, lot.availableQty - finalAwardedQty);
   lot.availableQty = remainingQty;
   lot.latestSalesDate = new Date();
-  listing.availableQuantity = remainingQty;
 
   if (remainingQty <= 0) {
     lot.status = 'sold';
-    listing.status = 'closed';
-    opportunity.status = 'completed';
 
-    // Reject all other pending bids
+    // Reject all other pending bids scoped to this lot/listing
+    if (listing) {
+      await Offer.updateMany(
+        { listingId: listing._id, _id: { $ne: offer._id }, status: 'pending' },
+        { status: 'rejected' }
+      );
+    }
+    // Also reject unlisted offers scoped by lotId
     await Offer.updateMany(
-      { listingId: listing._id, _id: { $ne: offer._id }, status: 'pending' },
+      { lotId: lot._id, _id: { $ne: offer._id }, status: 'pending' },
       { status: 'rejected' }
     );
   } else {
-    // Listing remains active and published, reject only other bids that ask for more than the remaining quantity
     lot.status = 'active';
-    listing.status = 'published';
 
-    await Offer.updateMany(
-      { listingId: listing._id, status: 'pending', quantity: { $gt: remainingQty } },
-      { status: 'rejected' }
-    );
+    if (listing) {
+      await Offer.updateMany(
+        { listingId: listing._id, status: 'pending', quantity: { $gt: remainingQty } },
+        { status: 'rejected' }
+      );
+    }
   }
 
   await lot.save();
-  await listing.save();
-  await opportunity.save();
+
+  // Conditionally update listing and opportunity only if present
+  if (listing) {
+    listing.availableQuantity = remainingQty;
+    listing.status = remainingQty <= 0 ? 'closed' : 'published';
+    await listing.save();
+  }
+  if (opportunity && remainingQty <= 0) {
+    opportunity.status = 'completed';
+    await opportunity.save();
+  }
 
   // Check and update any active AutomationRun for this lot
   const activeRun = await AutomationRun.findOne({
-    snapshotInventoryIds: lot._id,
-    status: { $in: ['evaluating', 'partially_awarded', 'dispatched'] }
+    $or: [
+      { snapshotInventoryIds: lot._id },
+      { 'affectedInventoryLots.lotId': lot._id }
+    ],
+    status: { $in: ['evaluating', 'partially_awarded', 'dispatched', 'escalating'] }
   });
 
   if (activeRun) {
@@ -528,9 +560,13 @@ export async function awardBid(
       }
     }
 
-    // Check if any lots in snapshotInventoryIds remain unsold
+    // Check if any lots in snapshotInventoryIds / affectedInventoryLots remain unsold
+    const lotIdsToCheck = (activeRun.snapshotInventoryIds && activeRun.snapshotInventoryIds.length > 0)
+      ? activeRun.snapshotInventoryIds
+      : (activeRun.affectedInventoryLots || []).map((l: any) => l.lotId);
+
     const unsoldLots = await InventoryLot.find({
-      _id: { $in: activeRun.snapshotInventoryIds },
+      _id: { $in: lotIdsToCheck },
       availableQty: { $gt: 0 }
     });
 
@@ -979,6 +1015,12 @@ export async function getShipmentById(shipmentId: string) {
 
 export async function getInventoryFacets(filter: any = {}): Promise<Array<{ attribute: string; values: Array<{ value: any; count: number }> }>> {
   const matchStage: any = { status: 'active', ...filter };
+  if (filter.supplierId && mongoose.Types.ObjectId.isValid(filter.supplierId)) {
+    matchStage.supplierId = new mongoose.Types.ObjectId(filter.supplierId);
+  }
+  if (filter.liquidationCycleId && mongoose.Types.ObjectId.isValid(filter.liquidationCycleId)) {
+    matchStage.liquidationCycleId = new mongoose.Types.ObjectId(filter.liquidationCycleId);
+  }
 
   const facets = await InventoryLot.aggregate([
     { $match: matchStage },

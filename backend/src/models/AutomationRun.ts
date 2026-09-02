@@ -28,6 +28,14 @@ export interface IAutomationRun extends Document {
   dispatchedAt: Date;
   executedAt?: Date;
   buyerEmails?: string[];
+  buyerOffers?: Array<{
+    buyerEmail: string;
+    stageIndex: number;
+    lotId: mongoose.Types.ObjectId | string;
+    offeredPrice: number;
+    offeredCases: number;
+    submittedAt: Date;
+  }>;
   affectedInventoryLots?: Array<{
     lotId: mongoose.Types.ObjectId | string;
     lotNumber?: string;
@@ -39,10 +47,12 @@ export interface IAutomationRun extends Document {
   campaignSnapshot?: any;
   evaluationEndsAt: Date;
   resolution?: {
-    action: 'auto_award' | 'hold_confirmation' | 'auto_donate' | 'yield_markdown' | 'escalate_review' | 'auto_recycle' | 'landfill_dispatched' | string;
+    action: 'auto_award' | 'hold_confirmation' | 'auto_donate' | 'yield_markdown' | 'escalate_review' | 'auto_recycle' | 'landfill_dispatched' | 'marketplace_broadcast' | string;
     targetBuyerId?: mongoose.Types.ObjectId;
     winningOfferId?: mongoose.Types.ObjectId;
     donationConfigSummary?: any;
+    listingIds?: mongoose.Types.ObjectId[];
+    complianceHoldLotIds?: mongoose.Types.ObjectId[];
     resolvedAt: Date;
   };
   createdAt: Date;
@@ -63,14 +73,17 @@ const AutomationRunSchema: Schema = new Schema({
   dispatchedAt: { type: Date, default: Date.now },
   executedAt: { type: Date, default: Date.now },
   buyerEmails: [{ type: String }],
+  buyerOffers: [Schema.Types.Mixed],
   affectedInventoryLots: [Schema.Types.Mixed],
   campaignSnapshot: { type: Schema.Types.Mixed },
   evaluationEndsAt: { type: Date, required: true },
   resolution: {
-    action: { type: String, enum: ['auto_award', 'hold_confirmation', 'auto_donate', 'yield_markdown', 'escalate_review', 'auto_recycle', 'landfill_dispatched'] },
+    action: { type: String, enum: ['auto_award', 'hold_confirmation', 'auto_donate', 'yield_markdown', 'escalate_review', 'auto_recycle', 'landfill_dispatched', 'marketplace_broadcast'] },
     targetBuyerId: { type: Schema.Types.ObjectId, ref: 'Buyer' },
     winningOfferId: { type: Schema.Types.ObjectId, ref: 'Offer' },
     donationConfigSummary: { type: Schema.Types.Mixed },
+    listingIds: [{ type: Schema.Types.ObjectId, ref: 'MarketplaceListing' }],
+    complianceHoldLotIds: [{ type: Schema.Types.ObjectId, ref: 'InventoryLot' }],
     resolvedAt: { type: Date }
   }
 }, {
