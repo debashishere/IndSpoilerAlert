@@ -44,6 +44,10 @@
 - **Unified Partner Registry**: The centralized directory (managed via Buyer Registry & Buyer List Manager) serving as the single repository for commercial buyers, non-profit / food bank donation partners, and waste management / landfill operators.
 - **Context-Aware Stage Tokens**: Dynamic merge tokens (`{{current_stage_discount}}`, `{{expiry_hours}}`, `{{offer_expiration_time}}`, `{{disposal_deadline}}`, `{{inventory_table}}`) that adapt their resolution automatically based on the stage's operational type.
 - **Stage Validation Guardrails**: Type-specific validation enforcing that Liquidation stages have buyers + pricing rules, Donation stages have non-profit partners + allocated lots + expiration windows, and Landfill stages have disposal partners + removal deadline dates.
+- **Private Stage Exclusivity Window**: The designated response timeframe during an active Liquidation Stage targeting specific or customized buyers, during which the evaluated inventory lots remain unlisted on the public marketplace and can only be bid upon via private, tokenized 1-click buyer action links.
+- **Marketplace Broadcast Fallback**: A terminal fallback rule configuration where remaining unsold inventory lots from prior private stages or stages targeting "All Buyers" are automatically published to the public `MarketplaceListing` catalog (subject to compliance verification) as a final commercial recovery attempt before non-commercial diversion.
+- **Compliance Hold Gate**: An automated regulatory safeguard during Marketplace Broadcast execution where lots with verified compliance documentation (COA/Batch Record) publish immediately to the public marketplace, while unverified FDA-regulated lots are held in a `compliance_hold` status pending supplier document upload and verification.
+- **Stage Balance Carry-Forward**: The automated mechanism where unawarded or partially remaining inventory quantities from a prior stage execution remain active for the duration of the current stage window and then carry forward as the available inventory pool for downstream stages or marketplace broadcast.
 
 ## Workflow Run History & Audit Trail
 

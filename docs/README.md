@@ -28,6 +28,8 @@ All major architectural designs are documented under [docs/adr/](adr/):
 - **[ADR 0029: Unified TipTap Email Builder Engine & Progressive Stepper](adr/0029-unified-tiptap-email-builder-and-progressive-stepper.md)**: Unified rich WYSIWYG email builder engine, legacy client XHTML transformer pipeline, and 3-step progressive stepper accordion.
 - **[ADR 0030: Light Theme Support & Top-Right Moon Icon Theme Switcher System](adr/0030-light-theme-support-and-top-right-moon-icon-theme-switcher.md)**: High-contrast light mode design system, centralized React theme context with localStorage persistence, and floating top-right moon/sun icon theme switcher.
 - **[ADR 0031: Premium ColorHunt Palette Theme Integration](adr/0031-colorhunt-palette-e3f2fd-90caf9-2196f3-0d47a1-theme-integration.md)**: Standardizing UI visual identity to ColorHunt palette (#E3F2FD, #90CAF9, #2196F3, #0D47A1) across light/dark design tokens and semantic surfaces.
+- **[ADR 0033: Polymorphic Stage-Gate Escalation Timeline for Donation & Landfill](adr/0033-polymorphic-stage-gate-timeline-donation-landfill.md)**: Unified polymorphic domain model, timing controls, and inventory allocations for Donation and Landfill workflow stages.
+- **[ADR 0034: Private Stage Exclusivity & Marketplace Broadcast Policy](adr/0034-private-stage-exclusivity-and-marketplace-broadcast-policy.md)**: Strict private stage exclusivity, marketplace broadcast fallback, compliance hold gates, and stage balance carry-forward rules.
 
 
 
