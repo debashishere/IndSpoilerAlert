@@ -9,6 +9,8 @@ import Offer from '../models/Offer';
 import Award from '../models/Award';
 import Shipment from '../models/Shipment';
 import DistributionCenter from '../models/DistributionCenter';
+import ComplianceDocument from '../models/ComplianceDocument';
+import AutomationRun from '../models/AutomationRun';
 
 const SIDECAR_URL = process.env.SIDECAR_URL || 'http://localhost:8000';
 
@@ -320,12 +322,16 @@ export async function placeBid(listingId: string, bidData: any) {
 }
 
 export async function projectToMarketplaceListing(lotId: string) {
-  const lot = await InventoryLot.findById(lotId).populate('productId').populate('complianceDocs');
+  const lot = await InventoryLot.findById(lotId)
+    .populate('productId')
+    .populate('distributionCenterId')
+    .populate('complianceDocs');
   if (!lot) {
     throw new Error('Inventory Lot not found.');
   }
 
   const product = lot.productId as any;
+  const dc = lot.distributionCenterId as any;
   const docs = (lot.complianceDocs || []) as any[];
 
   const coaVerified = docs.some(d => d.verified === true || d.status === 'verified');
@@ -334,18 +340,31 @@ export async function projectToMarketplaceListing(lotId: string) {
   return {
     lotId: lot._id,
     supplierId: lot.supplierId,
-    publicTitle: product?.description || `Lot #${lot.lotNumber}`,
+    publicTitle: product?.description || product?.brand || `Lot #${lot.lotNumber}`,
     category: product?.category || 'General Surplus',
     remainingShelfLife: lot.remainingShelfLife,
     availableQuantity: lot.availableQty,
-    publicPrice: lot.standardSellPrice,
+    publicPrice: lot.standardSellPrice || lot.costPerCase || 0,
+    startingPrice: lot.standardSellPrice || lot.costPerCase || 0,
+    minimumPrice: Math.round((lot.standardSellPrice || lot.costPerCase || 0) * 0.5 * 100) / 100,
     coaVerified,
-    sanitized: true
+    sanitized: true,
+    allowBidding: true,
+    warehouseRegion: dc?.name?.includes('Midwest') ? 'Midwest' : (dc?.name?.includes('West') ? 'West Coast' : (dc?.name?.includes('South') ? 'South' : 'East Coast')),
+    discountTier: (lot.remainingShelfLife || 1) < 0.4 ? 'steep' : 'moderate',
+    imageUrl: product?.imageUrl || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500',
+    description: product?.description || `Surplus ${product?.category || 'CPG'} Inventory Lot`,
+    allergens: product?.allergens || [],
+    certifications: product?.certifications || [],
+    expiresAt: lot.expirationDate
   };
 }
 
 export async function publishLotToMarketplace(lotId: string) {
-  const lot = await InventoryLot.findById(lotId).populate('productId').populate('complianceDocs');
+  const lot = await InventoryLot.findById(lotId)
+    .populate('productId')
+    .populate('distributionCenterId')
+    .populate('complianceDocs');
   if (!lot) {
     throw new Error('Inventory Lot not found.');
   }
@@ -357,6 +376,25 @@ export async function publishLotToMarketplace(lotId: string) {
   if (lot.fdaRegulated || (docs && docs.length > 0)) {
     if (!coaVerified) {
       throw new Error('Compliance verification required: COA or Batch Record must be verified prior to marketplace publication.');
+    }
+  }
+
+  // Exclusivity Policy: block public publication while an active private stage targets this lot
+  const activePrivateRun = await AutomationRun.findOne({
+    snapshotInventoryIds: lot._id,
+    status: { $in: ['evaluating', 'partially_awarded', 'escalating'] }
+  });
+  if (activePrivateRun) {
+    const LiquidationAutomation = (await import('../models/LiquidationAutomation')).default;
+    const automation = await LiquidationAutomation.findById(activePrivateRun.automationId);
+    const currentStage = automation?.stages?.[activePrivateRun.currentStageIndex ?? 0];
+    const isPublicBroadcastStage =
+      currentStage?.buyerType === 'all_buyers' ||
+      currentStage?.targetChannel === 'marketplace';
+    if (!isPublicBroadcastStage) {
+      throw new Error(
+        'Exclusivity Policy: Cannot publish lot to public marketplace while active in a private liquidation stage.'
+      );
     }
   }
 
@@ -373,11 +411,19 @@ export async function publishLotToMarketplace(lotId: string) {
       remainingShelfLife: projection.remainingShelfLife,
       availableQuantity: projection.availableQuantity,
       publicPrice: projection.publicPrice,
-      startingPrice: projection.publicPrice,
-      minimumPrice: projection.publicPrice,
+      startingPrice: projection.startingPrice,
+      minimumPrice: projection.minimumPrice,
       coaVerified: projection.coaVerified,
       sanitized: true,
-      status: 'published'
+      allowBidding: true,
+      status: 'published',
+      warehouseRegion: projection.warehouseRegion,
+      discountTier: projection.discountTier,
+      imageUrl: projection.imageUrl,
+      description: projection.description,
+      allergens: projection.allergens,
+      certifications: projection.certifications,
+      expiresAt: projection.expiresAt
     },
     { upsert: true, new: true }
   );
