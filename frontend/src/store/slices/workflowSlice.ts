@@ -213,6 +213,26 @@ export const workflowSlice = createSlice({
       state.selectorMode = 'automatic';
       state.stageGates = defaultStages;
     },
+    clearWorkflowState: (state) => {
+      state.liquidationCycles = [];
+      state.liquidationAutomations = [];
+      state.automationRuns = [];
+      state.selectedCycleId = null;
+      state.selectedRunDetails = null;
+      state.showRunDetailsModal = false;
+      state.editingCampaignId = null;
+      state.showCampaignDrawer = false;
+      state.previewHtml = null;
+      state.selectedAutomationTemplate = '';
+      state.categoryFilter = '';
+      state.maxRslFilter = 0;
+      state.minCasesFilter = 0;
+      state.explicitLotIds = [];
+      state.excludedLotIds = [];
+      state.selectorMode = 'automatic';
+      state.stageGates = defaultStages;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     // Fetch Cycles
@@ -367,6 +387,7 @@ export const {
   setSelectedRunDetails,
   setShowRunDetailsModal,
   resetCampaignWizard,
+  clearWorkflowState,
 } = workflowSlice.actions;
 
 // Reselect Selectors

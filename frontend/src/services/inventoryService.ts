@@ -23,16 +23,41 @@ import {
 } from '../store/slices/inventorySlice';
 
 
+export interface InventoryFetchOptions {
+  cycleId?: string;
+  supplierId?: string;
+  token?: string;
+}
+
 export class InventoryService {
-  static async fetchInventoryLots(cycleId?: string): Promise<any[]> {
-    const url = cycleId
-      ? `${API_BASE_URL}/inventory?liquidationCycleId=${cycleId}`
-      : `${API_BASE_URL}/inventory`;
-    const res = await fetch(url, {
-      headers: {
-        'Cache-Control': 'no-cache, no-store',
-        Pragma: 'no-cache',
-      },
+  static async fetchInventoryLots(options?: string | InventoryFetchOptions): Promise<any[]> {
+    let cycleId: string | undefined;
+    let supplierId: string | undefined;
+    let token: string | undefined;
+
+    if (typeof options === 'string') {
+      cycleId = options;
+    } else if (options && typeof options === 'object') {
+      cycleId = options.cycleId;
+      supplierId = options.supplierId;
+      token = options.token;
+    }
+
+    const params = new URLSearchParams();
+    if (cycleId) params.append('liquidationCycleId', cycleId);
+    if (supplierId) params.append('supplierId', supplierId);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+
+    const headers: Record<string, string> = {
+      'Cache-Control': 'no-cache, no-store',
+      Pragma: 'no-cache',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/inventory${queryString}`, {
+      headers,
     });
     if (!res.ok) {
       throw new Error(`Failed to fetch inventory lots: ${res.statusText}`);
@@ -291,11 +316,27 @@ export class InventoryService {
 // Redux Async Thunks
 export const fetchInventoryLotsThunk = createAsyncThunk(
   'inventory/fetchLots',
-  async (cycleId: string | undefined, { dispatch, rejectWithValue }) => {
+  async (options: string | InventoryFetchOptions | undefined, { dispatch, getState, rejectWithValue }) => {
     dispatch(setLoading(true));
     dispatch(setError(null));
     try {
-      const lots = await InventoryService.fetchInventoryLots(cycleId);
+      let finalOptions: InventoryFetchOptions = {};
+      if (typeof options === 'string') {
+        finalOptions = { cycleId: options };
+      } else if (options && typeof options === 'object') {
+        finalOptions = { ...options };
+      }
+
+      // If supplierId not explicitly passed, read from core / ingestion state if available
+      if (!finalOptions.supplierId) {
+        const state = getState() as any;
+        const currentSupplierId = state.core?.selectedSupplier || state.ingestion?.selectedSupplier;
+        if (currentSupplierId) {
+          finalOptions.supplierId = currentSupplierId;
+        }
+      }
+
+      const lots = await InventoryService.fetchInventoryLots(finalOptions);
       dispatch(setInventoryList(lots));
       return lots;
     } catch (err: any) {

@@ -11,6 +11,8 @@ import { sendEmailHelper, syncEmailToThread, sendCampaignEmail } from './emailSe
 import { compileTemplate, compileSubject } from './emailTemplateService';
 import { resolveStageBuyers } from './stageResolver';
 import { PLATFORM_TEMPLATE_MAP } from '../controllers/emailTemplateController';
+import { generateQuickBidToken } from '../routes/quickBidRoutes';
+import ComplianceDocument from '../models/ComplianceDocument';
 
 const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ind-spoiler-alert';
 
@@ -199,9 +201,11 @@ export async function executeWorkflowStage({ runId, stageIndex }: { runId: strin
   const totalUnsoldLots: any[] = [];
   for (const lot of lotSourceList) {
     const lId = (lot._id || lot.lotId)?.toString();
-    const totalQty = lot.availableQty !== undefined ? lot.availableQty : (lot.quantityCases || lot.cases || 0);
+    const initialTotalCases = lot.quantityCases !== undefined ? lot.quantityCases : (lot.cases || 0);
     const awardedQty = lotAwardedMap.get(lId) || 0;
-    const remainingQty = Math.max(0, totalQty - awardedQty);
+    const calculatedRemaining = initialTotalCases > 0 ? Math.max(0, initialTotalCases - awardedQty) : (lot.availableQty ?? 0);
+    const remainingQty = (lot.availableQty !== undefined && lot.availableQty <= calculatedRemaining) ? lot.availableQty : calculatedRemaining;
+
     if (remainingQty > 0) {
       totalUnsoldLots.push({
         lot,
@@ -344,7 +348,22 @@ export async function executeWorkflowStage({ runId, stageIndex }: { runId: strin
         } catch (e) {}
       }
       const compiledBuyerName = (buyerObj as any)?.companyName || (buyerObj as any)?.name || 'Valued Buyer';
-      const quickBidLink = `https://indspoileralert.com/bid?supplierId=${automation.supplierId}&listingId=${primaryLot?._id || 'deal'}`;
+      const frontendBaseUrl = process.env.FRONTEND_URL || 'https://indspoileralert.com';
+      let quickBidLink = `${frontendBaseUrl}/bid?supplierId=${automation.supplierId}&listingId=${primaryLot?._id || 'deal'}`;
+      if (mongoose.connection.readyState === 1) {
+        try {
+          const token = await generateQuickBidToken({
+            buyerEmail: email,
+            listingId: primaryLot?._id?.toString() || 'deal',
+            lotId: primaryLot?._id,
+            runId: run._id,
+            stageIndex,
+            supplierId: automation.supplierId,
+            expiresAt: stageEvaluationEndsAt
+          });
+          quickBidLink = `${process.env.FRONTEND_URL || 'https://indspoileralert.com'}/bid?token=${encodeURIComponent(token)}`;
+        } catch (e) {}
+      }
 
       const context = {
         buyer_name: compiledBuyerName,
@@ -438,11 +457,10 @@ export async function executeWorkflowStage({ runId, stageIndex }: { runId: strin
   await run.save();
 }
 
-// Define execute-workflow-fallback timeout job
-agenda.define('execute-workflow-fallback', async (job: any) => {
-  const { runId } = job.attrs.data;
+// Exported helper and definition for execute-workflow-fallback
+export async function executeWorkflowFallback({ runId }: { runId: string }) {
   const run = await AutomationRun.findById(runId);
-  if (!run || run.status !== 'evaluating') return;
+  if (!run || !['evaluating', 'escalating', 'partially_awarded', 'dispatched'].includes(run.status)) return;
 
   const automation = await LiquidationAutomation.findById(run.automationId);
   if (!automation) return;
@@ -453,11 +471,53 @@ agenda.define('execute-workflow-fallback', async (job: any) => {
   const lastStageType = (lastStage?.stageType || lastStage?.type || '').toLowerCase();
 
   let onFallback = automation.rules?.onFallback || 'escalate_review';
-  if (lastStageType === 'donation' && onFallback !== 'yield_markdown_retry') {
+  if (lastStageType === 'donation' && onFallback !== 'yield_markdown_retry' && onFallback !== 'marketplace_broadcast') {
     onFallback = 'auto_donate';
   }
 
-  if (onFallback === 'auto_donate' || lastStageType === 'donation') {
+  if (onFallback === 'marketplace_broadcast') {
+    const { publishLotToMarketplace } = require('./marketplaceService');
+    const publishedListingIds: mongoose.Types.ObjectId[] = [];
+    const complianceHoldLotIds: mongoose.Types.ObjectId[] = [];
+
+    for (const lotId of run.snapshotInventoryIds) {
+      try {
+        const lot = await InventoryLot.findById(lotId).populate('complianceDocs');
+        if (!lot || lot.availableQty <= 0) continue;
+
+        const docs = (lot.complianceDocs || []) as any[];
+        const coaVerified = docs.some(d => d.verified === true || d.status === 'verified');
+
+        if (lot.fdaRegulated || (docs && docs.length > 0)) {
+          if (!coaVerified) {
+            complianceHoldLotIds.push(lot._id as mongoose.Types.ObjectId);
+            continue;
+          }
+        }
+
+        const listing = await publishLotToMarketplace(lotId.toString());
+        if (listing && listing._id) {
+          publishedListingIds.push(listing._id as mongoose.Types.ObjectId);
+        }
+      } catch (err: any) {
+        console.error(`Failed to publish lot ${lotId} during marketplace fallback:`, err.message || err);
+        complianceHoldLotIds.push(lotId as mongoose.Types.ObjectId);
+      }
+    }
+
+    run.status = 'fallback_executed';
+    run.resolution = {
+      action: 'marketplace_broadcast',
+      resolvedAt: new Date(),
+      listingIds: publishedListingIds,
+      complianceHoldLotIds
+    };
+    await run.save();
+
+    await LiquidationAutomation.findByIdAndUpdate(automation._id, {
+      $inc: { 'stats.totalBroadcast': 1 }
+    });
+  } else if (onFallback === 'auto_donate' || lastStageType === 'donation') {
     const { donateInventory } = require('./inventoryService');
     const donationConfig = automation.donationConfig || {};
     const entities = donationConfig.donatingEntities || [];
@@ -517,6 +577,10 @@ agenda.define('execute-workflow-fallback', async (job: any) => {
     };
     await run.save();
   }
+}
+
+agenda.define('execute-workflow-fallback', async (job: any) => {
+  await executeWorkflowFallback(job.attrs.data);
 });
 
 // Helper to create decoupled runs and register fallbacks
@@ -768,7 +832,22 @@ export async function createAutomationRun(
         } catch (e) {}
       }
       const compiledBuyerName = (buyerObj as any)?.companyName || (buyerObj as any)?.name || 'Valued Buyer';
-      const quickBidLink = `https://indspoileralert.com/bid?supplierId=${automation.supplierId}&listingId=${primaryLot?._id || 'deal'}`;
+      const frontendBaseUrl = process.env.FRONTEND_URL || 'https://indspoileralert.com';
+      let quickBidLink = `${frontendBaseUrl}/bid?supplierId=${automation.supplierId}&listingId=${primaryLot?._id || 'deal'}`;
+      if (mongoose.connection.readyState === 1) {
+        try {
+          const token = await generateQuickBidToken({
+            buyerEmail: email,
+            listingId: primaryLot?._id?.toString() || 'deal',
+            lotId: primaryLot?._id,
+            runId: run._id,
+            stageIndex: hasStages ? 0 : 0,
+            supplierId: automation.supplierId,
+            expiresAt: evaluationEndsAt
+          });
+          quickBidLink = `${process.env.FRONTEND_URL || 'https://indspoileralert.com'}/bid?token=${encodeURIComponent(token)}`;
+        } catch (e) {}
+      }
 
       const context = {
         buyer_name: compiledBuyerName,
