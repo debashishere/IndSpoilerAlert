@@ -5,8 +5,11 @@ import app from '../index';
 describe('Workflow Execution Timeline API & Snapshot Test Suite (Issues 0054-0055)', () => {
   jest.setTimeout(30000);
 
-  afterAll(async () => {
-    await mongoose.disconnect();
+  beforeAll(async () => {
+    if (mongoose.connection.readyState === 0) {
+      const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/ind-spoiler-alert-test';
+      await mongoose.connect(uri);
+    }
   });
 
   it('Cycle 1 & 2 (Issues 0054-0055): should create automation run with executedAt snapshot and retrieve via REST APIs', async () => {

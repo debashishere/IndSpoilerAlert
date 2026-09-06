@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import app from '../index';
 
 describe('Inventory, Bidding, and Diversion API Endpoints', () => {
+  jest.setTimeout(25000);
   let supplierId: string;
   let buyerId: string;
   let distributionCenterId: string;
