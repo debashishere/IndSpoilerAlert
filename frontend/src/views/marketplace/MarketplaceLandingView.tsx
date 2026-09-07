@@ -67,7 +67,12 @@ export const MarketplaceLandingView: React.FC<MarketplaceLandingViewProps> = ({
       if (selectedRegion !== 'All') queryParams.append('region', selectedRegion);
       if (selectedDiscount !== 'All') queryParams.append('discountTier', selectedDiscount);
 
-      const response = await fetch(`${apiBaseUrl}/marketplace/listings?${queryParams.toString()}`);
+      const cleanBase = apiBaseUrl.endsWith('/') ? apiBaseUrl.slice(0, -1) : apiBaseUrl;
+      const endpoint = cleanBase.endsWith('/marketplace')
+        ? `${cleanBase}/listings`
+        : `${cleanBase}/marketplace/listings`;
+
+      const response = await fetch(`${endpoint}?${queryParams.toString()}`);
       if (response.ok) {
         const data = await response.json();
         setListings(data.listings || []);

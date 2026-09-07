@@ -81,8 +81,8 @@ export async function seedDatabase(forceClean: boolean = false) {
       { name: 'Unilever', companyCode: 'ULVR', preferredDisposition: 'sell', email: REAL_USER_EMAILS[0] },
       { name: 'Kraft Heinz', companyCode: 'KHC', preferredDisposition: 'sell', email: REAL_USER_EMAILS[1] },
       { name: 'Mondelez International', companyCode: 'MDLZ', preferredDisposition: 'sell', email: REAL_USER_EMAILS[2] },
-      { name: 'Danone North America', companyCode: 'DANN', preferredDisposition: 'donate', email: REAL_USER_EMAILS[0] },
-      { name: 'Conagra Brands', companyCode: 'CAG', preferredDisposition: 'recycle', email: REAL_USER_EMAILS[1] }
+      { name: 'Danone North America', companyCode: 'DANN', preferredDisposition: 'donate', email: 'danone.supplier@indspoileralert.com' },
+      { name: 'Conagra Brands', companyCode: 'CAG', preferredDisposition: 'recycle', email: 'conagra.supplier@indspoileralert.com' }
     ];
 
     const suppliers: any[] = [];
@@ -135,7 +135,7 @@ export async function seedDatabase(forceClean: boolean = false) {
 
     const buyers: any[] = [];
     for (const bData of buyerSeedData) {
-      const buyer = await Buyer.create(bData);
+      const buyer = await Buyer.create({ ...bData, supplierId: unilever._id });
       buyers.push(buyer);
     }
 
@@ -556,28 +556,7 @@ export async function seedDatabase(forceClean: boolean = false) {
       status: 'approved'
     });
 
-    const listing2 = await MarketplaceListing.create({
-      opportunityId: opp2._id,
-      sellerId: mondelez._id,
-      allowBidding: true,
-      startingPrice: 12.00,
-      minimumPrice: 8.00,
-      status: 'active',
-      expiresAt: new Date(Date.now() + 7 * 86400000)
-    });
 
-    await Offer.create({
-      listingId: listing2._id,
-      buyerId: buyers[1]._id, // Kroger
-      quantity: 500,
-      price: 9.50,
-      status: 'pending',
-      awardedQty: 0,
-      submittedAt: new Date(),
-      messages: [
-        { sender: 'buyer', content: 'Submitting initial bid of $9.50/case for 500 cases of Triscuit.', timestamp: new Date(), proposedPrice: 9.50, proposedQuantity: 500 }
-      ]
-    });
 
     // 8. Create Award & Shipment for CAG-MEAT-01 (Sold lot)
     const opp3 = await Opportunity.create({
@@ -873,7 +852,7 @@ export async function seedDatabase(forceClean: boolean = false) {
       threadId: 'th-demo-503',
       supplierId: mondelez._id.toString(),
       buyerEmail: REAL_USER_EMAILS[2],
-      listingId: listing2._id.toString(),
+      listingId: lots[2]._id.toString(),
       subject: 'Triscuit Whole Wheat Original Crackers Bidding Auction',
       status: 'active',
       openCount: 1,
