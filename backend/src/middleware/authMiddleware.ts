@@ -4,6 +4,9 @@ import { isValidRealEmail } from '../utils/emailValidation';
 export interface AuthenticatedUser {
   uid: string;
   email: string;
+  name?: string;
+  displayName?: string;
+  photoURL?: string;
   buyerProfile: boolean;
   supplierProfile: boolean;
   profiles: {
@@ -16,9 +19,58 @@ export interface AuthenticatedRequest extends Request {
   user?: AuthenticatedUser;
 }
 
+function decodeJwtPayload(token: string): any {
+  try {
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      let payloadJson: string;
+      try {
+        payloadJson = Buffer.from(parts[1], 'base64url').toString('utf8');
+      } catch {
+        let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+        while (b64.length % 4) b64 += '=';
+        payloadJson = Buffer.from(b64, 'base64').toString('utf8');
+      }
+      return JSON.parse(payloadJson);
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export function decodeToken(token: string): AuthenticatedUser | null {
   if (!token) return null;
 
+  // 1. If token is a JWT (e.g. Firebase ID Token or Mock JWT)
+  if (token.includes('.')) {
+    const jwtPayload = decodeJwtPayload(token);
+    if (jwtPayload && (jwtPayload.email || jwtPayload.user_id || jwtPayload.sub)) {
+      const email = jwtPayload.email || 'user@indspoileralert.com';
+      const uid = jwtPayload.user_id || jwtPayload.sub || jwtPayload.uid || token;
+      const name = jwtPayload.name || jwtPayload.displayName || email.split('@')[0];
+      const profiles = jwtPayload.profiles || {
+        buyer: jwtPayload.buyerProfile !== undefined ? Boolean(jwtPayload.buyerProfile) : true,
+        supplier: jwtPayload.supplierProfile !== undefined ? Boolean(jwtPayload.supplierProfile) : true,
+      };
+
+      return {
+        uid,
+        email,
+        name,
+        displayName: name,
+        photoURL: jwtPayload.picture || jwtPayload.photoURL,
+        buyerProfile: Boolean(profiles.buyer),
+        supplierProfile: Boolean(profiles.supplier),
+        profiles: {
+          buyer: Boolean(profiles.buyer),
+          supplier: Boolean(profiles.supplier),
+        },
+      };
+    }
+  }
+
+  // 2. Mock dev token format
   if (token.startsWith('mock-firebase-id-token-')) {
     const rawUid = token.replace('mock-firebase-id-token-', '');
     let email = 'dev@indspoileralert.com';
@@ -26,7 +78,9 @@ export function decodeToken(token: string): AuthenticatedUser | null {
     if (rawUid.includes('mock-uid-')) {
       const b64 = rawUid.replace('mock-uid-', '');
       try {
-        email = Buffer.from(b64, 'base64').toString('utf8');
+        let paddedB64 = b64.replace(/-/g, '+').replace(/_/g, '/');
+        while (paddedB64.length % 4) paddedB64 += '=';
+        email = Buffer.from(paddedB64, 'base64').toString('utf8');
       } catch {
         email = 'dev@indspoileralert.com';
       }

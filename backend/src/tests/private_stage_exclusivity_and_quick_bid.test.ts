@@ -339,6 +339,47 @@ describe('Issue 01: Private Stage Exclusivity Enforcement & Quick Bid Routing', 
       expect(checkDoc?.isUsed).toBe(true);
     });
 
+    it('allows quick-submit when authenticated user has a real Firebase JWT token matching token recipient', async () => {
+      const userEmail = 'debashisroe1996+atlantacommunityfoodbank@gmail.com';
+      const jwtTokenDoc = await QuickBidToken.create({
+        token: 'test-token-real-firebase-jwt',
+        buyerEmail: userEmail,
+        listingId: lot1._id.toString(),
+        lotId: lot1._id,
+        defaultAmount: 17.50,
+        expiresAt: new Date(Date.now() + 3600000),
+        isUsed: false
+      });
+
+      const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
+      const payload = Buffer.from(JSON.stringify({
+        iss: 'https://securetoken.google.com/indspoileralert',
+        aud: 'indspoileralert',
+        user_id: 'firebase-user-atlanta-fb',
+        sub: 'firebase-user-atlanta-fb',
+        email: userEmail,
+        email_verified: true
+      })).toString('base64url');
+      const realFirebaseJwt = `${header}.${payload}.sigRealMock`;
+
+      const res = await request(app)
+        .post('/api/bids/quick-submit')
+        .set('Authorization', `Bearer ${realFirebaseJwt}`)
+        .send({
+          token: jwtTokenDoc.token,
+          amount: 17.50,
+          cases: 80,
+          activeBuyerEmail: userEmail
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.bid.amount).toBe(17.50);
+
+      const updatedTokenDoc = await QuickBidToken.findOne({ token: jwtTokenDoc.token });
+      expect(updatedTokenDoc?.isUsed).toBe(true);
+    });
+
     it('generates stage-scoped quick bid tokens and maintains exclusivity in subsequent stage executions', async () => {
       const buyer2 = await Buyer.create({
         name: 'Secondary Liquidator',

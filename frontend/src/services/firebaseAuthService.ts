@@ -19,6 +19,30 @@ const MOCK_USER_STORAGE_KEY = 'ind_spoiler_auth_mock_user';
 const MOCK_TOKEN_STORAGE_KEY = 'ind_spoiler_auth_mock_token';
 const MOCK_PROFILES_STORAGE_KEY = 'ind_spoiler_auth_mock_profiles';
 
+export function createMockJwtToken(user: AuthUser): string {
+  const encodeB64Url = (obj: any): string => {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(obj))))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  };
+
+  const header = encodeB64Url({ alg: 'HS256', typ: 'JWT' });
+  const payload = encodeB64Url({
+    uid: user.uid,
+    sub: user.uid,
+    user_id: user.uid,
+    email: user.email,
+    name: user.displayName || user.email.split('@')[0],
+    displayName: user.displayName || user.email.split('@')[0],
+    profiles: user.profiles,
+    photoURL: user.photoURL,
+    email_verified: true,
+  });
+  const signature = 'mock_jwt_signature';
+  return `${header}.${payload}.${signature}`;
+}
+
 const isFirebaseConfigured = (): boolean => {
   const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
   const forceMock = import.meta.env.VITE_USE_DEV_MOCK_AUTH === 'true';
@@ -143,7 +167,7 @@ class FirebaseAuthService {
         profiles: userProfiles,
       };
 
-      const token = `mock-firebase-id-token-${uid}`;
+      const token = createMockJwtToken(user);
       this.mockUser = user;
       this.mockToken = token;
 
@@ -254,7 +278,7 @@ class FirebaseAuthService {
         profiles,
       };
 
-      const token = `mock-firebase-id-token-${uid}`;
+      const token = createMockJwtToken(user);
       this.mockUser = user;
       this.mockToken = token;
 
@@ -287,7 +311,7 @@ class FirebaseAuthService {
         profiles,
       };
 
-      const token = `mock-firebase-id-token-${uid}`;
+      const token = createMockJwtToken(user);
       this.mockUser = user;
       this.mockToken = token;
 

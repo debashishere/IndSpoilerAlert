@@ -174,6 +174,9 @@ export const QuickBidModal: React.FC<QuickBidModalProps> = ({ token, onClose, on
       if (auth?.token) {
         headers['Authorization'] = `Bearer ${auth.token}`;
       }
+      if (currentUserEmail || buyerEmail) {
+        headers['x-buyer-email'] = currentUserEmail || buyerEmail;
+      }
 
       const res = await fetch('/api/bids/quick-submit', {
         method: 'POST',
