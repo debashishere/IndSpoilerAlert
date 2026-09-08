@@ -24,7 +24,7 @@ import {
   Users
 } from 'lucide-react';
 import { getBuyers } from './services/networkService';
-import { DEFAULT_SUPPLIERS } from './services/coreService';
+import { DEFAULT_SUPPLIERS, getCurrentSupplier } from './services/coreService';
 import { ThemeToggle } from './components/shell';
 const LotOperationsHubView = React.lazy(() => import('./components/LotOperationsHubView').then(m => ({ default: m.LotOperationsHubView })));
 const WorkflowsView = React.lazy(() => import('./components/WorkflowsView').then(m => ({ default: m.WorkflowsView })));
@@ -32,7 +32,9 @@ const LogisticsView = React.lazy(() => import('./views/LogisticsView').then(m =>
 const InventoryListView = React.lazy(() => import('./views/InventoryListView').then(m => ({ default: m.InventoryListView })));
 const IngestionView = React.lazy(() => import('./views/IngestionView').then(m => ({ default: m.IngestionView || m.default })));
 import { useDispatch } from 'react-redux';
-import { setActiveTab as setActiveTabRedux, setReturnTab as setReturnTabRedux, fetchCoreReferenceData, fetchBuyerLists } from './store/slices/coreSlice';
+import { setActiveTab as setActiveTabRedux, setReturnTab as setReturnTabRedux, fetchCoreReferenceData, fetchBuyerLists, clearSupplierState } from './store/slices/coreSlice';
+import { clearWorkflowState } from './store/slices/workflowSlice';
+import { clearInventoryState } from './store/slices/inventorySlice';
 import { setBuyerAuth } from './store/slices/authSlice';
 import { setSelectedSupplier as setSelectedSupplierIngestion } from './store/slices/ingestionSlice';
 import { fetchShipmentsThunk } from './store/slices/logisticsSlice';
@@ -78,6 +80,9 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const tab = params.get('tab');
     if (tab === 'email-comms' || tab === 'mails') return 'inbox';
+    if (typeof window !== 'undefined' && (window.location.pathname.startsWith('/bid') || params.has('token') || params.has('quickBidToken'))) {
+      return 'marketplace';
+    }
     if (tab && ['ingestion', 'dashboard', 'analytics', 'marketplace', 'inventory', 'logistics', 'lot-hub', 'workflows', 'inbox', 'settings'].includes(tab)) {
       return tab as any;
     }
@@ -100,9 +105,11 @@ export default function App() {
   const [selectedSupplier, setSelectedSupplier] = useState<string>(DEFAULT_SUPPLIERS[0]._id);
 
   useEffect(() => {
-    dispatch(fetchCoreReferenceData({ supplierId: selectedSupplier }) as any);
-    dispatch(fetchBuyerLists(selectedSupplier) as any);
-  }, [dispatch, selectedSupplier]);
+    if (isAuthenticated) {
+      dispatch(fetchCoreReferenceData({ supplierId: selectedSupplier, token }) as any);
+      dispatch(fetchBuyerLists(selectedSupplier) as any);
+    }
+  }, [dispatch, selectedSupplier, isAuthenticated, token]);
 
   useEffect(() => {
     if (user) {
@@ -128,6 +135,13 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     return params.get('token') || params.get('quickBidToken') || null;
   });
+
+  useEffect(() => {
+    if (quickBidToken) {
+      setActiveTab('marketplace');
+      dispatch(setActiveTabRedux('marketplace'));
+    }
+  }, [quickBidToken, dispatch]);
 
   const [sidebarExpanded, setSidebarExpanded] = useState<boolean>(false);
   const [selectedLotHubId, setSelectedLotHubId] = useState<string | null>(() => {
@@ -342,11 +356,11 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-
   // Fetch buyers list using networkService
-  const fetchBuyers = async () => {
+  const fetchBuyers = async (supplierIdOverride?: string) => {
     try {
-      const data = await getBuyers();
+      const targetSupplier = supplierIdOverride || selectedSupplier;
+      const data = await getBuyers({ supplierId: targetSupplier, token });
       setBuyers(data);
       if (data.length > 0 && !selectedBuyerEmail) {
         setSelectedBuyerEmail(data[0].email || '');
@@ -356,24 +370,32 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    fetchBuyers();
-  }, []);
+
 
   // Fetch inventory dashboard
-  const fetchInventory = async (cycleId?: string) => {
+  const fetchInventory = async (cycleId?: string, supplierIdOverride?: string) => {
     setInventoryLoading(true);
     const targetCycleId = cycleId !== undefined ? cycleId : selectedCycleId;
+    const targetSupplierId = supplierIdOverride || selectedSupplier;
     try {
-      const url = targetCycleId 
-        ? `${API_BASE_URL}/inventory?liquidationCycleId=${targetCycleId}`
-        : `${API_BASE_URL}/inventory`;
-      const res = await fetch(url);
+      const params = new URLSearchParams();
+      if (targetCycleId) params.append('liquidationCycleId', targetCycleId);
+      if (targetSupplierId) params.append('supplierId', targetSupplierId);
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      const headers: Record<string, string> = {
+        'Cache-Control': 'no-cache, no-store',
+        Pragma: 'no-cache',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const url = `${API_BASE_URL}/inventory${queryString}`;
+      const res = await fetch(url, { headers });
       if (res.ok) {
         const data = await res.json();
         setInventoryList(data);
         // Also populate Redux store so modular InventoryListView can read it
-        dispatch(fetchInventoryLotsThunk(targetCycleId || undefined) as any);
+        dispatch(fetchInventoryLotsThunk({ cycleId: targetCycleId || undefined, supplierId: targetSupplierId || undefined, token }) as any);
         if (selectedLotHubId) {
           const target = data.find((l: any) => l._id === selectedLotHubId);
           if (target && (!selectedLot || selectedLot._id !== selectedLotHubId)) {
@@ -402,10 +424,6 @@ export default function App() {
     }
   };
 
-
-
-
-
   const fetchLiquidationAutomations = async (supplierId: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/liquidation-automations?supplierId=${supplierId}`);
@@ -418,13 +436,14 @@ export default function App() {
     }
   };
 
+  // Fetch all bids across all lots for the current supplier
   const fetchAllBids = async () => {
     setIsFetchingAllBids(true);
     try {
       const res = await fetch(`${API_BASE_URL}/bids`);
       if (res.ok) {
         const data = await res.json();
-        setAllBids(data);
+        setAllBids(data.bids || []);
       }
     } catch (err) {
       console.error("Error fetching all bids:", err);
@@ -433,43 +452,60 @@ export default function App() {
     }
   };
 
-
-
-
-
-
-
-
-
-
   useEffect(() => {
     if (selectedSupplier) {
       dispatch(setSelectedSupplierIngestion(selectedSupplier));
       dispatch(fetchBuyerLists(selectedSupplier) as any);
+      dispatch(fetchCoreReferenceData({ supplierId: selectedSupplier, token }) as any);
+      fetchBuyers(selectedSupplier);
       fetchLiquidationCycles(selectedSupplier);
       fetchLiquidationAutomations(selectedSupplier);
       setSelectedCycleId(''); // Reset selected cycle on supplier switch
     }
-  }, [selectedSupplier, dispatch]);
+  }, [selectedSupplier, dispatch, token]);
 
-  // Match logged-in user email to supplier automatically if possible
+  // Dynamically resolve & provision dedicated supplier profile for authenticated user
   useEffect(() => {
-    if (user?.email && suppliers.length > 0) {
-      const userEmailLower = user.email.toLowerCase();
-      const domain = userEmailLower.split('@')[1] || '';
-      const domainPrefix = domain.split('.')[0] || '';
-      const matched = suppliers.find((s) => {
-        const sNameLower = (s.name || '').toLowerCase().replace(/\s+/g, '');
-        return (
-          userEmailLower.includes(sNameLower) ||
-          (domainPrefix.length > 2 && sNameLower.includes(domainPrefix))
-        );
-      });
-      if (matched && matched._id !== selectedSupplier) {
-        setSelectedSupplier(matched._id);
-      }
+    let isMounted = true;
+    if (user?.email) {
+      getCurrentSupplier(user.email, token)
+        .then((profile) => {
+          if (!isMounted || !profile) return;
+          setSelectedSupplier(profile._id);
+          setSuppliers((prev) => {
+            const filtered = prev.filter((s) => s._id !== profile._id && s.email !== profile.email);
+            return [profile, ...filtered];
+          });
+          fetchInventory(selectedCycleId, profile._id);
+          fetchBuyers(profile._id);
+          dispatch(fetchCoreReferenceData({ supplierId: profile._id, token }) as any);
+        })
+        .catch((err) => {
+          console.warn('Failed to resolve dedicated supplier profile:', err);
+        });
+    } else if (!user) {
+      // Clear all state when logged out
+      setSelectedSupplier(DEFAULT_SUPPLIERS[0]._id);
+      setInventoryList([]);
+      setLiquidationCycles([]);
+      setAutomationList([]);
+      setSalesRecords([]);
+      setBids([]);
+      setAllBids([]);
+      setBuyers([]);
+      setSelectedBuyerEmail('');
+      setSelectedCycleId('');
+      setSelectedLot(null);
+      setSelectedLotForNegotiation(null);
+      setSuppliers(DEFAULT_SUPPLIERS);
+      dispatch(clearSupplierState());
+      dispatch(clearWorkflowState());
+      dispatch(clearInventoryState());
     }
-  }, [user, suppliers, selectedSupplier]);
+    return () => {
+      isMounted = false;
+    };
+  }, [user, token, dispatch]);
 
   // Fetch sales records from backend
   const fetchSalesRecords = async () => {
@@ -1604,6 +1640,20 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
               <button
                 onClick={() => {
                   logout();
+                  setSelectedSupplier(DEFAULT_SUPPLIERS[0]._id);
+                  setInventoryList([]);
+                  setLiquidationCycles([]);
+                  setAutomationList([]);
+                  setSalesRecords([]);
+                  setBids([]);
+                  setAllBids([]);
+                  setSelectedCycleId('');
+                  setSelectedLot(null);
+                  setSelectedLotForNegotiation(null);
+                  setSuppliers(DEFAULT_SUPPLIERS);
+                  dispatch(clearSupplierState());
+                  dispatch(clearWorkflowState());
+                  dispatch(clearInventoryState());
                   setForceLanding(true);
                 }}
                 style={{
@@ -1684,7 +1734,22 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
         )}
 
         {quickBidToken && (
-          <QuickBidModal token={quickBidToken} onClose={() => setQuickBidToken(null)} />
+          <QuickBidModal
+            token={quickBidToken}
+            onClose={() => {
+              // Strip token params from the URL before clearing modal state
+              const url = new URL(window.location.href);
+              url.searchParams.delete('token');
+              url.searchParams.delete('quickBidToken');
+              window.history.replaceState({}, document.title, url.pathname + (url.search !== '?' ? url.search : ''));
+              setQuickBidToken(null);
+            }}
+            onSuccess={() => {
+              // URL cleanup is handled inside QuickBidModal on successful submission;
+              // just clear the token state so the modal unmounts cleanly.
+              setQuickBidToken(null);
+            }}
+          />
         )}
 
 
