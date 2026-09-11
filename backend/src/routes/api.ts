@@ -29,6 +29,7 @@ import { authenticateToken, optionalAuthToken } from '../middleware/authMiddlewa
 import supplierRouter from './supplierRoutes';
 import marketplaceRouter from './marketplaceRoutes';
 import buyerListRoutes from './buyerListRoutes';
+// import dealRoutes from './dealRoutes';
 
 const router = Router();
 
@@ -37,6 +38,7 @@ router.use('/v1/supplier', supplierRouter);
 router.use('/v1/marketplace', marketplaceRouter);
 router.use('/marketplace', marketplaceRouter);
 router.use('/buyer-lists', buyerListRoutes);
+// router.use('/deals', dealRoutes);
 
 
 // Ensure uploads directory exists
@@ -138,9 +140,19 @@ router.post('/marketplace/listing/:id/bids', marketplaceController.placeBid);
 
 // Offers & Negotiation
 router.get('/bids', offersController.getBids);
+router.post('/bids/:id/accept', offersController.acceptBid);
+router.post('/bids/:id/decline', offersController.declineBid);
+router.post('/bids/:id/reset', offersController.resetBid);
+router.post('/bids/:id/renegotiate', offersController.renegotiateBid);
+router.post('/bids/:id/resend-settlement', offersController.resendSettlement);
 router.use('/bids', quickBidRoutes);
+router.post('/offers/:id/accept', offersController.acceptBid);
 router.post('/offers/:id/message', offersController.sendMessage);
 router.post('/offers/:id/reject', offersController.rejectBid);
+router.post('/offers/:id/decline', offersController.declineBid);
+router.post('/offers/:id/reset', offersController.resetBid);
+router.post('/offers/:id/renegotiate', offersController.renegotiateBid);
+router.post('/offers/:id/resend-settlement', offersController.resendSettlement);
 
 
 

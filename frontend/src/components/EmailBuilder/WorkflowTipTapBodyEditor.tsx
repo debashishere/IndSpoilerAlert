@@ -104,6 +104,12 @@ export const TokenBadgeNode = Node.create({
   selectable: true,
   atom: true,
 
+  addOptions() {
+    return {
+      tokenValues: {} as Record<string, string>,
+    };
+  },
+
   addAttributes() {
     return {
       token: {
@@ -124,10 +130,12 @@ export const TokenBadgeNode = Node.create({
   },
 
   renderHTML({ HTMLAttributes, node }) {
+    const tokenKey = node.attrs.token || 'token';
+    const displayVal = (this.options as any)?.tokenValues?.[tokenKey] || `{{${tokenKey}}}`;
     return [
       'span',
       mergeAttributes(HTMLAttributes),
-      `{{${node.attrs.token || 'token'}}}`
+      displayVal
     ];
   },
 });
@@ -158,6 +166,7 @@ export interface WorkflowTipTapBodyEditorProps {
   onSelectTag?: (token: string) => void;
   disabled?: boolean;
   availableTokens?: string[];
+  tokenValues?: Record<string, string>;
   onOpenDynamicTokenConfig?: () => void;
 }
 
@@ -189,6 +198,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
   onSelectTag,
   disabled = false,
   availableTokens = DEFAULT_AVAILABLE_TOKENS,
+  tokenValues,
   onOpenDynamicTokenConfig
 }) => {
   const [selectedFont, setSelectedFont] = useState('Verdana');
@@ -243,7 +253,9 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
       }),
       TextStyle,
       TextAlign,
-      TokenBadgeNode,
+      resolveExt(TokenBadgeNode).configure({
+        tokenValues: tokenValues || {},
+      }),
       LinkMark,
     ],
     content: contentHtml || `<p style="font-family: Verdana, sans-serif; font-size: 11pt;">Dear {{buyer_name}},</p><p style="font-family: Verdana, sans-serif; font-size: 11pt;">We have an urgent inventory offer available for review. Please see details below:</p>`,
@@ -273,6 +285,26 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
       }
     }
   }, [contentHtml, editor]);
+
+  // Live update token badges in DOM without document reload or overwriting user text
+  useEffect(() => {
+    if (!editor || editor.isDestroyed) return;
+    const ext = editor.extensionManager?.extensions?.find((e: any) => e.name === 'tokenBadge');
+    if (ext) {
+      ext.options.tokenValues = tokenValues || {};
+    }
+    if (editor.view?.dom) {
+      const badges = editor.view.dom.querySelectorAll<HTMLElement>('.token-badge-pill[data-token]');
+      badges.forEach((badge) => {
+        const token = badge.getAttribute('data-token');
+        if (token && tokenValues && tokenValues[token]) {
+          if (badge.textContent !== tokenValues[token]) {
+            badge.textContent = tokenValues[token];
+          }
+        }
+      });
+    }
+  }, [tokenValues, editor]);
 
   // Handle Token Insertion
   const handleInsertToken = useCallback(
@@ -412,6 +444,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
 
           {showTokenDropdown && (
             <div
+              data-testid="editor-tokens-dropdown"
               className="absolute left-0 mt-1 w-48 bg-white border border-slate-200 rounded-md shadow-lg z-50 py-1"
               style={{
                 position: 'absolute',
@@ -432,6 +465,7 @@ export const WorkflowTipTapBodyEditor: React.FC<WorkflowTipTapBodyEditorProps> =
                 <button
                   key={token}
                   type="button"
+                  data-testid={`insert-token-${token}`}
                   onClick={() => handleInsertToken(token)}
                   className="w-full text-left px-3 py-1.5 text-xs text-slate-700 hover:bg-orange-50 hover:text-orange-700 flex items-center justify-between"
                   style={{

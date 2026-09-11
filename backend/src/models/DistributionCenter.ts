@@ -7,6 +7,7 @@ export interface IDistributionCenter extends Document {
   address: string;
   coordinates: { lat: number; lng: number };
   coldStorage: boolean;
+  operatingHours?: string;
 }
 
 const DistributionCenterSchema: Schema = new Schema({
@@ -18,7 +19,8 @@ const DistributionCenterSchema: Schema = new Schema({
     lat: { type: Number, required: true },
     lng: { type: Number, required: true }
   },
-  coldStorage: { type: Boolean, default: false }
+  coldStorage: { type: Boolean, default: false },
+  operatingHours: { type: String, default: '08:00 AM - 04:30 PM CST' }
 });
 
 export default mongoose.model<IDistributionCenter>('DistributionCenter', DistributionCenterSchema);

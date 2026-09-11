@@ -9,7 +9,7 @@ import { compileTemplate, compileSubject } from './emailTemplateService';
 let defaultCachedTransporter: any = null;
 
 const getDefaultMailTransporter = async () => {
-  if (defaultCachedTransporter) {
+  if (process.env.NODE_ENV !== 'test' && defaultCachedTransporter) {
     return defaultCachedTransporter;
   }
 
@@ -304,8 +304,9 @@ export async function sendCampaignEmail(
   html: string,
   context?: Record<string, any>
 ) {
-  const finalSubject = compileSubject(subject, context || {});
-  const finalHtml = compileTemplate(html, context || {});
+  const hasTokens = (str: string) => /{{|data-token=/.test(str);
+  const finalSubject = (context && hasTokens(subject)) ? compileSubject(subject, context) : subject;
+  const finalHtml = (context && hasTokens(html)) ? compileTemplate(html, context) : html;
 
   // If SendGrid API Key is configured, use SendGrid API dispatch directly
   if (process.env.SENDGRID_API_KEY) {
