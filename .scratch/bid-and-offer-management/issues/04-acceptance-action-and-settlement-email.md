@@ -12,3 +12,10 @@ Complete the `[✓ Accept Offer]` action inside the Bid Action Inspector. Resolv
 - [x] Backend endpoint `POST /api/bids/:id/accept` records the award, locks inventory allocation, creates a Deal Settlement session token, and triggers Google OAuth email dispatch to the buyer.
 - [x] Logs acceptance event, deal value, and outbound notification to the Lot CRM Activity timeline and Emails Hub thread.
 - [x] Inspector UI updates seamlessly to reflect accepted status with options to view the deal or resend settlement communications.
+
+## Sub-Tickets (Buyer Deal Settlement & E-Sign Flow)
+Specified in detail by [ADR 0035: Buyer Deal Settlement Portal, Payment Gate & E-Sign Agreement Flow](../0035-buyer-deal-settlement-portal-and-payment-gated-esign.md):
+- [x] [04A — Standalone Portal Route & Hybrid Deal Authorization](./04a-standalone-portal-route-and-hybrid-deal-authorization.md)
+- [x] [04B — Payment Gate & Settlement State Machine](./04b-payment-gate-and-settlement-state-machine.md)
+- [x] [04C — Dual-Mode Signature Capture & Legal Agreement Execution](./04c-dual-mode-signature-capture-and-legal-agreement-execution.md)
+- [x] [04D — Authoritative Agreement PDF Generation & Executed Deal Dashboard](./04d-authoritative-agreement-pdf-and-executed-deal-dashboard.md)

@@ -264,23 +264,31 @@ export async function enableBidding(lotId: string) {
 }
 
 export async function getBids(lotId: string) {
+  const lot = await InventoryLot.findById(lotId);
   const opportunity = await Opportunity.findOne({ lotId });
-  if (!opportunity) {
-    throw new Error('Opportunity not found for this lot.');
+
+  if (!lot && !opportunity) {
+    throw new Error('Inventory lot not found.');
   }
 
-  const listing = await MarketplaceListing.findOne({ opportunityId: opportunity._id });
-  if (!listing) {
-    throw new Error('Marketplace Listing not found for this lot.');
+  const queryConditions: any[] = [{ lotId }];
+
+  if (opportunity) {
+    const listing = await MarketplaceListing.findOne({ opportunityId: opportunity._id });
+    if (listing) {
+      queryConditions.push({ listingId: listing._id });
+    }
   }
 
-  const bids = await Offer.find({ listingId: listing._id }).populate('buyerId');
+  const bids = await Offer.find({ $or: queryConditions }).populate('buyerId');
   const bidsWithPO = [];
   for (const bid of bids) {
     const award = await Award.findOne({ offerId: bid._id });
     const bidObj = bid.toObject();
     if (award) {
       (bidObj as any).poPdfUrl = award.poPdfUrl;
+      (bidObj as any).dealId = award._id.toString();
+      (bidObj as any).dealToken = award.dealToken;
     }
     bidsWithPO.push(bidObj);
   }
@@ -393,16 +401,20 @@ export async function awardBid(
   offer.awardedQty = finalAwardedQty;
   await offer.save();
 
-  const award = new Award({
-    listingId: listing?._id,
-    lotId: lot._id,
-    offerId: offer._id,
-    buyerId: buyer._id,
-    awardedQty: finalAwardedQty,
-    price: offer.price,
-    emailSent: emailSent || ''
-  });
-  await award.save();
+  const award = await Award.findOneAndUpdate(
+    { offerId: offer._id },
+    {
+      $set: {
+        listingId: listing?._id,
+        lotId: lot._id,
+        buyerId: buyer._id,
+        awardedQty: finalAwardedQty,
+        price: offer.price,
+        emailSent: emailSent || ''
+      }
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
 
   // Generate and upload PO PDF
   const poFilename = `po-${award._id}.pdf`;

@@ -221,6 +221,89 @@ export class InventoryService {
     return Array.isArray(data) ? data : data.bids || [];
   }
 
+  static async declineBid(bidId: string, reason: string, rationale?: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/bids/${bidId}/decline`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ reason, rationale }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to decline bid: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  static async resetBid(bidId: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/bids/${bidId}/reset`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to reset bid: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  static async renegotiateBid(bidId: string, counterPrice: number, counterQuantity: number, messageText?: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/bids/${bidId}/renegotiate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ counterPrice, counterQuantity, messageText }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to renegotiate bid: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  static async acceptBid(
+    bidId: string,
+    payload?: {
+      awardedQuantity?: number;
+      pickupAddress?: string;
+      pickupHours?: string;
+      templateHtml?: string;
+      emailSubject?: string;
+    }
+  ): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/bids/${bidId}/accept`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload || {}),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to accept bid: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
+  static async resendSettlementCommunications(bidId: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/bids/${bidId}/resend-settlement`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to resend settlement communications: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
   static async fetchLotActivities(lotId: string): Promise<any[]> {
     const res = await fetch(`${API_BASE_URL}/inventory/${lotId}/activities`, {
       headers: {

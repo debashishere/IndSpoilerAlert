@@ -17,6 +17,8 @@ import {
   setActivityContentInput as setReduxActivityContentInput,
   openAwardModal,
   setSelectedLot,
+  setLotHubData,
+  setInventoryList,
 } from '../store/slices/inventorySlice';
 import { setActiveTab } from '../store/slices/coreSlice';
 import {
@@ -29,7 +31,9 @@ import {
   uploadComplianceDocThunk,
   sendNegotiationMessageThunk,
   createLotActivityThunk,
+  InventoryService,
 } from '../services/inventoryService';
+import BidActionInspectorModal from './BidActionInspectorModal';
 import { 
   ArrowLeft, 
   Box, 
@@ -45,7 +49,9 @@ import {
   Layers,
   Activity,
   Users,
-  AlertTriangle
+  AlertTriangle,
+  Search,
+  CheckCircle2
 } from 'lucide-react';
 
 export interface LotOperationsHubViewProps {
@@ -53,6 +59,15 @@ export interface LotOperationsHubViewProps {
   onBack?: () => void;
   subTab?: 'details' | 'bids' | 'activities';
   setSubTab?: (tab: 'details' | 'bids' | 'activities') => void;
+  
+  // Bid Selection / Inspector
+  onSelectBid?: (bid: any) => void;
+  onOpenBidInspector?: (bid: any) => void;
+  isBidInspectorOpen?: boolean;
+  setIsBidInspectorOpen?: (open: boolean) => void;
+  onDeclineBid?: (bidId: string, payload: { reason: string; rationale?: string }) => Promise<void> | void;
+  onResetBid?: (bidId: string) => Promise<void> | void;
+  onCounterBid?: (bidId: string, payload: { price: number; quantity: number; message: string }) => Promise<void | any> | void | any;
   
   // Handlers & state from parent
   onEnableBidding?: (lot: any) => void;
@@ -146,6 +161,335 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
   const activityFilter = props.activityFilter ?? lotHubData.activityFilter ?? 'all';
   const activityTypeInput = props.activityTypeInput ?? lotHubData.selectedFormType ?? 'Email';
   const activityContentInput = props.activityContentInput !== undefined ? props.activityContentInput : lotHubData.activityContentInput;
+
+  const [bidStatusFilter, setBidStatusFilter] = useState<'All' | 'Pending' | 'Countered' | 'Awarded' | 'Declined'>('All');
+  const [bidSearchQuery, setBidSearchQuery] = useState('');
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false);
+  const [selectedBidForInspector, setSelectedBidForInspector] = useState<any>(null);
+  const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'success' | 'info' | 'error' | 'warning' } | null>(null);
+  const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+  const isSubmittingDecline = isSubmittingAction;
+  const setIsSubmittingDecline = setIsSubmittingAction;
+
+  const getBidStatusInfo = (rawStatus?: string) => {
+    const s = (rawStatus || '').toLowerCase();
+    if (s === 'countered') {
+      return { label: 'Countered', key: 'Countered', className: 'badge-outline-primary', bg: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'rgba(59, 130, 246, 0.3)' };
+    }
+    if (s === 'fully_accepted' || s === 'partially_accepted' || s === 'awarded' || s === 'accepted') {
+      return { label: 'Awarded', key: 'Awarded', className: 'badge-success', bg: 'rgba(16, 185, 129, 0.15)', color: '#10b981', border: 'rgba(16, 185, 129, 0.3)' };
+    }
+    if (s === 'rejected' || s === 'declined') {
+      return { label: 'Declined', key: 'Declined', className: 'badge-danger', bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: 'rgba(239, 68, 68, 0.3)' };
+    }
+    return { label: 'Pending', key: 'Pending', className: 'badge-warning', bg: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)' };
+  };
+
+  const rawBids = [...(bidsList || []), ...(negotiationBids || [])];
+  const uniqueBidsMap = new Map<string, any>();
+  for (const b of rawBids) {
+    if (b && b._id) {
+      if (!uniqueBidsMap.has(String(b._id))) {
+        uniqueBidsMap.set(String(b._id), b);
+      } else {
+        uniqueBidsMap.set(String(b._id), { ...uniqueBidsMap.get(String(b._id)), ...b });
+      }
+    }
+  }
+  const allBids = Array.from(uniqueBidsMap.values());
+
+  const filteredBids = allBids.filter((bid: any) => {
+    const statusInfo = getBidStatusInfo(bid.status);
+    if (bidStatusFilter !== 'All' && statusInfo.key !== bidStatusFilter) {
+      return false;
+    }
+    if (bidSearchQuery.trim()) {
+      const q = bidSearchQuery.toLowerCase();
+      const company = (bid.buyerId?.companyName || '').toLowerCase();
+      const email = (bid.buyerId?.email || '').toLowerCase();
+      const status = (statusInfo.label || '').toLowerCase();
+      if (!company.includes(q) && !email.includes(q) && !status.includes(q)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  const handleSelectedBidForNegotiationChange = (bid: any) => {
+    if (props.setSelectedBidForNegotiation) props.setSelectedBidForNegotiation(bid);
+    else dispatch(setReduxSelectedBidForNegotiation(bid));
+  };
+
+  const handleBidRowSelect = (bid: any) => {
+    setSelectedBidForInspector(bid);
+    handleSelectedBidForNegotiationChange(bid);
+    if (props.onSelectBid) props.onSelectBid(bid);
+    if (props.onOpenBidInspector) props.onOpenBidInspector(bid);
+    if (props.setIsBidInspectorOpen) props.setIsBidInspectorOpen(true);
+    setIsInspectorOpen(true);
+  };
+
+  const handleDeclineBidAction = async (payload: { reason: string; rationale: string }, explicitBid?: any) => {
+    const targetBid = explicitBid || selectedBidForInspector || selectedBidForNegotiation;
+    if (!targetBid?._id) return;
+    setIsSubmittingDecline(true);
+    try {
+      if (props.onDeclineBid) {
+        await props.onDeclineBid(targetBid._id, payload);
+      } else {
+        await InventoryService.declineBid(targetBid._id, payload.reason, payload.rationale);
+      }
+
+      const updatedBid = { ...targetBid, status: 'rejected' };
+      setSelectedBidForInspector(updatedBid);
+      handleSelectedBidForNegotiationChange(updatedBid);
+
+      const updateList = (list: any[]) =>
+        (list || []).map((b: any) => (b._id === targetBid._id ? { ...b, status: 'rejected' } : b));
+
+      const newBidsList = updateList(bidsList);
+      const newNegotiationBids = updateList(negotiationBids);
+
+      dispatch(setLotHubData({
+        bidsList: newBidsList,
+        negotiationBids: newNegotiationBids
+      }));
+
+      setFeedbackToast({
+        message: `Offer declined (${payload.reason}). Recorded in lot CRM timeline.`,
+        type: 'success'
+      });
+      setTimeout(() => setFeedbackToast(null), 4500);
+
+      if (props.setIsBidInspectorOpen) props.setIsBidInspectorOpen(false);
+      setIsInspectorOpen(false);
+    } catch (err: any) {
+      console.error('Error declining bid:', err);
+      setFeedbackToast({
+        message: err.message || 'Failed to decline offer',
+        type: 'error'
+      });
+      setTimeout(() => setFeedbackToast(null), 4500);
+    } finally {
+      setIsSubmittingDecline(false);
+    }
+  };
+
+  const handleResetBidAction = async () => {
+    const targetBid = selectedBidForInspector || selectedBidForNegotiation;
+    if (!targetBid?._id) return;
+    setIsSubmittingDecline(true);
+    try {
+      if (props.onResetBid) {
+        await props.onResetBid(targetBid._id);
+      } else {
+        await InventoryService.resetBid(targetBid._id);
+      }
+
+      const updatedBid = { ...targetBid, status: 'pending' };
+      setSelectedBidForInspector(updatedBid);
+      handleSelectedBidForNegotiationChange(updatedBid);
+
+      const updateList = (list: any[]) =>
+        (list || []).map((b: any) => (b._id === targetBid._id ? { ...b, status: 'pending' } : b));
+
+      const newBidsList = updateList(bidsList);
+      const newNegotiationBids = updateList(negotiationBids);
+
+      dispatch(setLotHubData({
+        bidsList: newBidsList,
+        negotiationBids: newNegotiationBids
+      }));
+
+      setFeedbackToast({
+        message: 'Bid status reset to pending. Bid is now re-actionable.',
+        type: 'success'
+      });
+      setTimeout(() => setFeedbackToast(null), 4500);
+    } catch (err: any) {
+      console.error('Error resetting bid:', err);
+      setFeedbackToast({
+        message: err.message || 'Failed to reset bid',
+        type: 'error'
+      });
+      setTimeout(() => setFeedbackToast(null), 4500);
+    } finally {
+      setIsSubmittingDecline(false);
+    }
+  };
+
+  const handleCounterBidAction = async (payload: { price: number; quantity: number; message: string }, explicitBid?: any) => {
+    const targetBid = explicitBid || selectedBidForInspector || selectedBidForNegotiation;
+    if (!targetBid?._id) return;
+    setIsSubmittingDecline(true);
+    try {
+      let updatedOffer: any;
+      if (props.onCounterBid) {
+        updatedOffer = await props.onCounterBid(targetBid._id, payload);
+      } else {
+        updatedOffer = await InventoryService.renegotiateBid(targetBid._id, payload.price, payload.quantity, payload.message);
+      }
+
+      const mergedBid = updatedOffer && updatedOffer._id ? updatedOffer : {
+        ...targetBid,
+        status: 'countered',
+        messages: [
+          ...(targetBid.messages || []),
+          {
+            sender: 'supplier',
+            content: payload.message,
+            proposedPrice: payload.price,
+            proposedQuantity: payload.quantity,
+            timestamp: new Date().toISOString()
+          }
+        ]
+      };
+
+      setSelectedBidForInspector(mergedBid);
+      handleSelectedBidForNegotiationChange(mergedBid);
+
+      const updateList = (list: any[]) =>
+        (list || []).map((b: any) => (b._id === targetBid._id ? mergedBid : b));
+
+      const newBidsList = updateList(bidsList);
+      const newNegotiationBids = updateList(negotiationBids);
+
+      dispatch(setLotHubData({
+        bidsList: newBidsList,
+        negotiationBids: newNegotiationBids
+      }));
+
+      if (updatedOffer?.emailDispatch && !updatedOffer.emailDispatch.dispatched) {
+        setFeedbackToast({
+          message: `Counter-offer recorded, but email dispatch warning: ${updatedOffer.emailDispatch.warning || 'Mail transport disconnected'}`,
+          type: 'warning'
+        });
+      } else {
+        setFeedbackToast({
+          message: `Counter-offer dispatched ($${payload.price.toFixed(2)}/cs for ${payload.quantity} cs). Status is now countered.`,
+          type: 'success'
+        });
+      }
+      setTimeout(() => setFeedbackToast(null), 4500);
+
+      // In-Situ Negotiation Continuity: Retain open inspector session
+      return updatedOffer;
+    } catch (err: any) {
+      console.error('Error countering bid:', err);
+      setFeedbackToast({
+        message: err.message || 'Failed to dispatch counter-offer',
+        type: 'error'
+      });
+      setTimeout(() => setFeedbackToast(null), 4500);
+    } finally {
+      setIsSubmittingDecline(false);
+    }
+  };
+
+  const handleAcceptBidAction = async (payload?: any, explicitBid?: any) => {
+    const targetBid = explicitBid || selectedBidForInspector || selectedBidForNegotiation;
+    if (!targetBid?._id) return;
+    setIsSubmittingDecline(true);
+    try {
+      let result: any;
+      if (props.onAcceptBid) {
+        result = await props.onAcceptBid(targetBid._id, payload);
+      } else {
+        result = await InventoryService.acceptBid(targetBid._id, payload);
+      }
+
+      const awardedNum = payload?.awardedQuantity || targetBid.quantity;
+      const newStatus = result?.status || (awardedNum < targetBid.quantity ? 'partially_accepted' : 'fully_accepted');
+
+      const mergedBid = {
+        ...targetBid,
+        ...(result || {}),
+        status: newStatus,
+        awardedQty: awardedNum,
+        dealId: result?.dealId || result?.award?._id || targetBid.dealId
+      };
+
+      setSelectedBidForInspector(mergedBid);
+      handleSelectedBidForNegotiationChange(mergedBid);
+
+      const updateList = (list: any[]) =>
+        (list || []).map((b: any) => (b._id === targetBid._id ? mergedBid : b));
+
+      const newBidsList = updateList(bidsList);
+      const newNegotiationBids = updateList(negotiationBids);
+
+      dispatch(setLotHubData({
+        bidsList: newBidsList,
+        negotiationBids: newNegotiationBids
+      }));
+
+      // Update lot availableQty in Redux inventoryList if present
+      if (lot && lot.availableQty !== undefined) {
+        const updatedAvailable = Math.max(0, lot.availableQty - awardedNum);
+        const updatedInventory = (inventoryList || []).map((l: any) =>
+          l._id === lot._id ? { ...l, availableQty: updatedAvailable } : l
+        );
+        dispatch(setInventoryList(updatedInventory));
+        if (selectedLot && selectedLot._id === lot._id) {
+          dispatch(setSelectedLot({ ...selectedLot, availableQty: updatedAvailable }));
+        }
+      }
+
+      if (result?.emailDispatch && !result.emailDispatch.dispatched) {
+        setFeedbackToast({
+          message: `Offer accepted, but email dispatch warning: ${result.emailDispatch.warning || 'Mail transport disconnected'}`,
+          type: 'warning'
+        });
+      } else {
+        setFeedbackToast({
+          message: `Offer successfully accepted (${awardedNum} cases awarded). Settlement email dispatched.`,
+          type: 'success'
+        });
+      }
+      setTimeout(() => setFeedbackToast(null), 4500);
+      return result;
+    } catch (err: any) {
+      console.error('Error accepting bid:', err);
+      setFeedbackToast({
+        message: err.message || 'Failed to accept bid',
+        type: 'error'
+      });
+      setTimeout(() => setFeedbackToast(null), 4500);
+      throw err;
+    } finally {
+      setIsSubmittingDecline(false);
+    }
+  };
+
+  const handleResendSettlementAction = async (bidId: string) => {
+    setIsSubmittingAction(true);
+    try {
+      setFeedbackToast({
+        message: 'Resending settlement communications to buyer...',
+        type: 'info'
+      });
+      const result = await InventoryService.resendSettlementCommunications(bidId);
+      if (result?.emailDispatch && !result.emailDispatch.dispatched) {
+        setFeedbackToast({
+          message: `Settlement email resend warning: ${result.emailDispatch.warning || 'Mail transport disconnected'}`,
+          type: 'warning'
+        });
+      } else {
+        setFeedbackToast({
+          message: 'Settlement communications successfully resent to buyer!',
+          type: 'success'
+        });
+      }
+    } catch (err: any) {
+      setFeedbackToast({
+        message: err.message || 'Failed to resend settlement communications',
+        type: 'error'
+      });
+    } finally {
+      setIsSubmittingAction(false);
+      setTimeout(() => setFeedbackToast(null), 4000);
+    }
+  };
 
   const returnTab = useSelector((state: RootState) => state.core?.returnTab);
   const backButtonLabel = returnTab === 'ingestion' ? 'Back to Ingestion Table' : 'Back to Inventory List';
@@ -285,10 +629,7 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
     }
   };
 
-  const handleSelectedBidForNegotiationChange = (bid: any) => {
-    if (props.setSelectedBidForNegotiation) props.setSelectedBidForNegotiation(bid);
-    else dispatch(setReduxSelectedBidForNegotiation(bid));
-  };
+
 
   const handleNegotiationChatInputChange = (val: string) => {
     if (props.setNegotiationChatInput) props.setNegotiationChatInput(val);
@@ -636,7 +977,7 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
           onClick={() => handleSubTabChange('bids')}
         >
           <Award size={18} />
-          <span>Bidding & Awarding ({negotiationBids.length || bidsList.length || 0})</span>
+          <span>Bid & Offer (Bidding & Awarding) ({allBids.length || negotiationBids.length || bidsList.length || 0})</span>
         </button>
         <button 
           className={`lot-hub-tab-btn ${subTab === 'activities' ? 'active' : ''}`}
@@ -1034,167 +1375,229 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
       {/* =========================================
           SUB-TAB 2: BIDDING & AWARDING
       ========================================= */}
+      {/* =========================================
+          SUB-TAB 2: BID & OFFER WORKSPACE
+      ========================================= */}
       {subTab === 'bids' && (
-        <div className="lot-hub-grid">
-          {/* Left Column: Active Bids & Awarding Table */}
-          <div className="lot-hub-card">
-            <div className="lot-hub-card-header">
-              <div className="lot-hub-card-title"><Award size={18} color="hsl(var(--primary))" /> Incoming Bids & Offers ({bidsList.length || negotiationBids.length})</div>
+        <div className="lot-hub-grid" style={{ display: 'block' }}>
+          <div className="lot-hub-card" style={{ width: '100%', padding: 0, overflow: 'hidden' }}>
+            {/* Card Header with Title, Status Filters, and Search */}
+            <div 
+              className="lot-hub-card-header" 
+              style={{ 
+                padding: '16px 20px', 
+                borderBottom: '1px solid hsl(var(--border-color))', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                flexWrap: 'wrap', 
+                gap: '12px' 
+              }}
+            >
+              <div className="lot-hub-card-title" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Award size={20} color="hsl(var(--primary))" />
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
+                  Bid & Offer ({filteredBids.length})
+                </h3>
+              </div>
+
+              {/* Filter Tabs & Search Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                {/* Status Filter Tabs */}
+                <div 
+                  role="tablist"
+                  aria-label="Status Filters"
+                  style={{ 
+                    display: 'flex', 
+                    gap: '4px', 
+                    backgroundColor: 'hsl(var(--bg-main))', 
+                    padding: '4px', 
+                    borderRadius: '8px', 
+                    border: '1px solid hsl(var(--border-color))' 
+                  }}
+                >
+                  {(['All', 'Pending', 'Countered', 'Awarded', 'Declined'] as const).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      role="tab"
+                      aria-selected={bidStatusFilter === status}
+                      className={`btn btn-sm ${bidStatusFilter === status ? 'btn-primary' : 'btn-ghost'}`}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '0.75rem',
+                        borderRadius: '6px',
+                        fontWeight: bidStatusFilter === status ? 600 : 400
+                      }}
+                      onClick={() => setBidStatusFilter(status)}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Search Bar */}
+                <div style={{ position: 'relative', minWidth: '220px' }}>
+                  <Search 
+                    size={14} 
+                    style={{ 
+                      position: 'absolute', 
+                      left: '10px', 
+                      top: '50%', 
+                      transform: 'translateY(-50%)', 
+                      color: 'hsl(var(--text-muted))' 
+                    }} 
+                  />
+                  <input
+                    type="text"
+                    aria-label="Search bids"
+                    placeholder="Search bids by buyer, email..."
+                    value={bidSearchQuery}
+                    onChange={(e) => setBidSearchQuery(e.target.value)}
+                    className="form-input"
+                    style={{
+                      paddingLeft: '32px',
+                      paddingRight: '12px',
+                      paddingTop: '6px',
+                      paddingBottom: '6px',
+                      fontSize: '0.8rem',
+                      borderRadius: '8px',
+                      width: '100%'
+                    }}
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* List Body */}
             {negotiationBidsLoading ? (
               <div style={{ padding: '60px 0', textAlign: 'center' }}>
                 <div className="loader" style={{ margin: '0 auto 12px' }} />
                 <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-muted))' }}>Retrieving live bidding dashboard...</p>
               </div>
-            ) : (bidsList.length === 0 && negotiationBids.length === 0) ? (
+            ) : filteredBids.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px 20px', color: 'hsl(var(--text-muted))' }}>
                 <MessageSquare size={36} style={{ opacity: 0.3, margin: '0 auto 12px' }} />
-                <p>No active bids currently placed for this lot.</p>
+                <p style={{ fontWeight: 500, fontSize: '0.95rem', margin: '0 0 4px 0' }}>
+                  {allBids.length === 0 ? 'No active bids currently placed for this lot.' : 'No bids match the selected filter or search.'}
+                </p>
+                {allBids.length > 0 && (
+                  <button 
+                    className="btn btn-sm btn-ghost" 
+                    style={{ fontSize: '0.8rem', marginTop: '8px' }}
+                    onClick={() => { setBidStatusFilter('All'); setBidSearchQuery(''); }}
+                  >
+                    Reset filters
+                  </button>
+                )}
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                {(negotiationBids.length > 0 ? negotiationBids : bidsList).map((bid: any) => (
-                  <div 
-                    key={bid._id}
-                    style={{
-                      padding: '16px',
-                      backgroundColor: selectedBidForNegotiation?._id === bid._id ? 'hsl(var(--bg-card-hover))' : 'hsl(var(--bg-main))',
-                      border: selectedBidForNegotiation?._id === bid._id ? '2px solid hsl(var(--primary))' : '1px solid hsl(var(--border-color))',
-                      borderRadius: '10px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s'
-                    }}
-                    onClick={() => handleSelectedBidForNegotiationChange(bid)}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: '1rem', color: 'hsl(var(--text-primary))' }}>
-                          {bid.buyerId?.companyName || 'Verified Buyer Network'}
-                        </div>
-                        <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
-                          Offer: <strong style={{ color: 'hsl(var(--success))', fontSize: '0.95rem' }}>${bid.bidPricePerCase?.toFixed(2)}</strong>/cs for <strong>{bid.quantityCases}</strong> cases
-                        </div>
-                      </div>
-                      <span className="badge badge-outline-primary" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>
-                        {bid.status || 'Submitted'}
-                      </span>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid hsl(var(--border-color))' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>
-                        Total Recovery: <strong>${(bid.bidPricePerCase * bid.quantityCases).toLocaleString(undefined, { minimumFractionDigits: 2 })}</strong>
-                      </span>
-
-                      <div style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.stopPropagation()}>
-                        <input 
-                          type="number" 
-                          placeholder="Partial Qty" 
-                          style={{ width: '90px', padding: '4px 8px', fontSize: '0.75rem', borderRadius: '4px', border: '1px solid hsl(var(--border-color))', backgroundColor: 'hsl(var(--bg-main))', color: 'hsl(var(--text-primary))' }}
-                          value={expandedBidId === bid._id ? partialAwardCases : ''}
-                          onChange={(e) => {
-                            handleExpandedBidIdChange(bid._id);
-                            handlePartialAwardCasesChange(e.target.value === '' ? '' : Number(e.target.value));
-                          }}
-                        />
-                        <button 
-                          className="btn btn-sm btn-primary"
-                          disabled={awardingBidId === bid._id}
-                          onClick={() => handleAwardBidAction(bid._id, expandedBidId === bid._id && typeof partialAwardCases === 'number' ? partialAwardCases : undefined)}
-                        >
-                          {awardingBidId === bid._id ? 'Awarding...' : 'Award Notice & BOL'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right Column: Negotiation Console & Counter-Offer Form */}
-          <div className="lot-hub-card">
-            <div className="lot-hub-card-header">
-              <div className="lot-hub-card-title"><MessageSquare size={18} color="hsl(var(--primary))" /> Live Negotiation Chat & Counter-Offer</div>
-            </div>
-
-            {selectedBidForNegotiation ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
-                <div style={{ padding: '12px', backgroundColor: 'hsl(var(--bg-main))', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>Negotiating with: {selectedBidForNegotiation.buyerId?.companyName || 'Verified Buyer'}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>Current Bid: ${selectedBidForNegotiation.bidPricePerCase?.toFixed(2)}/cs ({selectedBidForNegotiation.quantityCases} cases)</div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {/* List Header */}
+                <div 
+                  style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: '2fr 1.2fr 1fr 1.2fr 1.2fr 1fr', 
+                    gap: '12px', 
+                    padding: '12px 20px', 
+                    backgroundColor: 'hsl(var(--bg-main))', 
+                    borderBottom: '1px solid hsl(var(--border-color))',
+                    fontSize: '0.75rem', 
+                    fontWeight: 700, 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em', 
+                    color: 'hsl(var(--text-secondary))' 
+                  }}
+                >
+                  <div>Buyer Details</div>
+                  <div>Unit Price</div>
+                  <div>Quantity</div>
+                  <div>Total Recovery</div>
+                  <div>Submitted</div>
+                  <div style={{ textAlign: 'right' }}>Status</div>
                 </div>
 
-                {/* Message Log */}
-                <div style={{ flex: 1, minHeight: '220px', maxHeight: '320px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', padding: '10px', backgroundColor: 'hsl(var(--bg-main) / 50%)', borderRadius: '8px' }}>
-                  {(selectedBidForNegotiation.negotiationHistory || []).map((item: any, idx: number) => (
-                    <div 
-                      key={idx}
+                {/* Bid Rows */}
+                {filteredBids.map((bid: any) => {
+                  const unitPrice = typeof bid.price === 'number' ? bid.price : (typeof bid.bidPricePerCase === 'number' ? bid.bidPricePerCase : 0);
+                  const quantity = typeof bid.quantity === 'number' ? bid.quantity : (typeof bid.quantityCases === 'number' ? bid.quantityCases : 0);
+                  const totalRecovery = unitPrice * quantity;
+                  const statusInfo = getBidStatusInfo(bid.status);
+                  const submittedDate = bid.submittedAt || bid.createdAt || bid.timestamp;
+                  const formattedDate = submittedDate ? new Date(submittedDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                  const isSelected = selectedBidForNegotiation?._id === bid._id;
+
+                  return (
+                    <div
+                      key={bid._id}
+                      data-testid={`bid-row-${bid._id}`}
+                      role="row"
+                      onClick={() => handleBidRowSelect(bid)}
                       style={{
-                        alignSelf: item.sender === 'Supplier' ? 'flex-end' : 'flex-start',
-                        backgroundColor: item.sender === 'Supplier' ? 'hsl(var(--primary) / 20%)' : 'hsl(var(--bg-card))',
-                        border: `1px solid ${item.sender === 'Supplier' ? 'hsl(var(--primary) / 40%)' : 'hsl(var(--border-color))'}`,
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        maxWidth: '85%'
+                        display: 'grid',
+                        gridTemplateColumns: '2fr 1.2fr 1fr 1.2fr 1.2fr 1fr',
+                        gap: '12px',
+                        alignItems: 'center',
+                        padding: '14px 20px',
+                        borderBottom: '1px solid hsl(var(--border-color))',
+                        backgroundColor: isSelected ? 'hsl(var(--bg-card-hover))' : 'transparent',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.15s ease'
                       }}
                     >
-                      <div style={{ fontSize: '0.7rem', fontWeight: 700, color: item.sender === 'Supplier' ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))', marginBottom: '2px' }}>
-                        {item.sender === 'Supplier' ? 'You (IndSpoilerAlert Account)' : selectedBidForNegotiation.buyerId?.companyName}
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'hsl(var(--text-primary))' }}>
+                          {bid.buyerId?.companyName || 'Verified Buyer'}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>
+                          {bid.buyerId?.email || 'N/A'}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.85rem', lineHeight: 1.4 }}>{item.message || `Counter offer placed at $${item.price}/cs`}</div>
-                      <div style={{ fontSize: '0.65rem', color: 'hsl(var(--text-muted))', marginTop: '4px', textAlign: 'right' }}>
-                        {new Date(item.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+
+                      <div>
+                        <span style={{ fontWeight: 600, color: 'hsl(var(--success))', fontSize: '0.9rem' }}>
+                          ${unitPrice.toFixed(2)}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>/cs</span>
+                      </div>
+
+                      <div>
+                        <span style={{ fontWeight: 600, color: 'hsl(var(--text-primary))', fontSize: '0.85rem' }}>
+                          {quantity}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}> cs</span>
+                      </div>
+
+                      <div>
+                        <span style={{ fontWeight: 700, color: 'hsl(var(--text-primary))', fontSize: '0.9rem' }}>
+                          ${totalRecovery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+
+                      <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))' }}>
+                        {formattedDate}
+                      </div>
+
+                      <div style={{ textAlign: 'right' }}>
+                        <span 
+                          className={`badge ${statusInfo.className}`} 
+                          style={{ 
+                            fontSize: '0.75rem', 
+                            padding: '4px 8px', 
+                            borderRadius: '6px',
+                            backgroundColor: statusInfo.bg,
+                            color: statusInfo.color,
+                            border: `1px solid ${statusInfo.border}`,
+                            textTransform: 'capitalize',
+                            fontWeight: 600
+                          }}
+                        >
+                          {statusInfo.label}
+                        </span>
                       </div>
                     </div>
-                  ))}
-                  {(!selectedBidForNegotiation.negotiationHistory || selectedBidForNegotiation.negotiationHistory.length === 0) && (
-                    <p style={{ textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '0.8rem', margin: 'auto' }}>
-                      No messages recorded yet for this offer. Send a message or counter-offer below.
-                    </p>
-                  )}
-                </div>
-
-                {/* Counter Offer Input */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '8px', padding: '12px', backgroundColor: 'hsl(var(--bg-main))', borderRadius: '8px' }}>
-                  <input 
-                    type="number" 
-                    className="form-input" 
-                    placeholder={`Counter Price ($/cs)`} 
-                    value={counterOfferPrice}
-                    onChange={(e) => handleCounterOfferPriceChange(e.target.value === '' ? '' : Number(e.target.value))}
-                  />
-                  <input 
-                    type="number" 
-                    className="form-input" 
-                    placeholder={`Cases (${selectedBidForNegotiation.quantityCases})`} 
-                    value={counterOfferQty}
-                    onChange={(e) => handleCounterOfferQtyChange(e.target.value === '' ? '' : Number(e.target.value))}
-                  />
-                  <button className="btn btn-primary" onClick={handleSendCounterOfferAction}>
-                    Counter Offer
-                  </button>
-                </div>
-
-                {/* Chat Message Box */}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="Type direct message to buyer..." 
-                    style={{ flex: 1 }}
-                    value={negotiationChatInput}
-                    onChange={(e) => handleNegotiationChatInputChange(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleSendNegotiationMessageAction(); }}
-                  />
-                  <button className="btn btn-secondary" onClick={handleSendNegotiationMessageAction}>
-                    <Send size={16} /> Send
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '80px 20px', color: 'hsl(var(--text-muted))' }}>
-                <MessageSquare size={36} style={{ opacity: 0.3, margin: '0 auto 12px' }} />
-                <p>Select an incoming bid from the left panel to open live chat and counter-offer controls.</p>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -1317,6 +1720,49 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
           </div>
         </div>
       )}
+
+      {/* Toast Feedback Notification */}
+      {feedbackToast && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            zIndex: 1100,
+            padding: '12px 20px',
+            borderRadius: '8px',
+            backgroundColor: feedbackToast.type === 'error' ? '#ef4444' : '#10b981',
+            color: '#ffffff',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontWeight: 600,
+            fontSize: '0.85rem'
+          }}
+        >
+          {feedbackToast.type === 'error' ? <AlertTriangle size={16} /> : <CheckCircle2 size={16} />}
+          <span>{feedbackToast.message}</span>
+        </div>
+      )}
+
+      {/* Bid Action Inspector Modal */}
+      <BidActionInspectorModal
+        isOpen={props.isBidInspectorOpen !== undefined ? props.isBidInspectorOpen : isInspectorOpen}
+        onClose={() => {
+          if (props.setIsBidInspectorOpen) props.setIsBidInspectorOpen(false);
+          setIsInspectorOpen(false);
+        }}
+        bid={selectedBidForInspector || selectedBidForNegotiation}
+        lot={lot}
+        onDecline={(payload) => handleDeclineBidAction(payload, selectedBidForInspector || selectedBidForNegotiation)}
+        onReset={() => handleResetBidAction(selectedBidForInspector || selectedBidForNegotiation)}
+        onCounter={(counterData) => handleCounterBidAction(counterData, selectedBidForInspector || selectedBidForNegotiation)}
+        onAccept={(acceptPayload) => handleAcceptBidAction(acceptPayload, selectedBidForInspector || selectedBidForNegotiation)}
+        onResendSettlement={handleResendSettlementAction}
+        isSubmitting={isSubmittingAction}
+      />
     </div>
   );
 };
