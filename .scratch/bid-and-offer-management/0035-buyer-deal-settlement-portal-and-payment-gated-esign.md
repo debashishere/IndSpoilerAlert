@@ -11,7 +11,7 @@
 
 In [Issue 04](file:///Users/debashisroy/Documents/SpoilerAlert/.scratch/bid-and-offer-management/issues/04-acceptance-action-and-settlement-email.md), when a supplier accepts a buyer's offer in the Bid Action Inspector, the system deducts available lot inventory, records an `Award`, generates a cryptographic `dealToken`, and dispatches an acceptance email containing settlement links (`/deal/:dealId?token=:dealToken`).
 
-To complete the transaction lifecycle ([Issue 05](file:///Users/debashisroy/Documents/SpoilerAlert/.scratch/bid-and-offer-management/issues/05-deal-settlement-portal-and-esign.md)), the platform requires a dedicated post-award settlement experience for the buyer. Key engineering and domain challenges addressed:
+To complete the transaction lifecycle as part of [Issue 04 (Sub-Tickets 04A–04D)](./issues/04-acceptance-action-and-settlement-email.md), the platform requires a dedicated post-award settlement experience for the buyer. Key engineering and domain challenges addressed:
 1. **Frictionless External Access vs. Security**: External liquidators frequently access settlement links from mobile or guest browsers without an active platform session. Access must be secure yet frictionless.
 2. **Financial Safeguard (Payment Gate)**: In commercial surplus asset liquidation, legal execution of transfer agreements must strictly require confirmed payment receipt.
 3. **Legal E-Sign & Audit Integrity**: The digital agreement execution must capture tamper-evident audit records (signer identity, corporate title, timestamp, IP, signature artifact) and provide an authoritative executed PDF.

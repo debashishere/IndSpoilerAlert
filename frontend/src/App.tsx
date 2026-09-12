@@ -50,6 +50,7 @@ import { QuickBidModal } from './components/QuickBidModal';
 import { SHOW_DISTRESSED_ANALYTICS, SHOW_FREIGHT_LOGISTICS } from './components/shell/Sidebar';
 import { useAuth } from './context/AuthContext';
 import { PublicLandingPage } from './views/PublicLandingPage';
+import { DealSettlementPortalView } from './views/DealSettlementPortalView';
 
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -1452,6 +1453,28 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
         }}>⚡</div>
         <p style={{ color: 'hsl(var(--text-muted))', fontSize: '0.875rem', margin: 0 }}>Loading IndSpoiler Alert…</p>
       </div>
+    );
+  }
+
+  const getDealRouteInfo = () => {
+    if (typeof window !== 'undefined') {
+      const match = window.location.pathname.match(/^\/(?:portal\/)?deal\/([^/?#]+)/);
+      if (match) {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token') || params.get('dealToken');
+        return { dealId: match[1], token };
+      }
+    }
+    return null;
+  };
+
+  const dealRoute = getDealRouteInfo();
+  if (dealRoute) {
+    return (
+      <>
+        <ThemeToggle />
+        <DealSettlementPortalView dealId={dealRoute.dealId} token={dealRoute.token} />
+      </>
     );
   }
 
