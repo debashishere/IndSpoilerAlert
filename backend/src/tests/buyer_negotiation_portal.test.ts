@@ -307,10 +307,12 @@ describe('Buyer Negotiation Portal & Outbound Counter Action CTAs (Slice 3, Seam
       expect((acceptActivity?.metadata as any)?.pricePerCase).toBe(14.25);
       expect((acceptActivity?.metadata as any)?.awardedQuantity).toBe(120);
 
-      // 7. Verify Baseline Bid Preservation Invariant: offer.quantity and offer.price remain original values
+      // 7. Verify Baseline Bid Preservation Invariant: offer.quantity and offer.price remain original values, and finalPrice is persisted
       expect(acceptedOffer?.price).toBe(12.00);
       expect(acceptedOffer?.quantity).toBe(150);
+      expect((acceptedOffer as any)?.finalPrice).toBe(14.25);
     });
+
 
     it('rejects unilateral buyer acceptance when no supplier counter proposal exists with 400 Bad Request', async () => {
       // Create fresh pending offer with token generated directly

@@ -17,6 +17,7 @@ export interface IOffer extends Document {
   price: number;
   status: 'pending' | 'countered' | 'rejected' | 'partially_accepted' | 'fully_accepted';
   awardedQty?: number;
+  finalPrice?: number;
   negotiationToken?: string;
   submittedAt: Date;
   messages: IMessage[];
@@ -31,7 +32,9 @@ const OfferSchema: Schema = new Schema({
   price: { type: Number, required: true },
   status: { type: String, enum: ['pending', 'countered', 'rejected', 'partially_accepted', 'fully_accepted'], default: 'pending' },
   awardedQty: { type: Number, default: 0 },
+  finalPrice: { type: Number },
   negotiationToken: { type: String, required: false },
+
   submittedAt: { type: Date, default: Date.now },
   messages: {
     type: [{

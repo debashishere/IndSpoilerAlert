@@ -423,5 +423,22 @@ describe('Backend Seam 1: Bid Acceptance Action Flow & Settlement Email (Issue #
       expect(award?.price).toBe(12.50);
       expect(award?.totalAmount).toBe(1875.00); // 150 * 12.50
     });
+
+    it('should persist finalPrice on Offer while retaining immutable baseline price (Issue 01 Seam 1)', async () => {
+      const res = await request(app)
+        .post(`/api/bids/${offer._id}/accept`)
+        .send({
+          awardedQuantity: 150,
+          pricePerCase: 12.50,
+          pickupAddress: '450 Logistics Blvd, Denver, CO 80202',
+          pickupHours: '08:00 AM - 04:30 PM CST'
+        });
+
+      expect(res.status).toBe(200);
+      const updatedOffer = await Offer.findById(offer._id);
+      expect((updatedOffer as any)?.finalPrice).toBe(12.50);
+      expect(updatedOffer?.price).toBe(10.00); // Baseline price retained
+    });
   });
 });
+

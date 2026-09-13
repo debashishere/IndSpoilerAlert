@@ -1254,7 +1254,148 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       expect(screen.getByText(/<script>window\.__xssExecuted = true;<\/script>/i)).toBeInTheDocument();
     });
   });
+
+  describe('Dual-Figure Pricing & Settlement Banner (Issue #02)', () => {
+    const negotiatedBid = {
+      _id: 'bid-accepted-negotiated',
+      lotId: 'lot-101',
+      buyerId: {
+        _id: 'buyer-1',
+        companyName: 'Apex Liquidators',
+        email: 'apex@liquidators.com'
+      },
+      price: 29.00,
+      finalPrice: 30.00,
+      quantity: 100,
+      awardedQty: 100,
+      status: 'fully_accepted',
+      dealId: 'deal-101'
+    };
+
+    const sampleLot = {
+      _id: 'lot-101',
+      lotNumber: 'LOT-99',
+      standardSellPrice: 35.00,
+      productId: {
+        sku: 'SKU-APPLES',
+        description: 'Organic Honeycrisp Apples'
+      }
+    };
+
+    it('renders prominent settled price, Settled badge, and initial bid subtitle in Unit Offer card and computes gross recovery from settled terms for negotiated accepted offer', () => {
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={negotiatedBid}
+          lot={sampleLot}
+        />
+      );
+
+      // Top summary: Unit Offer card
+      const unitOfferCard = screen.getByTestId('summary-unit-offer');
+      expect(unitOfferCard).toBeInTheDocument();
+      expect(within(unitOfferCard).getByText(/\$30\.00/i)).toBeInTheDocument();
+      expect(within(unitOfferCard).getByText(/Settled/i)).toBeInTheDocument();
+      expect(within(unitOfferCard).getByText(/Initial Bid:\s*\$29\.00\s*\/case/i)).toBeInTheDocument();
+
+      // Top summary: Gross Recovery card (100 * $30.00 = $3,000.00)
+      const grossRecoveryCard = screen.getByTestId('summary-gross-recovery');
+      expect(grossRecoveryCard).toBeInTheDocument();
+      expect(within(grossRecoveryCard).getByText(/\$3,000\.00/i)).toBeInTheDocument();
+    });
+
+    it('renders dual-figure settlement copy in the active settlement banner for negotiated accepted offer', () => {
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={negotiatedBid}
+          lot={sampleLot}
+        />
+      );
+
+      const banner = screen.getByTestId('settlement-active-banner');
+      expect(banner).toBeInTheDocument();
+      expect(banner).toHaveTextContent(
+        'This offer has been awarded for 100 cases to Apex Liquidators at $30.00/case (negotiated from initial bid of $29.00/case). Total settlement value: $3,000.00.'
+      );
+    });
+
+    it('renders standard unit price without Settled badge or delta messaging when offer is accepted without negotiation', () => {
+      const standardAcceptedBid = {
+        ...negotiatedBid,
+        _id: 'bid-accepted-standard',
+        price: 25.00,
+        finalPrice: 25.00,
+        quantity: 80,
+        awardedQty: 80,
+        status: 'fully_accepted'
+      };
+
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={standardAcceptedBid}
+          lot={sampleLot}
+        />
+      );
+
+      // Unit Offer card: Clean unit price without Settled badge or Initial Bid subtitle
+      const unitOfferCard = screen.getByTestId('summary-unit-offer');
+      expect(within(unitOfferCard).getByText(/\$25\.00/i)).toBeInTheDocument();
+      expect(within(unitOfferCard).queryByText(/Settled/i)).toBeNull();
+      expect(within(unitOfferCard).queryByText(/Initial Bid/i)).toBeNull();
+
+      // Gross recovery: 80 * 25 = $2,000.00
+      const grossRecoveryCard = screen.getByTestId('summary-gross-recovery');
+      expect(within(grossRecoveryCard).getByText(/\$2,000\.00/i)).toBeInTheDocument();
+
+      // Settlement banner: Clean copy without delta messaging
+      const banner = screen.getByTestId('settlement-active-banner');
+      expect(banner).toHaveTextContent(
+        'This offer has been awarded for 80 cases to Apex Liquidators at $25.00/case. Total settlement value: $2,000.00.'
+      );
+      expect(banner).not.toHaveTextContent(/negotiated from initial bid/i);
+    });
+
+    it('renders clean standard unit price and banner when accepted offer has undefined finalPrice', () => {
+      const standardAcceptedBidNoFinal = {
+        ...negotiatedBid,
+        _id: 'bid-accepted-no-final',
+        price: 22.00,
+        finalPrice: undefined,
+        quantity: 50,
+        awardedQty: 50,
+        status: 'fully_accepted'
+      };
+
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={standardAcceptedBidNoFinal}
+          lot={sampleLot}
+        />
+      );
+
+      const unitOfferCard = screen.getByTestId('summary-unit-offer');
+      expect(within(unitOfferCard).getByText(/\$22\.00/i)).toBeInTheDocument();
+      expect(within(unitOfferCard).queryByText(/Settled/i)).toBeNull();
+
+      const grossRecoveryCard = screen.getByTestId('summary-gross-recovery');
+      expect(within(grossRecoveryCard).getByText(/\$1,100\.00/i)).toBeInTheDocument();
+
+      const banner = screen.getByTestId('settlement-active-banner');
+      expect(banner).toHaveTextContent(
+        'This offer has been awarded for 50 cases to Apex Liquidators at $22.00/case. Total settlement value: $1,100.00.'
+      );
+      expect(banner).not.toHaveTextContent(/negotiated from initial bid/i);
+    });
+  });
 });
+
 
 
 

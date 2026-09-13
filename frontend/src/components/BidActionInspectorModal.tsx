@@ -143,10 +143,9 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
 
   if (!isOpen || !bid) return null;
 
-  const unitPrice = bid.price ?? bid.bidPricePerCase ?? 0;
+  const unitPrice = typeof bid.price === 'number' ? bid.price : (typeof bid.bidPricePerCase === 'number' ? bid.bidPricePerCase : 0);
   const effectiveUnitPrice = agreedUnitPrice > 0 ? agreedUnitPrice : unitPrice;
-  const quantity = bid.quantity ?? bid.quantityCases ?? 0;
-  const totalRecovery = unitPrice * quantity;
+  const quantity = typeof bid.quantity === 'number' ? bid.quantity : (typeof bid.quantityCases === 'number' ? bid.quantityCases : 0);
   const buyerCompany = bid.buyerId?.companyName || 'Verified Buyer';
   const buyerEmail = bid.buyerId?.email || 'N/A';
   const rawStatus = (internalStatus || bid.status || 'pending').toLowerCase();
@@ -154,6 +153,13 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
   const isRejected = rawStatus === 'rejected' || rawStatus === 'declined';
   const isAccepted = rawStatus === 'fully_accepted' || rawStatus === 'partially_accepted' || rawStatus === 'awarded';
   const isCountered = rawStatus === 'countered';
+
+  const finalPrice = typeof bid.finalPrice === 'number' ? bid.finalPrice : undefined;
+  const hasNegotiatedSettledPrice = isAccepted && finalPrice !== undefined && Math.abs(finalPrice - unitPrice) > 0.001;
+  const effectiveAwardedQty = (isAccepted && typeof bid.awardedQty === 'number' && bid.awardedQty > 0) ? bid.awardedQty : quantity;
+  const effectivePrice = (isAccepted && finalPrice !== undefined) ? finalPrice : unitPrice;
+  const initialTotalRecovery = unitPrice * quantity;
+  const totalRecovery = effectivePrice * effectiveAwardedQty;
 
   const messages = Array.isArray(internalMessages)
     ? [...internalMessages].sort((a: any, b: any) => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime())
@@ -181,8 +187,8 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
   const priceDeltaPct = unitPrice > 0 && isPriceValid ? (priceDelta / unitPrice) * 100 : 0;
 
   const counterTotalRecovery = isCounterValid ? numCounterPrice * numCounterQuantity : 0;
-  const totalDelta = isCounterValid ? counterTotalRecovery - totalRecovery : 0;
-  const totalDeltaPct = totalRecovery > 0 && isCounterValid ? (totalDelta / totalRecovery) * 100 : 0;
+  const totalDelta = isCounterValid ? counterTotalRecovery - initialTotalRecovery : 0;
+  const totalDeltaPct = initialTotalRecovery > 0 && isCounterValid ? (totalDelta / initialTotalRecovery) * 100 : 0;
 
   const negotiationBaseUrl = typeof window !== 'undefined'
     ? `${window.location.origin}/portal/negotiation/${bid?._id || ''}`
@@ -653,13 +659,40 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
             </div>
           </div>
 
-          <div style={{ padding: '10px 14px', backgroundColor: 'hsl(var(--bg-card))', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
+          <div data-testid="summary-unit-offer" style={{ padding: '10px 14px', backgroundColor: 'hsl(var(--bg-card))', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
             <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <DollarSign size={14} /> Unit Offer
             </div>
-            <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'hsl(var(--success))', marginTop: '4px' }}>
-              ${unitPrice.toFixed(2)} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>/case</span>
-            </div>
+            {hasNegotiatedSettledPrice ? (
+              <div style={{ marginTop: '4px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '1.05rem', color: 'hsl(var(--success))' }}>
+                    ${finalPrice.toFixed(2)} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>/case</span>
+                  </span>
+                  <span 
+                    style={{ 
+                      fontSize: '0.65rem', 
+                      fontWeight: 700, 
+                      padding: '1px 5px', 
+                      borderRadius: '4px', 
+                      backgroundColor: 'hsla(var(--success), 0.15)', 
+                      color: 'hsl(var(--success))',
+                      border: '1px solid hsla(var(--success), 0.3)',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    Settled
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
+                  Initial Bid: ${unitPrice.toFixed(2)} /case
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontWeight: 700, fontSize: '1.05rem', color: 'hsl(var(--success))', marginTop: '4px' }}>
+                ${unitPrice.toFixed(2)} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>/case</span>
+              </div>
+            )}
           </div>
 
           <div style={{ padding: '10px 14px', backgroundColor: 'hsl(var(--bg-card))', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
@@ -671,7 +704,7 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
             </div>
           </div>
 
-          <div style={{ padding: '10px 14px', backgroundColor: 'hsl(var(--bg-card))', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
+          <div data-testid="summary-gross-recovery" style={{ padding: '10px 14px', backgroundColor: 'hsl(var(--bg-card))', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
             <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <DollarSign size={14} /> Gross Recovery
             </div>
@@ -775,7 +808,7 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
           {/* Mode: Accept Offer */}
           {activeMode === 'accept' && isAccepted && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ padding: '20px', backgroundColor: 'rgba(16, 185, 129, 0.08)', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+              <div data-testid="settlement-active-banner" style={{ padding: '20px', backgroundColor: 'rgba(16, 185, 129, 0.08)', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                   <h4 style={{ margin: 0, color: 'hsl(var(--success))', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.05rem' }}>
                     <CheckCircle2 size={20} /> Offer Accepted & Deal Settlement Active
@@ -785,7 +818,15 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                   </span>
                 </div>
                 <p style={{ margin: 0, fontSize: '0.9rem', color: 'hsl(var(--text-secondary))', lineHeight: 1.5 }}>
-                  This offer has been awarded for <strong>{bid.awardedQty || numAwarded} cases</strong> to <strong>{buyerCompany}</strong> at <strong>${unitPrice.toFixed(2)}/case</strong>. Total settlement value: <strong>${((bid.awardedQty || numAwarded) * unitPrice).toFixed(2)}</strong>.
+                  {hasNegotiatedSettledPrice ? (
+                    <>
+                      This offer has been awarded for <strong>{effectiveAwardedQty} cases</strong> to <strong>{buyerCompany}</strong> at <strong>${finalPrice.toFixed(2)}/case</strong> (negotiated from initial bid of <strong>${unitPrice.toFixed(2)}/case</strong>). Total settlement value: <strong>${(effectiveAwardedQty * finalPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>.
+                    </>
+                  ) : (
+                    <>
+                      This offer has been awarded for <strong>{effectiveAwardedQty} cases</strong> to <strong>{buyerCompany}</strong> at <strong>${unitPrice.toFixed(2)}/case</strong>. Total settlement value: <strong>${(effectiveAwardedQty * unitPrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>.
+                    </>
+                  )}
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginTop: '16px' }}>

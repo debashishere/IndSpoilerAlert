@@ -414,7 +414,7 @@ export async function resetBid(offerId: string) {
 }
 
 export async function getAllOffers() {
-  return await Offer.find()
+  const offers = await Offer.find()
     .populate('buyerId')
     .populate({
       path: 'listingId',
@@ -427,7 +427,30 @@ export async function getAllOffers() {
       }
     })
     .sort({ submittedAt: -1 });
+
+  const missingFinalPriceOffers = offers.filter(o => o.finalPrice === undefined);
+  const awardsMap = new Map<string, any>();
+  if (missingFinalPriceOffers.length > 0) {
+    const awards = await Award.find({ offerId: { $in: missingFinalPriceOffers.map(o => o._id) } });
+    for (const award of awards) {
+      if (award.offerId) {
+        awardsMap.set(award.offerId.toString(), award);
+      }
+    }
+  }
+
+  return offers.map(offer => {
+    const offerObj = offer.toObject ? offer.toObject() : { ...offer };
+    if (offerObj.finalPrice === undefined) {
+      const award = awardsMap.get(offer._id.toString());
+      if (award && award.price !== undefined) {
+        offerObj.finalPrice = award.price;
+      }
+    }
+    return offerObj;
+  });
 }
+
 
 export async function renegotiateBid(
   offerId: string,
@@ -746,8 +769,10 @@ export async function acceptBid(
   const pricePerCase = (options?.pricePerCase !== undefined && options.pricePerCase > 0)
     ? options.pricePerCase
     : (offer.price || 0);
+  offer.finalPrice = pricePerCase;
   const totalAmountNum = Math.round(awardedQty * pricePerCase * 100) / 100;
   const totalAmountFormatted = `$${totalAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 
   // Create or Update Award record (idempotent upsert to prevent E11000 duplicate key error)
   const award = await Award.findOneAndUpdate(

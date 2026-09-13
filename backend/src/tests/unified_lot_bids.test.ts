@@ -223,4 +223,99 @@ describe('Unified Lot Bids Query (Issue #01)', () => {
     await Offer.deleteMany({ _id: { $in: [privateBid._id, marketplaceBid._id] } });
     await Award.deleteMany({ offerId: marketplaceBid._id });
   });
+
+  it('should return finalPrice in getBids and getAllOffers, falling back to award.price when offer.finalPrice is not set (Issue 01 Seam 2)', async () => {
+    const InventoryLot = mongoose.model('InventoryLot');
+    const Buyer = mongoose.model('Buyer');
+    const Offer = mongoose.model('Offer');
+    const Award = mongoose.model('Award');
+
+    const testLot = await InventoryLot.create({
+      supplierId,
+      distributionCenterId: dcId,
+      productId,
+      lotNumber: 'LOT-FALLBACK-01',
+      expirationDate: new Date(Date.now() + 10 * 24 * 3600 * 1000),
+      quantityCases: 200,
+      availableQty: 200,
+      costPerCase: 5.00,
+      standardSellPrice: 10.00,
+      status: 'active'
+    });
+
+    // 1. Offer with explicit finalPrice
+    const offerWithFinal = await Offer.create({
+      lotId: testLot._id,
+      buyerId,
+      quantity: 50,
+      price: 12.00,
+      finalPrice: 15.50,
+      status: 'fully_accepted',
+      awardedQty: 50,
+      submittedAt: new Date()
+    });
+
+    // 2. Legacy offer without finalPrice on Offer, but with an Award having price
+    const legacyOffer = await Offer.create({
+      lotId: testLot._id,
+      buyerId,
+      quantity: 80,
+      price: 10.00,
+      status: 'fully_accepted',
+      awardedQty: 80,
+      submittedAt: new Date()
+    });
+    await Award.create({
+      offerId: legacyOffer._id,
+      buyerId,
+      lotId: testLot._id,
+      awardedQty: 80,
+      price: 11.25,
+      totalAmount: 900.00,
+      approvedDate: new Date()
+    });
+
+    // 3. Pending offer without finalPrice and without Award
+    const pendingOffer = await Offer.create({
+      lotId: testLot._id,
+      buyerId,
+      quantity: 30,
+      price: 9.00,
+      status: 'pending',
+      submittedAt: new Date()
+    });
+
+    // Test GET /api/inventory/:id/bids
+    const lotBidsRes = await request(app).get(`/api/inventory/${testLot._id}/bids`);
+    expect(lotBidsRes.status).toBe(200);
+    const bids = lotBidsRes.body.bids;
+    expect(bids.length).toBe(3);
+
+    const resOfferWithFinal = bids.find((b: any) => b._id.toString() === offerWithFinal._id.toString());
+    const resLegacyOffer = bids.find((b: any) => b._id.toString() === legacyOffer._id.toString());
+    const resPendingOffer = bids.find((b: any) => b._id.toString() === pendingOffer._id.toString());
+
+    expect(resOfferWithFinal.finalPrice).toBe(15.50);
+    expect(resLegacyOffer.finalPrice).toBe(11.25);
+    expect(resPendingOffer.finalPrice).toBeUndefined();
+
+    // Test GET /api/bids (getAllOffers)
+    const allBidsRes = await request(app).get('/api/bids');
+    expect(allBidsRes.status).toBe(200);
+    const allBids = allBidsRes.body;
+
+    const allOfferWithFinal = allBids.find((b: any) => b._id.toString() === offerWithFinal._id.toString());
+    const allLegacyOffer = allBids.find((b: any) => b._id.toString() === legacyOffer._id.toString());
+    const allPendingOffer = allBids.find((b: any) => b._id.toString() === pendingOffer._id.toString());
+
+    expect(allOfferWithFinal.finalPrice).toBe(15.50);
+    expect(allLegacyOffer.finalPrice).toBe(11.25);
+    expect(allPendingOffer.finalPrice).toBeUndefined();
+
+    // Clean up
+    await Offer.deleteMany({ _id: { $in: [offerWithFinal._id, legacyOffer._id, pendingOffer._id] } });
+    await Award.deleteMany({ offerId: legacyOffer._id });
+    await InventoryLot.findByIdAndDelete(testLot._id);
+  });
 });
+

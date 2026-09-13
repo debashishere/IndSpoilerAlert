@@ -289,8 +289,12 @@ export async function getBids(lotId: string) {
       (bidObj as any).poPdfUrl = award.poPdfUrl;
       (bidObj as any).dealId = award._id.toString();
       (bidObj as any).dealToken = award.dealToken;
+      if (bidObj.finalPrice === undefined && award.price !== undefined) {
+        (bidObj as any).finalPrice = award.price;
+      }
     }
     bidsWithPO.push(bidObj);
+
   }
   return bidsWithPO;
 }

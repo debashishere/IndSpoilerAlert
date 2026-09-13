@@ -1540,9 +1540,14 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
 
                 {/* Bid Rows */}
                 {filteredBids.map((bid: any) => {
+                  const isAccepted = bid.status === 'fully_accepted' || bid.status === 'partially_accepted';
                   const unitPrice = typeof bid.price === 'number' ? bid.price : (typeof bid.bidPricePerCase === 'number' ? bid.bidPricePerCase : 0);
+                  const finalPrice = typeof bid.finalPrice === 'number' ? bid.finalPrice : undefined;
+                  const hasNegotiatedSettledPrice = isAccepted && finalPrice !== undefined && Math.abs(finalPrice - unitPrice) > 0.001;
                   const quantity = typeof bid.quantity === 'number' ? bid.quantity : (typeof bid.quantityCases === 'number' ? bid.quantityCases : 0);
-                  const totalRecovery = unitPrice * quantity;
+                  const effectiveAwardedQty = (isAccepted && typeof bid.awardedQty === 'number' && bid.awardedQty > 0) ? bid.awardedQty : quantity;
+                  const effectivePrice = (isAccepted && finalPrice !== undefined) ? finalPrice : unitPrice;
+                  const totalRecovery = effectivePrice * effectiveAwardedQty;
                   const statusInfo = getBidStatusInfo(bid.status, bid);
                   const submittedDate = bid.submittedAt || bid.createdAt || bid.timestamp;
                   const formattedDate = submittedDate ? new Date(submittedDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
@@ -1576,11 +1581,41 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
                       </div>
 
                       <div>
-                        <span style={{ fontWeight: 600, color: 'hsl(var(--success))', fontSize: '0.9rem' }}>
-                          ${unitPrice.toFixed(2)}
-                        </span>
-                        <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>/cs</span>
+                        {hasNegotiatedSettledPrice ? (
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontWeight: 700, color: 'hsl(var(--success))', fontSize: '0.9rem' }}>
+                                ${finalPrice.toFixed(2)}/cs
+                              </span>
+                              <span 
+                                style={{ 
+                                  fontSize: '0.65rem', 
+                                  fontWeight: 700, 
+                                  padding: '1px 5px', 
+                                  borderRadius: '4px', 
+                                  backgroundColor: 'hsla(var(--success), 0.15)', 
+                                  color: 'hsl(var(--success))',
+                                  border: '1px solid hsla(var(--success), 0.3)',
+                                  textTransform: 'uppercase'
+                                }}
+                              >
+                                Settled
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
+                              Initial: ${unitPrice.toFixed(2)}/cs
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <span style={{ fontWeight: 600, color: 'hsl(var(--success))', fontSize: '0.9rem' }}>
+                              ${unitPrice.toFixed(2)}
+                            </span>
+                            <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>/cs</span>
+                          </div>
+                        )}
                       </div>
+
 
                       <div>
                         <span style={{ fontWeight: 600, color: 'hsl(var(--text-primary))', fontSize: '0.85rem' }}>
@@ -1778,7 +1813,7 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
         bid={selectedBidForInspector || selectedBidForNegotiation}
         lot={lot}
         onDecline={(payload) => handleDeclineBidAction(payload, selectedBidForInspector || selectedBidForNegotiation)}
-        onReset={() => handleResetBidAction(selectedBidForInspector || selectedBidForNegotiation)}
+        onReset={() => handleResetBidAction()}
         onCounter={(counterData) => handleCounterBidAction(counterData, selectedBidForInspector || selectedBidForNegotiation)}
         onAccept={(acceptPayload) => handleAcceptBidAction(acceptPayload, selectedBidForInspector || selectedBidForNegotiation)}
         onResendSettlement={handleResendSettlementAction}
