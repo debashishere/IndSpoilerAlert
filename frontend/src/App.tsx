@@ -51,6 +51,7 @@ import { SHOW_DISTRESSED_ANALYTICS, SHOW_FREIGHT_LOGISTICS } from './components/
 import { useAuth } from './context/AuthContext';
 import { PublicLandingPage } from './views/PublicLandingPage';
 import { DealSettlementPortalView } from './views/DealSettlementPortalView';
+import { BuyerNegotiationPortalView } from './views/BuyerNegotiationPortalView';
 
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -1468,12 +1469,34 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
     return null;
   };
 
+  const getNegotiationRouteInfo = () => {
+    if (typeof window !== 'undefined') {
+      const match = window.location.pathname.match(/^\/portal\/negotiation\/([^/?#]+)/);
+      if (match) {
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token') || params.get('negotiationToken');
+        return { offerId: match[1], token };
+      }
+    }
+    return null;
+  };
+
   const dealRoute = getDealRouteInfo();
   if (dealRoute) {
     return (
       <>
         <ThemeToggle />
         <DealSettlementPortalView dealId={dealRoute.dealId} token={dealRoute.token} />
+      </>
+    );
+  }
+
+  const negotiationRoute = getNegotiationRouteInfo();
+  if (negotiationRoute) {
+    return (
+      <>
+        <ThemeToggle />
+        <BuyerNegotiationPortalView offerId={negotiationRoute.offerId} token={negotiationRoute.token} />
       </>
     );
   }

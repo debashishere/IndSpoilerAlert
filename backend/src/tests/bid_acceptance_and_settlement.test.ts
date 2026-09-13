@@ -403,5 +403,25 @@ describe('Backend Seam 1: Bid Acceptance Action Flow & Settlement Email (Issue #
       const currentLot = await InventoryLot.findById(lot._id);
       expect(currentLot?.availableQty).toBe(300);
     });
+
+    it('should support custom negotiated pricePerCase and persist negotiated price and recalculated total onto Award record (Slice 2, Seam 2B)', async () => {
+      const res = await request(app)
+        .post(`/api/bids/${offer._id}/accept`)
+        .send({
+          awardedQuantity: 150,
+          pricePerCase: 12.50,
+          pickupAddress: '450 Logistics Blvd, Denver, CO 80202',
+          pickupHours: '08:00 AM - 04:30 PM CST'
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      const award = await Award.findOne({ offerId: offer._id });
+      expect(award).toBeDefined();
+      expect(award?.awardedQty).toBe(150);
+      expect(award?.price).toBe(12.50);
+      expect(award?.totalAmount).toBe(1875.00); // 150 * 12.50
+    });
   });
 });

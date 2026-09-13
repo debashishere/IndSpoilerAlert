@@ -24,13 +24,16 @@ export async function rejectBid(req: Request, res: Response) {
 
 export async function declineBid(req: Request, res: Response) {
   const { id } = req.params;
-  const { reason, rationale } = req.body;
+  const { reason, rationale, templateHtml, emailSubject } = req.body;
   if (!reason || typeof reason !== 'string' || !reason.trim()) {
     return res.status(400).json({ error: 'Decline reason is required.' });
   }
   try {
-    const offer = await offersService.declineBid(id, reason.trim(), rationale ? rationale.trim() : undefined);
-    return res.json(offer);
+    const result = await offersService.declineBid(id, reason.trim(), rationale ? rationale.trim() : undefined, {
+      templateHtml,
+      emailSubject
+    });
+    return res.json(result);
   } catch (error: any) {
     if (error.message === 'Offer not found.') {
       return res.status(404).json({ error: error.message });
@@ -95,7 +98,7 @@ export async function renegotiateBid(req: Request, res: Response) {
 
 export async function acceptBid(req: Request, res: Response) {
   const { id } = req.params;
-  const { awardedQuantity, pickupAddress, pickupHours, templateHtml, messageHtml, emailSubject } = req.body;
+  const { awardedQuantity, pickupAddress, pickupHours, templateHtml, messageHtml, emailSubject, pricePerCase } = req.body;
 
   if (awardedQuantity !== undefined && awardedQuantity !== null) {
     if (typeof awardedQuantity !== 'number' || awardedQuantity <= 0 || !Number.isInteger(awardedQuantity)) {
@@ -109,7 +112,8 @@ export async function acceptBid(req: Request, res: Response) {
       pickupAddress,
       pickupHours,
       templateHtml: templateHtml || messageHtml,
-      emailSubject
+      emailSubject,
+      pricePerCase: (pricePerCase !== undefined && pricePerCase !== null && !isNaN(Number(pricePerCase))) ? Number(pricePerCase) : undefined
     });
     return res.json(result);
   } catch (error: any) {

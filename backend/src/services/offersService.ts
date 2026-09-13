@@ -9,6 +9,35 @@ import crypto from 'crypto';
 import { compileTemplate, compileSubject } from './emailTemplateService';
 import { sendCampaignEmail, sendEmailHelper, syncEmailToThread } from './emailService';
 
+/**
+ * Shared helper to resolve associated inventory lot and product for an offer,
+ * whether linked via direct lotId or marketplace listingId / opportunityId.
+ */
+export async function resolveLotForOffer(offer: any, populateDC: boolean = true): Promise<any> {
+  if (!offer) return null;
+  let lot: any = null;
+  if (offer.lotId) {
+    let q = InventoryLot.findById(offer.lotId).populate('productId');
+    if (populateDC) q = q.populate('distributionCenterId');
+    lot = await q;
+  } else if (offer.listingId) {
+    const listing = await MarketplaceListing.findById(offer.listingId);
+    if (listing?.lotId) {
+      let q = InventoryLot.findById(listing.lotId).populate('productId');
+      if (populateDC) q = q.populate('distributionCenterId');
+      lot = await q;
+    } else if (listing?.opportunityId) {
+      const opp = await Opportunity.findById(listing.opportunityId);
+      if (opp?.lotId) {
+        let q = InventoryLot.findById(opp.lotId).populate('productId');
+        if (populateDC) q = q.populate('distributionCenterId');
+        lot = await q;
+      }
+    }
+  }
+  return lot;
+}
+
 export async function sendMessage(
   offerId: string, 
   sender: 'buyer' | 'system' | 'supplier', 
@@ -189,7 +218,15 @@ async function rollbackAcceptedAwardIfAny(offer: any) {
   }
 }
 
-export async function declineBid(offerId: string, reason: string, rationale?: string) {
+export async function declineBid(
+  offerId: string, 
+  reason: string, 
+  rationale?: string,
+  options?: {
+    templateHtml?: string;
+    emailSubject?: string;
+  }
+) {
   const offer = await Offer.findById(offerId).populate('buyerId');
   if (!offer) {
     throw new Error('Offer not found.');
@@ -210,39 +247,150 @@ export async function declineBid(offerId: string, reason: string, rationale?: st
 
   await offer.save();
 
-  // Find associated lotId
-  let lotId = offer.lotId;
-  if (!lotId && offer.listingId) {
+  // Find associated lot and product
+  let lot: any = null;
+  if (offer.lotId) {
+    lot = await InventoryLot.findById(offer.lotId).populate('productId');
+  } else if (offer.listingId) {
     const listing = await MarketplaceListing.findById(offer.listingId);
     if (listing?.lotId) {
-      lotId = listing.lotId;
+      lot = await InventoryLot.findById(listing.lotId).populate('productId');
     } else if (listing?.opportunityId) {
-      const opportunity = await Opportunity.findById(listing.opportunityId);
-      if (opportunity?.lotId) {
-        lotId = opportunity.lotId;
+      const opp = await Opportunity.findById(listing.opportunityId);
+      if (opp?.lotId) {
+        lot = await InventoryLot.findById(opp.lotId).populate('productId');
       }
     }
   }
 
-  if (lotId) {
-    const buyerName = (offer.buyerId as any)?.companyName || (offer.buyerId as any)?.email || 'Buyer';
-    await Activity.create({
-      lotId,
-      type: 'Note',
-      subject: `Bid Declined: ${reason}`,
-      content: `Offer of $${offer.price?.toFixed(2)}/cs (${offer.quantity} cases) from ${buyerName} was declined. Reason: ${reason}${rationale ? `. Rationale: ${rationale}` : ''}`,
-      sender: 'Supplier',
-      timestamp: new Date(),
-      metadata: {
-        offerId: offer._id,
-        reason,
-        rationale,
-        action: 'decline'
-      }
-    });
+  const buyerObj: any = offer.buyerId || {};
+  const buyerName = buyerObj.companyName || buyerObj.name || buyerObj.email || 'Valued Buyer';
+  const buyerEmail = buyerObj.email;
+  const productObj: any = lot?.productId || {};
+  const productName = productObj.name || productObj.description || lot?.lotNumber || 'Surplus Inventory Lot';
+  const supplierId = lot?.supplierId?.toString() || 'default';
+  const baseUrl = (process.env.FRONTEND_URL || 'https://indspoileralert.com').replace(/\/$/, '');
+  const catalogLink = `${baseUrl}/marketplace`;
+
+  // Build template context
+  const context: Record<string, any> = {
+    buyer_name: buyerName,
+    product_name: productName,
+    lot_number: lot?.lotNumber || '',
+    decline_reason: reason,
+    decline_rationale: rationale || '',
+    catalog_link: catalogLink,
+    marketplace_link: catalogLink,
+    supplier_name: 'Supplier',
+    offer_id: offer._id.toString(),
+    lot_id: lot?._id?.toString() || ''
+  };
+
+  const rawSubject = options?.emailSubject || `Offer Declined: {{product_name}} (Lot #{{lot_number}})`;
+  const rawBody = options?.templateHtml || `<p>Dear {{buyer_name}},</p><p>Thank you for your offer on <strong>{{product_name}}</strong> (Lot #{{lot_number}}). After review, we are unable to accept your offer.</p><p><strong>Reason:</strong> {{decline_reason}}</p>${rationale ? `<p><strong>Notes:</strong> {{decline_rationale}}</p>` : ''}<p>We invite you to explore other available inventory opportunities: <a href="{{catalog_link}}">Explore Available Surplus Inventory</a>.</p>`;
+
+  const compiledSubject = compileSubject(rawSubject, context);
+  const compiledHtml = compileTemplate(rawBody, context);
+
+  // 1. Automatically generate an Activity record (type: 'Email') in Lot CRM timeline
+  if (lot?._id) {
+    try {
+      await Activity.create({
+        lotId: lot._id,
+        type: 'Email',
+        subject: compiledSubject,
+        content: compiledHtml,
+        recipient: buyerEmail || 'Buyer',
+        sender: 'Supplier',
+        timestamp: new Date(),
+        metadata: {
+          offerId: offer._id,
+          reason,
+          rationale,
+          action: 'decline'
+        }
+      });
+    } catch (actErr) {
+      console.warn('Failed to create Activity record for decline:', actErr);
+    }
   }
 
-  return offer;
+  // 2. Automatically sync sent email into Emails Hub thread
+  if (buyerEmail) {
+    try {
+      await syncEmailToThread({
+        supplierId,
+        buyerEmail,
+        subject: compiledSubject,
+        body: compiledHtml,
+        senderType: 'supplier',
+        listingId: offer.listingId?.toString()
+      });
+    } catch (syncErr) {
+      console.warn('Failed to sync decline email to thread:', syncErr);
+    }
+  }
+
+  // 3. Outbound email dispatch via Google OAuth Mailbox (with automatic fallback to SMTP)
+  let emailDispatch: { dispatched: boolean; messageId?: string; warning?: string } = {
+    dispatched: false
+  };
+
+  if (buyerEmail) {
+    try {
+      const sendRes = await sendCampaignEmail(
+        supplierId,
+        buyerEmail,
+        compiledSubject,
+        compiledHtml,
+        context
+      );
+      emailDispatch = {
+        dispatched: true,
+        messageId: sendRes.messageId
+      };
+    } catch (dispatchErr: any) {
+      console.warn('[ResilientDeclineDispatch] OAuth dispatch encountered error, attempting fallback:', dispatchErr?.message || dispatchErr);
+      try {
+        const helperRes = await sendEmailHelper(
+          buyerEmail,
+          compiledSubject,
+          compiledHtml,
+          undefined,
+          'Supplier',
+          supplierId
+        );
+        if (helperRes.success) {
+          emailDispatch = {
+            dispatched: true,
+            messageId: helperRes.messageId
+          };
+        } else {
+          emailDispatch = {
+            dispatched: false,
+            warning: helperRes.error || 'Mail transport disconnected or failed to deliver.'
+          };
+        }
+      } catch (fallbackErr: any) {
+        console.warn('[ResilientDeclineDispatch] Mail transport failure:', fallbackErr?.message || fallbackErr);
+        emailDispatch = {
+          dispatched: false,
+          warning: fallbackErr?.message || 'Mail transport disconnected or failed to deliver.'
+        };
+      }
+    }
+  } else {
+    emailDispatch = {
+      dispatched: false,
+      warning: 'Buyer email address not found; email dispatch skipped.'
+    };
+  }
+
+  return {
+    success: true,
+    ...offer.toObject(),
+    emailDispatch
+  };
 }
 
 export async function resetBid(offerId: string) {
@@ -297,6 +445,11 @@ export async function renegotiateBid(
   }
 
   offer.status = 'countered';
+  const rawToken = crypto.randomBytes(16).toString('hex');
+  const hmacSecret = process.env.QUICK_BID_SECRET || 'spoileralert-quick-bid-secret';
+  const negotiationToken = `${rawToken}.${crypto.createHmac('sha256', hmacSecret).update(`${rawToken}:${offer._id}`).digest('hex')}`;
+  offer.negotiationToken = negotiationToken;
+
   const counterMessage = messageText || `Supplier counter-offer: $${counterPrice.toFixed(2)}/cs for ${counterQuantity} cases.`;
   offer.messages.push({
     sender: 'supplier',
@@ -330,6 +483,8 @@ export async function renegotiateBid(
   const productObj: any = lot?.productId || {};
   const productName = productObj.name || productObj.description || lot?.lotNumber || 'Surplus Inventory Lot';
   const supplierId = lot?.supplierId?.toString() || 'default';
+  const baseUrl = (process.env.FRONTEND_URL || 'https://indspoileralert.com').replace(/\/$/, '');
+  const portalNegotiationLink = `${baseUrl}/portal/negotiation/${offer._id}?token=${negotiationToken}`;
 
   // Build template context
   const context: Record<string, any> = {
@@ -340,6 +495,10 @@ export async function renegotiateBid(
     counter_quantity: `${counterQuantity}`,
     original_price: `$${offer.price?.toFixed(2)}`,
     original_quantity: `${offer.quantity}`,
+    accept_counter_link: portalNegotiationLink,
+    renegotiate_link: portalNegotiationLink,
+    portal_link: portalNegotiationLink,
+    negotiation_token: negotiationToken,
     supplier_name: 'Supplier',
     offer_id: offer._id.toString(),
     lot_id: lot?._id?.toString() || ''
@@ -347,7 +506,7 @@ export async function renegotiateBid(
 
   // Compile subject and HTML
   const rawSubject = options?.emailSubject || `Counter-Offer: {{product_name}} - {{counter_price}} ({{counter_quantity}} cases)`;
-  const rawBody = options?.templateHtml || messageText || `<p>Dear {{buyer_name}},</p><p>We propose a counter-offer of <strong>{{counter_price}}</strong> for <strong>{{counter_quantity}} cases</strong> of {{product_name}} (original offer: {{original_quantity}} cases at {{original_price}}).</p>`;
+  const rawBody = options?.templateHtml || messageText || `<p>Dear {{buyer_name}},</p><p>We propose a counter-offer of <strong>{{counter_price}}</strong> for <strong>{{counter_quantity}} cases</strong> of {{product_name}} (original offer: {{original_quantity}} cases at {{original_price}}).</p><p><a href="{{accept_counter_link}}">Accept Counter-Offer</a> | <a href="{{renegotiate_link}}">Propose New Terms</a></p>`;
 
   const compiledSubject = compileSubject(rawSubject, context);
   const compiledHtml = compileTemplate(rawBody, context);
@@ -463,6 +622,7 @@ export async function acceptBid(
     pickupHours?: string;
     templateHtml?: string;
     emailSubject?: string;
+    pricePerCase?: number;
   }
 ) {
   const offer = await Offer.findById(offerId).populate('buyerId');
@@ -507,8 +667,9 @@ export async function acceptBid(
   const requestedAwardQty = options?.awardedQuantity !== undefined ? options.awardedQuantity : offer.quantity;
   const awardedQty = Math.max(1, requestedAwardQty);
 
-  // Guard: awarded quantity cannot exceed offered quantity
-  if (awardedQty > offer.quantity) {
+  // Guard: awarded quantity cannot exceed offered quantity unless this is a negotiated award
+  const isNegotiatedAward = options?.pricePerCase !== undefined || (options?.awardedQuantity !== undefined && options.awardedQuantity !== offer.quantity && (offer.status === 'countered' || (offer.messages && offer.messages.length > 1)));
+  if (!isNegotiatedAward && awardedQty > offer.quantity) {
     throw new Error(`Awarded quantity (${awardedQty}) cannot exceed offered quantity (${offer.quantity}).`);
   }
 
@@ -573,7 +734,9 @@ export async function acceptBid(
   const sku = productObj.sku || 'N/A';
   const supplierId = lot?.supplierId?.toString() || 'default';
 
-  const pricePerCase = offer.price || 0;
+  const pricePerCase = (options?.pricePerCase !== undefined && options.pricePerCase > 0)
+    ? options.pricePerCase
+    : (offer.price || 0);
   const totalAmountNum = Math.round(awardedQty * pricePerCase * 100) / 100;
   const totalAmountFormatted = `$${totalAmountNum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 

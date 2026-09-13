@@ -171,7 +171,7 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
   const isSubmittingDecline = isSubmittingAction;
   const setIsSubmittingDecline = setIsSubmittingAction;
 
-  const getBidStatusInfo = (rawStatus?: string) => {
+  const getBidStatusInfo = (rawStatus?: string, bid?: any) => {
     const s = (rawStatus || '').toLowerCase();
     if (s === 'countered') {
       return { label: 'Countered', key: 'Countered', className: 'badge-outline-primary', bg: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', border: 'rgba(59, 130, 246, 0.3)' };
@@ -181,6 +181,13 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
     }
     if (s === 'rejected' || s === 'declined') {
       return { label: 'Declined', key: 'Declined', className: 'badge-danger', bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: 'rgba(239, 68, 68, 0.3)' };
+    }
+    const msgs = bid?.messages || [];
+    if (msgs.length > 0) {
+      const lastMsg = msgs[msgs.length - 1];
+      if (lastMsg?.sender === 'buyer' && (msgs.length > 1 || lastMsg?.proposedPrice !== undefined)) {
+        return { label: 'Buyer Countered', key: 'Buyer Countered', className: 'badge-indigo', bg: 'rgba(99, 102, 241, 0.15)', color: '#6366f1', border: 'rgba(99, 102, 241, 0.3)' };
+      }
     }
     return { label: 'Pending', key: 'Pending', className: 'badge-warning', bg: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: 'rgba(245, 158, 11, 0.3)' };
   };
@@ -199,9 +206,13 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
   const allBids = Array.from(uniqueBidsMap.values());
 
   const filteredBids = allBids.filter((bid: any) => {
-    const statusInfo = getBidStatusInfo(bid.status);
+    const statusInfo = getBidStatusInfo(bid.status, bid);
     if (bidStatusFilter !== 'All' && statusInfo.key !== bidStatusFilter) {
-      return false;
+      if (bidStatusFilter === 'Pending' && statusInfo.key === 'Buyer Countered') {
+        // Buyer Countered is a sub-state of pending offers
+      } else {
+        return false;
+      }
     }
     if (bidSearchQuery.trim()) {
       const q = bidSearchQuery.toLowerCase();
@@ -234,10 +245,17 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
     if (!targetBid?._id) return;
     setIsSubmittingDecline(true);
     try {
+      let declineRes: any;
       if (props.onDeclineBid) {
-        await props.onDeclineBid(targetBid._id, payload);
+        declineRes = await props.onDeclineBid(targetBid._id, payload);
       } else {
-        await InventoryService.declineBid(targetBid._id, payload.reason, payload.rationale);
+        declineRes = await InventoryService.declineBid(
+          targetBid._id, 
+          payload.reason, 
+          payload.rationale, 
+          (payload as any).templateHtml, 
+          (payload as any).emailSubject
+        );
       }
 
       const updatedBid = { ...targetBid, status: 'rejected' };
@@ -255,9 +273,12 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
         negotiationBids: newNegotiationBids
       }));
 
+      const warningMsg = declineRes?.emailDispatch?.warning;
       setFeedbackToast({
-        message: `Offer declined (${payload.reason}). Recorded in lot CRM timeline.`,
-        type: 'success'
+        message: warningMsg
+          ? `Offer declined (${payload.reason}), but email delivery warning: ${warningMsg}`
+          : `Offer declined (${payload.reason}). Recorded in lot CRM timeline.`,
+        type: warningMsg ? 'warning' : 'success'
       });
       setTimeout(() => setFeedbackToast(null), 4500);
 
@@ -1522,7 +1543,7 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
                   const unitPrice = typeof bid.price === 'number' ? bid.price : (typeof bid.bidPricePerCase === 'number' ? bid.bidPricePerCase : 0);
                   const quantity = typeof bid.quantity === 'number' ? bid.quantity : (typeof bid.quantityCases === 'number' ? bid.quantityCases : 0);
                   const totalRecovery = unitPrice * quantity;
-                  const statusInfo = getBidStatusInfo(bid.status);
+                  const statusInfo = getBidStatusInfo(bid.status, bid);
                   const submittedDate = bid.submittedAt || bid.createdAt || bid.timestamp;
                   const formattedDate = submittedDate ? new Date(submittedDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A';
                   const isSelected = selectedBidForNegotiation?._id === bid._id;

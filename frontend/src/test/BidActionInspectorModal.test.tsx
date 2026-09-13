@@ -116,10 +116,10 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
     fireEvent.click(confirmBtn);
 
     expect(onDeclineMock).toHaveBeenCalledTimes(1);
-    expect(onDeclineMock).toHaveBeenCalledWith({
+    expect(onDeclineMock).toHaveBeenCalledWith(expect.objectContaining({
       reason: 'Price below minimum recovery floor',
       rationale: 'Minimum floor is $4.20/cs for this harvest.'
-    });
+    }));
   });
 
   it('renders adaptive lifecycle override control when bid is rejected and triggers onReset', () => {
@@ -1011,7 +1011,242 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       expect(onResendMock).toHaveBeenCalledWith('bid-101');
     });
   });
+
+  describe('Issue 18: Slice 1 — Decline Offer Full Composer & 2-Column Split Work Surface (Seam 1B)', () => {
+    it('renders 2-column split work surface with Decline Notice TipTap composer in right pane', () => {
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={sampleBid}
+          lot={sampleLot}
+        />
+      );
+
+      // Switch to decline tab
+      fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+      // Left pane controls
+      expect(screen.getByLabelText(/Decline Reason/i)).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/Add specific rationale or notes/i)).toBeInTheDocument();
+
+      // Right pane composer
+      const rightPane = screen.getByTestId('decline-right-pane');
+      expect(rightPane).toBeInTheDocument();
+      expect(within(rightPane).getByText(/Decline Notice Email Template/i)).toBeInTheDocument();
+    });
+
+    it('dynamically populates decline tokens and dispatches onDecline with templateHtml and emailSubject', async () => {
+      const onDeclineMock = vi.fn();
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={sampleBid}
+          lot={sampleLot}
+          onDecline={onDeclineMock}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+      // Select reason
+      fireEvent.change(screen.getByLabelText(/Decline Reason/i), {
+        target: { value: 'Price below minimum recovery floor' }
+      });
+
+      // Enter rationale
+      fireEvent.change(screen.getByPlaceholderText(/Add specific rationale or notes/i), {
+        target: { value: 'Minimum floor is $4.50/cs for Honeycrisp' }
+      });
+
+      const confirmBtn = screen.getByRole('button', { name: /confirm decline/i });
+      expect(confirmBtn).not.toBeDisabled();
+
+      fireEvent.click(confirmBtn);
+
+      await waitFor(() => {
+        expect(onDeclineMock).toHaveBeenCalledWith(expect.objectContaining({
+          reason: 'Price below minimum recovery floor',
+          rationale: 'Minimum floor is $4.50/cs for Honeycrisp',
+          templateHtml: expect.any(String),
+          emailSubject: expect.stringContaining('Organic Honeycrisp Apples')
+        }));
+      });
+    });
+
+    it('surfaces decline tokens in dropdown and preserves data-token badges for decline parameters', () => {
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={sampleBid}
+          lot={sampleLot}
+        />
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+      const rightPane = screen.getByTestId('decline-right-pane');
+      expect(within(rightPane).getByTestId('workflow-tiptap-editor')).toBeInTheDocument();
+
+      const tokensBtn = within(rightPane).getByTestId('editor-tokens-button');
+      fireEvent.click(tokensBtn);
+
+      const tokensDropdown = screen.getByTestId('editor-tokens-dropdown');
+      expect(within(tokensDropdown).getByText('{{buyer_name}}')).toBeInTheDocument();
+      expect(within(tokensDropdown).getByText('{{product_name}}')).toBeInTheDocument();
+      expect(within(tokensDropdown).getByText('{{lot_number}}')).toBeInTheDocument();
+      expect(within(tokensDropdown).getByText('{{decline_reason}}')).toBeInTheDocument();
+      expect(within(tokensDropdown).getByText('{{decline_rationale}}')).toBeInTheDocument();
+      expect(within(tokensDropdown).getByText('{{catalog_link}}')).toBeInTheDocument();
+
+      const editorContent = rightPane.querySelector('.ProseMirror');
+      expect(editorContent).toBeInTheDocument();
+      expect(editorContent?.innerHTML).toContain('data-token="decline_reason"');
+    });
+  });
+
+
+  describe('Issue 18: Slice 2 — In-Situ Thread Bid Acceptance with Dynamic Token Re-Hydration (Seam 2A)', () => {
+    const threadBid = {
+      _id: 'bid-thread-1',
+      lotId: 'lot-101',
+      buyerId: {
+        _id: 'buyer-1',
+        companyName: 'Apex Liquidators',
+        email: 'apex@liquidators.com'
+      },
+      price: 3.50,
+      quantity: 150,
+      status: 'pending',
+      messages: [
+        {
+          sender: 'buyer',
+          content: 'Initial baseline offer.',
+          timestamp: '2026-09-08T10:00:00.000Z',
+          proposedPrice: 3.50,
+          proposedQuantity: 150
+        },
+        {
+          sender: 'supplier',
+          content: 'Supplier counter: $4.50 for 130 cases.',
+          timestamp: '2026-09-08T11:00:00.000Z',
+          proposedPrice: 4.50,
+          proposedQuantity: 130
+        },
+        {
+          sender: 'buyer',
+          content: 'Revised buyer proposal: $4.25/cs for 140 cases.',
+          timestamp: '2026-09-08T12:00:00.000Z',
+          proposedPrice: 4.25,
+          proposedQuantity: 140
+        }
+      ]
+    };
+
+    const lotWithDC = {
+      _id: 'lot-101',
+      lotNumber: 'LOT-99',
+      availableQty: 200,
+      standardSellPrice: 5.00,
+      distributionCenter: {
+        address: '100 Main Logistics Way, Chicago, IL',
+        operatingHours: '08:00 AM - 04:30 PM CST'
+      },
+      productId: {
+        sku: 'SKU-APPLES',
+        description: 'Organic Honeycrisp Apples'
+      }
+    };
+
+    it('identifies the latest active buyer proposal in thread and renders Accept This Bid button', () => {
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={threadBid}
+          lot={lotWithDC}
+        />
+      );
+
+      // Should render exactly one "Accept This Bid" button on the latest active buyer message
+      const acceptBidButtons = screen.getAllByRole('button', { name: /accept this bid/i });
+      expect(acceptBidButtons).toHaveLength(1);
+      expect(acceptBidButtons[0]).toHaveTextContent(/\$4\.25/);
+      expect(acceptBidButtons[0]).toHaveTextContent(/140/);
+    });
+
+    it('transitions to accept tab in-situ and hydrates agreed price, quantity, and settlement tokens', async () => {
+      const onAcceptMock = vi.fn();
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={threadBid}
+          lot={lotWithDC}
+          onAccept={onAcceptMock}
+        />
+      );
+
+      // Initially in accept tab with baseline terms
+      const acceptBidBtn = screen.getByRole('button', { name: /accept this bid/i });
+      fireEvent.click(acceptBidBtn);
+
+      // Modal stays open, transitions to accept mode, awarded quantity becomes 140
+      const awardedQtyInput = screen.getByLabelText(/Awarded Quantity/i) as HTMLInputElement;
+      expect(awardedQtyInput.value).toBe('140');
+
+      // Agreed price shows negotiated $4.25/cs instead of baseline $3.50
+      expect(screen.getByDisplayValue('$4.25')).toBeInTheDocument();
+
+      // Total settlement value shows 140 * 4.25 = $595.00
+      expect(screen.getByTestId('total-settlement-value')).toHaveTextContent('$595.00');
+
+      // Click Confirm & Initiate Settlement
+      const confirmAcceptBtn = screen.getByRole('button', { name: /confirm & initiate settlement/i });
+      fireEvent.click(confirmAcceptBtn);
+
+      await waitFor(() => {
+        expect(onAcceptMock).toHaveBeenCalledWith(expect.objectContaining({
+          awardedQuantity: 140,
+          pricePerCase: 4.25
+        }));
+      });
+    });
+
+    it('safely renders buyer messages containing HTML or script tags as text without XSS vulnerability', () => {
+      const maliciousBid = {
+        ...threadBid,
+        messages: [
+          {
+            sender: 'buyer',
+            content: '<script>window.__xssExecuted = true;</script><img src="x" onerror="window.__xssImg = true;" />Proposal with payload',
+            timestamp: '2026-09-08T10:00:00.000Z',
+            proposedPrice: 4.10,
+            proposedQuantity: 100
+          }
+        ]
+      };
+
+      const { container } = render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={maliciousBid}
+          lot={lotWithDC}
+        />
+      );
+
+      // Verify that no script tag or raw HTML element was executed or inserted
+      expect(container.querySelector('script')).toBeNull();
+      // The text content should be rendered safely as visible string text
+      expect(screen.getByText(/<script>window\.__xssExecuted = true;<\/script>/i)).toBeInTheDocument();
+    });
+  });
 });
+
+
 
 
 

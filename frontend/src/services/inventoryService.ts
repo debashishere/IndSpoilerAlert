@@ -221,13 +221,19 @@ export class InventoryService {
     return Array.isArray(data) ? data : data.bids || [];
   }
 
-  static async declineBid(bidId: string, reason: string, rationale?: string): Promise<any> {
+  static async declineBid(
+    bidId: string, 
+    reason: string, 
+    rationale?: string,
+    templateHtml?: string,
+    emailSubject?: string
+  ): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/bids/${bidId}/decline`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ reason, rationale }),
+      body: JSON.stringify({ reason, rationale, templateHtml, emailSubject }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -274,6 +280,7 @@ export class InventoryService {
       pickupHours?: string;
       templateHtml?: string;
       emailSubject?: string;
+      pricePerCase?: number;
     }
   ): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/bids/${bidId}/accept`, {

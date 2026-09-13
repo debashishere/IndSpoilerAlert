@@ -96,7 +96,9 @@ describe('Frontend Seam B: Bid Action Inspector & Decline Flow Integration (Issu
       expect(declineSpy).toHaveBeenCalledWith(
         'bid-test-1',
         'Price below minimum recovery floor',
-        'Counter-floor is $5.00/cs minimum.'
+        'Counter-floor is $5.00/cs minimum.',
+        expect.any(String),
+        expect.any(String)
       );
     });
 
@@ -104,6 +106,42 @@ describe('Frontend Seam B: Bid Action Inspector & Decline Flow Integration (Issu
     expect(await screen.findByText(/Offer declined/i)).toBeInTheDocument();
 
     // Badge in the table updates to Declined (now filter tab + row badge both display Declined)
+    await waitFor(() => {
+      expect(screen.getAllByText('Declined').length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it('handles resilient email warning telemetry when decline succeeds with email transport warning', async () => {
+    vi.spyOn(InventoryService, 'declineBid').mockResolvedValueOnce({
+      _id: 'bid-test-1',
+      status: 'rejected',
+      emailDispatch: {
+        dispatched: false,
+        warning: 'Mail transport disconnected or failed to deliver.'
+      }
+    });
+
+    render(
+      <Provider store={store}>
+        <LotOperationsHubView />
+      </Provider>
+    );
+
+    fireEvent.click(screen.getByText('Apex Liquidators'));
+    expect(await screen.findByText(/Bid Action Inspector/i)).toBeInTheDocument();
+
+    const declineTabBtn = screen.getByRole('button', { name: /decline offer/i });
+    fireEvent.click(declineTabBtn);
+
+    const reasonSelect = screen.getByLabelText(/Decline Reason/i);
+    fireEvent.change(reasonSelect, {
+      target: { value: 'Price below minimum recovery floor' }
+    });
+
+    const confirmBtn = screen.getByRole('button', { name: /confirm decline/i });
+    fireEvent.click(confirmBtn);
+
+    expect(await screen.findByText(/email delivery warning/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getAllByText('Declined').length).toBeGreaterThanOrEqual(2);
     });

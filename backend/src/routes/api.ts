@@ -30,6 +30,7 @@ import supplierRouter from './supplierRoutes';
 import marketplaceRouter from './marketplaceRoutes';
 import buyerListRoutes from './buyerListRoutes';
 import dealRoutes from './dealRoutes';
+import portalRoutes from './portalRoutes';
 
 const router = Router();
 
@@ -39,6 +40,7 @@ router.use('/v1/marketplace', marketplaceRouter);
 router.use('/marketplace', marketplaceRouter);
 router.use('/buyer-lists', buyerListRoutes);
 router.use('/deals', dealRoutes);
+router.use('/portal', portalRoutes);
 
 
 // Ensure uploads directory exists

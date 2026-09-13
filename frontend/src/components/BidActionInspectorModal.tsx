@@ -40,6 +40,17 @@ export const SETTLEMENT_TOKENS = [
   'deal_document_link'
 ];
 
+export const DECLINE_TOKENS = [
+  'buyer_name',
+  'product_name',
+  'lot_number',
+  'decline_reason',
+  'decline_rationale',
+  'catalog_link'
+];
+
+export const DEFAULT_DECLINE_MESSAGE = '<p>Dear <span data-token="buyer_name">{{buyer_name}}</span>,</p><p>Thank you for your offer on <strong><span data-token="product_name">{{product_name}}</span></strong> (Lot #<span data-token="lot_number">{{lot_number}}</span>). After review, we are unable to accept your offer.</p><p><strong>Reason:</strong> <span data-token="decline_reason">{{decline_reason}}</span></p><p><strong>Notes:</strong> <span data-token="decline_rationale">{{decline_rationale}}</span></p><p>We invite you to explore other available inventory opportunities: <a href="{{catalog_link}}">Explore Available Surplus Inventory</a>.</p>';
+
 export const DEFAULT_ACCEPTANCE_MESSAGE = '<p>Dear <span data-token="buyer_name">{{buyer_name}}</span>,</p><p>We are pleased to accept your offer for <span data-token="awarded_quantity">{{awarded_quantity}}</span> of <span data-token="product_name">{{product_name}}</span> (SKU: <span data-token="sku">{{sku}}</span>) at <span data-token="price_per_case">{{price_per_case}}</span>. Total settlement amount: <span data-token="total_amount">{{total_amount}}</span>.</p><p><strong>Pickup Location:</strong> <span data-token="pickup_location">{{pickup_location}}</span><br/><strong>Dock Operating Hours:</strong> <span data-token="pickup_hours">{{pickup_hours}}</span></p><p>Please review and execute the deal agreement: <a href="{{deal_document_link}}"><span data-token="deal_document_link">{{deal_document_link}}</span></a></p><p>Complete transaction payment: <a href="{{payment_link}}"><span data-token="payment_link">{{payment_link}}</span></a></p>';
 
 export interface BidActionInspectorModalProps {
@@ -47,13 +58,14 @@ export interface BidActionInspectorModalProps {
   onClose: () => void;
   bid: any;
   lot?: any;
-  onDecline?: (payload: { reason: string; rationale: string }) => Promise<void> | void;
+  onDecline?: (payload: { reason: string; rationale: string; templateHtml?: string; emailSubject?: string }) => Promise<void> | void;
   onReset?: () => Promise<void> | void;
   onAccept?: (payload?: {
     awardedQuantity: number;
     pickupAddress: string;
     pickupHours: string;
     templateHtml: string;
+    pricePerCase?: number;
   }) => Promise<any> | void;
   onCounter?: (counterData: { price: number; quantity: number; message: string }) => Promise<any> | void;
   onResendSettlement?: (bidId: string) => Promise<any> | void;
@@ -82,6 +94,8 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
   const [activeMode, setActiveMode] = useState<'accept' | 'counter' | 'decline'>('accept');
   const [selectedDeclineReason, setSelectedDeclineReason] = useState('');
   const [declineRationale, setDeclineRationale] = useState('');
+  const [declineMessage, setDeclineMessage] = useState<string>(DEFAULT_DECLINE_MESSAGE);
+  const [agreedUnitPrice, setAgreedUnitPrice] = useState<number>(bid?.price || bid?.bidPricePerCase || 0);
 
   // Counter mode state
   const [counterPrice, setCounterPrice] = useState<number | string>(bid?.price || bid?.bidPricePerCase || '');
@@ -101,7 +115,10 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
   React.useEffect(() => {
     if (bid?.status) setInternalStatus(bid.status);
     if (bid?.messages) setInternalMessages(bid.messages);
-    if (bid?.price || bid?.bidPricePerCase) setCounterPrice(bid.price || bid.bidPricePerCase);
+    if (bid?.price || bid?.bidPricePerCase) {
+      setCounterPrice(bid.price || bid.bidPricePerCase);
+      setAgreedUnitPrice(bid.price || bid.bidPricePerCase);
+    }
     if (bid?.quantity || bid?.quantityCases) setCounterQuantity(bid.quantity || bid.quantityCases);
     if (bid?.awardedQty) {
       setAwardedQuantity(bid.awardedQty);
@@ -125,6 +142,7 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
   if (!isOpen || !bid) return null;
 
   const unitPrice = bid.price ?? bid.bidPricePerCase ?? 0;
+  const effectiveUnitPrice = agreedUnitPrice > 0 ? agreedUnitPrice : unitPrice;
   const quantity = bid.quantity ?? bid.quantityCases ?? 0;
   const totalRecovery = unitPrice * quantity;
   const buyerCompany = bid.buyerId?.companyName || 'Verified Buyer';
@@ -138,6 +156,12 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
   const messages = Array.isArray(internalMessages)
     ? [...internalMessages].sort((a: any, b: any) => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime())
     : [];
+
+  const isPending = !isRejected && !isAccepted && !isCountered;
+  const isBuyerCountered = isPending && messages.length > 0 && (() => {
+    const lastMsg = messages[messages.length - 1];
+    return lastMsg?.sender === 'buyer' && (messages.length > 1 || lastMsg?.proposedPrice !== undefined);
+  })();
 
 
   const lotNumber = lot?.lotNumber || 'N/A';
@@ -167,7 +191,7 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
   };
 
   const numAwarded = Number(awardedQuantity) || quantity;
-  const settlementTotal = numAwarded * unitPrice;
+  const settlementTotal = numAwarded * effectiveUnitPrice;
   const formattedSettlementTotal = `$${settlementTotal.toFixed(2)}`;
 
   const settlementTokenValues: Record<string, string> = {
@@ -175,12 +199,23 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
     product_name: productTitle ? `[${productTitle}]` : '{{product_name}}',
     sku: lot?.productId?.sku ? `[${lot.productId.sku}]` : '{{sku}}',
     awarded_quantity: `[${numAwarded} cases]`,
-    price_per_case: `[$${unitPrice.toFixed(2)}/case]`,
+    price_per_case: `[$${effectiveUnitPrice.toFixed(2)}/case]`,
     total_amount: `[${formattedSettlementTotal}]`,
     pickup_location: pickupAddress ? `[${pickupAddress}]` : '{{pickup_location}}',
     pickup_hours: pickupHours ? `[${pickupHours}]` : '{{pickup_hours}}',
     payment_link: `[/deal/${bid._id}#payment]`,
     deal_document_link: `[/deal/${bid._id}]`
+  };
+
+  const catalogLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/marketplace`;
+
+  const declineTokenValues: Record<string, string> = {
+    buyer_name: buyerCompany ? `[${buyerCompany}]` : '{{buyer_name}}',
+    product_name: productTitle ? `[${productTitle}]` : '{{product_name}}',
+    lot_number: lotNumber ? `[${lotNumber}]` : '{{lot_number}}',
+    decline_reason: selectedDeclineReason ? `[${selectedDeclineReason}]` : '{{decline_reason}}',
+    decline_rationale: declineRationale ? `[${declineRationale}]` : '{{decline_rationale}}',
+    catalog_link: `[${catalogLink}]`
   };
 
   const handleConfirmAccept = async () => {
@@ -191,7 +226,8 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
         awardedQuantity: numAwarded,
         pickupAddress,
         pickupHours,
-        templateHtml: acceptanceMessage || DEFAULT_ACCEPTANCE_MESSAGE
+        templateHtml: acceptanceMessage || DEFAULT_ACCEPTANCE_MESSAGE,
+        pricePerCase: effectiveUnitPrice
       });
 
       const newStatus = numAwarded < quantity ? 'partially_accepted' : 'fully_accepted';
@@ -223,7 +259,9 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
     if (onDecline) {
       await onDecline({
         reason: selectedDeclineReason,
-        rationale: declineRationale
+        rationale: declineRationale,
+        templateHtml: declineMessage || DEFAULT_DECLINE_MESSAGE,
+        emailSubject: `Offer Declined: ${productTitle} (Lot #${lotNumber})`
       });
     }
   };
@@ -273,6 +311,13 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
     }, 4500);
   };
 
+
+  const latestBuyerProposalIdx = messages.reduce((latestIdx: number, msg: any, idx: number) => {
+    if (msg.sender === 'buyer' && (msg.proposedPrice !== undefined || msg.proposedQuantity !== undefined)) {
+      return idx;
+    }
+    return latestIdx;
+  }, -1);
 
   const renderNegotiationHistoryThread = () => (
     <div 
@@ -365,10 +410,56 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                   </span>
                 </div>
 
-                <div 
-                  style={{ color: 'hsl(var(--text-primary))', lineHeight: 1.4 }}
-                  dangerouslySetInnerHTML={{ __html: msg.content }}
-                />
+                {isBuyer ? (
+                  <div style={{ color: 'hsl(var(--text-primary))', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>
+                    {msg.content}
+                  </div>
+                ) : (
+                  <div 
+                    style={{ color: 'hsl(var(--text-primary))', lineHeight: 1.4 }}
+                    dangerouslySetInnerHTML={{ 
+                      __html: (msg.content || '')
+                        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                        .replace(/on\w+="[^"]*"/gi, '')
+                        .replace(/on\w+='[^']*'/gi, '')
+                        .replace(/on\w+=\S+/gi, '')
+                    }}
+                  />
+                )}
+
+                {isBuyer && idx === latestBuyerProposalIdx && !isRejected && !isAccepted && (
+                  <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      aria-label={`Accept This Bid ($${Number(msg.proposedPrice !== undefined ? msg.proposedPrice : unitPrice).toFixed(2)}/cs • ${msg.proposedQuantity !== undefined ? msg.proposedQuantity : quantity} cs)`}
+                      onClick={() => {
+                        if (msg.proposedPrice !== undefined) {
+                          setAgreedUnitPrice(Number(msg.proposedPrice));
+                        }
+                        if (msg.proposedQuantity !== undefined) {
+                          setAwardedQuantity(Number(msg.proposedQuantity));
+                        }
+                        setActiveMode('accept');
+                      }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 12px',
+                        backgroundColor: 'hsl(var(--success))',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <CheckCircle2 size={14} />
+                      Accept This Bid (${Number(msg.proposedPrice !== undefined ? msg.proposedPrice : unitPrice).toFixed(2)}/cs • {msg.proposedQuantity !== undefined ? msg.proposedQuantity : quantity} cs)
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -436,14 +527,18 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                       ? 'rgba(16, 185, 129, 0.15)' 
                       : isCountered
                         ? 'rgba(59, 130, 246, 0.15)'
-                        : 'rgba(245, 158, 11, 0.15)',
+                        : isBuyerCountered
+                          ? 'rgba(99, 102, 241, 0.15)'
+                          : 'rgba(245, 158, 11, 0.15)',
                   color: isRejected 
                     ? '#ef4444' 
                     : isAccepted 
                       ? '#10b981' 
                       : isCountered
                         ? '#3b82f6'
-                        : '#f59e0b',
+                        : isBuyerCountered
+                          ? '#6366f1'
+                          : '#f59e0b',
                   border: `1px solid ${
                     isRejected 
                       ? 'rgba(239, 68, 68, 0.3)' 
@@ -451,12 +546,14 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                         ? 'rgba(16, 185, 129, 0.3)' 
                         : isCountered
                           ? 'rgba(59, 130, 246, 0.3)'
-                          : 'rgba(245, 158, 11, 0.3)'
+                          : isBuyerCountered
+                            ? 'rgba(99, 102, 241, 0.3)'
+                            : 'rgba(245, 158, 11, 0.3)'
                   }`,
                   textTransform: 'capitalize'
                 }}
               >
-                {internalStatus || bid.status || 'pending'}
+                {isBuyerCountered ? 'Buyer Countered' : (internalStatus || bid.status || 'pending')}
               </span>
             </div>
             <div style={{ fontSize: '0.85rem', color: 'hsl(var(--text-muted))', marginTop: '4px' }}>
@@ -815,7 +912,7 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                     <input
                       type="text"
                       className="form-input"
-                      value={`$${unitPrice.toFixed(2)}`}
+                      value={`$${effectiveUnitPrice.toFixed(2)}`}
                       disabled
                       style={{ width: '100%', opacity: 0.8 }}
                     />
@@ -1046,102 +1143,151 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
 
           {/* Mode: Decline Offer */}
           {activeMode === 'decline' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+              {/* Left Column (~38%) */}
               <div 
                 style={{ 
-                  padding: '16px', 
-                  backgroundColor: 'rgba(239, 68, 68, 0.08)', 
-                  borderRadius: '10px', 
-                  border: '1px solid rgba(239, 68, 68, 0.25)',
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'flex-start'
+                  flex: '1 1 38%', 
+                  minWidth: '300px', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '16px' 
                 }}
               >
-                <AlertTriangle size={20} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div 
+                  style={{ 
+                    padding: '16px', 
+                    backgroundColor: 'rgba(239, 68, 68, 0.08)', 
+                    borderRadius: '10px', 
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    display: 'flex',
+                    gap: '12px',
+                    alignItems: 'flex-start'
+                  }}
+                >
+                  <AlertTriangle size={20} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    <div style={{ fontWeight: 600, color: '#ef4444', fontSize: '0.9rem' }}>
+                      Decline Workflow Guardrails
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', lineHeight: 1.4 }}>
+                      Declining this offer marks its lifecycle status as <strong>rejected</strong>, logs the structured justification into the lot CRM timeline, and notifies the buyer. A decline reason is required.
+                    </div>
+                  </div>
+                </div>
+
                 <div>
-                  <div style={{ fontWeight: 600, color: '#ef4444', fontSize: '0.9rem' }}>
-                    Decline Workflow Guardrails
-                  </div>
-                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', marginTop: '4px', lineHeight: 1.4 }}>
-                    Declining this offer marks its lifecycle status as <strong>rejected</strong>, logs the structured justification into the lot CRM timeline, and notifies the buyer. A decline reason is required.
-                  </div>
+                  <label 
+                    htmlFor="decline-reason-select"
+                    style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px' }}
+                  >
+                    Decline Reason <span style={{ color: '#ef4444' }}>*</span> (Mandatory)
+                  </label>
+                  <select
+                    id="decline-reason-select"
+                    aria-label="Decline Reason"
+                    className="form-input"
+                    value={selectedDeclineReason}
+                    onChange={(e) => setSelectedDeclineReason(e.target.value)}
+                    style={{ width: '100%', height: '42px' }}
+                  >
+                    <option value="">Select mandatory decline reason...</option>
+                    {DECLINE_REASONS.map((reason) => (
+                      <option key={reason} value={reason}>
+                        {reason}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label 
+                    htmlFor="decline-rationale-notes"
+                    style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px' }}
+                  >
+                    Decline Rationale & Supplier Notes
+                  </label>
+                  <textarea
+                    id="decline-rationale-notes"
+                    className="form-input"
+                    rows={4}
+                    value={declineRationale}
+                    onChange={(e) => setDeclineRationale(e.target.value)}
+                    placeholder="Add specific rationale or notes for the buyer and lot audit trail..."
+                    style={{ width: '100%', resize: 'vertical' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={onClose}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={handleConfirmDecline}
+                    disabled={!selectedDeclineReason || isSubmitting}
+                    style={{
+                      backgroundColor: '#ef4444',
+                      color: '#ffffff',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      fontWeight: 600,
+                      cursor: !selectedDeclineReason || isSubmitting ? 'not-allowed' : 'pointer',
+                      opacity: !selectedDeclineReason || isSubmitting ? 0.6 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <XCircle size={16} />
+                    {isSubmitting ? 'Declining...' : 'Confirm Decline & Send Notice'}
+                  </button>
                 </div>
               </div>
 
-              <div>
-                <label 
-                  htmlFor="decline-reason-select"
-                  style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px' }}
-                >
-                  Decline Reason <span style={{ color: '#ef4444' }}>*</span> (Mandatory)
-                </label>
-                <select
-                  id="decline-reason-select"
-                  aria-label="Decline Reason"
-                  className="form-input"
-                  value={selectedDeclineReason}
-                  onChange={(e) => setSelectedDeclineReason(e.target.value)}
-                  style={{ width: '100%', height: '42px' }}
-                >
-                  <option value="">Select mandatory decline reason...</option>
-                  {DECLINE_REASONS.map((reason) => (
-                    <option key={reason} value={reason}>
-                      {reason}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* Right Column (~62%): TipTap Email Builder */}
+              <div 
+                data-testid="decline-right-pane"
+                style={{ 
+                  flex: '1 1 62%', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  gap: '12px',
+                  minWidth: '360px'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                    Decline Notice Email Template (TipTap)
+                  </label>
+                  <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>
+                    Dynamic Merge Tokens Enabled
+                  </span>
+                </div>
 
-              <div>
-                <label 
-                  htmlFor="decline-rationale-notes"
-                  style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px' }}
-                >
-                  Decline Rationale & Supplier Notes
-                </label>
-                <textarea
-                  id="decline-rationale-notes"
-                  className="form-input"
-                  rows={4}
-                  value={declineRationale}
-                  onChange={(e) => setDeclineRationale(e.target.value)}
-                  placeholder="Add specific rationale or notes for the buyer and lot audit trail..."
-                  style={{ width: '100%', resize: 'vertical' }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={onClose}
+                <WorkflowTipTapBodyEditor
+                  contentHtml={declineMessage}
+                  onChange={(html) => setDeclineMessage(html)}
                   disabled={isSubmitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn"
-                  onClick={handleConfirmDecline}
-                  disabled={!selectedDeclineReason || isSubmitting}
-                  style={{
-                    backgroundColor: '#ef4444',
-                    color: '#ffffff',
-                    border: 'none',
-                    padding: '10px 20px',
-                    borderRadius: '8px',
-                    fontWeight: 600,
-                    cursor: !selectedDeclineReason || isSubmitting ? 'not-allowed' : 'pointer',
-                    opacity: !selectedDeclineReason || isSubmitting ? 0.6 : 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <XCircle size={16} />
-                  {isSubmitting ? 'Declining...' : 'Confirm Decline'}
-                </button>
+                  availableTokens={DECLINE_TOKENS}
+                  tokenValues={declineTokenValues}
+                />
+
+                <div style={{ display: 'none' }}>
+                  <textarea
+                    aria-label="Decline Notice Email Raw Input"
+                    placeholder="Decline notice content..."
+                    value={declineMessage}
+                    onChange={(e) => setDeclineMessage(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           )}
