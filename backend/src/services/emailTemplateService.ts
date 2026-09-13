@@ -119,6 +119,21 @@ function normalizeContext(context: EmailCompilationContext = {}): EmailCompilati
   if (typeof normalized.quick_bid_link === 'string') {
     normalized.quick_bid_link = new Handlebars.SafeString(normalized.quick_bid_link) as any;
   }
+  if (typeof normalized.accept_counter_link === 'string') {
+    normalized.accept_counter_link = new Handlebars.SafeString(normalized.accept_counter_link) as any;
+  }
+  if (typeof normalized.renegotiate_link === 'string') {
+    normalized.renegotiate_link = new Handlebars.SafeString(normalized.renegotiate_link) as any;
+  }
+  if (typeof normalized.portal_link === 'string') {
+    normalized.portal_link = new Handlebars.SafeString(normalized.portal_link) as any;
+  }
+  if (typeof normalized.payment_link === 'string') {
+    normalized.payment_link = new Handlebars.SafeString(normalized.payment_link) as any;
+  }
+  if (typeof normalized.deal_document_link === 'string') {
+    normalized.deal_document_link = new Handlebars.SafeString(normalized.deal_document_link) as any;
+  }
 
   if (typeof normalized.inventory_table === 'string') {
     normalized.inventory_table = new Handlebars.SafeString(normalized.inventory_table) as any;

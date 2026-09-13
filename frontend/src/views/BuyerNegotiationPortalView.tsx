@@ -56,6 +56,14 @@ export const BuyerNegotiationPortalView: React.FC<BuyerNegotiationPortalViewProp
       const fallbackQty = json.latestSupplierProposal?.proposedQuantity ?? json.offer?.quantity ?? '';
       setProposedPrice(fallbackPrice.toString());
       setProposedQuantity(fallbackQty.toString());
+
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const action = urlParams.get('action');
+        if (action === 'rebid' || action === 'renegotiate') {
+          setShowRebidModal(true);
+        }
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred loading the negotiation.');
     } finally {

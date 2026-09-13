@@ -485,6 +485,8 @@ export async function renegotiateBid(
   const supplierId = lot?.supplierId?.toString() || 'default';
   const baseUrl = (process.env.FRONTEND_URL || 'https://indspoileralert.com').replace(/\/$/, '');
   const portalNegotiationLink = `${baseUrl}/portal/negotiation/${offer._id}?token=${negotiationToken}`;
+  const acceptCounterLink = `${portalNegotiationLink}&action=accept`;
+  const renegotiateLink = `${portalNegotiationLink}&action=rebid`;
 
   // Build template context
   const context: Record<string, any> = {
@@ -495,8 +497,8 @@ export async function renegotiateBid(
     counter_quantity: `${counterQuantity}`,
     original_price: `$${offer.price?.toFixed(2)}`,
     original_quantity: `${offer.quantity}`,
-    accept_counter_link: portalNegotiationLink,
-    renegotiate_link: portalNegotiationLink,
+    accept_counter_link: acceptCounterLink,
+    renegotiate_link: renegotiateLink,
     portal_link: portalNegotiationLink,
     negotiation_token: negotiationToken,
     supplier_name: 'Supplier',
@@ -506,7 +508,14 @@ export async function renegotiateBid(
 
   // Compile subject and HTML
   const rawSubject = options?.emailSubject || `Counter-Offer: {{product_name}} - {{counter_price}} ({{counter_quantity}} cases)`;
-  const rawBody = options?.templateHtml || messageText || `<p>Dear {{buyer_name}},</p><p>We propose a counter-offer of <strong>{{counter_price}}</strong> for <strong>{{counter_quantity}} cases</strong> of {{product_name}} (original offer: {{original_quantity}} cases at {{original_price}}).</p><p><a href="{{accept_counter_link}}">Accept Counter-Offer</a> | <a href="{{renegotiate_link}}">Propose New Terms</a></p>`;
+  const ctaButtonsHtml = `<p style="margin-top: 24px;"><a href="{{accept_counter_link}}" class="btn-counter-accept" style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 12px 22px; border-radius: 8px; font-weight: 700; text-decoration: none; margin-right: 12px; font-size: 14px;">Accept Counter-Offer ({{counter_price}} &bull; {{counter_quantity}} cases)</a><a href="{{renegotiate_link}}" class="btn-counter-renegotiate" style="display: inline-block; background-color: #3b82f6; color: #ffffff; padding: 12px 22px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 14px;">Propose New Terms / Re-bid</a></p>`;
+
+  let rawBody = options?.templateHtml || messageText || '';
+  if (!rawBody.trim()) {
+    rawBody = `<p>Dear {{buyer_name}},</p><p>We propose a counter-offer of <strong>{{counter_price}}</strong> for <strong>{{counter_quantity}} cases</strong> of {{product_name}} (original offer: {{original_quantity}} cases at {{original_price}}).</p>${ctaButtonsHtml}`;
+  } else if (!rawBody.includes('accept_counter_link') && !rawBody.includes('portal_link')) {
+    rawBody = `${rawBody}${ctaButtonsHtml}`;
+  }
 
   const compiledSubject = compileSubject(rawSubject, context);
   const compiledHtml = compileTemplate(rawBody, context);

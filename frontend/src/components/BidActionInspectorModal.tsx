@@ -22,10 +22,12 @@ export const NEGOTIATION_TOKENS = [
   'product_name',
   'counter_price',
   'counter_quantity',
-  'original_price'
+  'original_price',
+  'accept_counter_link',
+  'renegotiate_link'
 ];
 
-export const DEFAULT_COUNTER_MESSAGE = '<p>Dear <span data-token="buyer_name">{{buyer_name}}</span>,</p><p>We propose a counter-offer for <span data-token="product_name">{{product_name}}</span> at <span data-token="counter_price">{{counter_price}}</span> for <span data-token="counter_quantity">{{counter_quantity}}</span> cases (original offer: <span data-token="original_price">{{original_price}}</span>).</p>';
+export const DEFAULT_COUNTER_MESSAGE = '<p>Dear <span data-token="buyer_name">{{buyer_name}}</span>,</p><p>We propose a counter-offer for <span data-token="product_name">{{product_name}}</span> at <span data-token="counter_price">{{counter_price}}</span> for <span data-token="counter_quantity">{{counter_quantity}}</span> cases (original offer: <span data-token="original_price">{{original_price}}</span>).</p><p><a href="{{accept_counter_link}}" class="btn-counter-accept" style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 12px 22px; border-radius: 8px; font-weight: 700; text-decoration: none; margin-right: 12px; font-size: 14px;">Accept Counter-Offer (<span data-token="counter_price">{{counter_price}}</span> • <span data-token="counter_quantity">{{counter_quantity}}</span>)</a><a href="{{renegotiate_link}}" class="btn-counter-renegotiate" style="display: inline-block; background-color: #3b82f6; color: #ffffff; padding: 12px 22px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 14px;">Propose New Terms / Re-bid</a></p>';
 
 export const SETTLEMENT_TOKENS = [
   'buyer_name',
@@ -182,12 +184,18 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
   const totalDelta = isCounterValid ? counterTotalRecovery - totalRecovery : 0;
   const totalDeltaPct = totalRecovery > 0 && isCounterValid ? (totalDelta / totalRecovery) * 100 : 0;
 
+  const negotiationBaseUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/portal/negotiation/${bid?._id || ''}`
+    : `/portal/negotiation/${bid?._id || ''}`;
+
   const tokenValues: Record<string, string> = {
     buyer_name: buyerCompany ? `[${buyerCompany}]` : '{{buyer_name}}',
     product_name: productTitle ? `[${productTitle}]` : '{{product_name}}',
     counter_price: isPriceValid ? `[$${numCounterPrice.toFixed(2)}/cs]` : '{{counter_price}}',
     counter_quantity: isQuantityValid ? `[${numCounterQuantity} cases]` : '{{counter_quantity}}',
-    original_price: unitPrice > 0 ? `[$${unitPrice.toFixed(2)}/cs]` : '{{original_price}}'
+    original_price: unitPrice > 0 ? `[$${unitPrice.toFixed(2)}/cs]` : '{{original_price}}',
+    accept_counter_link: `[${negotiationBaseUrl}?action=accept]`,
+    renegotiate_link: `[${negotiationBaseUrl}?action=rebid]`
   };
 
   const numAwarded = Number(awardedQuantity) || quantity;

@@ -135,6 +135,24 @@ describe('Buyer Negotiation Portal & Outbound Counter Action CTAs (Slice 3, Seam
       expect(activity?.content).toContain('/portal/negotiation/');
       expect(activity?.content).toContain(updatedOffer?.negotiationToken);
     });
+
+    it('automatically embeds prominent CTA buttons in counter email when plain messageText is provided', async () => {
+      await Activity.deleteMany({});
+      const res = await request(app)
+        .post(`/api/bids/${offer._id}/renegotiate`)
+        .send({
+          counterPrice: 16.50,
+          counterQuantity: 100,
+          messageText: 'We propose a counter-offer for Banquet Premium Surplus Item #13 at $16.50 for 100 cases.'
+        });
+
+      expect(res.status).toBe(200);
+      const activity = await Activity.findOne({ lotId: lot._id, 'metadata.action': 'counter' });
+      expect(activity?.content).toContain('Accept Counter-Offer');
+      expect(activity?.content).toContain('Propose New Terms / Re-bid');
+      expect(activity?.content).toContain('action=accept');
+      expect(activity?.content).toContain('action=rebid');
+    });
   });
 
   describe('GET /api/portal/negotiation/:offerId', () => {

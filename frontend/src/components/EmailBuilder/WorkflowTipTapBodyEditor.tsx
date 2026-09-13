@@ -103,6 +103,7 @@ export const TokenBadgeNode = Node.create({
   inline: true,
   selectable: true,
   atom: true,
+  marks: '_',
 
   addOptions() {
     return {
@@ -150,13 +151,28 @@ export const LinkMark = Mark.create({
         parseHTML: (element) => element.getAttribute('href'),
         renderHTML: (attributes) => ({ href: attributes.href, target: '_blank', rel: 'noopener noreferrer' }),
       },
+      style: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('style') || null,
+        renderHTML: (attributes) => {
+          if (attributes.style) {
+            return { style: attributes.style };
+          }
+          return { style: 'color: hsl(var(--primary)); text-decoration: underline;' };
+        },
+      },
+      class: {
+        default: null,
+        parseHTML: (element) => element.getAttribute('class') || null,
+        renderHTML: (attributes) => (attributes.class ? { class: attributes.class } : {}),
+      },
     };
   },
   parseHTML() {
     return [{ tag: 'a[href]' }];
   },
   renderHTML({ HTMLAttributes }) {
-    return ['a', mergeAttributes(HTMLAttributes, { style: 'color: hsl(var(--primary)); text-decoration: underline;' }), 0];
+    return ['a', mergeAttributes(HTMLAttributes), 0];
   },
 });
 

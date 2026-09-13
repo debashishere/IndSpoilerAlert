@@ -259,4 +259,30 @@ describe('BuyerNegotiationPortalView (Slice 3 Seam 3B)', () => {
 
     window.location = originalLocation;
   });
+
+  it('automatically opens the re-bid modal when action=rebid is present in the URL query', async () => {
+    const originalLocation = window.location;
+    // @ts-ignore
+    delete window.location;
+    // @ts-ignore
+    window.location = { ...originalLocation, search: '?token=valid-token-123.abc&action=rebid' };
+
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => mockPortalData
+    });
+
+    render(<BuyerNegotiationPortalView offerId={mockOfferId} token={mockToken} />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Organic Honeycrisp Apples/i)).toBeInTheDocument();
+    });
+
+    // Verify modal is automatically visible
+    expect(screen.getByRole('heading', { name: /Propose Revised Offer/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Proposed Price \(\$\/cs\)/i)).toBeInTheDocument();
+
+    window.location = originalLocation;
+  });
 });

@@ -422,6 +422,8 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       expect(within(tokensDropdown).getByText('{{counter_price}}')).toBeInTheDocument();
       expect(within(tokensDropdown).getByText('{{counter_quantity}}')).toBeInTheDocument();
       expect(within(tokensDropdown).getByText('{{original_price}}')).toBeInTheDocument();
+      expect(within(tokensDropdown).getByText('{{accept_counter_link}}')).toBeInTheDocument();
+      expect(within(tokensDropdown).getByText('{{renegotiate_link}}')).toBeInTheDocument();
 
       // Insert counter_price token and verify editor contains the token badge
       fireEvent.click(within(tokensDropdown).getByText('{{counter_price}}'));
@@ -629,6 +631,14 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
         // Check that preset text is present in the editor canvas
         expect(editorCanvas?.textContent).toContain('Dear');
         expect(editorCanvas?.textContent).toContain('We propose a counter-offer');
+        expect(editorCanvas?.textContent).toContain('Accept Counter-Offer');
+        expect(editorCanvas?.textContent).toContain('Propose New Terms / Re-bid');
+
+        // Check that CTA buttons are present
+        const acceptBtn = editorCanvas?.querySelector('a[href*="accept_counter_link"]');
+        const rebidBtn = editorCanvas?.querySelector('a[href*="renegotiate_link"]');
+        expect(acceptBtn).toBeInTheDocument();
+        expect(rebidBtn).toBeInTheDocument();
 
         // Check that dynamic token pills exist in the editor canvas for all required tokens
         const tokenPills = editorCanvas?.querySelectorAll('.token-badge-pill');
