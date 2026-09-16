@@ -148,4 +148,40 @@ describe('0085 — MarketplaceLandingView Public Buyer Catalog Grid', () => {
       expect(screen.getByText(/Submit Marketplace Bid/i)).toBeInTheDocument();
     });
   });
+
+  it('renders listings cleanly without error when publicPrice is undefined', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockImplementation((url: string) => {
+      if (url.includes('/api/v1/marketplace/listings')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            success: true,
+            listings: [
+              {
+                _id: 'listing-no-price',
+                publicTitle: 'Unpriced Surplus Lot',
+                category: 'Dairy',
+                remainingShelfLife: 0.8,
+                availableQuantity: 100,
+                startingPrice: 12.00,
+                status: 'published'
+              }
+            ]
+          })
+        });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({}) });
+    }));
+
+    render(
+      <Provider store={store}>
+        <MarketplaceLandingView />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Unpriced Surplus Lot')).toBeInTheDocument();
+      expect(screen.getByText('$12.00')).toBeInTheDocument();
+    });
+  });
 });

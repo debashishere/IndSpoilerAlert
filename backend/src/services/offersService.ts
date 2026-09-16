@@ -50,20 +50,12 @@ export async function sendMessage(
     throw new Error('Offer not found.');
   }
 
-  const listing = await MarketplaceListing.findById(offer.listingId);
-  if (!listing) {
-    throw new Error('Marketplace Listing not found for this offer.');
-  }
-
-  const opportunity = await Opportunity.findById(listing.opportunityId);
-  if (!opportunity) {
-    throw new Error('Opportunity not found for this offer.');
-  }
-
-  const lot = await InventoryLot.findById(opportunity.lotId);
+  const lot = await resolveLotForOffer(offer, false);
   if (!lot) {
-    throw new Error('Inventory Lot not found.');
+    throw new Error('Inventory Lot not found for this offer.');
   }
+
+  const standardSellPrice = lot.standardSellPrice || lot.costPerCase || offer.price || 10;
 
   // 1. Add supplier message
   const supplierMsg = {
@@ -97,9 +89,9 @@ export async function sendMessage(
     // Supplier proposed a counter-price
     if (parsedPrice <= offer.price) {
       buyerReply = `We've already bid $${offer.price.toFixed(2)}/cs, which is higher than or equal to your suggestion. Please award us the listing at our current bid!`;
-    } else if (parsedPrice > lot.standardSellPrice) {
+    } else if (parsedPrice > standardSellPrice) {
       // Way too high (exceeds standard sell price)
-      buyerReply = `Our budget doesn't allow for prices higher than the standard selling price of $${lot.standardSellPrice.toFixed(2)}/cs. We have to reject this pricing.`;
+      buyerReply = `Our budget doesn't allow for prices higher than the standard selling price of $${standardSellPrice.toFixed(2)}/cs. We have to reject this pricing.`;
       updatedStatus = 'rejected';
     } else {
       // Price is between current bid and standard sell price.
@@ -131,7 +123,7 @@ export async function sendMessage(
     if (lowerMsg.includes('accept') || lowerMsg.includes('agree') || lowerMsg.includes('ok') || lowerMsg.includes('deal')) {
       buyerReply = `Great! We are ready to finalize the transaction. Please accept and award this bid!`;
     } else if (lowerMsg.includes('lowest') || lowerMsg.includes('negotiate') || lowerMsg.includes('better')) {
-      const midwayPrice = Math.round(((offer.price + lot.standardSellPrice) / 2) * 100) / 100;
+      const midwayPrice = Math.round(((offer.price + standardSellPrice) / 2) * 100) / 100;
       buyerReply = `We are open to negotiating. We can increase our bid to $${midwayPrice.toFixed(2)}/cs. How does that work?`;
       updatedPrice = midwayPrice;
     } else {

@@ -59,7 +59,7 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
   useEffect(() => {
     if (listing) {
       setQuantity(Math.min(20, listing.availableQuantity));
-      setPrice(listing.startingPrice || listing.publicPrice || 0);
+      setPrice(listing.publicPrice ?? listing.startingPrice ?? 0);
     }
   }, [listing]);
 
@@ -198,7 +198,7 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
                 Available Stock: <strong className="text-slate-900 dark:text-slate-200">{listing.availableQuantity} cases</strong>
               </span>
               <span>
-                Floor Price: <strong className="text-emerald-600 dark:text-emerald-400">${listing.publicPrice.toFixed(2)}/cs</strong>
+                Floor Price: <strong className="text-emerald-600 dark:text-emerald-400">${(listing.publicPrice ?? listing.startingPrice ?? 0).toFixed(2)}/cs</strong>
               </span>
             </div>
           </div>

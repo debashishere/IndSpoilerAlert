@@ -48,6 +48,9 @@
 - **Marketplace Broadcast Fallback**: A terminal fallback rule configuration where remaining unsold inventory lots from prior private stages or stages targeting "All Buyers" are automatically published to the public `MarketplaceListing` catalog (subject to compliance verification) as a final commercial recovery attempt before non-commercial diversion.
 - **Compliance Hold Gate**: An automated regulatory safeguard during Marketplace Broadcast execution where lots with verified compliance documentation (COA/Batch Record) publish immediately to the public marketplace, while unverified FDA-regulated lots are held in a `compliance_hold` status pending supplier document upload and verification.
 - **Stage Balance Carry-Forward**: The automated mechanism where unawarded or partially remaining inventory quantities from a prior stage execution remain active for the duration of the current stage window and then carry forward as the available inventory pool for downstream stages or marketplace broadcast.
+- **Campaign Scope**: The macro-orchestration boundary (`AutomationRun`) managing multi-lot inventory snapshots (`snapshotInventoryIds`), stage escalation timers, and buyer tier dispatches across multiple lots.
+- **Atomic Offer Granularity**: The micro-transactional unit (`Offer` and `Award`) representing a buyer's commercial and legal commitment to a single physical inventory lot (`lotId`), ensuring warehouse DC pickup accuracy, SKU-level valuation, and independent negotiation.
+- **Strict Listing Reference Invariant**: The database relational integrity rule requiring `Offer.listingId` (and `Award.listingId`) to be strictly null or undefined unless a matching document exists in the `MarketplaceListing` collection, preventing foreign key cross-contamination with unlisted inventory lot IDs.
 
 ## Workflow Run History & Audit Trail
 

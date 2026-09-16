@@ -198,4 +198,31 @@ describe('0087 — BuyerBidModal Component & Bidding Verification Workflow', () 
 
     global.fetch = originalFetch;
   });
+
+  it('renders and functions gracefully when listing.publicPrice is undefined', () => {
+    const store = createTestStore();
+    const listingWithoutPublicPrice = {
+      _id: 'listing_no_price',
+      publicTitle: 'Unpriced CPG Batch',
+      category: 'Beverages',
+      remainingShelfLife: 0.5,
+      availableQuantity: 50,
+      startingPrice: 5.00,
+      status: 'published'
+    };
+
+    render(
+      <Provider store={store}>
+        <BuyerBidModal
+          isOpen={true}
+          onClose={vi.fn()}
+          listing={listingWithoutPublicPrice as any}
+        />
+      </Provider>
+    );
+
+    expect(screen.getByText(/Unpriced CPG Batch/i)).toBeInTheDocument();
+    expect(screen.getByText(/Floor Price:/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/\$5.00\/cs/i).length).toBeGreaterThanOrEqual(1);
+  });
 });

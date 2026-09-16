@@ -214,7 +214,16 @@ router.post('/quick-submit', optionalAuthToken, async (req: AuthenticatedRequest
     // Resolve the target lot
     const InventoryLot = (await import('../models/InventoryLot')).default;
     const targetLotId = tokenDoc.lotId || tokenDoc.listingId;
-    const lot = targetLotId ? await InventoryLot.findById(targetLotId) : null;
+    let lot = (targetLotId && mongoose.isValidObjectId(targetLotId)) ? await InventoryLot.findById(targetLotId) : null;
+
+    // If targetLotId was actually a MarketplaceListing _id, resolve its linked lotId
+    if (!lot && tokenDoc.listingId && mongoose.isValidObjectId(tokenDoc.listingId)) {
+      const MarketplaceListing = (await import('../models/MarketplaceListing')).default;
+      const listingDoc = await MarketplaceListing.findById(tokenDoc.listingId);
+      if (listingDoc?.lotId) {
+        lot = await InventoryLot.findById(listingDoc.lotId);
+      }
+    }
 
     // Validate cases against available quantity
     if (lot && bidCases > (lot.availableQty ?? lot.quantityCases ?? Infinity)) {
@@ -223,7 +232,7 @@ router.post('/quick-submit', optionalAuthToken, async (req: AuthenticatedRequest
 
     // 2. Ensure the linked AutomationRun is still active (if present)
     let run: any = null;
-    if (tokenDoc.runId) {
+    if (tokenDoc.runId && mongoose.isValidObjectId(tokenDoc.runId)) {
       const AutomationRun = (await import('../models/AutomationRun')).default;
       run = await AutomationRun.findById(tokenDoc.runId);
       if (run) {
@@ -257,13 +266,24 @@ router.post('/quick-submit', optionalAuthToken, async (req: AuthenticatedRequest
     }
 
     // 4. Create an Offer record routed through the standard evaluation pipeline
+    let verifiedListingId: mongoose.Types.ObjectId | undefined = undefined;
+    if (tokenDoc.listingId && mongoose.isValidObjectId(tokenDoc.listingId)) {
+      const MarketplaceListing = (await import('../models/MarketplaceListing')).default;
+      const listingExists = await MarketplaceListing.exists({ _id: tokenDoc.listingId });
+      if (listingExists) {
+        verifiedListingId = new mongoose.Types.ObjectId(tokenDoc.listingId);
+      }
+    }
+
     const Offer = (await import('../models/Offer')).default;
     const offer = await Offer.create({
-      listingId: tokenDoc.listingId && mongoose.Types.ObjectId.isValid(tokenDoc.listingId)
-        ? new mongoose.Types.ObjectId(tokenDoc.listingId)
+      listingId: verifiedListingId,
+      lotId: (tokenDoc.lotId && mongoose.isValidObjectId(tokenDoc.lotId))
+        ? new mongoose.Types.ObjectId(tokenDoc.lotId as string)
+        : (lot?._id || undefined),
+      runId: (tokenDoc.runId && mongoose.isValidObjectId(tokenDoc.runId))
+        ? new mongoose.Types.ObjectId(tokenDoc.runId as string)
         : undefined,
-      lotId: tokenDoc.lotId ? new mongoose.Types.ObjectId(tokenDoc.lotId as string) : undefined,
-      runId: tokenDoc.runId ? new mongoose.Types.ObjectId(tokenDoc.runId as string) : undefined,
       buyerId: buyer._id,
       quantity: bidCases,
       price: bidAmount,
@@ -297,9 +317,10 @@ router.post('/quick-submit', optionalAuthToken, async (req: AuthenticatedRequest
           const { checkBidAgainstActiveWorkflows } = await import('../services/agendaService');
           // Resolve listing for pipeline hook (optional — may be null for unlisted lots)
           const MarketplaceListing = (await import('../models/MarketplaceListing')).default;
+          const isListingIdValid = tokenDoc.listingId && mongoose.isValidObjectId(tokenDoc.listingId);
           const listing = await MarketplaceListing.findOne({
             $or: [
-              ...(tokenDoc.listingId ? [{ _id: tokenDoc.listingId }] : []),
+              ...(isListingIdValid ? [{ _id: tokenDoc.listingId }] : []),
               { lotId: lot._id }
             ]
           });

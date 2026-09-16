@@ -187,9 +187,9 @@ export async function enableBidding(lotId: string) {
       category: product?.category || 'General Surplus',
       remainingShelfLife: lot.remainingShelfLife,
       availableQuantity: lot.availableQty ?? lot.quantityCases,
-      publicPrice: lot.standardSellPrice || lot.costPerCase,
-      startingPrice: lot.standardSellPrice || lot.costPerCase,
-      minimumPrice: Math.round((lot.standardSellPrice || lot.costPerCase) * 0.5 * 100) / 100,
+      publicPrice: lot.standardSellPrice || lot.costPerCase || 0,
+      startingPrice: lot.standardSellPrice || lot.costPerCase || 0,
+      minimumPrice: Math.round((lot.standardSellPrice || lot.costPerCase || 0) * 0.5 * 100) / 100,
       coaVerified: true,
       sanitized: true,
       allowBidding: true,
@@ -203,7 +203,7 @@ export async function enableBidding(lotId: string) {
     if (!listing.publicTitle) listing.publicTitle = product?.description || product?.brand || `Lot #${lot.lotNumber}`;
     if (!listing.category) listing.category = product?.category || 'General Surplus';
     if (!listing.availableQuantity) listing.availableQuantity = lot.availableQty ?? lot.quantityCases;
-    if (!listing.publicPrice) listing.publicPrice = lot.standardSellPrice || lot.costPerCase;
+    if (listing.publicPrice === undefined || listing.publicPrice === null) listing.publicPrice = lot.standardSellPrice || lot.costPerCase || listing.startingPrice || 0;
     if (!listing.remainingShelfLife) listing.remainingShelfLife = lot.remainingShelfLife;
   }
   await listing.save();
@@ -227,9 +227,11 @@ export async function enableBidding(lotId: string) {
         for (let i = 0; i < selectedBuyers.length; i++) {
           const buyer = selectedBuyers[i];
           const pct = 0.2 + Math.random() * 0.8;
-          const quantity = Math.max(1, Math.round(lot.availableQty * pct));
+          const availableCases = lot.availableQty ?? lot.quantityCases ?? 10;
+          const quantity = Math.max(1, Math.round(availableCases * pct));
           const pricePct = 0.6 + Math.random() * 0.35;
-          const price = Math.round(lot.standardSellPrice * pricePct * 100) / 100;
+          const basePrice = lot.standardSellPrice || lot.costPerCase || listing?.publicPrice || listing?.startingPrice || 10;
+          const price = Math.round(basePrice * pricePct * 100) / 100;
 
           const offer = new Offer({
             listingId: listing?._id,

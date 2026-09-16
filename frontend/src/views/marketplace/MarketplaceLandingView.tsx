@@ -8,7 +8,7 @@ export interface ListingItem {
   category: string;
   remainingShelfLife: number; // 0 to 1 decimal representing RSL %
   availableQuantity: number;
-  publicPrice: number;
+  publicPrice?: number;
   startingPrice?: number;
   minimumPrice?: number;
   coaVerified?: boolean;
@@ -88,8 +88,8 @@ export const MarketplaceLandingView: React.FC<MarketplaceLandingViewProps> = ({
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase();
     return (
-      item.publicTitle.toLowerCase().includes(q) ||
-      item.category.toLowerCase().includes(q) ||
+      (item.publicTitle?.toLowerCase().includes(q) ?? false) ||
+      (item.category?.toLowerCase().includes(q) ?? false) ||
       (item.description && item.description.toLowerCase().includes(q))
     );
   });
@@ -310,7 +310,7 @@ export const MarketplaceLandingView: React.FC<MarketplaceLandingViewProps> = ({
                       <span className="text-xs text-slate-400 block uppercase font-medium">Public Floor Price</span>
                       <div className="flex items-baseline gap-1">
                         <span className="text-xl font-extrabold text-emerald-400">
-                          ${listing.publicPrice.toFixed(2)}
+                          ${(listing.publicPrice ?? listing.startingPrice ?? 0).toFixed(2)}
                         </span>
                         <span className="text-xs text-slate-400">/case</span>
                       </div>
@@ -379,7 +379,7 @@ export const MarketplaceLandingView: React.FC<MarketplaceLandingViewProps> = ({
                   </div>
                   <div>
                     <span className="text-[11px] text-slate-500 uppercase block">Floor Price</span>
-                    <span className="text-sm font-bold text-emerald-400">${selectedListing.publicPrice.toFixed(2)} / cs</span>
+                    <span className="text-sm font-bold text-emerald-400">${(selectedListing.publicPrice ?? selectedListing.startingPrice ?? 0).toFixed(2)} / cs</span>
                   </div>
                   <div>
                     <span className="text-[11px] text-slate-500 uppercase block">Shelf Life Decay</span>

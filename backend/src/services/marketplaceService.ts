@@ -464,7 +464,13 @@ export async function getMarketplaceListings(filters: {
   }
 
   const listings = await MarketplaceListing.find(query).sort({ createdAt: -1 });
-  return listings;
+  return listings.map((l: any) => {
+    const doc = l.toObject ? l.toObject({ virtuals: true }) : { ...l };
+    if (doc.publicPrice === undefined || doc.publicPrice === null) {
+      doc.publicPrice = doc.startingPrice || doc.minimumPrice || 0;
+    }
+    return doc;
+  });
 }
 
 

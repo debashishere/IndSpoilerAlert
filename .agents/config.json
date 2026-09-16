@@ -1,0 +1,9 @@
+{
+  "mcp": {
+    "allowedServers": ["google-stitch"],
+    "trustedServers": ["google-stitch"]
+  },
+  "security": {
+    "allowSubagentMcpExecution": true
+  }
+}
