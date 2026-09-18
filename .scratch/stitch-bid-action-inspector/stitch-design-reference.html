@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+
+<html lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Bid Action Inspector - Pure Leaf Premium Surplus Item #3 (Tea)</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Geist, Inter, JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<!-- Google Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Geist', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Menlo', 'Monaco', 'Courier New', 'monospace'],
+            editor: ['Verdana', 'Geneva', 'Tahoma', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+    }
+    .material-symbols-outlined.fill-icon {
+      font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 20;
+    }
+    .token-badge {
+      display: inline-flex;
+      align-items: center;
+      background-color: #fef3c7;
+      border: 1px solid #fde68a;
+      color: #b45309;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 4px;
+      font-size: 11.5px;
+      vertical-align: baseline;
+      box-shadow: 0 1px 2px rgba(217, 119, 6, 0.08);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="w-full min-h-full bg-slate-100/90 text-slate-800 antialiased selection:bg-blue-100 selection:text-blue-900 font-sans p-4 sm:p-6 md:p-8 flex flex-col items-center justify-start">
+<!-- Subtle Ambient Backdrop Cards for Context Depth -->
+<div class="fixed inset-0 -z-10 bg-gradient-to-br from-slate-100 via-slate-200/70 to-slate-100 pointer-events-none opacity-90 flex flex-col p-6 overflow-hidden">
+<div class="w-full h-12 bg-white/70 backdrop-blur border border-slate-200/70 rounded-xl mb-4 shadow-2xs flex items-center justify-between px-6">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-slate-400"></div>
+<div class="w-28 h-3.5 bg-slate-300 rounded"></div>
+<div class="w-16 h-3 bg-slate-200 rounded ml-4"></div>
+</div>
+<div class="flex gap-2">
+<div class="w-20 h-7 bg-slate-200 rounded"></div>
+<div class="w-7 h-7 bg-slate-300 rounded-full"></div>
+</div>
+</div>
+<div class="grid grid-cols-4 gap-4 mb-4">
+<div class="h-28 bg-white/50 border border-slate-200/50 rounded-xl"></div>
+<div class="h-28 bg-white/50 border border-slate-200/50 rounded-xl"></div>
+<div class="h-28 bg-white/50 border border-slate-200/50 rounded-xl"></div>
+<div class="h-28 bg-white/50 border border-slate-200/50 rounded-xl"></div>
+</div>
+<div class="flex-1 bg-white/40 border border-slate-200/50 rounded-xl"></div>
+</div>
+<!-- MAIN MODAL CONTAINER (Explicit visible dimensions, clean auto-scrolling) -->
+<div class="w-full max-w-[1100px] bg-white text-slate-800 rounded-2xl shadow-xl border border-slate-200 flex flex-col overflow-visible my-2 sm:my-4 transition-all">
+<!-- 1. TOP MODAL HEADER -->
+<header class="bg-white px-6 py-5 border-b border-slate-200 flex items-start justify-between rounded-t-2xl">
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center gap-2 flex-wrap text-[12px] font-medium text-slate-500">
+<span class="font-semibold uppercase tracking-wider text-slate-400 text-[11px]">BID ACTION INSPECTOR</span>
+<span class="text-slate-300">•</span>
+<span class="font-mono text-slate-600 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">Lot #LOT-2026-003</span>
+<span class="font-mono text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">SKU: ULVR-TEA-003</span>
+<span class="text-slate-300">•</span>
+<span class="inline-flex items-center gap-1.5 bg-[#fef3c7] text-[#b45309] border border-[#fde68a] rounded-full px-2.5 py-0.5 text-[11.5px] font-semibold">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+          Pending Acceptance
+        </span>
+</div>
+<h1 class="text-[22px] sm:text-[24px] font-bold text-slate-900 tracking-tight leading-snug">
+        Pure Leaf Premium Surplus Item #3 (Tea)
+      </h1>
+</div>
+<!-- Header Actions (Preview Email & Close) -->
+<div class="flex items-center gap-2.5 shrink-0 ml-4">
+<button class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-[12px] font-medium text-slate-700 shadow-2xs cursor-pointer" onclick="previewActiveEmailModal()" type="button">
+<span class="material-symbols-outlined text-[16px] text-slate-500">visibility</span>
+<span class="">Preview Email</span>
+</button>
+<button aria-label="Close modal" class="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center cursor-pointer text-[14px]" onclick="window.history.back()" type="button">
+        ✕
+      </button>
+</div>
+</header>
+<!-- 2. KEY METRICS SUMMARY STAT CARDS (4-Column Grid) -->
+<section class="bg-slate-50/70 px-6 py-4 border-b border-slate-200">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+<!-- Card 1: Buyer Organization -->
+<div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-colors">
+<div class="flex items-center justify-between text-slate-500 text-[11.5px] font-medium mb-1.5">
+<span class="flex items-center gap-1.5 text-slate-500">
+<span class="material-symbols-outlined text-[15px] text-slate-400">corporate_fare</span> Buyer Organization
+          </span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">Verified</span>
+</div>
+<div class="text-[14px] font-bold text-slate-900 truncate" title="Atlanta Community Food Bank">Atlanta Community Food Bank</div>
+<div class="flex items-center gap-1 text-slate-500 text-[11px] truncate mt-1">
+<span class="material-symbols-outlined text-[13px] text-slate-400 shrink-0">mail</span>
+<span class="truncate font-mono" title="debashisroe1996+atlantacommunityfoodbank@gmail.com">debashisroe1996+atlantacommunityfoodbank@gmail.com</span>
+</div>
+</div>
+<!-- Card 2: Unit Offer -->
+<div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-colors">
+<div class="flex items-center justify-between text-slate-500 text-[11.5px] font-medium mb-1.5">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-slate-400">attach_money</span> Unit Offer
+          </span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">Settled (+15%)</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-[20px] font-bold font-mono text-emerald-600 leading-none">$15.00</span>
+<span class="text-slate-500 text-[12px]">/case</span>
+</div>
+<div class="text-[11px] text-slate-500 mt-1 font-mono">Initial: $12.50 • Reserve: $14.00</div>
+</div>
+<!-- Card 3: Volume Requested -->
+<div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-colors">
+<div class="flex items-center justify-between text-slate-500 text-[11.5px] font-medium mb-1.5">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-slate-400">inventory_2</span> Volume Requested
+          </span>
+<span class="text-[10px] font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded font-mono">100% Lot</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-[20px] font-bold font-mono text-slate-900 leading-none">100</span>
+<span class="text-slate-500 text-[12px]">cases</span>
+</div>
+<div class="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+<span class="font-mono">Avail: 100 cases</span>
+<span class="text-emerald-600 font-semibold">Full Clearing</span>
+</div>
+</div>
+<!-- Card 4: Gross Recovery -->
+<div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 transition-colors">
+<div class="flex items-center justify-between text-slate-500 text-[11.5px] font-medium mb-1.5">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-slate-400">payments</span> Gross Recovery
+          </span>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">Target Margin</span>
+</div>
+<div class="flex items-baseline gap-1">
+<span class="text-[20px] font-bold font-mono text-slate-900 leading-none">$1,500.00</span>
+</div>
+<div class="text-[11px] text-slate-500 mt-1 font-mono">Net clearing: $1,455.00 (3% fee)</div>
+</div>
+</div>
+</section>
+<!-- 3. ACTION TABS NAVIGATION BAR -->
+<nav class="bg-white px-6 border-b border-slate-200 flex items-center select-none overflow-x-auto">
+<div class="flex items-center gap-2 sm:gap-4">
+<!-- Tab 1: Accept Offer -->
+<button class="flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] font-semibold text-slate-500 hover:text-slate-800 border-b-[3px] border-transparent hover:border-slate-300 -mb-[1px] transition-all cursor-pointer" id="tab-btn-accept" onclick="switchTab('accept')" type="button">
+<span class="material-symbols-outlined text-[18px]">check_circle</span>
+<span class="">Accept Offer</span>
+</button>
+<!-- Tab 2: Negotiate -->
+<button class="flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] font-bold text-amber-600 border-b-[3px] border-amber-500 -mb-[1px] transition-all bg-amber-50/40 cursor-pointer" id="tab-btn-negotiate" onclick="switchTab('negotiate')" type="button">
+<span class="material-symbols-outlined text-[18px]">swap_horiz</span>
+<span class="">Negotiate</span>
+</button>
+<!-- Tab 3: Decline -->
+<button class="flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] font-semibold text-slate-500 hover:text-slate-800 border-b-[3px] border-transparent hover:border-slate-300 -mb-[1px] transition-all cursor-pointer" id="tab-btn-decline" onclick="switchTab('decline')" type="button">
+<span class="material-symbols-outlined text-[18px]">cancel</span>
+<span class="">Decline</span>
+</button>
+<!-- Tab 4: Timeline -->
+<button class="flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] font-semibold text-slate-500 hover:text-slate-800 border-b-[3px] border-transparent hover:border-slate-300 -mb-[1px] transition-all cursor-pointer" id="tab-btn-timeline" onclick="switchTab('timeline')" type="button">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span class="">Timeline</span>
+</button>
+</div>
+</nav>
+<!-- 4. WORK SURFACES -->
+<!-- ==================== PANE 1: ACCEPT OFFER (ACTIVE BY DEFAULT) ==================== -->
+<main class="tab-pane px-6 pb-6 pt-5 hidden" id="pane-accept">
+<div class="flex flex-col gap-4"><!-- 1. Logistics & Allocation Configuration Card (TOP) -->
+<section class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-2xs flex flex-col gap-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-slate-200">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="text-[14px] font-bold text-slate-900 tracking-tight">Logistics &amp; Allocation</h2>
+<span class="inline-flex items-center text-[10.5px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded">Ready for Settlement</span>
+</div>
+<p class="text-slate-500 text-[12px] mt-0.5">Review DC warehouse depot address, dock operating hours, and verify full lot award before confirming.</p>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+<div class="flex flex-col gap-1.5">
+<label class="text-[12px] font-bold text-slate-800 flex items-center justify-between" for="accept-pickup-address">
+<span class="flex items-center gap-1">DC Pickup Address <span class="text-rose-500">*</span></span>
+<span class="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded font-mono">FOB Origin</span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined text-[16px] text-blue-500 absolute left-3 top-2.5 pointer-events-none">location_on</span>
+<input class="w-full bg-white border border-slate-300 focus:border-blue-500 rounded-lg pl-9 pr-3 py-2 text-[12.5px] text-slate-900 font-medium shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20" id="accept-pickup-address" type="text" value="Texas Central Facility, Dallas, TX, United States"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[12px] font-bold text-slate-800 flex items-center justify-between" for="accept-dock-hours">
+<span class="flex items-center gap-1">Dock Operating Hours <span class="text-rose-500">*</span></span>
+<span class="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">Appointment Req.</span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-2.5 pointer-events-none">schedule</span>
+<input class="w-full bg-white border border-slate-300 focus:border-blue-500 rounded-lg pl-9 pr-3 py-2 text-[12.5px] text-slate-900 font-medium shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20" id="accept-dock-hours" type="text" value="08:00 AM - 04:30 PM CST"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[12px] font-bold text-slate-800 flex items-center justify-between" for="accept-awarded-qty">
+<span class="">Awarded Qty (cases)</span>
+<span class="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded font-mono">100 Max</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-2.5 pointer-events-none">inventory</span>
+<input class="w-full bg-white border border-slate-300 focus:border-blue-500 rounded-lg pl-9 pr-3 py-2 text-[12.5px] font-mono font-bold text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-blue-500/20" id="accept-awarded-qty" max="100" min="1" type="number" value="100"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[12px] font-bold text-slate-800 flex items-center justify-between">
+<span class="">Agreed Price ($/case)</span>
+<span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-mono font-semibold">Settled</span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-2.5 pointer-events-none">lock</span>
+<input class="w-full bg-slate-100 border border-slate-200 rounded-lg pl-9 pr-12 py-2 text-[12.5px] font-mono font-bold text-emerald-600 cursor-not-allowed shadow-2xs" disabled="" type="text" value="$15.00"/>
+<span class="absolute right-3 top-2.5 text-[11px] font-mono text-slate-400 uppercase font-semibold">USD</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. Communication Card with Channel Selector (BELOW Parameters) -->
+<section class="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden transition-all" id="accept-email-builder-section">
+<div class="bg-slate-50/70 hover:bg-slate-100/70 transition-colors px-4 sm:px-5 py-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none" onclick="toggleEmailAccordion('accept-email-body', 'accept-email-chevron')">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 flex-wrap">
+<h2 class="text-[13px] font-bold text-slate-900 tracking-tight">Communication</h2>
+<!-- Channel Selector Pills -->
+<div class="inline-flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 text-[11px] font-medium" onclick="event.stopPropagation()">
+<button class="px-2 py-0.5 rounded bg-blue-600 text-white font-semibold flex items-center gap-1 shadow-2xs cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[13px]">mail</span> Email
+            </button>
+<button class="px-2 py-0.5 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[13px]">forum</span> In-App
+            </button>
+<button class="px-2 py-0.5 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[13px]">sms</span> SMS
+            </button>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 text-[11px] font-mono text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-2xs max-w-[320px] sm:max-w-none truncate w-fit">
+<span class="text-slate-400 font-sans">Recipient:</span>
+<span class="truncate font-semibold text-slate-700">debashisroe1996+atlantacommunityfoodbank@gmail.com</span>
+</span>
+</div>
+</div>
+<div class="flex items-center gap-2.5 shrink-0 ml-auto">
+<div class="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
+<span class="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded font-medium">7 Dynamic Tokens</span>
+<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded">94 Words</span>
+</div>
+<button aria-label="Toggle email builder collapse" class="w-7 h-7 rounded-md bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center transition-transform shadow-2xs" type="button">
+<span class="material-symbols-outlined text-[18px] transition-transform duration-200" id="accept-email-chevron">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Accordion Body Content -->
+<div class="flex flex-col transition-all duration-300 hidden" id="accept-email-body">
+<!-- Rich Text Toolbar -->
+<div class="bg-slate-50 border-b border-slate-200 p-2 flex flex-wrap items-center gap-1.5 text-slate-700 select-none text-[12px]">
+<div class="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded text-slate-700 font-medium">
+<span class="font-editor">Verdana</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+</div>
+<div class="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded text-slate-700 font-mono">
+<span class="">11pt</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+</div>
+<div class="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded text-slate-700 font-medium">
+<span class="">Paragraph</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+</div>
+<div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+<button class="bg-[#fef3c7] border border-[#fde68a] text-[#b45309] font-semibold text-[11px] px-2 py-1 rounded flex items-center gap-1 hover:bg-[#fde68a] transition-colors" type="button">
+<span class="">🏷️ Tags</span>
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</button>
+<div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+<div class="flex items-center gap-0.5">
+<button class="w-7 h-7 flex items-center justify-center rounded bg-slate-200/80 text-slate-900 font-bold hover:bg-slate-200" title="Bold" type="button">B</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 italic font-serif" title="Italic" type="button">I</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 underline" title="Underline" type="button">U</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 line-through" title="Strikethrough" type="button">S</button>
+</div>
+<div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+<div class="flex items-center gap-0.5">
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Align Left" type="button">
+<span class="material-symbols-outlined text-[16px]">format_align_left</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Align Center" type="button">
+<span class="material-symbols-outlined text-[16px]">format_align_center</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Align Right" type="button">
+<span class="material-symbols-outlined text-[16px]">format_align_right</span>
+</button>
+</div>
+<div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+<div class="flex items-center gap-0.5">
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Bullet List" type="button">
+<span class="material-symbols-outlined text-[16px]">format_list_bulleted</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Numbered List" type="button">
+<span class="material-symbols-outlined text-[16px]">format_list_numbered</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Link" type="button">
+<span class="material-symbols-outlined text-[16px]">link</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Image" type="button">
+<span class="material-symbols-outlined text-[16px]">image</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Highlight" type="button">
+<span class="material-symbols-outlined text-[16px] text-amber-500">ink_highlighter</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600 ml-auto" title="Clear Formatting" type="button">
+<span class="material-symbols-outlined text-[16px]">format_clear</span>
+</button>
+</div>
+</div>
+<!-- Email Canvas Body -->
+<div class="bg-white min-h-[200px] p-5 font-editor text-[13px] text-slate-800 leading-[1.7] outline-none border-b border-slate-100">
+<p class="mb-4">Dear <span class="token-badge">[Atlanta Community Food Bank]</span>,</p>
+<p class="mb-4">
+        We are pleased to accept your offer for <span class="token-badge">[100 cases]</span> of <span class="token-badge">[Pure Leaf Premium Surplus Item #3 (Tea)]</span> (SKU: <span class="token-badge">[ULVR-TEA-003]</span>) at <span class="token-badge">[$15.00/case]</span>. Total settlement amount: <span class="token-badge">[$1500.00]</span>.
+      </p>
+<p class="mb-4">
+<strong>Pickup Location:</strong><br/>
+<span class="token-badge">[Texas Central Facility, Dallas, TX, United States]</span>
+</p>
+<p class="mb-4">
+<strong>Dock Operating Hours:</strong> <span class="token-badge">[08:00 AM - 04:30 PM CST]</span>
+</p>
+<p class="mb-4">
+        Please review and execute the deal agreement:<br/>
+<span class="token-badge">[/deal/6aa78cbc767c8ac8af587c4d]</span>
+</p>
+<p class="mb-2">
+        Complete transaction payment:<br/>
+<span class="token-badge">[/deal/6aa78cbc767c8ac8af587c4d#payment]</span>
+</p>
+</div>
+</div>
+</section>
+<!-- 3. Settlement Summary Footer Bar (BOTTOM) -->
+<div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5 mt-1">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-emerald-100/80 border border-emerald-200 flex items-center justify-center text-emerald-700 shrink-0">
+<span class="material-symbols-outlined text-[20px]">verified_user</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-baseline gap-2">
+<span class="text-[12.5px] font-bold text-slate-700">Total Settlement Value:</span>
+<span class="text-[18px] font-bold font-mono text-emerald-600 leading-none">$1,500.00</span>
+<span class="text-[11px] text-slate-500 font-normal">(100 cs × $15.00)</span>
+</div>
+<div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
+<span class="text-emerald-600 font-semibold font-mono">Full Clearing</span>
+<span class="">•</span>
+<span class="">FOB Origin Texas Facility</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2.5 shrink-0">
+<button class="hover:text-slate-900 flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors cursor-pointer text-[12px] font-medium text-slate-600 shadow-2xs" onclick="previewActiveEmailModal()" type="button">
+<span class="material-symbols-outlined text-[15px] text-slate-500">visibility</span>
+<span class="">Preview Email</span>
+</button>
+<button class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[13px] rounded-lg py-2 px-5 shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] whitespace-nowrap" onclick="alert('Offer Confirmed and Dispatched to Buyer.')" type="button">
+<span class="material-symbols-outlined text-[17px]">check</span>
+<span class="">Confirm Offer</span>
+</button>
+</div>
+</div></div>
+</main>
+<!-- ==================== PANE 2: NEGOTIATE ==================== -->
+<main class="tab-pane px-6 pb-6 pt-5" id="pane-negotiate">
+<div class="flex flex-col gap-4"><!-- 1. Counter-Offer Parameters Card (TOP) -->
+<section class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-2xs flex flex-col gap-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-slate-200">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+<span class="material-symbols-outlined text-[20px]">swap_horiz</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="text-[14px] font-bold text-slate-900 tracking-tight">Counter-Offer Parameters</h2>
+<span class="inline-flex items-center text-[10.5px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">Round 2 Propose</span>
+</div>
+<p class="text-slate-500 text-[12px] mt-0.5">Adjust counter unit price or tranche volume. Totals recalculate dynamically with margin validation.</p>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+<div class="flex flex-col gap-1.5">
+<label class="text-[12px] font-bold text-slate-800 flex items-center justify-between" for="negotiate-price">
+<span class="flex items-center gap-1">Counter Unit Price ($/cs) <span class="text-amber-600">*</span></span>
+<span class="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-mono font-semibold" id="negotiate-uplift-badge">+10.0% Uplift</span>
+</label>
+<div class="relative flex items-center">
+<span class="absolute left-3 text-slate-400 font-mono text-[13px] font-medium">$</span>
+<input class="w-full bg-white border border-slate-300 focus:border-amber-500 rounded-lg pl-7 pr-3 py-2 text-[12.5px] font-mono font-bold text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-amber-500/20" id="negotiate-price" oninput="recalcNegotiateTotals()" step="0.25" type="number" value="16.50"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[12px] font-bold text-slate-800 flex items-center justify-between" for="negotiate-volume">
+<span class="">Counter Volume (cases)</span>
+<span class="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded font-mono">100 Max</span>
+</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-2.5 pointer-events-none">inventory</span>
+<input class="w-full bg-white border border-slate-300 focus:border-amber-500 rounded-lg pl-9 pr-3 py-2 text-[12.5px] font-mono font-bold text-slate-900 shadow-2xs focus:outline-none focus:ring-2 focus:ring-amber-500/20" id="negotiate-volume" max="100" min="1" oninput="recalcNegotiateTotals()" type="number" value="100"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[12px] font-bold text-slate-800 flex items-center justify-between">
+<span class="">Counter Holding Window</span>
+<span class="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">Auto-expires</span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-2.5 pointer-events-none">timer</span>
+<input class="w-full bg-slate-100 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-[12px] font-medium text-slate-700 cursor-not-allowed shadow-2xs" disabled="" type="text" value="48 Hours"/>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[12px] font-bold text-slate-800 flex items-center justify-between">
+<span class="">Liquidation Reserve Floor</span>
+<span class="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded font-mono font-semibold">Met</span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined text-[16px] text-slate-400 absolute left-3 top-2.5 pointer-events-none">shield</span>
+<input class="w-full bg-slate-100 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-[12px] font-mono font-bold text-slate-700 cursor-not-allowed shadow-2xs" disabled="" type="text" value="$14.00 /case ($1,400.00 Floor)"/>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. Communication Card with Channel Selector (BELOW Parameters) -->
+<section class="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden transition-all" id="negotiate-email-builder-section">
+<div class="bg-slate-50/70 hover:bg-slate-100/70 transition-colors px-4 sm:px-5 py-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none" onclick="toggleEmailAccordion('negotiate-email-body', 'negotiate-email-chevron')">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 flex-wrap">
+<h2 class="text-[13px] font-bold text-slate-900 tracking-tight">Communication</h2>
+<!-- Channel Selector Pills -->
+<div class="inline-flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 text-[11px] font-medium" onclick="event.stopPropagation()">
+<button class="px-2 py-0.5 rounded bg-amber-500 text-white font-semibold flex items-center gap-1 shadow-2xs cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[13px]">mail</span> Email
+            </button>
+<button class="px-2 py-0.5 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[13px]">forum</span> In-App
+            </button>
+<button class="px-2 py-0.5 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[13px]">sms</span> SMS
+            </button>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 text-[11px] font-mono text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-2xs max-w-[320px] sm:max-w-none truncate w-fit">
+<span class="text-slate-400 font-sans">Recipient:</span>
+<span class="truncate font-semibold text-slate-700">debashisroe1996+atlantacommunityfoodbank@gmail.com</span>
+</span>
+</div>
+</div>
+<div class="flex items-center gap-2.5 shrink-0 ml-auto">
+<div class="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
+<span class="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded font-medium">6 Dynamic Tokens</span>
+<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded">108 Words</span>
+</div>
+<button aria-label="Toggle email builder collapse" class="w-7 h-7 rounded-md bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center transition-transform shadow-2xs" type="button">
+<span class="material-symbols-outlined text-[18px] transition-transform duration-200" id="negotiate-email-chevron">expand_more</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col transition-all duration-300 hidden" id="negotiate-email-body">
+<!-- TipTap Toolbar -->
+<div class="bg-slate-50 border-b border-slate-200 p-2 flex flex-wrap items-center gap-1.5 text-slate-700 select-none text-[12px]">
+<div class="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded text-slate-700 font-medium">
+<span class="font-editor">Verdana</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+</div>
+<div class="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded text-slate-700 font-mono">
+<span class="">11pt</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+</div>
+<div class="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded text-slate-700 font-medium">
+<span class="">Paragraph</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+</div>
+<div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+<button class="bg-[#fef3c7] border border-[#fde68a] text-[#b45309] font-semibold text-[11px] px-2 py-1 rounded flex items-center gap-1 hover:bg-[#fde68a] transition-colors" type="button">
+<span class="">🏷️ Tags</span>
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</button>
+<div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+<div class="flex items-center gap-0.5">
+<button class="w-7 h-7 flex items-center justify-center rounded bg-slate-200/80 text-slate-900 font-bold hover:bg-slate-200" title="Bold" type="button">B</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 italic font-serif" title="Italic" type="button">I</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 underline" title="Underline" type="button">U</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 line-through" title="Strikethrough" type="button">S</button>
+</div>
+<div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+<div class="flex items-center gap-0.5">
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Align Left" type="button">
+<span class="material-symbols-outlined text-[16px]">format_align_left</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Align Center" type="button">
+<span class="material-symbols-outlined text-[16px]">format_align_center</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Align Right" type="button">
+<span class="material-symbols-outlined text-[16px]">format_align_right</span>
+</button>
+</div>
+<div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+<div class="flex items-center gap-0.5">
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Bullet List" type="button">
+<span class="material-symbols-outlined text-[16px]">format_list_bulleted</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Numbered List" type="button">
+<span class="material-symbols-outlined text-[16px]">format_list_numbered</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600" title="Link" type="button">
+<span class="material-symbols-outlined text-[16px]">link</span>
+</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-600 ml-auto" title="Clear Formatting" type="button">
+<span class="material-symbols-outlined text-[16px]">format_clear</span>
+</button>
+</div>
+</div>
+<!-- Email Canvas Body -->
+<div class="bg-white min-h-[200px] p-5 font-editor text-[13px] text-slate-800 leading-[1.7] outline-none border-b border-slate-100">
+<p class="mb-4">Dear Procurement Team at <span class="token-badge">[Atlanta Community Food Bank]</span>,</p>
+<p class="mb-4">
+        Thank you for your bid of <span class="token-badge">[$15.00/case]</span> for <span class="token-badge">[Pure Leaf Premium Surplus Item #3 (Tea)]</span> (SKU: <span class="token-badge">[ULVR-TEA-003]</span>). Due to active exchange benchmarks and minimum inventory clearance margins, we propose the following revised terms:
+      </p>
+<p class="mb-4">
+<strong>Proposed Counter Terms:</strong><br/>
+        • Proposed Unit Price: <span class="token-badge" id="negotiate-token-price">[$16.50/case]</span> (FOB Dallas Facility)<br/>
+        • Volume Allocation: <span class="token-badge" id="negotiate-token-vol">[100 cases]</span><br/>
+        • Updated Gross Settlement Value: <span class="token-badge" id="negotiate-token-total">[$1,650.00]</span><br/>
+        • Counter Holding Window: <span class="token-badge">[48 Hours]</span>
+</p>
+<p class="mb-4">
+<strong>Pickup Location &amp; Logistics:</strong><br/>
+<span class="token-badge">[Texas Central Facility, Dallas, TX, United States]</span> (Dock: 08:00 AM - 04:30 PM CST, Appointment Required)
+      </p>
+<p class="mb-2">
+        To review and confirm acceptance of counter terms:<br/>
+<span class="token-badge">[/deal/counter/6aa78cbc767c8ac8af587c4d?round=2]</span>
+</p>
+</div>
+</div>
+</section>
+<!-- 3. Dynamic Summary & Dispatch Bar (BOTTOM) -->
+<div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5 mt-1">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-amber-100/80 border border-amber-200 flex items-center justify-center text-amber-700 shrink-0">
+<span class="material-symbols-outlined text-[20px]">trending_up</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-baseline gap-2">
+<span class="text-[12.5px] font-bold text-slate-700">Counter Total Value:</span>
+<span class="text-[18px] font-bold font-mono text-amber-600 leading-none" id="negotiate-calc-total">$1,650.00</span>
+<span class="text-[11px] text-slate-500 font-normal" id="negotiate-calc-sub">(100 cs × $16.50)</span>
+</div>
+<div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2">
+<span class="text-emerald-600 font-semibold font-mono" id="negotiate-diff-label">+$150.00 vs Buyer Bid</span>
+<span class="">•</span>
+<span class="">Gross Recovery Target</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2.5 shrink-0">
+<button class="hover:text-slate-900 flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors cursor-pointer text-[12px] font-medium text-slate-600 shadow-2xs" onclick="previewActiveEmailModal()" type="button">
+<span class="material-symbols-outlined text-[15px] text-slate-500">visibility</span>
+<span class="">Preview Email</span>
+</button>
+<button class="bg-amber-500 hover:bg-amber-600 text-white font-semibold text-[13px] rounded-lg py-2 px-5 shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] whitespace-nowrap" onclick="alert('Counter Offer Dispatched to Buyer.')" type="button">
+<span class="material-symbols-outlined text-[17px]">send</span>
+<span class="">Send Counter</span>
+</button>
+</div>
+</div></div>
+</main>
+<!-- ==================== PANE 3: DECLINE ==================== -->
+<main class="tab-pane px-6 pb-6 pt-5 hidden" id="pane-decline">
+<div class="flex flex-col gap-4"><!-- 1. Rejection Specification Card (TOP) -->
+<section class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-2xs flex flex-col gap-4">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3.5 border-b border-slate-200">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
+<span class="material-symbols-outlined text-[20px]">cancel</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<h2 class="text-[14px] font-bold text-slate-900 tracking-tight">Decline Offer Specification</h2>
+<span class="inline-flex items-center text-[10.5px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 px-2 py-0.5 rounded">Terminal Action</span>
+</div>
+<p class="text-slate-500 text-[12px] mt-0.5">Specify decline codes and internal clearance audit memo before terminating this offer transaction.</p>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+<div class="flex flex-col gap-1.5">
+<label class="text-[12px] font-bold text-slate-800 flex items-center justify-between" for="decline-reason">
+<span class="">Rejection Reason <span class="text-rose-500">*</span></span>
+<span class="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">Required</span>
+</label>
+<div class="relative">
+<select class="w-full bg-white border border-slate-300 focus:border-rose-500 rounded-lg pl-3 pr-8 py-2 text-[12.5px] text-slate-900 font-medium shadow-2xs focus:outline-none focus:ring-2 focus:ring-rose-500/20 appearance-none cursor-pointer" id="decline-reason">
+<option selected="">Price Below Floor Margin</option>
+<option>Lot Re-allocated to Primary Network Partner</option>
+<option>Logistical Infeasibility / Dock Capacity</option>
+<option>Buyer Credit / Clearinghouse Exception</option>
+</select>
+<span class="material-symbols-outlined text-[18px] text-slate-400 absolute right-2.5 top-2 pointer-events-none">arrow_drop_down</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-[12px] font-bold text-slate-800 flex items-center justify-between" for="decline-memo">
+<span class="">Internal Audit Note</span>
+<span class="text-[10px] text-slate-400 font-mono">Ledger Memo</span>
+</label>
+<input class="w-full bg-white border border-slate-300 focus:border-rose-500 rounded-lg px-3 py-2 text-[12.5px] text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-rose-500/20" id="decline-memo" type="text" value="The offered unit rate of $15.00 is below current clearing threshold for this lot tranche."/>
+</div>
+</div>
+<div class="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+<input checked="" class="w-4 h-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500 cursor-pointer" id="relist-checkbox" type="checkbox"/>
+<label class="text-[12.5px] font-medium text-slate-700 cursor-pointer" for="relist-checkbox">Automatically return <span class="font-semibold text-slate-900">100 cases</span> to the active open auction liquidation pool.</label>
+</div>
+</section>
+<!-- 2. Communication Card with Channel Selector (BELOW Specification) -->
+<section class="bg-white border border-slate-200 rounded-xl shadow-2xs overflow-hidden transition-all" id="decline-email-builder-section">
+<div class="bg-slate-50/70 hover:bg-slate-100/70 transition-colors px-4 sm:px-5 py-3.5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer select-none" onclick="toggleEmailAccordion('decline-email-body', 'decline-email-chevron')">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-700 shrink-0">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 flex-wrap">
+<h2 class="text-[13px] font-bold text-slate-900 tracking-tight">Communication</h2>
+<!-- Channel Selector Pills -->
+<div class="inline-flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 text-[11px] font-medium" onclick="event.stopPropagation()">
+<button class="px-2 py-0.5 rounded bg-rose-600 text-white font-semibold flex items-center gap-1 shadow-2xs cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[13px]">mail</span> Email
+            </button>
+<button class="px-2 py-0.5 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[13px]">forum</span> In-App
+            </button>
+<button class="px-2 py-0.5 rounded text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex items-center gap-1 cursor-pointer" type="button">
+<span class="material-symbols-outlined text-[13px]">sms</span> SMS
+            </button>
+</div>
+</div>
+<span class="inline-flex items-center gap-1 text-[11px] font-mono text-slate-600 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-2xs max-w-[320px] sm:max-w-none truncate w-fit">
+<span class="text-slate-400 font-sans">Recipient:</span>
+<span class="truncate font-semibold text-slate-700">debashisroe1996+atlantacommunityfoodbank@gmail.com</span>
+</span>
+</div>
+</div>
+<div class="flex items-center gap-2.5 shrink-0 ml-auto">
+<div class="hidden sm:flex items-center gap-1.5 text-[11px] font-mono text-slate-500">
+<span class="bg-rose-50 text-rose-800 border border-rose-200 px-2 py-0.5 rounded font-medium">6 Dynamic Tokens</span>
+<span class="bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded">68 Words</span>
+</div>
+<button aria-label="Toggle email builder collapse" class="w-7 h-7 rounded-md bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center justify-center transition-transform shadow-2xs" type="button">
+<span class="material-symbols-outlined text-[18px] transition-transform duration-200" id="decline-email-chevron">expand_more</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col transition-all duration-300 hidden" id="decline-email-body">
+<div class="bg-slate-50 border-b border-slate-200 p-2 flex flex-wrap items-center gap-1.5 text-slate-700 select-none text-[12px]">
+<div class="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded text-slate-700 font-medium">
+<span class="font-editor">Verdana</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+</div>
+<div class="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded text-slate-700 font-mono">
+<span class="">11pt</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+</div>
+<div class="flex items-center gap-1 bg-white border border-slate-200 px-2 py-1 rounded text-slate-700 font-medium">
+<span class="">Paragraph</span>
+<span class="material-symbols-outlined text-[16px] text-slate-400">arrow_drop_down</span>
+</div>
+<div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+<button class="bg-[#fef3c7] border border-[#fde68a] text-[#b45309] font-semibold text-[11px] px-2 py-1 rounded flex items-center gap-1 hover:bg-[#fde68a] transition-colors" type="button">
+<span class="">🏷️ Tags</span>
+<span class="material-symbols-outlined text-[14px]">arrow_drop_down</span>
+</button>
+<div class="h-4 w-[1px] bg-slate-300 mx-1"></div>
+<div class="flex items-center gap-0.5">
+<button class="w-7 h-7 flex items-center justify-center rounded bg-slate-200/80 text-slate-900 font-bold hover:bg-slate-200" title="Bold" type="button">B</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 italic font-serif" title="Italic" type="button">I</button>
+<button class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 text-slate-700 underline" title="Underline" type="button">U</button>
+</div>
+</div>
+<div class="bg-white min-h-[180px] p-5 font-editor text-[13px] text-slate-800 leading-[1.7] outline-none border-b border-slate-100">
+<p class="mb-4">Dear Procurement Team at <span class="token-badge">[Atlanta Community Food Bank]</span>,</p>
+<p class="mb-4">Thank you for participating in the liquidation tender for <span class="token-badge">[Pure Leaf Premium Surplus Item #3 (Tea)]</span> (Lot: <span class="token-badge">[LOT-2026-003]</span>, SKU: <span class="token-badge">[ULVR-TEA-003]</span>).</p>
+<p class="mb-4">We regret to inform you that your submitted bid of <span class="token-badge">[$15.00/case]</span> for <span class="token-badge">[100 cases]</span> has not been accepted by the supplier due to the price variance falling below the minimum liquidation reserve guideline for this SKU.</p>
+<p class="mb-2">All pre-authorization security holds placed on your clearinghouse account will be promptly released within 1-2 business hours without any processing deduction.</p>
+</div>
+</div>
+</section>
+<!-- 3. Rejection Footer Action Bar (BOTTOM) -->
+<div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3.5 mt-1">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-rose-100/80 border border-rose-200 flex items-center justify-center text-rose-700 shrink-0">
+<span class="material-symbols-outlined text-[20px]">archive</span>
+</div>
+<div>
+<div class="text-[12.5px] font-bold text-slate-800">Status: Lot will revert to unallocated inventory</div>
+<div class="text-[11px] text-slate-500 mt-0.5">Escrow deposit hold released to buyer immediately upon rejection dispatch.</div>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2.5 shrink-0">
+<button class="hover:text-slate-900 flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-colors cursor-pointer text-[12px] font-medium text-slate-600 shadow-2xs" onclick="previewActiveEmailModal()" type="button">
+<span class="material-symbols-outlined text-[15px] text-slate-400">visibility</span>
+<span class="">Preview Email</span>
+</button>
+<button class="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-[13px] rounded-lg py-2 px-5 shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] whitespace-nowrap" onclick="alert('Offer has been declined and escrow hold released.')" type="button">
+<span class="material-symbols-outlined text-[17px]">cancel</span>
+<span class="">Decline Offer</span>
+</button>
+</div>
+</div></div>
+</main>
+<!-- ==================== PANE 4: TIMELINE ==================== -->
+<main class="tab-pane px-6 pb-6 pt-5 hidden" id="pane-timeline">
+<div class="flex flex-col gap-4">
+<!-- Filter Bar on Top -->
+<div class="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+<div class="flex flex-wrap items-center gap-3">
+<div class="relative min-w-[200px]">
+<span class="material-symbols-outlined text-[18px] text-slate-400 absolute left-3 top-2.5 pointer-events-none">filter_alt</span>
+<select class="w-full bg-slate-50 border border-slate-300 rounded-lg pl-9 pr-8 py-2 text-[12.5px] font-medium text-slate-800 shadow-2xs focus:outline-none focus:border-blue-500 appearance-none cursor-pointer" id="timeline-filter" onchange="filterTimelineEvents(this.value)">
+<option value="all">All Events</option>
+<option selected="" value="negotiations">Negotiations</option>
+<option value="system">System Notes</option>
+<option value="status">Status Transitions</option>
+</select>
+<span class="material-symbols-outlined text-[18px] text-slate-400 absolute right-2.5 top-2.5 pointer-events-none">arrow_drop_down</span>
+</div>
+<div class="text-[12px] text-slate-500 font-mono">
+            Lot ID: <span class="font-semibold text-slate-700">LOT-2026-003</span>
+</div>
+</div>
+<div class="relative min-w-[240px]">
+<span class="material-symbols-outlined text-[18px] text-slate-400 absolute left-3 top-2.5 pointer-events-none">search</span>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-3 py-2 text-[12.5px] text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500" onkeyup="searchTimelineEvents(this.value)" placeholder="Search event history..." type="text"/>
+</div>
+</div>
+<!-- Chronological Activity Feed Stream -->
+<div class="bg-slate-50/60 border border-slate-200 rounded-xl p-6 shadow-2xs">
+<div class="relative pl-6 sm:pl-8 space-y-5 before:absolute before:left-2.5 sm:before:left-3.5 before:top-3 before:bottom-3 before:w-[2px] before:bg-slate-200">
+<!-- Event 1: Bid Accepted / Counter Trigger -->
+<div class="timeline-item relative group" data-type="negotiations">
+<div class="absolute -left-[23px] sm:-left-[27px] top-1 w-5 h-5 rounded-full bg-amber-100 border-2 border-amber-500 flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-600"></span>
+</div>
+<div class="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="bg-amber-100 text-amber-800 text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-amber-200">
+                    Negotiation Round 2
+                  </span>
+<span class="text-[13px] font-bold text-slate-900">Bid Accepted / Counter Trigger</span>
+<span class="text-[11px] font-mono text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 font-semibold">
+                    $16.50/cs (+10.0%)
+                  </span>
+</div>
+<span class="text-[11.5px] text-slate-500 font-mono">9/14/2026, 11:22:10 AM</span>
+</div>
+<p class="text-[12.5px] text-slate-600 mt-1">
+                Counter terms formulated with $16.50/case unit rate and 100 cases allocation. Expiration target set to 48 hours. Reserve price matched ($14.00 floor).
+              </p>
+<div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+<span class="">Actor: Clearinghouse Liquidation Desk</span>
+<span class="text-slate-400">Ref: CTR-2026-003-R2</span>
+</div>
+</div>
+</div>
+<!-- Event 2: Buyer Bid Submitted -->
+<div class="timeline-item relative group" data-type="negotiations">
+<div class="absolute -left-[23px] sm:-left-[27px] top-1 w-5 h-5 rounded-full bg-emerald-100 border-2 border-emerald-500 flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+</div>
+<div class="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="bg-emerald-100 text-emerald-800 text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-emerald-200">
+                    Buyer Bid
+                  </span>
+<span class="text-[13px] font-bold text-slate-900">Offer Submitted ($15.00/cs by Atlanta Community Food Bank)</span>
+<span class="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-semibold">
+                    $1,500.00 Gross
+                  </span>
+</div>
+<span class="text-[11.5px] text-slate-500 font-mono">9/14/2026, 10:45:12 AM</span>
+</div>
+<p class="text-[12.5px] text-slate-600 mt-1">
+                Procurement bid entered for 100 cases of Pure Leaf Premium Surplus Item #3 (Tea). Pre-authorization holds placed into escrow reserve.
+              </p>
+<div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+<span class="">Actor: Buyer (debashisroe1996+atlantacommunityfoodbank@gmail.com)</span>
+<span class="text-slate-400">Ref: BID-ULVR-0811</span>
+</div>
+</div>
+</div>
+<!-- Event 3: Escrow Session Initialized -->
+<div class="timeline-item relative group hidden" data-type="system">
+<div class="absolute -left-[23px] sm:-left-[27px] top-1 w-5 h-5 rounded-full bg-indigo-100 border-2 border-indigo-500 flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-indigo-600"></span>
+</div>
+<div class="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="bg-indigo-100 text-indigo-800 text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-indigo-200">
+                    Escrow State
+                  </span>
+<span class="text-[13px] font-bold text-slate-900">Escrow Session Initialized</span>
+<span class="text-[11px] font-mono text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
+                    Pre-Auth Verified
+                  </span>
+</div>
+<span class="text-[11.5px] text-slate-500 font-mono">9/14/2026, 10:45:10 AM</span>
+</div>
+<p class="text-[12.5px] text-slate-600 mt-1">
+                ACH guarantee verified for $1,500.00. 3% clearinghouse fee ($45.00) locked in reserve pending settlement signature.
+              </p>
+<div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+<span class="">Actor: Automated Escrow Protocol</span>
+<span class="text-slate-400">Contract: /deal/6aa78cbc767c8ac8af587c4d</span>
+</div>
+</div>
+</div>
+<!-- Event 4: Lot Published to Clearing Desk -->
+<div class="timeline-item relative group hidden" data-type="status">
+<div class="absolute -left-[23px] sm:-left-[27px] top-1 w-5 h-5 rounded-full bg-slate-200 border-2 border-slate-400 flex items-center justify-center">
+<span class="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+</div>
+<div class="bg-white border border-slate-200 rounded-lg p-4 shadow-2xs">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="bg-slate-100 text-slate-700 text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border border-slate-200">
+                    Lot Published
+                  </span>
+<span class="text-[13px] font-bold text-slate-900">Lot Published to Clearing Desk</span>
+</div>
+<span class="text-[11.5px] text-slate-500 font-mono">9/13/2026, 04:15:00 PM</span>
+</div>
+<p class="text-[12.5px] text-slate-600 mt-1">
+                Supplier listed 100 cases of Pure Leaf Premium Surplus Item #3 (SKU: ULVR-TEA-003) with baseline reserve price $14.00/case.
+              </p>
+<div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+<span class="">Actor: Inventory Liquidation Ingestion Worker</span>
+<span class="text-slate-400">Digest: 0x2e8b...12a</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Interactive Tab & Dynamic Calculation Logic -->
+<script>
+  function switchTab(tabKey) {
+    const panes = ['accept', 'negotiate', 'decline', 'timeline'];
+    panes.forEach(pane => {
+      const el = document.getElementById('pane-' + pane);
+      if (el) el.classList.add('hidden');
+    });
+
+    const baseBtnClass = "flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] font-semibold text-slate-500 hover:text-slate-800 border-b-[3px] border-transparent hover:border-slate-300 -mb-[1px] transition-all cursor-pointer";
+    panes.forEach(pane => {
+      const btn = document.getElementById('tab-btn-' + pane);
+      if (btn) btn.className = baseBtnClass;
+    });
+
+    const targetPane = document.getElementById('pane-' + tabKey);
+    if (targetPane) targetPane.classList.remove('hidden');
+
+    const targetBtn = document.getElementById('tab-btn-' + tabKey);
+    if (targetBtn) {
+      if (tabKey === 'accept') {
+        targetBtn.className = "flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] font-bold text-emerald-600 border-b-[3px] border-emerald-500 -mb-[1px] transition-all bg-emerald-50/40 cursor-pointer";
+      } else if (tabKey === 'negotiate') {
+        targetBtn.className = "flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] font-bold text-amber-600 border-b-[3px] border-amber-500 -mb-[1px] transition-all bg-amber-50/40 cursor-pointer";
+      } else if (tabKey === 'decline') {
+        targetBtn.className = "flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] font-bold text-rose-600 border-b-[3px] border-rose-500 -mb-[1px] transition-all bg-rose-50/40 cursor-pointer";
+      } else if (tabKey === 'timeline') {
+        targetBtn.className = "flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] font-bold text-blue-600 border-b-[3px] border-blue-600 -mb-[1px] transition-all bg-blue-50/40 cursor-pointer";
+      }
+    }
+  }
+
+  function toggleEmailAccordion(bodyId, chevronId) {
+    const body = document.getElementById(bodyId);
+    const chevron = document.getElementById(chevronId);
+    if (!body) return;
+
+    if (body.classList.contains('hidden')) {
+      body.classList.remove('hidden');
+      if (chevron) chevron.textContent = 'expand_less';
+    } else {
+      body.classList.add('hidden');
+      if (chevron) chevron.textContent = 'expand_more';
+    }
+  }
+
+  function recalcNegotiateTotals() {
+    const priceInput = document.getElementById('negotiate-price');
+    const volInput = document.getElementById('negotiate-volume');
+    const calcTotal = document.getElementById('negotiate-calc-total');
+    const calcSub = document.getElementById('negotiate-calc-sub');
+    const tokenPrice = document.getElementById('negotiate-token-price');
+    const tokenVol = document.getElementById('negotiate-token-vol');
+    const tokenTotal = document.getElementById('negotiate-token-total');
+    const diffLabel = document.getElementById('negotiate-diff-label');
+    const upliftBadge = document.getElementById('negotiate-uplift-badge');
+
+    const price = parseFloat(priceInput.value) || 0;
+    const vol = parseInt(volInput.value) || 0;
+    const total = price * vol;
+    const baseBuyerPrice = 15.00;
+    const upliftPercent = (((price - baseBuyerPrice) / baseBuyerPrice) * 100).toFixed(1);
+    const diffGross = total - (baseBuyerPrice * vol);
+
+    const formattedTotal = '$' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const formattedPrice = '$' + price.toFixed(2) + '/case';
+
+    if (calcTotal) calcTotal.textContent = formattedTotal;
+    if (calcSub) calcSub.textContent = `(${vol} cs × $${price.toFixed(2)})`;
+    if (tokenPrice) tokenPrice.textContent = `[${formattedPrice}]`;
+    if (tokenVol) tokenVol.textContent = `[${vol} cases]`;
+    if (tokenTotal) tokenTotal.textContent = `[${formattedTotal}]`;
+
+    if (diffLabel) {
+      if (diffGross >= 0) {
+        diffLabel.textContent = `+$${diffGross.toFixed(2)} vs Buyer Bid`;
+        diffLabel.className = "text-emerald-600 font-semibold font-mono";
+      } else {
+        diffLabel.textContent = `-$${Math.abs(diffGross).toFixed(2)} vs Buyer Bid`;
+        diffLabel.className = "text-rose-600 font-semibold font-mono";
+      }
+    }
+
+    if (upliftBadge) {
+      upliftBadge.textContent = `${upliftPercent >= 0 ? '+' : ''}${upliftPercent}% Uplift`;
+    }
+  }
+
+  function resetNegotiateFields() {
+    const price = document.getElementById('negotiate-price');
+    const vol = document.getElementById('negotiate-volume');
+    if (price) price.value = "16.50";
+    if (vol) vol.value = "100";
+    recalcNegotiateTotals();
+  }
+
+  function filterTimelineEvents(type) {
+    const items = document.querySelectorAll('.timeline-item');
+    items.forEach(item => {
+      if (type === 'all' || item.getAttribute('data-type') === type) {
+        item.classList.remove('hidden');
+      } else {
+        item.classList.add('hidden');
+      }
+    });
+  }
+
+  function searchTimelineEvents(query) {
+    const items = document.querySelectorAll('.timeline-item');
+    const q = query.toLowerCase();
+    items.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      if (text.includes(q)) {
+        item.classList.remove('hidden');
+      } else {
+        item.classList.add('hidden');
+      }
+    });
+  }
+
+  function previewActiveEmailModal() {
+    alert("Displaying rich email template preview with dynamic tokens populated for Lot #LOT-2026-003.");
+  }
+
+  // Run on initial load to ensure state consistency
+  document.addEventListener('DOMContentLoaded', () => {
+    switchTab('accept');
+    if (document.getElementById('timeline-filter')) {
+      filterTimelineEvents(document.getElementById('timeline-filter').value);
+    }
+  });
+</script>
+</body></html>
+

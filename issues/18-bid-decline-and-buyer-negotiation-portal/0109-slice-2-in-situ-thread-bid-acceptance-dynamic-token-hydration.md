@@ -1,11 +1,9 @@
-# 0109 — Slice 2: In-Situ Thread Bid Acceptance with Dynamic Token Re-Hydration
+# 0109 — Slice 2: Negotiation History Migration to Timeline Tab
 
 **What to build:**
-Enable suppliers to accept negotiated proposals directly from the **Negotiation History Thread** inside `BidActionInspectorModal.tsx`:
-- **Active Proposal Qualification**: Identify the **latest active proposal** from the buyer in `offer.messages` (where `msg.sender === 'buyer'` and `proposedPrice` or `proposedQuantity` is present). Any earlier buyer messages are superseded and marked read-only.
-- **"Accept This Bid" CTA**: Render a distinct action button on this latest buyer message card:
-  - Button text: e.g. `Accept Offer ($14.50/cs • 200 cs)` with an acceptance icon.
-- **In-Situ Tab Transition**: Clicking "Accept This Bid" transitions the modal's `activeMode` smoothly to `'accept'` within the same window (no modal dismissal or full page navigation).
+Negotiation History Thread has been removed from modal action tabs (Accept Offer, Negotiate, Decline) and consolidated into the dedicated Timeline Tab:
+- All negotiation messages, buyer bids, supplier counter-offers, and timestamps are recorded in the Timeline activity feed.
+- Action tabs remain streamlined and focused on parameters and outbound communication.
 - **Dynamic Re-Hydration**:
   - Dynamically re-hydrates `awardedQuantity` to the message's `proposedQuantity` (defaulting to available if unspecified).
   - Sets active agreed unit price to `proposedPrice` (overriding the immutable baseline `bid.price` display).
@@ -18,9 +16,6 @@ Enable suppliers to accept negotiated proposals directly from the **Negotiation 
 
 **Status:** complete
 
-- [x] Identify latest active incoming buyer bid in `renderNegotiationHistoryThread` and render "Accept This Bid" button.
-- [x] Implement click handler that switches `activeMode` to `'accept'` in-situ.
-- [x] Hydrate `awardedQuantity`, agreed unit price, settlement value, and TipTap token dictionary from the selected proposal.
-- [x] Update frontend `InventoryService.acceptBid` and backend `offersService.acceptBid` to support custom negotiated `pricePerCase`.
-- [x] Persist correct negotiated unit price and total amount on the generated `Award` record.
-- [x] Add unit and integration tests verifying thread CTA rendering, tab transition, token re-hydration, and settlement submission.
+- [x] Consolidate negotiation history in dedicated Timeline tab with lifecycle audit trail and category filtering.
+- [x] Remove Negotiation History Thread from action tabs (Accept Offer, Negotiate, Decline).
+- [x] Update unit and integration tests to verify Negotiation History Thread is removed from action tabs and accessible in Timeline tab.

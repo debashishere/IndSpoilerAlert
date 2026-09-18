@@ -146,7 +146,7 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
     expect(onResetMock).toHaveBeenCalledTimes(1);
   });
 
-  it('renders chronological Negotiation History Thread with buyer bids, supplier counter proposals, system notices, and timestamps', () => {
+  it('renders chronological negotiation events in Timeline Tab and removes Negotiation History Thread from action tabs', () => {
     const bidWithThread = {
       ...sampleBid,
       status: 'countered',
@@ -182,18 +182,18 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       />
     );
 
-    // Thread header
-    expect(screen.getByText(/Negotiation History Thread/i)).toBeInTheDocument();
+    // Switch to Negotiate tab and verify Negotiation History Thread is not in tabs
+    fireEvent.click(screen.getByRole('button', { name: /re-negotiate|negotiate/i }));
+    expect(screen.queryByText(/Negotiation History Thread/i)).not.toBeInTheDocument();
 
-    // Verify messages content
-    expect(screen.getByText(/Initial baseline offer submitted\./i)).toBeInTheDocument();
+    // Switch to Timeline tab where chronological negotiation events are rendered
+    fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+    expect(screen.getByTestId('timeline-activity-feed')).toBeInTheDocument();
+
+    // Verify messages content in Timeline
+    expect(screen.getByText(/Initial offer submitted at \$3\.50\/cs for 150 cases/i)).toBeInTheDocument();
     expect(screen.getByText(/Supplier counter-offer: \$4\.10\/cs for 120 cases due to tight margins\./i)).toBeInTheDocument();
-    expect(screen.getByText(/Negotiation state transitioned to countered\./i)).toBeInTheDocument();
-
-    // Verify badges / roles
-    expect(screen.getByText('Buyer Initial Bid')).toBeInTheDocument();
-    expect(screen.getByText('Supplier Counter')).toBeInTheDocument();
-    expect(screen.getByText('System Notice')).toBeInTheDocument();
+    expect(screen.getByText(/Status Transition: Active Counter Proposal/i)).toBeInTheDocument();
 
     // Verify proposed terms rendered in supplier counter
     expect(screen.getAllByText(/\$4\.10/i).length).toBeGreaterThanOrEqual(1);
@@ -253,10 +253,10 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
 
     const leftPane = screen.getByTestId('counter-left-pane');
     expect(leftPane).toBeInTheDocument();
-    // Left pane contains Counter Price, Counter Quantity, and the Negotiation History Thread
+    // Left pane contains Counter Price and Counter Quantity (Negotiation History Thread is removed)
     expect(leftPane).toContainElement(screen.getByPlaceholderText(/enter counter price/i));
     expect(leftPane).toContainElement(screen.getByPlaceholderText(/enter counter quantity/i));
-    expect(leftPane).toContainElement(screen.getByText(/Negotiation History Thread/i));
+    expect(screen.queryByText(/Negotiation History Thread/i)).not.toBeInTheDocument();
 
     const rightPane = screen.getByTestId('counter-right-pane');
     expect(rightPane).toBeInTheDocument();
@@ -384,11 +384,14 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       expect(screen.getByTestId('modal-status-badge')).toHaveTextContent(/countered/i);
     });
 
-    // The newly sent proposal is appended to the visible thread in the left pane
+    // Verify Negotiation History Thread is not in the left pane
     const leftPane = screen.getByTestId('counter-left-pane');
-    expect(within(leftPane).getByText(/Countering with standard margin requirement\./i)).toBeInTheDocument();
-    expect(within(leftPane).getByText(/\$4\.50\/cs/i)).toBeInTheDocument();
-    expect(within(leftPane).getByText(/140 cases/i)).toBeInTheDocument();
+    expect(within(leftPane).queryByText(/Negotiation History Thread/i)).not.toBeInTheDocument();
+
+    // The newly sent proposal is recorded in the Timeline tab
+    fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+    expect(screen.getByText(/Countering with standard margin requirement\./i)).toBeInTheDocument();
+    expect(screen.getByText(/Supplier Counter-Offer Dispatched/i)).toBeInTheDocument();
 
     // Success toast notification
     expect(await screen.findByText(/Counter-offer successfully dispatched/i)).toBeInTheDocument();
@@ -599,13 +602,15 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       expect(onCloseMock).not.toHaveBeenCalled();
       expect(screen.getByText(/Bid Action Inspector/i)).toBeInTheDocument();
 
-      // Negotiation thread shows newly dispatched proposal with rendered token badge
+      // Verify Negotiation History Thread is not in the left pane
       const leftPane = screen.getByTestId('counter-left-pane');
+      expect(within(leftPane).queryByText(/Negotiation History Thread/i)).not.toBeInTheDocument();
+
+      // Dispatched proposal is recorded in the Timeline tab
+      fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
       await waitFor(() => {
-        expect(within(leftPane).getByText(/Supplier Counter/i)).toBeInTheDocument();
+        expect(screen.getByText(/Supplier Counter-Offer Dispatched/i)).toBeInTheDocument();
       });
-      const badges = leftPane.querySelectorAll('.token-badge-pill');
-      expect(badges.length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -1170,7 +1175,7 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       }
     };
 
-    it('identifies the latest active buyer proposal in thread and renders Accept This Bid button', () => {
+    it('verifies Negotiation History Thread is removed from action tabs and consolidated in Timeline', () => {
       render(
         <BidActionInspectorModal
           isOpen={true}
@@ -1180,52 +1185,24 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
         />
       );
 
-      // Should render exactly one "Accept This Bid" button on the latest active buyer message
-      const acceptBidButtons = screen.getAllByRole('button', { name: /accept this bid/i });
-      expect(acceptBidButtons).toHaveLength(1);
-      expect(acceptBidButtons[0]).toHaveTextContent(/\$4\.25/);
-      expect(acceptBidButtons[0]).toHaveTextContent(/140/);
+      // Verify Negotiation History Thread is removed from Accept tab
+      expect(screen.queryByText(/Negotiation History Thread/i)).not.toBeInTheDocument();
+
+      // Switch to Negotiate mode and verify Negotiation History Thread is removed
+      fireEvent.click(screen.getByRole('button', { name: /re-negotiate|negotiate/i }));
+      expect(screen.queryByText(/Negotiation History Thread/i)).not.toBeInTheDocument();
+
+      // Switch to Decline mode and verify Negotiation History Thread is removed
+      fireEvent.click(screen.getByRole('button', { name: /decline/i }));
+      expect(screen.queryByText(/Negotiation History Thread/i)).not.toBeInTheDocument();
+
+      // Switch to Timeline tab and verify negotiation history is present
+      fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+      expect(screen.getByTestId('timeline-activity-feed')).toBeInTheDocument();
+      expect(screen.getByText(/\$4\.25\/cs for 140 cases/i)).toBeInTheDocument();
     });
 
-    it('transitions to accept tab in-situ and hydrates agreed price, quantity, and settlement tokens', async () => {
-      const onAcceptMock = vi.fn();
-      render(
-        <BidActionInspectorModal
-          isOpen={true}
-          onClose={vi.fn()}
-          bid={threadBid}
-          lot={lotWithDC}
-          onAccept={onAcceptMock}
-        />
-      );
-
-      // Initially in accept tab with baseline terms
-      const acceptBidBtn = screen.getByRole('button', { name: /accept this bid/i });
-      fireEvent.click(acceptBidBtn);
-
-      // Modal stays open, transitions to accept mode, awarded quantity becomes 140
-      const awardedQtyInput = screen.getByLabelText(/Awarded Quantity/i) as HTMLInputElement;
-      expect(awardedQtyInput.value).toBe('140');
-
-      // Agreed price shows negotiated $4.25/cs instead of baseline $3.50
-      expect(screen.getByDisplayValue('$4.25')).toBeInTheDocument();
-
-      // Total settlement value shows 140 * 4.25 = $595.00
-      expect(screen.getByTestId('total-settlement-value')).toHaveTextContent('$595.00');
-
-      // Click Confirm & Initiate Settlement
-      const confirmAcceptBtn = screen.getByRole('button', { name: /confirm & initiate settlement/i });
-      fireEvent.click(confirmAcceptBtn);
-
-      await waitFor(() => {
-        expect(onAcceptMock).toHaveBeenCalledWith(expect.objectContaining({
-          awardedQuantity: 140,
-          pricePerCase: 4.25
-        }));
-      });
-    });
-
-    it('safely renders buyer messages containing HTML or script tags as text without XSS vulnerability', () => {
+    it('safely renders buyer messages containing HTML or script tags as text without XSS vulnerability in Timeline', () => {
       const maliciousBid = {
         ...threadBid,
         messages: [
@@ -1247,6 +1224,9 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
           lot={lotWithDC}
         />
       );
+
+      // Switch to Timeline tab
+      fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
 
       // Verify that no script tag or raw HTML element was executed or inserted
       expect(container.querySelector('script')).toBeNull();
@@ -1394,7 +1374,1841 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       expect(banner).not.toHaveTextContent(/negotiated from initial bid/i);
     });
   });
+
+  describe('Issue 01 — Stitch Header & 4-Column Commercial Stat Cards', () => {
+    const stitchBid = {
+      _id: 'bid-stitch-101',
+      lotId: 'lot-stitch-101',
+      buyerId: {
+        _id: 'buyer-apex',
+        companyName: 'Apex Liquidators',
+        email: 'apex@liquidators.com'
+      },
+      price: 24.50,
+      quantity: 200,
+      status: 'pending',
+      submittedAt: '2026-09-18T00:00:00.000Z',
+      messages: []
+    };
+
+    const stitchLot = {
+      _id: 'lot-stitch-101',
+      lotNumber: 'LOT-550',
+      availableQty: 250,
+      quantity: 250,
+      reservePrice: 20.00,
+      productId: {
+        sku: 'SKU-ORGANIC-APPLES',
+        description: 'Premium Honeycrisp Apples'
+      }
+    };
+
+    it('renders modal shell with Stitch styling and header elements including Preview Email button', () => {
+      const { container } = render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={stitchBid}
+          lot={stitchLot}
+        />
+      );
+
+      // Modal container has expanded full-screen workbench classes
+      const modalContainer = container.querySelector('.modal-container');
+      expect(modalContainer).toBeInTheDocument();
+      expect(modalContainer?.className).toMatch(/max-w-\[98vw\]/);
+      expect(modalContainer?.className).toMatch(/rounded-2xl/);
+
+      // Header tags and title
+      const header = container.querySelector('header');
+      expect(header).toBeInTheDocument();
+      expect(within(header!).getByText(/LOT-550/i)).toBeInTheDocument();
+      expect(within(header!).getByText(/SKU-ORGANIC-APPLES/i)).toBeInTheDocument();
+      expect(within(header!).getByTestId('modal-status-badge')).toHaveTextContent(/pending/i);
+      expect(within(header!).getByText(/Premium Honeycrisp Apples/i)).toBeInTheDocument();
+
+      // Maximize toggle, Preview Email action and close control
+      const maximizeBtn = screen.getByRole('button', { name: /maximize inspector/i });
+      expect(maximizeBtn).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /preview email/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /close inspector/i })).toBeInTheDocument();
+
+      // Toggle Maximize to 100vw full screen
+      fireEvent.click(maximizeBtn);
+      expect(modalContainer?.className).toMatch(/w-full h-full rounded-none/);
+      expect(screen.getByRole('button', { name: /restore inspector/i })).toBeInTheDocument();
+
+      // Toggle back to Near Full-Screen Workbench
+      fireEvent.click(screen.getByRole('button', { name: /restore inspector/i }));
+      expect(modalContainer?.className).toMatch(/max-w-\[98vw\]/);
+      expect(modalContainer?.className).toMatch(/rounded-2xl/);
+    });
+
+    it('renders all 4 commercial stat cards with dynamic metrics, verified badge, allocation % and net clearing', () => {
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={stitchBid}
+          lot={stitchLot}
+        />
+      );
+
+      // Card 1: Buyer Organization
+      const buyerCard = screen.getByTestId('summary-buyer-org');
+      expect(buyerCard).toBeInTheDocument();
+      expect(within(buyerCard).getByText('Apex Liquidators')).toBeInTheDocument();
+      expect(within(buyerCard).getByTestId('buyer-verified-badge')).toBeInTheDocument();
+      const mailtoLink = within(buyerCard).getByRole('link', { name: /apex@liquidators\.com/i });
+      expect(mailtoLink).toHaveAttribute('href', 'mailto:apex@liquidators.com');
+
+      // Card 2: Unit Offer
+      const unitOfferCard = screen.getByTestId('summary-unit-offer');
+      expect(unitOfferCard).toBeInTheDocument();
+      expect(within(unitOfferCard).getByText(/\$24\.50/i)).toBeInTheDocument();
+      expect(within(unitOfferCard).getByText(/Floor:\s*\$20\.00/i)).toBeInTheDocument();
+
+      // Card 3: Volume Requested (200 cases out of 250 = 80%)
+      const volumeCard = screen.getByTestId('summary-volume-requested');
+      expect(volumeCard).toBeInTheDocument();
+      expect(within(volumeCard).getByText(/200/i)).toBeInTheDocument();
+      expect(within(volumeCard).getByText(/80%/i)).toBeInTheDocument();
+      expect(within(volumeCard).getByText(/Partial Clearing/i)).toBeInTheDocument();
+
+      // Card 4: Gross Recovery ($4,900.00 with 3% fee -> $4,753.00 net)
+      const recoveryCard = screen.getByTestId('summary-gross-recovery');
+      expect(recoveryCard).toBeInTheDocument();
+      expect(within(recoveryCard).getByText(/\$4,900\.00/i)).toBeInTheDocument();
+      expect(within(recoveryCard).getByText(/Net Est:\s*\$4,753\.00/i)).toBeInTheDocument();
+    });
+
+    it('shows Full Clearing indicator when volume requested covers all available lot quantity', () => {
+      const fullBid = {
+        ...stitchBid,
+        quantity: 250
+      };
+
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={fullBid}
+          lot={stitchLot}
+        />
+      );
+
+      const volumeCard = screen.getByTestId('summary-volume-requested');
+      expect(within(volumeCard).getByText(/100%/i)).toBeInTheDocument();
+      expect(within(volumeCard).getByText(/Full Clearing/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('Issue 02 — Accept Offer Work Surface with DC Logistics & Multi-Channel Communication Card', () => {
+    const stitchBid = {
+      _id: 'bid-stitch-101',
+      lotId: 'lot-stitch-101',
+      buyerId: {
+        _id: 'buyer-apex',
+        companyName: 'Apex Liquidators',
+        email: 'apex@liquidators.com'
+      },
+      price: 24.50,
+      quantity: 200,
+      status: 'pending',
+      submittedAt: '2026-09-18T00:00:00.000Z',
+      messages: []
+    };
+
+    const stitchLot = {
+      _id: 'lot-stitch-101',
+      lotNumber: 'LOT-550',
+      availableQty: 250,
+      quantity: 250,
+      reservePrice: 20.00,
+      distributionCenter: {
+        address: 'Texas Central Facility, Dallas, TX, United States',
+        operatingHours: '08:00 AM - 04:30 PM CST'
+      },
+      productId: {
+        sku: 'SKU-ORGANIC-APPLES',
+        description: 'Premium Honeycrisp Apples'
+      }
+    };
+
+    describe('Seam 1: Logistics & Allocation Parameters Card', () => {
+      it('renders logistics parameters card with FOB Origin tag, Appointment Req indicator, inventory-capped stepper, and locked settled price', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        // Logistics card shell and header
+        const logisticsCard = screen.getByTestId('accept-logistics-card');
+        expect(logisticsCard).toBeInTheDocument();
+        expect(within(logisticsCard).getByText('Logistics & Allocation')).toBeInTheDocument();
+        expect(within(logisticsCard).getByText('Ready for Settlement')).toBeInTheDocument();
+
+        // 1. DC Pickup Address with FOB Origin tag
+        expect(within(logisticsCard).getByText('FOB Origin')).toBeInTheDocument();
+        const addressInput = screen.getByLabelText(/dc pickup address/i) as HTMLInputElement;
+        expect(addressInput).toBeInTheDocument();
+        expect(addressInput.value).toBe('Texas Central Facility, Dallas, TX, United States');
+
+        // 2. Dock Operating Hours with Appointment Req. indicator
+        expect(within(logisticsCard).getByText('Appointment Req.')).toBeInTheDocument();
+        const hoursInput = screen.getByLabelText(/dock operating hours/i) as HTMLInputElement;
+        expect(hoursInput).toBeInTheDocument();
+        expect(hoursInput.value).toBe('08:00 AM - 04:30 PM CST');
+
+        // 3. Awarded Quantity Stepper capped at lot availableQty
+        expect(within(logisticsCard).getByText(/250 Max/i)).toBeInTheDocument();
+        const qtyInput = screen.getByLabelText(/awarded quantity/i) as HTMLInputElement;
+        expect(qtyInput).toBeInTheDocument();
+        expect(qtyInput.value).toBe('200'); // bid quantity
+        expect(qtyInput.max).toBe('250');
+        expect(qtyInput.min).toBe('1');
+
+        // 4. Agreed Price locked with Settled badge and USD currency label
+        expect(within(logisticsCard).getByText('Settled')).toBeInTheDocument();
+        const priceInput = screen.getByLabelText(/agreed price/i) as HTMLInputElement;
+        expect(priceInput).toBeInTheDocument();
+        expect(priceInput).toBeDisabled();
+        expect(priceInput.value).toBe('$24.50');
+        expect(within(logisticsCard).getByText('USD')).toBeInTheDocument();
+      });
+
+      it('allows updating logistics address, hours, and awarded quantity', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        const addressInput = screen.getByLabelText(/dc pickup address/i) as HTMLInputElement;
+        fireEvent.change(addressInput, { target: { value: '450 Logistics Blvd, Denver, CO' } });
+        expect(addressInput.value).toBe('450 Logistics Blvd, Denver, CO');
+
+        const hoursInput = screen.getByLabelText(/dock operating hours/i) as HTMLInputElement;
+        fireEvent.change(hoursInput, { target: { value: '07:00 AM - 03:00 PM MST' } });
+        expect(hoursInput.value).toBe('07:00 AM - 03:00 PM MST');
+
+        const qtyInput = screen.getByLabelText(/awarded quantity/i) as HTMLInputElement;
+        fireEvent.change(qtyInput, { target: { value: '150' } });
+        expect(qtyInput.value).toBe('150');
+      });
+    });
+
+    describe('Seam 2: Multi-Channel Communication Card & Dynamic Metrics', () => {
+      it('renders communication card with channel pills (Email active), recipient badge, dynamic token count, and word count', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        const commCard = screen.getByTestId('accept-communication-card');
+        expect(commCard).toBeInTheDocument();
+        expect(within(commCard).getByText('Communication')).toBeInTheDocument();
+
+        // Channel selector pills
+        const emailPill = screen.getByRole('button', { name: /^email$/i });
+        const inAppPill = screen.getByRole('button', { name: /^in-app$/i });
+        const smsPill = screen.getByRole('button', { name: /^sms$/i });
+
+        expect(emailPill).toBeInTheDocument();
+        expect(inAppPill).toBeInTheDocument();
+        expect(smsPill).toBeInTheDocument();
+
+        // Email active by default
+        expect(emailPill.getAttribute('data-active')).toBe('true');
+        expect(inAppPill.getAttribute('data-active')).toBe('false');
+        expect(smsPill.getAttribute('data-active')).toBe('false');
+
+        // Recipient badge
+        expect(within(commCard).getByText(/Recipient:/i)).toBeInTheDocument();
+        expect(within(commCard).getByText('apex@liquidators.com')).toBeInTheDocument();
+
+        // Dynamic tokens count & word count pills
+        expect(within(commCard).getByText(/\d+ Dynamic Tokens/i)).toBeInTheDocument();
+        expect(within(commCard).getByText(/\d+ Words/i)).toBeInTheDocument();
+      });
+
+      it('switches channel selector pills between Email, In-App, and SMS', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        const emailPill = screen.getByRole('button', { name: /^email$/i });
+        const inAppPill = screen.getByRole('button', { name: /^in-app$/i });
+        const smsPill = screen.getByRole('button', { name: /^sms$/i });
+
+        // Switch to In-App
+        fireEvent.click(inAppPill);
+        expect(inAppPill.getAttribute('data-active')).toBe('true');
+        expect(emailPill.getAttribute('data-active')).toBe('false');
+
+        // Switch to SMS
+        fireEvent.click(smsPill);
+        expect(smsPill.getAttribute('data-active')).toBe('true');
+        expect(inAppPill.getAttribute('data-active')).toBe('false');
+
+        // Switch back to Email
+        fireEvent.click(emailPill);
+        expect(emailPill.getAttribute('data-active')).toBe('true');
+      });
+
+      it('toggles accordion collapse and expand to hide/show TipTap body canvas', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        const accordionToggle = screen.getByRole('button', { name: /toggle communication accordion/i });
+        const editorBody = screen.getByTestId('accept-communication-body');
+
+        // Initially open / visible
+        expect(editorBody).toBeVisible();
+
+        // Click to collapse
+        fireEvent.click(accordionToggle);
+        expect(editorBody).not.toBeVisible();
+
+        // Click to expand again
+        fireEvent.click(accordionToggle);
+        expect(editorBody).toBeVisible();
+      });
+    });
+
+    describe('Seam 3: Settlement Summary Footer & Execution Dispatch', () => {
+      it('calculates live settlement total with breakdown and full clearing indicator, dispatching onAccept on Confirm Offer click', async () => {
+        const onAcceptMock = vi.fn();
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+            onAccept={onAcceptMock}
+          />
+        );
+
+        const footer = screen.getByTestId('accept-settlement-footer');
+        expect(footer).toBeInTheDocument();
+
+        // 200 cases @ $24.50 = $4,900.00
+        expect(within(footer).getByTestId('total-settlement-value')).toHaveTextContent('$4,900.00');
+        expect(within(footer).getByText(/\(200 cs × \$24\.50\)/i)).toBeInTheDocument();
+
+        // Origin tag
+        expect(within(footer).getByText(/FOB Origin Texas Central Facility/i)).toBeInTheDocument();
+
+        // Click Confirm Offer
+        const confirmBtn = within(footer).getByRole('button', { name: /confirm offer/i });
+        fireEvent.click(confirmBtn);
+
+        await waitFor(() => {
+          expect(onAcceptMock).toHaveBeenCalledTimes(1);
+          expect(onAcceptMock).toHaveBeenCalledWith(expect.objectContaining({
+            awardedQuantity: 200,
+            pickupAddress: 'Texas Central Facility, Dallas, TX, United States',
+            pickupHours: '08:00 AM - 04:30 PM CST',
+            pricePerCase: 24.50,
+            templateHtml: expect.any(String)
+          }));
+        });
+      });
+
+      it('updates live total and displays Partial Clearing when awarded quantity is reduced', async () => {
+        const onAcceptMock = vi.fn();
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+            onAccept={onAcceptMock}
+          />
+        );
+
+        const footer = screen.getByTestId('accept-settlement-footer');
+        const qtyInput = screen.getByLabelText(/awarded quantity/i);
+
+        // Reduce allocation from 200 to 120 cases
+        fireEvent.change(qtyInput, { target: { value: '120' } });
+
+        // Total updates to 120 * $24.50 = $2,940.00
+        expect(within(footer).getByTestId('total-settlement-value')).toHaveTextContent('$2,940.00');
+        expect(within(footer).getByText(/\(120 cs × \$24\.50\)/i)).toBeInTheDocument();
+        expect(within(footer).getByText(/Partial Clearing/i)).toBeInTheDocument();
+
+        const confirmBtn = within(footer).getByRole('button', { name: /confirm offer/i });
+        fireEvent.click(confirmBtn);
+
+        await waitFor(() => {
+          expect(onAcceptMock).toHaveBeenCalledWith(expect.objectContaining({
+            awardedQuantity: 120,
+            pricePerCase: 24.50
+          }));
+        });
+      });
+
+      it('disables Confirm Offer button when pickup address is empty or when isSubmitting is true', () => {
+        const { rerender } = render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+            isSubmitting={false}
+          />
+        );
+
+        const footer = screen.getByTestId('accept-settlement-footer');
+        const confirmBtn = within(footer).getByRole('button', { name: /confirm offer/i });
+        expect(confirmBtn).not.toBeDisabled();
+
+        // Clear pickup address -> should disable
+        const addressInput = screen.getByLabelText(/dc pickup address/i);
+        fireEvent.change(addressInput, { target: { value: '' } });
+        expect(confirmBtn).toBeDisabled();
+
+        // Restore address
+        fireEvent.change(addressInput, { target: { value: 'Warehouse DC 5' } });
+        expect(confirmBtn).not.toBeDisabled();
+
+        // Re-render with isSubmitting=true -> should disable
+        rerender(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+            isSubmitting={true}
+          />
+        );
+        expect(confirmBtn).toBeDisabled();
+      });
+
+      it('opens Outbound Email Preview modal when clicking Preview Email in the settlement footer', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        const footer = screen.getByTestId('accept-settlement-footer');
+        const previewBtn = within(footer).getByRole('button', { name: /preview outbound settlement email/i });
+
+        fireEvent.click(previewBtn);
+
+        // Outbound Email Preview modal opens
+        expect(screen.getByText('Outbound Email Preview')).toBeInTheDocument();
+        expect(screen.getByText(/To:/i)).toBeInTheDocument();
+        expect(screen.getAllByText('apex@liquidators.com').length).toBeGreaterThanOrEqual(1);
+      });
+    });
+  });
+
+  describe('Issue 03 — Negotiate Work Surface with Live Counter Parameters, In-Situ Continuity & Delta Metrics', () => {
+    const stitchBid = {
+      _id: 'bid-stitch-101',
+      lotId: 'lot-stitch-101',
+      buyerId: {
+        _id: 'buyer-apex',
+        companyName: 'Apex Liquidators',
+        email: 'apex@liquidators.com'
+      },
+      price: 24.50,
+      quantity: 200,
+      status: 'pending',
+      submittedAt: '2026-09-18T00:00:00.000Z',
+      messages: []
+    };
+
+    const stitchLot = {
+      _id: 'lot-stitch-101',
+      lotNumber: 'LOT-550',
+      availableQty: 250,
+      quantity: 250,
+      reservePrice: 20.00,
+      distributionCenter: {
+        address: 'Texas Central Facility, Dallas, TX, United States',
+        operatingHours: '08:00 AM - 04:30 PM CST'
+      },
+      productId: {
+        sku: 'SKU-ORGANIC-APPLES',
+        description: 'Premium Honeycrisp Apples'
+      }
+    };
+
+    describe('Seam 1: Counter-Offer Parameters Card & Live Margin Uplift', () => {
+      it('renders counter parameters card with counter price, volume, holding window, reserve floor match, and live uplift badge', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        // Switch to Negotiate mode
+        const negotiateTab = screen.getByRole('button', { name: /negotiate/i });
+        fireEvent.click(negotiateTab);
+
+        // Parameters card shell and title
+        const paramsCard = screen.getByTestId('negotiate-parameters-card');
+        expect(paramsCard).toBeInTheDocument();
+        expect(within(paramsCard).getByText('Counter-Offer Parameters')).toBeInTheDocument();
+        expect(within(paramsCard).getByText(/Adjust counter unit price or tranche volume/i)).toBeInTheDocument();
+
+        // 1. Counter Unit Price with live uplift badge
+        const priceInput = screen.getByPlaceholderText(/enter counter price/i) as HTMLInputElement;
+        expect(priceInput).toBeInTheDocument();
+        expect(priceInput.value).toBe('24.5');
+
+        // Initial uplift with same price as bid is +0.0% Uplift
+        const upliftBadge = within(paramsCard).getByTestId('negotiate-uplift-badge');
+        expect(upliftBadge).toHaveTextContent('+0.0% Uplift');
+
+        // Change price to 26.95 (+$2.45, +10.0% uplift)
+        fireEvent.change(priceInput, { target: { value: '26.95' } });
+        expect(upliftBadge).toHaveTextContent('+10.0% Uplift');
+
+        // 2. Counter Volume with max indicator
+        expect(within(paramsCard).getByText(/250 Max/i)).toBeInTheDocument();
+        const volumeInput = screen.getByPlaceholderText(/enter counter quantity/i) as HTMLInputElement;
+        expect(volumeInput).toBeInTheDocument();
+        expect(volumeInput.value).toBe('200');
+
+        // 3. Counter Holding Window
+        expect(within(paramsCard).getByText('Counter Holding Window')).toBeInTheDocument();
+        expect(within(paramsCard).getByText('Auto-expires')).toBeInTheDocument();
+        const windowInput = screen.getByDisplayValue('48 Hours');
+        expect(windowInput).toBeDisabled();
+
+        // 4. Liquidation Reserve Floor validation
+        expect(within(paramsCard).getByText('Liquidation Reserve Floor')).toBeInTheDocument();
+        // Since 26.95 >= 20.00, floor status is "Met"
+        expect(within(paramsCard).getByText('Met')).toBeInTheDocument();
+        expect(screen.getByDisplayValue(/\$20\.00 \/case \(\$4,000\.00 Floor\)/i)).toBeDisabled();
+
+        // When counter price is lowered below reserve floor (e.g. 18.00)
+        fireEvent.change(priceInput, { target: { value: '18.00' } });
+        expect(within(paramsCard).getByText('Below Floor')).toBeInTheDocument();
+        expect(upliftBadge).toHaveTextContent('-26.5% Uplift');
+      });
+
+      it('displays live delta indicators comparing counter terms against buyer original offer in the parameters card', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /negotiate/i }));
+
+        const priceInput = screen.getByPlaceholderText(/enter counter price/i);
+        const volumeInput = screen.getByPlaceholderText(/enter counter quantity/i);
+
+        fireEvent.change(priceInput, { target: { value: '26.95' } });
+        fireEvent.change(volumeInput, { target: { value: '200' } });
+
+        const deltaContainer = screen.getByTestId('counter-delta-indicators');
+        expect(deltaContainer).toBeInTheDocument();
+        expect(within(deltaContainer).getByText(/\+\$2\.45\/cs \(\+10\.0%\)/i)).toBeInTheDocument();
+        expect(within(deltaContainer).getByText(/\+\$490\.00 \(\+10\.0%\)/i)).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 2: In-Situ Negotiation Continuity & Direct Bid Acceptance', () => {
+      const bidWithThread = {
+        ...stitchBid,
+        messages: [
+          {
+            sender: 'buyer',
+            content: 'Initial offer submitted at $22.00/case for 150 cases.',
+            proposedPrice: 22.00,
+            proposedQuantity: 150,
+            timestamp: '2026-09-17T10:00:00.000Z'
+          },
+          {
+            sender: 'supplier',
+            content: 'Counter proposal: $25.00/case.',
+            proposedPrice: 25.00,
+            proposedQuantity: 150,
+            timestamp: '2026-09-17T14:00:00.000Z'
+          },
+          {
+            sender: 'buyer',
+            content: 'Revised buyer proposal: $23.50/case for 180 cases.',
+            proposedPrice: 23.50,
+            proposedQuantity: 180,
+            timestamp: '2026-09-18T09:00:00.000Z'
+          }
+        ]
+      };
+
+      it('verifies proposal thread is removed from Negotiate pane and displayed in Timeline tab', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={bidWithThread}
+            lot={stitchLot}
+          />
+        );
+
+        // Switch to Negotiate mode
+        fireEvent.click(screen.getByRole('button', { name: /negotiate/i }));
+
+        const leftPane = screen.getByTestId('counter-left-pane');
+        expect(leftPane).toBeInTheDocument();
+
+        // Negotiation thread is removed from Negotiate pane
+        expect(within(leftPane).queryByText(/Negotiation History Thread/i)).not.toBeInTheDocument();
+
+        // Switch to Timeline tab to inspect proposal stream
+        fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+        const feed = screen.getByTestId('timeline-activity-feed');
+        expect(within(feed).getByText(/Counter proposal: \$25\.00\/case/i)).toBeInTheDocument();
+        expect(within(feed).getByText(/Revised buyer proposal: \$23\.50\/case/i)).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 3: Multi-Channel Communication Card & Live Token Sync', () => {
+      it('renders communication card with channel pills, recipient, word/token counts, and toggles accordion', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /negotiate/i }));
+
+        const commCard = screen.getByTestId('negotiate-communication-card');
+        expect(commCard).toBeInTheDocument();
+        expect(within(commCard).getByText('Communication')).toBeInTheDocument();
+
+        // Channel pills
+        const emailPill = within(commCard).getByRole('button', { name: /^email$/i });
+        const inAppPill = within(commCard).getByRole('button', { name: /^in-app$/i });
+        const smsPill = within(commCard).getByRole('button', { name: /^sms$/i });
+
+        expect(emailPill).toBeInTheDocument();
+        expect(inAppPill).toBeInTheDocument();
+        expect(smsPill).toBeInTheDocument();
+
+        expect(emailPill.getAttribute('data-active')).toBe('true');
+
+        // Switch to In-App
+        fireEvent.click(inAppPill);
+        expect(inAppPill.getAttribute('data-active')).toBe('true');
+        expect(screen.getByText(/In-App Channel Active/i)).toBeInTheDocument();
+
+        // Switch to SMS
+        fireEvent.click(smsPill);
+        expect(smsPill.getAttribute('data-active')).toBe('true');
+        expect(screen.getByText(/SMS Channel Active/i)).toBeInTheDocument();
+
+        // Switch back to Email
+        fireEvent.click(emailPill);
+        expect(emailPill.getAttribute('data-active')).toBe('true');
+
+        // Recipient badge
+        expect(within(commCard).getByText(/Recipient:/i)).toBeInTheDocument();
+        expect(within(commCard).getByText('apex@liquidators.com')).toBeInTheDocument();
+
+        // Token & word counts
+        expect(within(commCard).getByText(/\d+ Dynamic Tokens/i)).toBeInTheDocument();
+        expect(within(commCard).getByText(/\d+ Words/i)).toBeInTheDocument();
+
+        // Accordion toggle
+        const accordionToggle = within(commCard).getByRole('button', { name: /toggle negotiate communication accordion/i });
+        const commBody = screen.getByTestId('negotiate-communication-body');
+        expect(commBody).toBeVisible();
+
+        fireEvent.click(accordionToggle);
+        expect(commBody).not.toBeVisible();
+
+        fireEvent.click(accordionToggle);
+        expect(commBody).toBeVisible();
+      });
+
+      it('hydrates TipTap counter preset with dynamic tokens and live syncs when modifying price and volume', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /negotiate/i }));
+
+        const commCard = screen.getByTestId('negotiate-communication-card');
+        expect(within(commCard).getByText(/\[Apex Liquidators\]/i)).toBeInTheDocument();
+        expect(within(commCard).getAllByText(/\[\$24\.50\/cs\]/i).length).toBeGreaterThanOrEqual(1);
+        expect(within(commCard).getAllByText(/\[200 cases\]/i).length).toBeGreaterThanOrEqual(1);
+
+        // Update price to 27.00 and volume to 175
+        const priceInput = screen.getByPlaceholderText(/enter counter price/i);
+        fireEvent.change(priceInput, { target: { value: '27.00' } });
+
+        const volumeInput = screen.getByPlaceholderText(/enter counter quantity/i);
+        fireEvent.change(volumeInput, { target: { value: '175' } });
+
+        expect(within(commCard).getAllByText(/\[\$27\.00\/cs\]/i).length).toBeGreaterThanOrEqual(1);
+        expect(within(commCard).getAllByText(/\[175 cases\]/i).length).toBeGreaterThanOrEqual(1);
+      });
+    });
+
+    describe('Seam 4: Dynamic Counter Summary & In-Situ Dispatch Continuity', () => {
+      it('calculates real-time counter total value, delta variance against buyer bid, and opens email preview', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /negotiate/i }));
+
+        const priceInput = screen.getByPlaceholderText(/enter counter price/i);
+        const volumeInput = screen.getByPlaceholderText(/enter counter quantity/i);
+
+        fireEvent.change(priceInput, { target: { value: '26.95' } });
+        fireEvent.change(volumeInput, { target: { value: '200' } });
+
+        const summaryBar = screen.getByTestId('negotiate-summary-bar');
+        expect(summaryBar).toBeInTheDocument();
+
+        // 200 cs @ $26.95 = $5,390.00
+        expect(within(summaryBar).getByTestId('counter-total-value')).toHaveTextContent('$5,390.00');
+        expect(within(summaryBar).getByText(/\(200 cs × \$26\.95\)/i)).toBeInTheDocument();
+
+        // Delta vs buyer bid: 200 * 24.50 = 4900 -> delta = +$490.00
+        expect(within(summaryBar).getByText(/\+\$490\.00 vs Buyer Bid/i)).toBeInTheDocument();
+        expect(within(summaryBar).getByText(/Gross Recovery Target/i)).toBeInTheDocument();
+
+        // Click Preview Email in summary bar
+        const previewBtn = within(summaryBar).getByRole('button', { name: /preview.*email/i });
+        fireEvent.click(previewBtn);
+
+        expect(screen.getByText('Outbound Email Preview')).toBeInTheDocument();
+      });
+
+      it('dispatches counter-offer, retains modal session in-situ, updates status badge to Countered, appends proposal to thread, and emits toast feedback', async () => {
+        const onCounterMock = vi.fn().mockResolvedValue({ emailDispatch: { dispatched: true } });
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+            onCounter={onCounterMock}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /negotiate/i }));
+
+        const priceInput = screen.getByPlaceholderText(/enter counter price/i);
+        const volumeInput = screen.getByPlaceholderText(/enter counter quantity/i);
+
+        fireEvent.change(priceInput, { target: { value: '26.95' } });
+        fireEvent.change(volumeInput, { target: { value: '200' } });
+
+        const summaryBar = screen.getByTestId('negotiate-summary-bar');
+        const dispatchBtn = within(summaryBar).getByRole('button', { name: /dispatch counter-offer/i });
+
+        fireEvent.click(dispatchBtn);
+
+        await waitFor(() => {
+          expect(onCounterMock).toHaveBeenCalledTimes(1);
+          expect(onCounterMock).toHaveBeenCalledWith(expect.objectContaining({
+            price: 26.95,
+            quantity: 200,
+            message: expect.any(String)
+          }));
+        });
+
+        // In-situ continuity: modal stays open
+        expect(screen.getByTestId('negotiate-parameters-card')).toBeInTheDocument();
+
+        // Status badge updates to countered
+        expect(screen.getByTestId('modal-status-badge')).toHaveTextContent('countered');
+
+        // Negotiation thread is not in leftPane; new proposal is logged in Timeline tab
+        const leftPane = screen.getByTestId('counter-left-pane');
+        expect(within(leftPane).queryByText(/Negotiation History Thread/i)).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+        expect(screen.getByText(/Supplier Counter-Offer Dispatched/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/\$26\.95\/cs/i).length).toBeGreaterThanOrEqual(1);
+
+        // Toast feedback is emitted
+        expect(screen.getByText(/Counter-offer successfully dispatched/i)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Issue 04 — Decline Offer Work Surface with Mandatory Codes, Audit Memo & Rejection Dispatch', () => {
+    const stitchBid = {
+      _id: 'bid-stitch-101',
+      lotId: 'lot-stitch-101',
+      buyerId: {
+        _id: 'buyer-apex',
+        companyName: 'Apex Liquidators',
+        email: 'apex@liquidators.com'
+      },
+      price: 24.50,
+      quantity: 200,
+      status: 'pending',
+      submittedAt: '2026-09-18T00:00:00.000Z',
+      messages: []
+    };
+
+    const stitchLot = {
+      _id: 'lot-stitch-101',
+      lotNumber: 'LOT-550',
+      availableQty: 250,
+      quantity: 250,
+      reservePrice: 20.00,
+      distributionCenter: {
+        address: 'Texas Central Facility, Dallas, TX, United States',
+        operatingHours: '08:00 AM - 04:30 PM CST'
+      },
+      productId: {
+        sku: 'SKU-ORGANIC-APPLES',
+        description: 'Premium Honeycrisp Apples'
+      }
+    };
+
+    describe('Seam 1: Rejection Specification Card & Auto-Relist Control', () => {
+      it('renders rejection specification card with mandatory reason dropdown, audit memo textarea, and auto-relist toggle', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        // Switch to Decline Offer mode
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        // Split work surface containers
+        expect(screen.getByTestId('decline-split-work-surface')).toBeInTheDocument();
+        expect(screen.getByTestId('decline-left-pane')).toBeInTheDocument();
+
+        // 1. Rejection Specification Card
+        const specCard = screen.getByTestId('decline-specification-card');
+        expect(specCard).toBeInTheDocument();
+        expect(within(specCard).getByText(/Rejection Specification/i)).toBeInTheDocument();
+        expect(within(specCard).getByText(/Mandatory Justification/i)).toBeInTheDocument();
+
+        // 2. Mandatory Decline Reason dropdown
+        const reasonSelect = screen.getByLabelText(/Decline Reason/i) as HTMLSelectElement;
+        expect(reasonSelect).toBeInTheDocument();
+        expect(reasonSelect.value).toBe('');
+        expect(within(specCard).getByText(/Price below minimum recovery floor|Price below recovery floor/i)).toBeInTheDocument();
+        expect(within(specCard).getByText(/Inventory committed elsewhere/i)).toBeInTheDocument();
+        expect(within(specCard).getByText(/Logistics\/pickup constraint/i)).toBeInTheDocument();
+        expect(within(specCard).getByText(/Custom rationale/i)).toBeInTheDocument();
+
+        // 3. Internal Audit Memo / Rationale textarea
+        const memoTextarea = screen.getByPlaceholderText(/Add specific rationale or notes/i);
+        expect(memoTextarea).toBeInTheDocument();
+        expect(memoTextarea).toHaveAttribute('id', 'decline-rationale-notes');
+
+        // 4. Auto-relist inventory toggle / checkbox
+        const autoRelistToggle = screen.getByTestId('auto-relist-toggle') as HTMLInputElement;
+        expect(autoRelistToggle).toBeInTheDocument();
+        expect(autoRelistToggle.type).toBe('checkbox');
+        expect(autoRelistToggle.checked).toBe(true);
+        expect(within(specCard).getByText(/Auto-Relist Inventory/i)).toBeInTheDocument();
+        expect(within(specCard).getByText(/Return cases to open surplus pool/i)).toBeInTheDocument();
+        expect(within(specCard).getByText(/Enabled/i)).toBeInTheDocument();
+
+        // Toggle checkbox updates checked state and visual indicator
+        fireEvent.click(autoRelistToggle);
+        expect(autoRelistToggle.checked).toBe(false);
+        expect(within(specCard).getByText(/Disabled/i)).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 2: Multi-Channel Communication Card & Dynamic Decline Tokens', () => {
+      it('renders decline communication card with channel pills (Email active by default), recipient badge, dynamic token count, and word count', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        const commCard = screen.getByTestId('decline-communication-card');
+        expect(commCard).toBeInTheDocument();
+        expect(within(commCard).getByText('Communication')).toBeInTheDocument();
+
+        // Channel selector pills
+        const emailPill = within(commCard).getByRole('button', { name: /^email$/i });
+        const inAppPill = within(commCard).getByRole('button', { name: /^in-app$/i });
+        const smsPill = within(commCard).getByRole('button', { name: /^sms$/i });
+
+        expect(emailPill).toBeInTheDocument();
+        expect(inAppPill).toBeInTheDocument();
+        expect(smsPill).toBeInTheDocument();
+
+        // Email active by default
+        expect(emailPill.getAttribute('data-active')).toBe('true');
+        expect(inAppPill.getAttribute('data-active')).toBe('false');
+        expect(smsPill.getAttribute('data-active')).toBe('false');
+
+        // Recipient badge
+        expect(within(commCard).getByText(/Recipient:/i)).toBeInTheDocument();
+        expect(within(commCard).getByText('apex@liquidators.com')).toBeInTheDocument();
+
+        // Dynamic tokens count & word count pills
+        expect(within(commCard).getByText(/\d+ Dynamic Tokens/i)).toBeInTheDocument();
+        expect(within(commCard).getByText(/\d+ Words/i)).toBeInTheDocument();
+      });
+
+      it('switches channel selector pills between Email, In-App, and SMS', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+        const commCard = screen.getByTestId('decline-communication-card');
+
+        const emailPill = within(commCard).getByRole('button', { name: /^email$/i });
+        const inAppPill = within(commCard).getByRole('button', { name: /^in-app$/i });
+        const smsPill = within(commCard).getByRole('button', { name: /^sms$/i });
+
+        // Switch to In-App
+        fireEvent.click(inAppPill);
+        expect(inAppPill.getAttribute('data-active')).toBe('true');
+        expect(emailPill.getAttribute('data-active')).toBe('false');
+        expect(screen.getByText(/In-App Channel Active/i)).toBeInTheDocument();
+
+        // Switch to SMS
+        fireEvent.click(smsPill);
+        expect(smsPill.getAttribute('data-active')).toBe('true');
+        expect(inAppPill.getAttribute('data-active')).toBe('false');
+        expect(screen.getByText(/SMS Channel Active/i)).toBeInTheDocument();
+
+        // Switch back to Email
+        fireEvent.click(emailPill);
+        expect(emailPill.getAttribute('data-active')).toBe('true');
+      });
+
+      it('toggles accordion collapse and expand to hide and show TipTap canvas', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        const accordionToggle = screen.getByRole('button', { name: /toggle decline communication accordion/i });
+        const editorBody = screen.getByTestId('decline-communication-body');
+
+        expect(editorBody).toBeVisible();
+
+        fireEvent.click(accordionToggle);
+        expect(editorBody).not.toBeVisible();
+
+        fireEvent.click(accordionToggle);
+        expect(editorBody).toBeVisible();
+      });
+
+      it('pre-loads TipTap decline notice template with live dynamic token pills and syncs when reason and rationale are modified', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        const commCard = screen.getByTestId('decline-communication-card');
+
+        // Pre-loaded dynamic tokens
+        expect(within(commCard).getByText(/\[Apex Liquidators\]/i)).toBeInTheDocument();
+        expect(within(commCard).getByText(/\[Premium Honeycrisp Apples\]/i)).toBeInTheDocument();
+        expect(within(commCard).getByText(/\[LOT-550\]/i)).toBeInTheDocument();
+
+        // Select decline reason
+        const reasonSelect = screen.getByLabelText(/Decline Reason/i);
+        fireEvent.change(reasonSelect, { target: { value: 'Price below minimum recovery floor' } });
+
+        // Token badge for decline_reason updates live
+        expect(within(commCard).getByText(/\[Price below minimum recovery floor\]/i)).toBeInTheDocument();
+
+        // Add audit memo rationale notes
+        const memoTextarea = screen.getByPlaceholderText(/Add specific rationale or notes/i);
+        fireEvent.change(memoTextarea, { target: { value: 'Offer does not meet our minimum floor' } });
+
+        // Token badge for decline_rationale updates live
+        expect(within(commCard).getByText(/\[Offer does not meet our minimum floor\]/i)).toBeInTheDocument();
+
+        // Verify ProseMirror editor retains surrounding text and resolved token values
+        const editor = commCard.querySelector('.ProseMirror');
+        expect(editor?.textContent).toContain('After review, we are unable to accept your offer');
+        expect(editor?.textContent).toContain('[Price below minimum recovery floor]');
+        expect(editor?.textContent).toContain('[Offer does not meet our minimum floor]');
+      });
+    });
+
+    describe('Seam 3: Decline Action Footer, Preview Modal & In-Situ Rejection Continuity', () => {
+      it('renders decline action footer with escrow deposit release notice, inventory return state indicator, and preview email button opening the preview modal', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        const footer = screen.getByTestId('decline-action-footer');
+        expect(footer).toBeInTheDocument();
+
+        // Escrow deposit release notice
+        expect(within(footer).getByText(/escrow deposit/i)).toBeInTheDocument();
+        expect(within(footer).getByText(/released|voided/i)).toBeInTheDocument();
+
+        // Inventory return state indicator (auto-relist is true by default)
+        expect(within(footer).getByText(/surplus pool|returning to open pool|auto-relist/i)).toBeInTheDocument();
+
+        // Toggle auto-relist off and observe return state indicator update
+        const autoRelistToggle = screen.getByTestId('auto-relist-toggle');
+        fireEvent.click(autoRelistToggle);
+        expect(within(footer).getByText(/retained|unallocated|not auto-relisted/i)).toBeInTheDocument();
+
+        // Preview Email button in footer
+        const previewBtn = within(footer).getByRole('button', { name: /preview.*email/i });
+        expect(previewBtn).toBeInTheDocument();
+
+        fireEvent.click(previewBtn);
+        const previewDialog = screen.getByRole('dialog', { name: /email preview dialog/i });
+        expect(previewDialog).toBeInTheDocument();
+        expect(within(previewDialog).getByText('Outbound Email Preview')).toBeInTheDocument();
+        expect(within(previewDialog).getByText(/apex@liquidators\.com/i)).toBeInTheDocument();
+      });
+
+      it('disables Confirm Decline & Send Notice button when no reason code is selected or when isSubmitting is true', () => {
+        const { rerender } = render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+            isSubmitting={false}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        const footer = screen.getByTestId('decline-action-footer');
+        const confirmBtn = within(footer).getByRole('button', { name: /confirm decline/i });
+        expect(confirmBtn).toBeDisabled();
+
+        // Select a reason -> button should be enabled
+        const reasonSelect = screen.getByLabelText(/Decline Reason/i);
+        fireEvent.change(reasonSelect, { target: { value: 'Price below minimum recovery floor' } });
+        expect(confirmBtn).not.toBeDisabled();
+
+        // When isSubmitting is true -> button should be disabled
+        rerender(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={stitchBid}
+            lot={stitchLot}
+            isSubmitting={true}
+          />
+        );
+        expect(confirmBtn).toBeDisabled();
+      });
+
+      it('dispatches onDecline with reason, rationale, templateHtml and autoRelist, updates lifecycle badge to rejected, logs rejection notice, and emits toast feedback without abrupt modal dismissal', async () => {
+        const onDeclineMock = vi.fn().mockResolvedValue(undefined);
+        const onCloseMock = vi.fn();
+
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={onCloseMock}
+            bid={stitchBid}
+            lot={stitchLot}
+            onDecline={onDeclineMock}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        // Fill in reason & rationale
+        const reasonSelect = screen.getByLabelText(/Decline Reason/i);
+        fireEvent.change(reasonSelect, { target: { value: 'Price below minimum recovery floor' } });
+
+        const memoTextarea = screen.getByPlaceholderText(/Add specific rationale or notes/i);
+        fireEvent.change(memoTextarea, { target: { value: 'Counter-offer was not feasible at $24.50.' } });
+
+        const footer = screen.getByTestId('decline-action-footer');
+        const confirmBtn = within(footer).getByRole('button', { name: /confirm decline/i });
+
+        fireEvent.click(confirmBtn);
+
+        await waitFor(() => {
+          expect(onDeclineMock).toHaveBeenCalledTimes(1);
+          expect(onDeclineMock).toHaveBeenCalledWith(expect.objectContaining({
+            reason: 'Price below minimum recovery floor',
+            rationale: 'Counter-offer was not feasible at $24.50.',
+            templateHtml: expect.any(String),
+            emailSubject: expect.stringContaining('LOT-550'),
+            autoRelist: true
+          }));
+        });
+
+        // In-situ continuity: onClose is NOT called, modal stays open
+        expect(onCloseMock).not.toHaveBeenCalled();
+        expect(screen.getByTestId('decline-specification-card')).toBeInTheDocument();
+
+        // Lifecycle badge updates to rejected
+        expect(screen.getByTestId('modal-status-badge')).toHaveTextContent(/rejected|declined/i);
+
+        // Toast feedback is emitted
+        expect(screen.getByText(/Offer successfully declined|declined.*notice dispatched/i)).toBeInTheDocument();
+
+        // Rejection banner displayed
+        expect(screen.getByTestId('declined-active-banner')).toBeInTheDocument();
+
+        // Verify Negotiation History Thread is not in Decline pane
+        expect(screen.queryByText(/Negotiation History Thread/i)).not.toBeInTheDocument();
+
+        // Rejection notice is logged into Timeline Tab
+        fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+        expect(screen.getAllByText(/Offer declined\. Reason: Price below minimum recovery floor/i).length).toBeGreaterThanOrEqual(1);
+      });
+    });
+  });
+
+  describe('Issue #05: Dedicated Timeline Audit Tab', () => {
+    describe('Seam 1: Navigation & Tab Activation', () => {
+      const sampleBid = {
+        _id: 'bid-101',
+        lotId: 'lot-101',
+        buyerId: {
+          _id: 'buyer-1',
+          companyName: 'Apex Liquidators',
+          email: 'apex@liquidators.com'
+        },
+        price: 3.50,
+        quantity: 150,
+        status: 'pending',
+        submittedAt: '2026-09-08T10:00:00.000Z',
+        messages: [
+          {
+            sender: 'buyer',
+            content: 'Initial offer submitted at $3.50/cs for 150 cases.',
+            timestamp: '2026-09-08T10:00:00.000Z'
+          }
+        ]
+      };
+
+      const sampleLot = {
+        _id: 'lot-101',
+        lotNumber: 'LOT-99',
+        standardSellPrice: 5.00,
+        createdAt: '2026-09-07T08:00:00.000Z',
+        productId: {
+          sku: 'SKU-APPLES',
+          description: 'Organic Honeycrisp Apples'
+        }
+      };
+
+      it('renders dedicated Timeline tab with history icon and counter badge, and activates timeline surface on click', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        const timelineTabBtn = screen.getByRole('button', { name: /timeline/i });
+        expect(timelineTabBtn).toBeInTheDocument();
+
+        // Check for counter badge inside timeline tab
+        const badge = screen.getByTestId('timeline-tab-badge');
+        expect(badge).toBeInTheDocument();
+        expect(Number(badge.textContent)).toBeGreaterThan(0);
+
+        // Click to switch to Timeline mode
+        fireEvent.click(timelineTabBtn);
+
+        // Verify timeline audit surface container is active
+        expect(screen.getByTestId('timeline-audit-surface')).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 2: Multi-Source Event Stream Aggregation & Feed Rendering', () => {
+      const sampleBidWithHistory = {
+        _id: 'bid-202',
+        lotId: 'lot-202',
+        buyerId: {
+          _id: 'buyer-2',
+          companyName: 'Peak Produce Co',
+          email: 'buyer@peakproduce.com'
+        },
+        price: 4.00,
+        quantity: 200,
+        status: 'pending',
+        submittedAt: '2026-09-08T10:00:00.000Z',
+        messages: [
+          {
+            sender: 'buyer',
+            content: 'Initial offer submitted at $4.00/cs for 200 cases.',
+            timestamp: '2026-09-08T10:00:00.000Z'
+          },
+          {
+            sender: 'supplier',
+            proposedPrice: 4.60,
+            proposedQuantity: 200,
+            content: 'Counter-offer: We can release at $4.60/cs.',
+            timestamp: '2026-09-08T11:30:00.000Z'
+          }
+        ]
+      };
+
+      const sampleLot = {
+        _id: 'lot-202',
+        lotNumber: 'LOT-202',
+        standardSellPrice: 5.50,
+        createdAt: '2026-09-07T08:00:00.000Z',
+        productId: {
+          sku: 'SKU-ORANGES',
+          description: 'Valencia Oranges Grade A'
+        }
+      };
+
+      it('aggregates multi-source lifecycle events across lot listing, escrow verification, buyer bid, and supplier counter into chronological feed', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBidWithHistory}
+            lot={sampleLot}
+          />
+        );
+
+        // Switch to Timeline tab
+        fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+
+        const feed = screen.getByTestId('timeline-activity-feed');
+        expect(feed).toBeInTheDocument();
+
+        // 1. Lot Publication event (System / Blue)
+        const lotCard = screen.getByTestId(`timeline-event-card-lot-pub-${sampleLot._id}`);
+        expect(lotCard).toBeInTheDocument();
+        expect(within(lotCard).getByText(/Lot Published & Inventory Allocated/i)).toBeInTheDocument();
+        expect(within(lotCard).getByTestId('timeline-event-actor')).toHaveTextContent('Supplier Operations');
+        expect(within(lotCard).getByTestId('timeline-event-description')).toHaveTextContent(/LOT-202/);
+        expect(within(lotCard).getByTestId('timeline-event-description')).toHaveTextContent(/\$5\.50\/cs/);
+        expect(within(lotCard).getByTestId('timeline-event-category-badge')).toHaveTextContent(/system/i);
+        const lotDot = within(lotCard).getByTestId('timeline-node-dot');
+        expect(lotDot).toHaveStyle({ backgroundColor: '#3b82f6' });
+
+        // 2. Escrow Pre-Authorization event (System / Blue)
+        const escrowCard = screen.getByTestId(`timeline-event-card-escrow-${sampleBidWithHistory._id}`);
+        expect(escrowCard).toBeInTheDocument();
+        expect(within(escrowCard).getByText(/Automated Escrow Pre-Authorization/i)).toBeInTheDocument();
+        expect(within(escrowCard).getByTestId('timeline-event-actor')).toHaveTextContent('Escrow Engine / Compliance');
+        expect(within(escrowCard).getByTestId('timeline-event-description')).toHaveTextContent('Peak Produce Co');
+        expect(within(escrowCard).getByTestId('timeline-event-ref-id')).toHaveTextContent(/ESCROW-PREAUTH/);
+        const escrowDot = within(escrowCard).getByTestId('timeline-node-dot');
+        expect(escrowDot).toHaveStyle({ backgroundColor: '#3b82f6' });
+
+        // 3. Buyer Initial Bid event (Negotiations / Amber)
+        const bidCard = screen.getByTestId(`timeline-event-card-bid-init-${sampleBidWithHistory._id}`);
+        expect(bidCard).toBeInTheDocument();
+        expect(within(bidCard).getByText(/Buyer Initial Offer Submitted/i)).toBeInTheDocument();
+        expect(within(bidCard).getByTestId('timeline-event-actor')).toHaveTextContent('Peak Produce Co');
+        expect(within(bidCard).getByTestId('timeline-event-description')).toHaveTextContent(/\$4\.00\/cs/);
+        expect(within(bidCard).getByTestId('timeline-event-description')).toHaveTextContent(/200 cases/);
+        expect(within(bidCard).getByTestId('timeline-event-description')).toHaveTextContent(/\$800\.00/);
+        const bidDot = within(bidCard).getByTestId('timeline-node-dot');
+        expect(bidDot).toHaveStyle({ backgroundColor: '#f59e0b' });
+
+        // 4. Supplier Counter-Offer event (Negotiations / Amber)
+        const counterCard = screen.getByTestId(/timeline-event-card-msg-1-/);
+        expect(counterCard).toBeInTheDocument();
+        expect(within(counterCard).getByText(/Supplier Counter-Offer Dispatched/i)).toBeInTheDocument();
+        expect(within(counterCard).getByTestId('timeline-event-actor')).toHaveTextContent('Supplier Operations');
+        expect(within(counterCard).getByTestId('timeline-event-description')).toHaveTextContent(/Counter-offer: We can release at \$4\.60\/cs\./);
+        const counterDot = within(counterCard).getByTestId('timeline-node-dot');
+        expect(counterDot).toHaveStyle({ backgroundColor: '#f59e0b' });
+
+        // Verify chronological sequence order in DOM: lot pub -> escrow -> initial bid -> counter
+        const eventCards = within(feed).getAllByTestId(/^timeline-event-card-/);
+        expect(eventCards.length).toBe(4);
+        expect(eventCards[0]).toHaveAttribute('data-testid', `timeline-event-card-lot-pub-${sampleLot._id}`);
+        expect(eventCards[1]).toHaveAttribute('data-testid', `timeline-event-card-escrow-${sampleBidWithHistory._id}`);
+        expect(eventCards[2]).toHaveAttribute('data-testid', `timeline-event-card-bid-init-${sampleBidWithHistory._id}`);
+        expect(eventCards[3]).toHaveAttribute('data-testid', expect.stringContaining('timeline-event-card-msg-1-'));
+      });
+
+      it('renders status transitions with adaptive color coding: Emerald for Accepted deal award and Red for Declined offer', () => {
+        // Test Accepted Status Transition (Emerald)
+        const acceptedBid = {
+          ...sampleBidWithHistory,
+          status: 'accepted'
+        };
+
+        const { unmount } = render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={acceptedBid}
+            lot={sampleLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+
+        const acceptCard = screen.getByTestId(`timeline-event-card-status-accept-${acceptedBid._id}`);
+        expect(acceptCard).toBeInTheDocument();
+        expect(within(acceptCard).getByText(/Offer Accepted & Deal Settlement Active/i)).toBeInTheDocument();
+        expect(within(acceptCard).getByTestId('timeline-event-category-badge')).toHaveTextContent(/status/i);
+        const acceptDot = within(acceptCard).getByTestId('timeline-node-dot');
+        expect(acceptDot).toHaveStyle({ backgroundColor: '#10b981' });
+
+        unmount();
+
+        // Test Declined/Rejected Status Transition (Red)
+        const rejectedBid = {
+          ...sampleBidWithHistory,
+          status: 'rejected'
+        };
+
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={rejectedBid}
+            lot={sampleLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+
+        const rejectCard = screen.getByTestId(`timeline-event-card-status-reject-${rejectedBid._id}`);
+        expect(rejectCard).toBeInTheDocument();
+        expect(within(rejectCard).getByText(/Offer Declined & Rejection Notice Dispatched/i)).toBeInTheDocument();
+        expect(within(rejectCard).getByTestId('timeline-event-category-badge')).toHaveTextContent(/status/i);
+        const rejectDot = within(rejectCard).getByTestId('timeline-node-dot');
+        expect(rejectDot).toHaveStyle({ backgroundColor: '#ef4444' });
+      });
+    });
+
+    describe('Seam 3: Category Filter Dropdown', () => {
+      const sampleBidWithHistory = {
+        _id: 'bid-303',
+        lotId: 'lot-303',
+        buyerId: {
+          _id: 'buyer-3',
+          companyName: 'Valley Fresh Foods',
+          email: 'buyer@valleyfresh.com'
+        },
+        price: 4.25,
+        quantity: 300,
+        status: 'accepted',
+        submittedAt: '2026-09-08T10:00:00.000Z',
+        messages: [
+          {
+            sender: 'buyer',
+            content: 'Initial offer submitted at $4.25/cs for 300 cases.',
+            timestamp: '2026-09-08T10:00:00.000Z'
+          },
+          {
+            sender: 'supplier',
+            proposedPrice: 4.50,
+            proposedQuantity: 300,
+            content: 'Supplier counter at $4.50/cs.',
+            timestamp: '2026-09-08T11:00:00.000Z'
+          }
+        ]
+      };
+
+      const sampleLot = {
+        _id: 'lot-303',
+        lotNumber: 'LOT-303',
+        standardSellPrice: 5.00,
+        createdAt: '2026-09-07T08:00:00.000Z',
+        productId: {
+          sku: 'SKU-BERRIES',
+          description: 'Organic Strawberries 1lb'
+        }
+      };
+
+      it('filters timeline feed by category (negotiations, system, status) and updates visible event count', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBidWithHistory}
+            lot={sampleLot}
+          />
+        );
+
+        // Switch to Timeline tab
+        fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+
+        // Verify initial state: All Events selected, all 5 events visible
+        const filterDropdown = screen.getByTestId('timeline-category-filter');
+        expect(filterDropdown).toBeInTheDocument();
+        expect(filterDropdown).toHaveValue('all');
+
+        const eventCountBadge = screen.getByTestId('timeline-event-count');
+        expect(eventCountBadge).toHaveTextContent('(5 of 5 events)');
+
+        let cards = screen.getAllByTestId(/^timeline-event-card-/);
+        expect(cards.length).toBe(5);
+
+        // 1. Filter by 'negotiations'
+        fireEvent.change(filterDropdown, { target: { value: 'negotiations' } });
+        expect(eventCountBadge).toHaveTextContent('(2 of 5 events)');
+        cards = screen.getAllByTestId(/^timeline-event-card-/);
+        expect(cards.length).toBe(2);
+        cards.forEach((card) => {
+          expect(within(card).getByTestId('timeline-event-category-badge')).toHaveTextContent(/negotiations/i);
+        });
+        expect(screen.queryByTestId(`timeline-event-card-lot-pub-${sampleLot._id}`)).not.toBeInTheDocument();
+        expect(screen.queryByTestId(`timeline-event-card-status-accept-${sampleBidWithHistory._id}`)).not.toBeInTheDocument();
+
+        // 2. Filter by 'system'
+        fireEvent.change(filterDropdown, { target: { value: 'system' } });
+        expect(eventCountBadge).toHaveTextContent('(2 of 5 events)');
+        cards = screen.getAllByTestId(/^timeline-event-card-/);
+        expect(cards.length).toBe(2);
+        cards.forEach((card) => {
+          expect(within(card).getByTestId('timeline-event-category-badge')).toHaveTextContent(/system/i);
+        });
+        expect(screen.getByTestId(`timeline-event-card-lot-pub-${sampleLot._id}`)).toBeInTheDocument();
+        expect(screen.getByTestId(`timeline-event-card-escrow-${sampleBidWithHistory._id}`)).toBeInTheDocument();
+
+        // 3. Filter by 'status'
+        fireEvent.change(filterDropdown, { target: { value: 'status' } });
+        expect(eventCountBadge).toHaveTextContent('(1 of 5 events)');
+        cards = screen.getAllByTestId(/^timeline-event-card-/);
+        expect(cards.length).toBe(1);
+        expect(within(cards[0]).getByTestId('timeline-event-category-badge')).toHaveTextContent(/status/i);
+        expect(screen.getByTestId(`timeline-event-card-status-accept-${sampleBidWithHistory._id}`)).toBeInTheDocument();
+
+        // 4. Reset back to 'all'
+        fireEvent.change(filterDropdown, { target: { value: 'all' } });
+        expect(eventCountBadge).toHaveTextContent('(5 of 5 events)');
+        expect(screen.getAllByTestId(/^timeline-event-card-/).length).toBe(5);
+      });
+    });
+  });
+
+  describe('Issue 06 — Interactive Outbound Email Preview Modal Dialog', () => {
+    const sampleBid = {
+      _id: 'bid-preview-1',
+      lotId: 'lot-preview-1',
+      buyerId: {
+        _id: 'buyer-preview-1',
+        companyName: 'Atlanta Community Food Bank',
+        email: 'procurement@acfb.org'
+      },
+      price: 15.00,
+      quantity: 250,
+      status: 'pending',
+      submittedAt: '2026-09-18T10:00:00.000Z',
+      messages: []
+    };
+
+    const sampleLot = {
+      _id: 'lot-preview-1',
+      lotNumber: 'LOT-PREV-88',
+      standardSellPrice: 18.00,
+      productId: {
+        sku: 'SKU-PREV-FOOD',
+        description: 'Nutritious Pantry Mix 24pk'
+      },
+      warehouse: 'Atlanta Central Depot #4'
+    };
+
+    describe('Seam 1: Modal Triggering & Responsive Dismissal Across All Surfaces', () => {
+      it('triggers preview modal from header and footer across modes, and closes via top-right X and footer Done buttons without dismissing inspector', async () => {
+        const onCloseMock = vi.fn();
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={onCloseMock}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        // 1. Header trigger button
+        const headerPreviewBtn = screen.getByTestId('header-preview-email-btn');
+        expect(headerPreviewBtn).toBeInTheDocument();
+        fireEvent.click(headerPreviewBtn);
+
+        // Verify overlay dialog opens
+        const previewDialog = screen.getByTestId('email-preview-dialog');
+        expect(previewDialog).toBeInTheDocument();
+        expect(screen.getByRole('dialog', { name: /email preview dialog/i })).toBeInTheDocument();
+
+        // Close via top-right close button (X)
+        const closeBtn = screen.getByTestId('close-email-preview-btn');
+        expect(closeBtn).toBeInTheDocument();
+        fireEvent.click(closeBtn);
+
+        // Preview dialog should be closed, inspector remains open, onClose mock was not called
+        expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
+        expect(onCloseMock).not.toHaveBeenCalled();
+        expect(screen.getByText(/Bid Action Inspector/i)).toBeInTheDocument();
+
+        // 2. Accept mode footer trigger button
+        const acceptFooterBtn = screen.getByTestId('footer-preview-accept-btn');
+        expect(acceptFooterBtn).toBeInTheDocument();
+        fireEvent.click(acceptFooterBtn);
+
+        expect(screen.getByTestId('email-preview-dialog')).toBeInTheDocument();
+
+        // Close via footer Done button
+        const doneBtn = screen.getByTestId('done-email-preview-btn');
+        expect(doneBtn).toBeInTheDocument();
+        fireEvent.click(doneBtn);
+
+        expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
+        expect(onCloseMock).not.toHaveBeenCalled();
+
+        // 3. Counter mode footer trigger button
+        const counterTab = screen.getByRole('button', { name: /re-negotiate/i });
+        fireEvent.click(counterTab);
+
+        const counterFooterBtn = screen.getByTestId('footer-preview-counter-btn');
+        expect(counterFooterBtn).toBeInTheDocument();
+        fireEvent.click(counterFooterBtn);
+
+        expect(screen.getByTestId('email-preview-dialog')).toBeInTheDocument();
+
+        // Dismiss via Done button
+        fireEvent.click(screen.getByTestId('done-email-preview-btn'));
+        expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
+        expect(onCloseMock).not.toHaveBeenCalled();
+
+        // 4. Decline mode footer trigger button
+        const declineTab = screen.getByRole('button', { name: /decline offer/i });
+        fireEvent.click(declineTab);
+
+        const declineFooterBtn = screen.getByTestId('footer-preview-decline-btn');
+        expect(declineFooterBtn).toBeInTheDocument();
+        fireEvent.click(declineFooterBtn);
+
+        expect(screen.getByTestId('email-preview-dialog')).toBeInTheDocument();
+
+        // Dismiss via top-right X button
+        fireEvent.click(screen.getByTestId('close-email-preview-btn'));
+        expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
+        expect(onCloseMock).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Seam 2: Mode-Aware Recipient & Subject Line Rendering', () => {
+      it('renders buyer recipient email and mode-specific contextual subject lines for Accept, Counter, and Decline modes', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        // 1. Accept Mode
+        fireEvent.click(screen.getByTestId('header-preview-email-btn'));
+        const previewDialog = screen.getByTestId('email-preview-dialog');
+        expect(previewDialog).toBeInTheDocument();
+
+        const recipientDiv = screen.getByTestId('email-preview-recipient');
+        expect(recipientDiv).toHaveTextContent(`To: ${sampleBid.buyerId.email}`);
+
+        const subjectDiv = screen.getByTestId('email-preview-subject');
+        expect(subjectDiv).toHaveTextContent(`Subject: Offer Awarded & Deal Settlement: ${sampleLot.productId.description}`);
+
+        fireEvent.click(screen.getByTestId('close-email-preview-btn'));
+        expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
+
+        // 2. Counter Mode
+        fireEvent.click(screen.getByRole('button', { name: /re-negotiate/i }));
+        fireEvent.click(screen.getByTestId('footer-preview-counter-btn'));
+
+        expect(screen.getByTestId('email-preview-dialog')).toBeInTheDocument();
+        expect(screen.getByTestId('email-preview-recipient')).toHaveTextContent(`To: ${sampleBid.buyerId.email}`);
+        expect(screen.getByTestId('email-preview-subject')).toHaveTextContent(`Subject: Counter-Offer Proposal: ${sampleLot.productId.description}`);
+
+        fireEvent.click(screen.getByTestId('done-email-preview-btn'));
+        expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
+
+        // 3. Decline Mode
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+        fireEvent.click(screen.getByTestId('footer-preview-decline-btn'));
+
+        expect(screen.getByTestId('email-preview-dialog')).toBeInTheDocument();
+        expect(screen.getByTestId('email-preview-recipient')).toHaveTextContent(`To: ${sampleBid.buyerId.email}`);
+        expect(screen.getByTestId('email-preview-subject')).toHaveTextContent(`Subject: Offer Declined: ${sampleLot.productId.description}`);
+
+        fireEvent.click(screen.getByTestId('close-email-preview-btn'));
+        expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
+      });
+
+      it('falls back to bid.buyerEmail when buyerId.email is absent', () => {
+        const bidWithDirectEmail = {
+          ...sampleBid,
+          buyerId: undefined,
+          buyerEmail: 'partner@directwholesale.com'
+        };
+
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={bidWithDirectEmail as any}
+            lot={sampleLot}
+          />
+        );
+
+        fireEvent.click(screen.getByTestId('header-preview-email-btn'));
+        expect(screen.getByTestId('email-preview-recipient')).toHaveTextContent('To: partner@directwholesale.com');
+      });
+    });
+
+    describe('Seam 3: Authentic Dynamic Token Hydration & HTML Body Rendering', () => {
+      it('hydrates all Acceptance Settlement tokens into authentic commercial values reflecting live parameter changes and eliminates bracketed chips or raw tags', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        // Modify logistics & allocation parameters live
+        const qtyInput = screen.getByLabelText(/Awarded Quantity/i);
+        fireEvent.change(qtyInput, { target: { value: '200' } });
+
+        const addressInput = screen.getByLabelText(/DC Pickup Address/i);
+        fireEvent.change(addressInput, { target: { value: '450 Logistics Blvd, Gate 4, Atlanta, GA 30301' } });
+
+        const hoursInput = screen.getByLabelText(/Dock Operating Hours/i);
+        fireEvent.change(hoursInput, { target: { value: 'Mon-Fri 06:00 AM - 02:00 PM EST' } });
+
+        // Trigger preview modal
+        fireEvent.click(screen.getByTestId('header-preview-email-btn'));
+
+        const previewBody = screen.getByTestId('email-preview-body');
+        expect(previewBody).toBeInTheDocument();
+
+        // Authentic values resolved:
+        // buyer_name
+        expect(previewBody).toHaveTextContent('Atlanta Community Food Bank');
+        // product_name
+        expect(previewBody).toHaveTextContent('Nutritious Pantry Mix 24pk');
+        // sku
+        expect(previewBody).toHaveTextContent('SKU-PREV-FOOD');
+        // awarded_quantity (live updated)
+        expect(previewBody).toHaveTextContent('200 cases');
+        // price_per_case
+        expect(previewBody).toHaveTextContent('$15.00/case');
+        // total_amount (200 * $15.00 = $3,000.00)
+        expect(previewBody).toHaveTextContent('$3,000.00');
+        // pickup_location (live updated)
+        expect(previewBody).toHaveTextContent('450 Logistics Blvd, Gate 4, Atlanta, GA 30301');
+        // pickup_hours (live updated)
+        expect(previewBody).toHaveTextContent('Mon-Fri 06:00 AM - 02:00 PM EST');
+        // deal_document_link & payment_link
+        const links = previewBody.querySelectorAll('a');
+        const dealDocLink = Array.from(links).find((a) => a.getAttribute('href') === `/deal/${sampleBid._id}`);
+        expect(dealDocLink).toBeDefined();
+        expect(dealDocLink).toHaveTextContent(`/deal/${sampleBid._id}`);
+
+        const paymentLink = Array.from(links).find((a) => a.getAttribute('href') === `/deal/${sampleBid._id}#payment`);
+        expect(paymentLink).toBeDefined();
+        expect(paymentLink).toHaveTextContent(`/deal/${sampleBid._id}#payment`);
+
+        // Verify zero raw merge tags, zero bracketed chips, and no remaining data-token spans
+        const html = previewBody.innerHTML;
+        expect(html).not.toMatch(/\{\{[a-z_]+\}\}/i);
+        expect(html).not.toMatch(/\[(Atlanta Community Food Bank|Nutritious Pantry Mix|SKU-PREV-FOOD|200 cases|\$15\.00\/case|\$3,000\.00)\]/);
+        expect(previewBody.querySelectorAll('span[data-token]').length).toBe(0);
+      });
+
+      it('hydrates all Counter Proposal tokens into authentic commercial values reflecting live counter parameter adjustments without bracketed chips or raw tags', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        // Switch to Counter mode
+        fireEvent.click(screen.getByRole('button', { name: /re-negotiate/i }));
+
+        // Modify counter price & volume
+        const priceInput = screen.getByPlaceholderText(/Enter counter price/i);
+        fireEvent.change(priceInput, { target: { value: '16.50' } });
+
+        const qtyInput = screen.getByPlaceholderText(/Enter counter quantity/i);
+        fireEvent.change(qtyInput, { target: { value: '180' } });
+
+        // Open preview dialog from Counter footer
+        fireEvent.click(screen.getByTestId('footer-preview-counter-btn'));
+
+        const previewBody = screen.getByTestId('email-preview-body');
+        expect(previewBody).toBeInTheDocument();
+
+        // Authentic values resolved:
+        expect(previewBody).toHaveTextContent('Atlanta Community Food Bank');
+        expect(previewBody).toHaveTextContent('Nutritious Pantry Mix 24pk');
+        expect(previewBody).toHaveTextContent('$16.50/cs');
+        expect(previewBody).toHaveTextContent('180 cases');
+        expect(previewBody).toHaveTextContent('$15.00/cs');
+
+        // Check CTA action links
+        const links = previewBody.querySelectorAll('a');
+        const acceptCta = Array.from(links).find((a) =>
+          a.getAttribute('href')?.includes(`/portal/negotiation/${sampleBid._id}?action=accept`)
+        );
+        expect(acceptCta).toBeDefined();
+        expect(acceptCta).toHaveTextContent('Accept Counter-Offer ($16.50/cs • 180 cases)');
+
+        const renegotiateCta = Array.from(links).find((a) =>
+          a.getAttribute('href')?.includes(`/portal/negotiation/${sampleBid._id}?action=rebid`)
+        );
+        expect(renegotiateCta).toBeDefined();
+        expect(renegotiateCta).toHaveTextContent('Propose New Terms / Re-bid');
+
+        // Verify zero raw merge tags and zero bracketed chips
+        const html = previewBody.innerHTML;
+        expect(html).not.toMatch(/\{\{[a-z_]+\}\}/i);
+        expect(html).not.toMatch(/\[(\$16\.50\/cs|180 cases|\$15\.00\/cs|Atlanta Community Food Bank|Nutritious Pantry Mix)\]/);
+        expect(previewBody.querySelectorAll('span[data-token]').length).toBe(0);
+      });
+
+      it('hydrates all Decline Notice tokens into authentic commercial values reflecting selected reason and audit memo notes without bracketed chips or raw tags', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        // Switch to Decline mode
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        // Select decline reason & enter audit memo rationale
+        const reasonSelect = screen.getByLabelText(/Decline Reason/i);
+        fireEvent.change(reasonSelect, { target: { value: 'Price below minimum recovery floor' } });
+
+        const rationaleTextarea = screen.getByPlaceholderText(/Add specific rationale or notes/i);
+        fireEvent.change(rationaleTextarea, {
+          target: { value: 'Offer unit price is below floor recovery requirements.' }
+        });
+
+        // Open preview dialog from Decline footer
+        fireEvent.click(screen.getByTestId('footer-preview-decline-btn'));
+
+        const previewBody = screen.getByTestId('email-preview-body');
+        expect(previewBody).toBeInTheDocument();
+
+        // Authentic values resolved:
+        expect(previewBody).toHaveTextContent('Atlanta Community Food Bank');
+        expect(previewBody).toHaveTextContent('Nutritious Pantry Mix 24pk');
+        expect(previewBody).toHaveTextContent('LOT-PREV-88');
+        expect(previewBody).toHaveTextContent('Price below minimum recovery floor');
+        expect(previewBody).toHaveTextContent('Offer unit price is below floor recovery requirements.');
+
+        // Verify catalog redirect link
+        const links = previewBody.querySelectorAll('a');
+        const catalogLink = Array.from(links).find((a) =>
+          a.getAttribute('href')?.includes('/marketplace')
+        );
+        expect(catalogLink).toBeDefined();
+        expect(catalogLink).toHaveTextContent('Explore Available Surplus Inventory');
+
+        // Verify zero raw merge tags, zero bracketed chips, and no remaining data-token spans
+        const html = previewBody.innerHTML;
+        expect(html).not.toMatch(/\{\{[a-z_]+\}\}/i);
+        expect(html).not.toMatch(/\[(Atlanta Community Food Bank|Nutritious Pantry Mix|LOT-PREV-88|Price below minimum recovery floor|Offer unit price is below floor)\]/);
+        expect(previewBody.querySelectorAll('span[data-token]').length).toBe(0);
+      });
+    });
+  });
 });
+
+
 
 
 
