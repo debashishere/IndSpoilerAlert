@@ -260,9 +260,9 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
 
     const rightPane = screen.getByTestId('counter-right-pane');
     expect(rightPane).toBeInTheDocument();
-    // Right pane contains outbound message staging and dispatch button
+    // Right pane contains outbound message staging
     expect(rightPane).toContainElement(screen.getByPlaceholderText(/explain your counter-offer parameters/i));
-    expect(rightPane).toContainElement(screen.getByRole('button', { name: /dispatch counter-offer/i }));
+    expect(screen.getByRole('button', { name: /dispatch counter-offer/i })).toBeInTheDocument();
   });
 
   it('displays live delta indicators comparing counter terms against buyer original offer', () => {
@@ -1413,11 +1413,13 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
         />
       );
 
-      // Modal container has expanded full-screen workbench classes
-      const modalContainer = container.querySelector('.modal-container');
-      expect(modalContainer).toBeInTheDocument();
-      expect(modalContainer?.className).toMatch(/max-w-\[98vw\]/);
-      expect(modalContainer?.className).toMatch(/rounded-2xl/);
+      // Workspace container has full-screen operational workspace classes
+      const workspaceShell = container.querySelector('[data-testid="bid-action-inspector-workspace"]') || container.firstElementChild;
+      expect(workspaceShell).toBeInTheDocument();
+      expect(workspaceShell?.className).toContain('fixed');
+      expect(workspaceShell?.className).toContain('inset-0');
+      expect(workspaceShell?.className).toContain('w-screen');
+      expect(workspaceShell?.className).toContain('h-screen');
 
       // Header tags and title
       const header = container.querySelector('header');
@@ -1427,21 +1429,10 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       expect(within(header!).getByTestId('modal-status-badge')).toHaveTextContent(/pending/i);
       expect(within(header!).getByText(/Premium Honeycrisp Apples/i)).toBeInTheDocument();
 
-      // Maximize toggle, Preview Email action and close control
-      const maximizeBtn = screen.getByRole('button', { name: /maximize inspector/i });
-      expect(maximizeBtn).toBeInTheDocument();
+      // Preview Email action and close control (maximize button removed)
       expect(screen.getByRole('button', { name: /preview email/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /close inspector/i })).toBeInTheDocument();
-
-      // Toggle Maximize to 100vw full screen
-      fireEvent.click(maximizeBtn);
-      expect(modalContainer?.className).toMatch(/w-full h-full rounded-none/);
-      expect(screen.getByRole('button', { name: /restore inspector/i })).toBeInTheDocument();
-
-      // Toggle back to Near Full-Screen Workbench
-      fireEvent.click(screen.getByRole('button', { name: /restore inspector/i }));
-      expect(modalContainer?.className).toMatch(/max-w-\[98vw\]/);
-      expect(modalContainer?.className).toMatch(/rounded-2xl/);
+      expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /maximize inspector/i })).toBeNull();
     });
 
     it('renders all 4 commercial stat cards with dynamic metrics, verified badge, allocation % and net clearing', () => {
@@ -3206,7 +3197,861 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       });
     });
   });
+
+  describe('Issue 07: Full-Screen Workspace Shell, Centralized Tabs & Maximize Removal', () => {
+    describe('Seam 1: Full-Screen Operational Workspace Shell & Maximize Removal', () => {
+      it('renders a viewport-filling full-screen workspace shell and permanently eliminates maximize button', () => {
+        const { container } = render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        // Root workspace container fills viewport with exact required Tailwind classes
+        const workspaceShell = container.querySelector('[data-testid="bid-action-inspector-workspace"]') || container.firstElementChild;
+        expect(workspaceShell).toBeInTheDocument();
+        expect(workspaceShell?.className).toContain('fixed');
+        expect(workspaceShell?.className).toContain('inset-0');
+        expect(workspaceShell?.className).toContain('w-screen');
+        expect(workspaceShell?.className).toContain('h-screen');
+        expect(workspaceShell?.className).toContain('z-[1050]');
+        expect(workspaceShell?.className).toContain('bg-slate-50');
+        expect(workspaceShell?.className).toContain('dark:bg-slate-950');
+        expect(workspaceShell?.className).toContain('flex');
+        expect(workspaceShell?.className).toContain('flex-col');
+        expect(workspaceShell?.className).toContain('overflow-hidden');
+
+        // Modal overlay backdrop and floating card are eliminated
+        expect(container.querySelector('.modal-overlay')).toBeNull();
+
+        // Maximize/minimize toggle button is permanently removed
+        expect(screen.queryByTestId('toggle-maximize-inspector-btn')).toBeNull();
+        expect(screen.queryByRole('button', { name: /maximize/i })).toBeNull();
+        expect(screen.queryByRole('button', { name: /restore/i })).toBeNull();
+      });
+    });
+
+    describe('Seam 2: Dual Header Exit Anchors & Preserved Metadata', () => {
+      it('implements dual exit anchors (Back to Bids & Close Workspace) and preserves header metadata', () => {
+        const handleClose = vi.fn();
+        const handleReset = vi.fn();
+        const nonPendingBid = { ...sampleBid, status: 'countered' };
+
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={handleClose}
+            onReset={handleReset}
+            bid={nonPendingBid}
+            lot={sampleLot}
+          />
+        );
+
+        // 1. Dedicated Left Exit Anchor: Back to Bids & Offers
+        const backBtn = screen.getByRole('button', { name: /back to bids/i });
+        expect(backBtn).toBeInTheDocument();
+        expect(backBtn).toHaveTextContent(/Back to Bids & Offers/i);
+        fireEvent.click(backBtn);
+        expect(handleClose).toHaveBeenCalledTimes(1);
+
+        // 2. Explicit Right Exit Anchor: Close Workspace
+        const closeBtn = screen.getByRole('button', { name: /close workspace/i });
+        expect(closeBtn).toBeInTheDocument();
+        fireEvent.click(closeBtn);
+        expect(handleClose).toHaveBeenCalledTimes(2);
+
+        // 3. Preserved header metadata & controls
+        const header = screen.getByRole('banner');
+        expect(header).toBeInTheDocument();
+        expect(within(header).getByText(/LOT-99/i)).toBeInTheDocument();
+        expect(within(header).getByText(/SKU-APPLES/i)).toBeInTheDocument();
+        expect(within(header).getByTestId('modal-status-badge')).toBeInTheDocument();
+        expect(within(header).getByText(/Organic Honeycrisp Apples/i)).toBeInTheDocument();
+        expect(within(header).getByTestId('header-preview-email-btn')).toBeInTheDocument();
+        expect(within(header).getByRole('button', { name: /reset bid to pending/i })).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 3: Centralized Commercial Stat Cards Container', () => {
+      it('centralizes the 4 commercial stat cards within a max-w-[1100px] mx-auto w-full container', () => {
+        const { container } = render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        const statCardsContainer = screen.getByTestId('centralized-commercial-stat-cards');
+        expect(statCardsContainer).toBeInTheDocument();
+        expect(statCardsContainer.className).toContain('max-w-[1100px]');
+        expect(statCardsContainer.className).toContain('mx-auto');
+        expect(statCardsContainer.className).toContain('w-full');
+
+        // All 4 commercial stat cards are children within the centralized container
+        expect(within(statCardsContainer).getByTestId('summary-buyer-org')).toBeInTheDocument();
+        expect(within(statCardsContainer).getByTestId('summary-unit-offer')).toBeInTheDocument();
+        expect(within(statCardsContainer).getByTestId('summary-volume-requested')).toBeInTheDocument();
+        expect(within(statCardsContainer).getByTestId('summary-gross-recovery')).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 4: Centralized Mode Navigation Tabs & Content Body', () => {
+      it('centers the Mode Navigation Tabs bar horizontally within a max-w-[1100px] container and constrains body content', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        // Navigation Tabs bar is centered within max-w-[1100px] mx-auto and has justify-content: center
+        const tabsBar = screen.getByTestId('centralized-navigation-tabs-bar');
+        expect(tabsBar).toBeInTheDocument();
+        expect(tabsBar.className).toContain('max-w-[1100px]');
+        expect(tabsBar.className).toContain('mx-auto');
+        expect(tabsBar.style.justifyContent).toBe('center');
+
+        // All 4 tabs are present inside the centered tabs bar
+        expect(within(tabsBar).getByRole('button', { name: /accept offer/i })).toBeInTheDocument();
+        expect(within(tabsBar).getByRole('button', { name: /negotiate/i })).toBeInTheDocument();
+        expect(within(tabsBar).getByRole('button', { name: /decline/i })).toBeInTheDocument();
+        expect(within(tabsBar).getByRole('button', { name: /timeline/i })).toBeInTheDocument();
+
+        // Body content container is constrained within max-w-[1100px] mx-auto
+        const bodyContainer = screen.getByTestId('centralized-workspace-body');
+        expect(bodyContainer).toBeInTheDocument();
+        expect(bodyContainer.className).toContain('max-w-[1100px]');
+        expect(bodyContainer.className).toContain('mx-auto');
+        expect(bodyContainer.className).toContain('w-full');
+      });
+    });
+  });
+
+  describe('Issue 08 — Sequential Stacking & Clean Single-Column View for Accept Offer Tab', () => {
+    describe('Seam 1: Sequential Single-Column Work Surface & Top-Down Section Stacking', () => {
+      it('refactors accept-work-surface into a single-column vertical flex layout with top-down sequential section stacking', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        const workSurface = screen.getByTestId('accept-work-surface');
+        expect(workSurface).toBeInTheDocument();
+
+        // 1. Single-column vertical flex layout classes/styling
+        expect(workSurface.className).toContain('flex');
+        expect(workSurface.className).toContain('flex-col');
+        expect(workSurface.className).toContain('max-w-[1100px]');
+        expect(workSurface.className).toContain('mx-auto');
+        expect(workSurface.className).toContain('w-full');
+
+        // 2. Sequential stacking order in DOM
+        const leftPane = screen.getByTestId('accept-left-pane');
+        const rightPane = screen.getByTestId('accept-right-pane');
+        const executionBar = screen.getByTestId('accept-execution-bar');
+
+        expect(leftPane).toBeInTheDocument();
+        expect(rightPane).toBeInTheDocument();
+        expect(executionBar).toBeInTheDocument();
+
+        // Check relative document order
+        expect(leftPane.compareDocumentPosition(rightPane) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(rightPane.compareDocumentPosition(executionBar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        // executionBar is outside rightPane
+        expect(rightPane.contains(executionBar)).toBe(false);
+
+        // Also preserves existing accept-settlement-footer test ID
+        expect(screen.getByTestId('accept-settlement-footer')).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 2: Full-Width Sequential Rows in Logistics & Allocation Card', () => {
+      it('renders all 4 logistics form fields on individual full-width rows with step badges and sequential order', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        const logisticsCard = screen.getByTestId('accept-logistics-card');
+        expect(logisticsCard).toBeInTheDocument();
+
+        // 4 individual rows with dedicated test IDs
+        const rowAddress = within(logisticsCard).getByTestId('logistics-row-address');
+        const rowHours = within(logisticsCard).getByTestId('logistics-row-hours');
+        const rowQuantity = within(logisticsCard).getByTestId('logistics-row-quantity');
+        const rowPrice = within(logisticsCard).getByTestId('logistics-row-price');
+
+        expect(rowAddress).toBeInTheDocument();
+        expect(rowHours).toBeInTheDocument();
+        expect(rowQuantity).toBeInTheDocument();
+        expect(rowPrice).toBeInTheDocument();
+
+        // Ensure full width classes
+        expect(rowAddress.className).toContain('w-full');
+        expect(rowHours.className).toContain('w-full');
+        expect(rowQuantity.className).toContain('w-full');
+        expect(rowPrice.className).toContain('w-full');
+
+        // Document order of rows is sequential
+        expect(rowAddress.compareDocumentPosition(rowHours) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(rowHours.compareDocumentPosition(rowQuantity) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(rowQuantity.compareDocumentPosition(rowPrice) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        // Step badges exist in rows
+        expect(within(rowAddress).getByText('Step 1.1')).toBeInTheDocument();
+        expect(within(rowHours).getByText('Step 1.2')).toBeInTheDocument();
+        expect(within(rowQuantity).getByText('Step 1.3')).toBeInTheDocument();
+        expect(within(rowPrice).getByText('Step 1.4')).toBeInTheDocument();
+
+        // Helper labels & badges
+        expect(within(rowAddress).getByText('FOB Origin')).toBeInTheDocument();
+        expect(within(rowHours).getByText('Appointment Req.')).toBeInTheDocument();
+        expect(within(rowQuantity).getByText(/Max/i)).toBeInTheDocument();
+        expect(within(rowPrice).getByText('Settled')).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 3: Full-Width Email Builder Canvas & Channel Controls', () => {
+      it('expands TipTap Email Builder to full container width with clean toolbar controls, token badges, and channel selector pills', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        const rightPane = screen.getByTestId('accept-right-pane');
+        const commCard = screen.getByTestId('accept-communication-card');
+
+        expect(rightPane.className).toContain('w-full');
+        expect(commCard.className).toContain('w-full');
+
+        // Step 2 indicator
+        expect(within(commCard).getByText('Step 2')).toBeInTheDocument();
+
+        // TipTap editor canvas is rendered inside full width container
+        const editor = within(commCard).getByTestId('workflow-tiptap-editor');
+        expect(editor).toBeInTheDocument();
+
+        // Channel selector pills exist and are functional
+        const emailPill = within(commCard).getByRole('button', { name: /^email$/i });
+        const inAppPill = within(commCard).getByRole('button', { name: /^in-app$/i });
+        const smsPill = within(commCard).getByRole('button', { name: /^sms$/i });
+
+        expect(emailPill).toBeInTheDocument();
+        expect(inAppPill).toBeInTheDocument();
+        expect(smsPill).toBeInTheDocument();
+
+        // Token badge count & word count are rendered
+        expect(within(commCard).getByText(/\d+ Dynamic Tokens/i)).toBeInTheDocument();
+        expect(within(commCard).getByText(/\d+ Words/i)).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 4: Sticky Bottom Settlement Summary Bar & Execution Actions', () => {
+      it('docks the settlement execution bar stickily at the bottom aligned with 1100px container, renders Step 3 badge, and executes accept dispatch', async () => {
+        const onAcceptMock = vi.fn();
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+            onAccept={onAcceptMock}
+          />
+        );
+
+        const executionBar = screen.getByTestId('accept-execution-bar');
+        expect(executionBar).toBeInTheDocument();
+
+        // 1. Sticky bottom positioning and backdrop blur
+        expect(executionBar.className).toContain('sticky');
+        expect(executionBar.className).toContain('bottom-0');
+        expect(executionBar.className).toContain('z-20');
+        expect(executionBar.className).toContain('backdrop-blur');
+
+        // 2. Step 3 indicator
+        expect(within(executionBar).getByText('Step 3')).toBeInTheDocument();
+
+        // 3. Live calculations and breakdown
+        expect(within(executionBar).getByTestId('total-settlement-value')).toBeInTheDocument();
+        expect(within(executionBar).getByText(/Total Settlement Value:/i)).toBeInTheDocument();
+
+        // 4. Preserves Preview Email button
+        const previewBtn = within(executionBar).getByTestId('footer-preview-accept-btn');
+        expect(previewBtn).toBeInTheDocument();
+
+        // 5. Confirm Offer action dispatches onAccept
+        const confirmBtn = within(executionBar).getByRole('button', { name: /confirm offer/i });
+        expect(confirmBtn).toBeInTheDocument();
+        expect(confirmBtn).not.toBeDisabled();
+
+        fireEvent.click(confirmBtn);
+        await waitFor(() => {
+          expect(onAcceptMock).toHaveBeenCalledTimes(1);
+        });
+      });
+    });
+  });
+
+  describe('Issue 09 — Sequential Stacking & Clean Single-Column View for Negotiate / Counter Tab', () => {
+    describe('Seam 1: Sequential Single-Column Work Surface & Top-Down Section Stacking', () => {
+      it('refactors counter-split-work-surface into a single-column vertical flex layout with top-down sequential section stacking', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        // Switch to Negotiate / Counter tab
+        fireEvent.click(screen.getByRole('button', { name: /re-negotiate|negotiate/i }));
+
+        const workSurface = screen.getByTestId('counter-split-work-surface');
+        expect(workSurface).toBeInTheDocument();
+
+        // 1. Single-column vertical flex layout classes/styling
+        expect(workSurface.className).toContain('flex');
+        expect(workSurface.className).toContain('flex-col');
+        expect(workSurface.className).toContain('gap-6');
+        expect(workSurface.className).toContain('max-w-[1100px]');
+        expect(workSurface.className).toContain('mx-auto');
+        expect(workSurface.className).toContain('w-full');
+
+        // 2. Sequential stacking order in DOM
+        const leftPane = screen.getByTestId('counter-left-pane');
+        const rightPane = screen.getByTestId('counter-right-pane');
+        const summaryBar = screen.getByTestId('counter-summary-bar');
+
+        expect(leftPane).toBeInTheDocument();
+        expect(rightPane).toBeInTheDocument();
+        expect(summaryBar).toBeInTheDocument();
+
+        // Check relative document order: leftPane -> rightPane -> summaryBar
+        expect(leftPane.compareDocumentPosition(rightPane) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(rightPane.compareDocumentPosition(summaryBar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        // summaryBar is outside rightPane
+        expect(rightPane.contains(summaryBar)).toBe(false);
+
+        // Step badges exist
+        expect(within(leftPane).getByText('Step 1')).toBeInTheDocument();
+        expect(within(rightPane).getByText('Step 2')).toBeInTheDocument();
+        expect(within(summaryBar).getByText('Step 3')).toBeInTheDocument();
+
+        // Preserves contract test IDs
+        expect(screen.getByTestId('negotiate-parameters-card')).toBeInTheDocument();
+        expect(screen.getByTestId('counter-communication-card')).toBeInTheDocument();
+        expect(screen.getByTestId('negotiate-summary-bar')).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 2: Full-Width Sequential Rows in Counter-Offer Parameters Card', () => {
+      it('renders all 4 parameter fields on individual full-width rows with step badges and sequential order', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /re-negotiate|negotiate/i }));
+
+        const paramsCard = screen.getByTestId('negotiate-parameters-card');
+        expect(paramsCard).toBeInTheDocument();
+
+        // 4 individual rows with dedicated test IDs
+        const rowPrice = within(paramsCard).getByTestId('counter-row-price');
+        const rowQuantity = within(paramsCard).getByTestId('counter-row-quantity');
+        const rowWindow = within(paramsCard).getByTestId('counter-row-window');
+        const rowFloor = within(paramsCard).getByTestId('counter-row-floor');
+
+        expect(rowPrice).toBeInTheDocument();
+        expect(rowQuantity).toBeInTheDocument();
+        expect(rowWindow).toBeInTheDocument();
+        expect(rowFloor).toBeInTheDocument();
+
+        // Ensure full width classes
+        expect(rowPrice.className).toContain('w-full');
+        expect(rowQuantity.className).toContain('w-full');
+        expect(rowWindow.className).toContain('w-full');
+        expect(rowFloor.className).toContain('w-full');
+
+        // Document order of rows is sequential
+        expect(rowPrice.compareDocumentPosition(rowQuantity) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(rowQuantity.compareDocumentPosition(rowWindow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(rowWindow.compareDocumentPosition(rowFloor) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        // Step badges exist in rows
+        expect(within(rowPrice).getByText('Step 1.1')).toBeInTheDocument();
+        expect(within(rowQuantity).getByText('Step 1.2')).toBeInTheDocument();
+        expect(within(rowWindow).getByText('Step 1.3')).toBeInTheDocument();
+        expect(within(rowFloor).getByText('Step 1.4')).toBeInTheDocument();
+
+        // Helper labels & badges
+        expect(within(rowPrice).getByTestId('negotiate-uplift-badge')).toBeInTheDocument();
+        expect(within(rowQuantity).getByText(/Max/i)).toBeInTheDocument();
+        expect(within(rowWindow).getByText('Auto-expires')).toBeInTheDocument();
+        expect(within(rowFloor).getByText(/Met|Below Floor/i)).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 3: Full-Width Multi-Channel Communication Card & Live Token Sync', () => {
+      it('expands communication card to full width, renders Step 2 badge, channel pills, dynamic tokens, accordion collapse, and live token rehydration', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /re-negotiate|negotiate/i }));
+
+        const rightPane = screen.getByTestId('counter-right-pane');
+        const commCard = screen.getByTestId('counter-communication-card');
+
+        expect(rightPane.className).toContain('w-full');
+        expect(commCard.className).toContain('w-full');
+
+        // Step 2 indicator
+        expect(within(commCard).getByText('Step 2')).toBeInTheDocument();
+
+        // Recipient email indicator
+        expect(within(commCard).getByText(/Recipient:/i)).toBeInTheDocument();
+        expect(within(commCard).getByText('apex@liquidators.com')).toBeInTheDocument();
+
+        // Channel selector pills
+        const emailPill = within(commCard).getByRole('button', { name: /^email$/i });
+        const inAppPill = within(commCard).getByRole('button', { name: /^in-app$/i });
+        const smsPill = within(commCard).getByRole('button', { name: /^sms$/i });
+
+        expect(emailPill).toBeInTheDocument();
+        expect(inAppPill).toBeInTheDocument();
+        expect(smsPill).toBeInTheDocument();
+
+        // Dynamic tokens & word counts
+        expect(within(commCard).getByText(/\d+ Dynamic Tokens/i)).toBeInTheDocument();
+        expect(within(commCard).getByText(/\d+ Words/i)).toBeInTheDocument();
+
+        // TipTap editor canvas
+        const editor = within(commCard).getByTestId('workflow-tiptap-editor');
+        expect(editor).toBeInTheDocument();
+
+        // Accordion collapse and expand
+        const accordionToggle = within(commCard).getByRole('button', { name: /toggle negotiate communication accordion/i });
+        const commBody = screen.getByTestId('negotiate-communication-body');
+        expect(commBody).toBeVisible();
+
+        fireEvent.click(accordionToggle);
+        expect(commBody).not.toBeVisible();
+
+        fireEvent.click(accordionToggle);
+        expect(commBody).toBeVisible();
+
+        // Live token re-hydration: change counter price to 4.25
+        const priceInput = screen.getByPlaceholderText(/enter counter price/i);
+        fireEvent.change(priceInput, { target: { value: '4.25' } });
+
+        const priceBadge = editor.querySelector('.token-badge-pill[data-token="counter_price"]');
+        expect(priceBadge?.textContent).toBe('[$4.25/cs]');
+      });
+    });
+
+    describe('Seam 4: Sticky Bottom Counter Summary Dispatch Bar & In-Situ Execution', () => {
+      it('docks the counter summary dispatch bar stickily at the bottom aligned with 1100px container, renders Step 3 badge, delta indicators, and executes counter dispatch', async () => {
+        const onCounterMock = vi.fn().mockResolvedValue(undefined);
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+            onCounter={onCounterMock}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /re-negotiate|negotiate/i }));
+
+        const summaryBar = screen.getByTestId('counter-summary-bar');
+        expect(summaryBar).toBeInTheDocument();
+
+        // 1. Sticky bottom positioning and backdrop blur
+        expect(summaryBar.className).toContain('sticky');
+        expect(summaryBar.className).toContain('bottom-0');
+        expect(summaryBar.className).toContain('z-20');
+        expect(summaryBar.className).toContain('backdrop-blur');
+
+        // 2. Step 3 indicator
+        expect(within(summaryBar).getByText('Step 3')).toBeInTheDocument();
+
+        // 3. Real-time total counter value and delta indicators
+        expect(within(summaryBar).getByTestId('counter-total-value')).toBeInTheDocument();
+        expect(within(summaryBar).getByText(/Counter Total Value:/i)).toBeInTheDocument();
+        expect(within(summaryBar).getByTestId('counter-delta-indicators')).toBeInTheDocument();
+
+        // 4. Outbound Email Preview trigger
+        const previewBtn = within(summaryBar).getByTestId('footer-preview-counter-btn');
+        expect(previewBtn).toBeInTheDocument();
+
+        // 5. Dispatch Counter-Offer action triggers onCounter callback and preserves in-situ continuity
+        const dispatchBtn = within(summaryBar).getByRole('button', { name: /dispatch counter-offer/i });
+        expect(dispatchBtn).toBeInTheDocument();
+        expect(dispatchBtn).not.toBeDisabled();
+
+        fireEvent.click(dispatchBtn);
+        await waitFor(() => {
+          expect(onCounterMock).toHaveBeenCalledTimes(1);
+        });
+      });
+    });
+  });
+
+  describe('Issue 10 — Sequential Stacking & Clean Single-Column View for Decline Offer Tab', () => {
+    describe('Seam 1: Sequential Single-Column Work Surface & Top-Down Section Stacking', () => {
+      it('refactors decline-split-work-surface into a single-column vertical flex layout with top-down sequential section stacking', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        // Switch to Decline Offer tab
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        const workSurface = screen.getByTestId('decline-split-work-surface');
+        expect(workSurface).toBeInTheDocument();
+
+        // 1. Single-column vertical flex layout classes/styling
+        expect(workSurface.className).toContain('flex');
+        expect(workSurface.className).toContain('flex-col');
+        expect(workSurface.className).toContain('gap-6');
+        expect(workSurface.className).toContain('max-w-[1100px]');
+        expect(workSurface.className).toContain('mx-auto');
+        expect(workSurface.className).toContain('w-full');
+
+        // 2. Sequential stacking order in DOM
+        const leftPane = screen.getByTestId('decline-left-pane');
+        const rightPane = screen.getByTestId('decline-right-pane');
+        const actionFooter = screen.getByTestId('decline-action-footer');
+
+        expect(leftPane).toBeInTheDocument();
+        expect(rightPane).toBeInTheDocument();
+        expect(actionFooter).toBeInTheDocument();
+
+        // Check relative document order: leftPane -> rightPane -> actionFooter
+        expect(leftPane.compareDocumentPosition(rightPane) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(rightPane.compareDocumentPosition(actionFooter) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        // Step badges exist
+        expect(within(leftPane).getByText('Step 1')).toBeInTheDocument();
+        expect(within(rightPane).getByText('Step 2')).toBeInTheDocument();
+        expect(within(actionFooter).getByText('Step 3')).toBeInTheDocument();
+
+        // Preserves contract test IDs
+        expect(screen.getByTestId('decline-specification-card')).toBeInTheDocument();
+        expect(screen.getByTestId('decline-communication-card')).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 2: Full-Width Sequential Rows in Decline Specification Card', () => {
+      it('renders all 3 specification fields on individual full-width rows with step badges and sequential order', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        const specCard = screen.getByTestId('decline-specification-card');
+        expect(specCard).toBeInTheDocument();
+
+        // 3 individual rows with dedicated test IDs
+        const rowReason = within(specCard).getByTestId('decline-row-reason');
+        const rowMemo = within(specCard).getByTestId('decline-row-memo');
+        const rowRelist = within(specCard).getByTestId('decline-row-relist');
+
+        expect(rowReason).toBeInTheDocument();
+        expect(rowMemo).toBeInTheDocument();
+        expect(rowRelist).toBeInTheDocument();
+
+        // Ensure full width classes
+        expect(rowReason.className).toContain('w-full');
+        expect(rowMemo.className).toContain('w-full');
+        expect(rowRelist.className).toContain('w-full');
+
+        // Document order of rows is sequential
+        expect(rowReason.compareDocumentPosition(rowMemo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(rowMemo.compareDocumentPosition(rowRelist) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        // Step badges exist in rows
+        expect(within(rowReason).getByText('Step 1.1')).toBeInTheDocument();
+        expect(within(rowMemo).getByText('Step 1.2')).toBeInTheDocument();
+        expect(within(rowRelist).getByText('Step 1.3')).toBeInTheDocument();
+
+        // Specific form control verification within rows
+        expect(within(rowReason).getByRole('combobox', { name: /decline reason/i })).toBeInTheDocument();
+        expect(within(rowMemo).getByPlaceholderText(/add specific rationale or notes/i)).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 3: Full-Width Multi-Channel Communication Card & Live Token Sync', () => {
+      it('expands decline communication card to full width, renders Step 2 badge, channel pills, dynamic tokens, accordion collapse, and live token rehydration', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        const rightPane = screen.getByTestId('decline-right-pane');
+        const commCard = screen.getByTestId('decline-communication-card');
+
+        expect(rightPane.className).toContain('w-full');
+        expect(commCard.className).toContain('w-full');
+
+        // Step 2 indicator
+        expect(within(commCard).getByText('Step 2')).toBeInTheDocument();
+
+        // Recipient email indicator
+        expect(within(commCard).getByText(/Recipient:/i)).toBeInTheDocument();
+        expect(within(commCard).getByText('apex@liquidators.com')).toBeInTheDocument();
+
+        // Channel selector pills
+        const emailPill = within(commCard).getByRole('button', { name: /^email$/i });
+        const inAppPill = within(commCard).getByRole('button', { name: /^in-app$/i });
+        const smsPill = within(commCard).getByRole('button', { name: /^sms$/i });
+
+        expect(emailPill).toBeInTheDocument();
+        expect(inAppPill).toBeInTheDocument();
+        expect(smsPill).toBeInTheDocument();
+
+        // Dynamic tokens & word counts
+        expect(within(commCard).getByText(/\d+ Dynamic Tokens/i)).toBeInTheDocument();
+        expect(within(commCard).getByText(/\d+ Words/i)).toBeInTheDocument();
+
+        // TipTap editor canvas
+        const editor = within(commCard).getByTestId('workflow-tiptap-editor');
+        expect(editor).toBeInTheDocument();
+
+        // Accordion collapse and expand
+        const accordionToggle = within(commCard).getByRole('button', { name: /toggle decline communication accordion/i });
+        const commBody = screen.getByTestId('decline-communication-body');
+        expect(commBody).toBeVisible();
+
+        fireEvent.click(accordionToggle);
+        expect(commBody).not.toBeVisible();
+
+        fireEvent.click(accordionToggle);
+        expect(commBody).toBeVisible();
+
+        // Live token re-hydration: select decline reason and verify dynamic token pill in editor
+        const reasonSelect = screen.getByLabelText(/decline reason/i);
+        fireEvent.change(reasonSelect, { target: { value: 'Price below minimum recovery floor' } });
+
+        const reasonBadge = editor.querySelector('.token-badge-pill[data-token="decline_reason"]');
+      });
+    });
+
+    describe('Seam 4: Sticky Bottom Decline Action Footer & In-Situ Execution', () => {
+      it('docks the decline action footer stickily at the bottom aligned with 1100px container, renders Step 3 badge, escrow release indicator, and executes decline dispatch', async () => {
+        const onDeclineMock = vi.fn().mockResolvedValue(undefined);
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+            onDecline={onDeclineMock}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+        const footer = screen.getByTestId('decline-action-footer');
+        expect(footer).toBeInTheDocument();
+
+        // 1. Sticky bottom positioning and backdrop blur
+        expect(footer.className).toContain('sticky');
+        expect(footer.className).toContain('bottom-0');
+        expect(footer.className).toContain('z-20');
+        expect(footer.className).toContain('backdrop-blur');
+
+        // 2. Step 3 indicator
+        expect(within(footer).getByText('Step 3')).toBeInTheDocument();
+
+        // 3. Escrow deposit release notice and inventory return state indicator
+        expect(within(footer).getByText(/Escrow Deposit Release Notice:/i)).toBeInTheDocument();
+        expect(within(footer).getByText(/Buyer deposit hold released immediately upon rejection/i)).toBeInTheDocument();
+        expect(within(footer).getByText(/Auto-Relist Active: 150 cases returning to open surplus pool/i)).toBeInTheDocument();
+
+        // 4. Outbound Email Preview trigger
+        const previewBtn = within(footer).getByTestId('footer-preview-decline-btn');
+        expect(previewBtn).toBeInTheDocument();
+
+        // 5. Confirm Decline & Send Notice action triggers onDecline callback
+        const declineBtn = within(footer).getByRole('button', { name: /confirm decline & send notice/i });
+        expect(declineBtn).toBeInTheDocument();
+
+        // Select a mandatory reason first to enable button
+        const reasonSelect = screen.getByLabelText(/decline reason/i);
+        fireEvent.change(reasonSelect, { target: { value: 'Price below minimum recovery floor' } });
+        expect(declineBtn).not.toBeDisabled();
+
+        fireEvent.click(declineBtn);
+        await waitFor(() => {
+          expect(onDeclineMock).toHaveBeenCalledTimes(1);
+        });
+      });
+    });
+  });
+
+  describe('Issue 11 — Timeline Centralization, Verification & ADR 0037 Amendment', () => {
+    describe('Seam 1: Centralized Timeline Audit Trail Container & Styling', () => {
+      it('aligns the Timeline Audit Trail within the centralized max-w-[1100px] mx-auto container with consistent card styling, filters, and search bar', () => {
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+
+        const timelineSurface = screen.getByTestId('timeline-audit-surface');
+        expect(timelineSurface).toBeInTheDocument();
+
+        // 1. Centralized container layout classes matching other tabs
+        expect(timelineSurface.className).toContain('flex');
+        expect(timelineSurface.className).toContain('flex-col');
+        expect(timelineSurface.className).toContain('max-w-[1100px]');
+        expect(timelineSurface.className).toContain('mx-auto');
+        expect(timelineSurface.className).toContain('w-full');
+
+        // 2. Controls bar with filters and search input
+        const controlsBar = screen.getByTestId('timeline-controls-bar');
+        expect(controlsBar).toBeInTheDocument();
+        expect(within(controlsBar).getByTestId('timeline-category-filter')).toBeInTheDocument();
+        expect(within(controlsBar).getByTestId('timeline-event-count')).toBeInTheDocument();
+        expect(within(controlsBar).getByTestId('timeline-search-input')).toBeInTheDocument();
+
+        // 3. Activity feed within centralized container
+        const activityFeed = screen.getByTestId('timeline-activity-feed');
+        expect(activityFeed).toBeInTheDocument();
+      });
+    });
+
+    describe('Seam 2: Outbound Email Preview Dialog in Full-Screen Workspace Across Modes', () => {
+      it('verifies outbound email preview dialog opens, renders resolved token values, and dismisses cleanly across all tabs in full-screen mode', () => {
+        const onCloseMock = vi.fn();
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={onCloseMock}
+            bid={sampleBid}
+            lot={sampleLot}
+          />
+        );
+
+        // Verify full-screen shell is rendered
+        const shell = screen.getByTestId('bid-action-inspector-workspace');
+        expect(shell).toBeInTheDocument();
+        expect(shell.className).toContain('w-screen');
+        expect(shell.className).toContain('h-screen');
+
+        // --- Tab 1: Accept Offer ---
+        const acceptPreviewBtn = screen.getByTestId('footer-preview-accept-btn');
+        fireEvent.click(acceptPreviewBtn);
+
+        const previewDialog = screen.getByTestId('email-preview-dialog');
+        expect(previewDialog).toBeInTheDocument();
+
+        // Verify resolved token preview content
+        const previewBody = screen.getByTestId('email-preview-body');
+        expect(previewBody.textContent).toContain('Apex Liquidators');
+        expect(previewBody.textContent).toContain('$3.50');
+        expect(previewBody.textContent).not.toContain('{{buyer_company}}');
+        expect(previewBody.textContent).not.toContain('{{settled_price}}');
+
+        // Dismiss via Done button
+        fireEvent.click(screen.getByTestId('done-email-preview-btn'));
+        expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
+        expect(onCloseMock).not.toHaveBeenCalled();
+
+        // --- Tab 2: Negotiate / Counter ---
+        fireEvent.click(screen.getByRole('button', { name: /re-negotiate/i }));
+        const counterPreviewBtn = screen.getByTestId('footer-preview-counter-btn');
+        fireEvent.click(counterPreviewBtn);
+
+        expect(screen.getByTestId('email-preview-dialog')).toBeInTheDocument();
+        const counterBody = screen.getByTestId('email-preview-body');
+        expect(counterBody.textContent).not.toContain('{{counter_price}}');
+        expect(counterBody.textContent).not.toContain('{{counter_quantity}}');
+
+        // Dismiss via close (X) button
+        fireEvent.click(screen.getByTestId('close-email-preview-btn'));
+        expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
+        expect(onCloseMock).not.toHaveBeenCalled();
+
+        // --- Tab 3: Decline Offer ---
+        fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+        const reasonSelect = screen.getByLabelText(/decline reason/i);
+        fireEvent.change(reasonSelect, { target: { value: 'Price below minimum recovery floor' } });
+
+        const declinePreviewBtn = screen.getByTestId('footer-preview-decline-btn');
+        fireEvent.click(declinePreviewBtn);
+
+        expect(screen.getByTestId('email-preview-dialog')).toBeInTheDocument();
+        const declineBody = screen.getByTestId('email-preview-body');
+        expect(declineBody.textContent).toContain('Price below minimum recovery floor');
+        expect(declineBody.textContent).not.toContain('{{decline_reason}}');
+
+        // Dismiss via Done button
+        fireEvent.click(screen.getByTestId('done-email-preview-btn'));
+        expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
+        expect(onCloseMock).not.toHaveBeenCalled();
+      });
+    });
+  });
 });
+
+
 
 
 

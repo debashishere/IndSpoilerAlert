@@ -58,3 +58,43 @@ The Stitch specification introduces:
 
 ### Negative / Trade-offs
 - Slight increase in modal component DOM size due to dedicated Timeline tab and Preview Modal; mitigated by modular component decomposition and clean React state handling.
+
+---
+
+## 4. Architectural Amendment: Full-Screen Workspace & Sequential Single-Column Flow
+
+- **Amendment Date**: 2026-09-18
+- **Status**: Approved & Implemented
+
+### 4.1 Full-Screen Operational Workspace Shell & Maximize Elimination
+- **Context**: The previous floating window overlay with maximize/minimize toggle caused UI crampedness across rich institutional actions (steppers, dynamic TipTap editors, preview modals).
+- **Decision**: Promoted the Bid Action Inspector to a permanent, viewport-filling full-screen operational workspace (`w-screen h-screen`, `fixed inset-0`, `rounded-none`, `z-[1050]`).
+- **Maximize Button Removal**: The maximize/minimize toggle button (`maximize-modal-btn`) has been permanently eliminated. Escape key or explicit exit anchors (`back-to-bids-btn` and `close-workspace-btn`) gracefully dismiss the full-screen workspace session.
+
+### 4.2 Centralized Layout Architecture (`max-w-[1100px] mx-auto`)
+- **Key Metrics Stat Cards**: Centralized in a responsive 4-column grid constrained to `max-w-[1100px] mx-auto w-full`.
+- **Mode Navigation Tabs**: The 4 navigation tabs (`Accept Offer`, `Negotiate`, `Decline Offer`, `Timeline`) are horizontally centered within `max-w-[1100px] mx-auto`.
+- **Content Workspace Body**: The tab content body (`centralized-workspace-body`) is strictly constrained to `max-w-[1100px] mx-auto w-full`, standardizing eye tracking and typography reading line lengths.
+
+### 4.3 Sequential Single-Column Vertical Flow
+The legacy side-by-side two-column split layouts (`left-pane` and `right-pane` side-by-side) across action tabs have been refactored into a clear, top-down sequential dependency hierarchy:
+1. **Accept Offer Tab**:
+   - **Step 1 (Configuration)**: Logistics & Allocation Card (`accept-left-pane`, `accept-logistics-card`) with full-width sequential rows for DC Address (`logistics-row-address`), Operating Hours (`logistics-row-hours`), Awarded Quantity stepper (`logistics-row-quantity`), and Settled Price stepper (`logistics-row-price`).
+   - **Step 2 (Communication)**: Multi-channel Communication Card (`accept-right-pane`, `accept-communication-card`) with full-width TipTap Email Builder, channel pills (`Email`, `In-App`, `SMS`), token badges, and accordion controls.
+   - **Step 3 (Settlement Execution)**: Docks stickily at the viewport bottom (`accept-execution-bar`, `sticky bottom-0 z-20 backdrop-blur`) aligned with the 1100px container, keeping recovery calculations and primary Confirm Offer CTA continuously accessible.
+2. **Negotiate / Counter Tab**:
+   - **Step 1 (Parameters)**: Counter-Offer Parameters Card (`counter-left-pane`, `negotiate-parameters-card`) with full-width sequential rows for Counter Price (`counter-row-price`), Counter Volume (`counter-row-volume`), Holding Window (`counter-row-holding`), and Reserve Floor (`counter-row-reserve`), displaying margin uplift badges and delta variance indicators.
+   - **Step 2 (Communication)**: Multi-channel Communication Card (`counter-right-pane`, `counter-communication-card`) with full-width TipTap editor with dynamic token hydration and sync.
+   - **Step 3 (Dispatch Summary)**: Docks stickily at viewport bottom (`counter-summary-bar`, `sticky bottom-0 z-20 backdrop-blur`), providing live counter total recovery, baseline delta indicators, and Send Counter-Offer CTA.
+3. **Decline Offer Tab**:
+   - **Step 1 (Specification)**: Decline Specification Card (`decline-left-pane`, `decline-specification-card`) with full-width sequential rows for Mandatory Reason (`decline-row-reason`), Internal Audit Memo (`decline-row-memo`), and Inventory Relist toggle (`decline-row-relist`).
+   - **Step 2 (Communication)**: Multi-channel Communication Card (`decline-right-pane`, `decline-communication-card`) with full-width rejection notice editor and token synchronization.
+   - **Step 3 (Action Footer)**: Docks stickily at viewport bottom (`decline-action-footer`, `sticky bottom-0 z-20 backdrop-blur`), rendering escrow deposit release indicators, auto-relist telemetry, and Confirm Decline CTA.
+4. **Timeline Audit Trail Tab**:
+   - Centralized within `timeline-audit-surface` (`max-w-[1100px] mx-auto w-full`), rendering the controls bar (`timeline-controls-bar`), category filter (`timeline-category-filter`), search bar (`timeline-search-input`), and chronological activity feed (`timeline-activity-feed`) with consistent card aesthetics.
+
+### 4.4 Outbound Email Preview Dialog Integration
+- Outbound Email Preview modal dialog (`email-preview-dialog`) functions seamlessly within the full-screen layout.
+- Accessible via header preview button or sticky footers across all modes.
+- Hydrates all dynamic tokens into authentic commercial values before dispatch, and dismisses cleanly without closing the full-screen inspector session.
+

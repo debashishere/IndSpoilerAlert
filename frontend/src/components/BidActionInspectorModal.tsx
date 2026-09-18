@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { 
   X, 
+  ArrowLeft,
   CheckCircle2, 
   RefreshCw, 
   XCircle, 
@@ -26,9 +27,7 @@ import {
   Shield,
   TrendingUp,
   Search,
-  Filter,
-  Maximize2,
-  Minimize2
+  Filter
 } from 'lucide-react';
 import { WorkflowTipTapBodyEditor } from './EmailBuilder/WorkflowTipTapBodyEditor';
 
@@ -139,7 +138,6 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState<boolean>(false);
   const [activeChannel, setActiveChannel] = useState<'email' | 'in-app' | 'sms'>('email');
   const [isCommunicationAccordionOpen, setIsCommunicationAccordionOpen] = useState<boolean>(true);
-  const [isMaximized, setIsMaximized] = useState<boolean>(false);
 
   React.useEffect(() => {
     if (bid?.status) setInternalStatus(bid.status);
@@ -553,7 +551,11 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
     });
 
     return (
-      <div data-testid="timeline-audit-surface" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div 
+        data-testid="timeline-audit-surface" 
+        className="flex flex-col gap-6 w-full max-w-[1100px] mx-auto"
+        style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+      >
         {/* Header & Controls bar */}
         <div 
           data-testid="timeline-controls-bar"
@@ -820,37 +822,10 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
 
   return (
     <div 
-      className="modal-overlay" 
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        zIndex: 1050,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: isMaximized ? '0' : '10px'
-      }}
+      data-testid="bid-action-inspector-workspace"
+      className="fixed inset-0 w-screen h-screen z-[1050] bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden text-slate-900 dark:text-slate-100"
     >
-      <div 
-        className={`modal-container max-w-[98vw] ${isMaximized ? 'w-full h-full rounded-none' : 'w-[98vw] h-[96vh] max-h-[96vh] rounded-2xl'}`}
-        style={{
-          backgroundColor: 'hsl(var(--bg-card))',
-          color: 'hsl(var(--text-primary))',
-          borderRadius: isMaximized ? '0px' : '16px',
-          border: isMaximized ? 'none' : '1px solid hsl(var(--border-color))',
-          width: isMaximized ? '100vw' : '98vw',
-          maxWidth: isMaximized ? '100vw' : '98vw',
-          height: isMaximized ? '100vh' : '96vh',
-          maxHeight: isMaximized ? '100vh' : '96vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: isMaximized ? 'none' : '0 25px 50px -12px rgba(0, 0, 0, 0.45)',
-          overflow: 'hidden',
-          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
-        }}
-      >
-        {/* Header */}
+      {/* Header */}
         <header 
           style={{
             padding: '20px 24px',
@@ -863,6 +838,29 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+              <button
+                type="button"
+                data-testid="back-to-bids-btn"
+                onClick={onClose}
+                aria-label="Back to Bids & Offers"
+                className="btn btn-outline"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  padding: '3px 10px',
+                  borderRadius: '6px',
+                  borderColor: 'hsl(var(--border-color))',
+                  color: 'hsl(var(--text-secondary))',
+                  cursor: 'pointer'
+                }}
+              >
+                <ArrowLeft size={14} />
+                <span>← Back to Bids &amp; Offers</span>
+              </button>
+              <span style={{ color: 'hsl(var(--text-muted))' }}>•</span>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'hsl(var(--text-muted))' }}>
                 Bid Action Inspector
               </span>
@@ -944,26 +942,6 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
               type="button"
-              aria-label={isMaximized ? "Restore inspector size" : "Maximize inspector size"}
-              data-testid="toggle-maximize-inspector-btn"
-              className="btn btn-outline"
-              onClick={() => setIsMaximized(!isMaximized)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '0.8rem',
-                padding: '6px 12px',
-                borderColor: 'hsl(var(--border-color))'
-              }}
-              title={isMaximized ? "Restore to workbench view (98vw)" : "Maximize to full screen (100vw)"}
-            >
-              {isMaximized ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-              <span>{isMaximized ? 'Restore View' : 'Maximize View'}</span>
-            </button>
-
-            <button
-              type="button"
               data-testid="header-preview-email-btn"
               className="btn btn-outline"
               onClick={() => setIsPreviewModalOpen(true)}
@@ -1003,17 +981,22 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
 
             <button 
               type="button"
-              aria-label="Close Inspector"
+              data-testid="close-workspace-btn"
+              aria-label="Close Workspace"
               onClick={onClose}
+              className="btn btn-outline"
               style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: 'hsl(var(--text-muted))',
-                padding: '4px'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.8rem',
+                padding: '6px 12px',
+                borderColor: 'hsl(var(--border-color))',
+                cursor: 'pointer'
               }}
             >
-              <X size={20} />
+              <X size={16} />
+              <span>Close Workspace</span>
             </button>
           </div>
         </header>
@@ -1091,200 +1074,208 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
         {/* Commercial Overview Cards */}
         <div 
           style={{
-            padding: '16px 24px',
             backgroundColor: 'hsl(var(--bg-main) / 50%)',
             borderBottom: '1px solid hsl(var(--border-color))',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '12px'
+            width: '100%'
           }}
         >
-          {/* Card 1: Buyer Organization */}
-          <div 
-            data-testid="summary-buyer-org" 
-            style={{ 
-              padding: '12px 16px', 
-              backgroundColor: 'hsl(var(--bg-card))', 
-              borderRadius: '10px', 
-              border: '1px solid hsl(var(--border-color))',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
+          <div
+            data-testid="centralized-commercial-stat-cards"
+            className="max-w-[1100px] mx-auto w-full"
+            style={{
+              padding: '16px 24px',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '12px'
             }}
           >
-            <div>
-              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Building2 size={14} /> Buyer Organization
-                </span>
-                <span 
-                  data-testid="buyer-verified-badge"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
+            {/* Card 1: Buyer Organization */}
+            <div 
+              data-testid="summary-buyer-org" 
+              style={{ 
+                padding: '12px 16px', 
+                backgroundColor: 'hsl(var(--bg-card))', 
+                borderRadius: '10px', 
+                border: '1px solid hsl(var(--border-color))',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Building2 size={14} /> Buyer Organization
+                  </span>
+                  <span 
+                    data-testid="buyer-verified-badge"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      color: '#10b981',
+                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      border: '1px solid rgba(16, 185, 129, 0.25)'
+                    }}
+                  >
+                    <ShieldCheck size={12} /> Verified
+                  </span>
+                </div>
+                <div style={{ fontWeight: 600, fontSize: '0.95rem', marginTop: '6px', color: 'hsl(var(--text-primary))' }}>
+                  {buyerCompany}
+                </div>
+              </div>
+              <div style={{ marginTop: '6px', fontSize: '0.75rem' }}>
+                <a 
+                  href={`mailto:${buyerEmail}`}
+                  style={{ 
+                    color: 'hsl(var(--text-muted))', 
+                    display: 'flex', 
+                    alignItems: 'center', 
                     gap: '4px',
+                    textDecoration: 'none'
+                  }}
+                >
+                  <Mail size={12} /> {buyerEmail}
+                </a>
+              </div>
+            </div>
+
+            {/* Card 2: Unit Offer */}
+            <div 
+              data-testid="summary-unit-offer" 
+              style={{ 
+                padding: '12px 16px', 
+                backgroundColor: 'hsl(var(--bg-card))', 
+                borderRadius: '10px', 
+                border: '1px solid hsl(var(--border-color))',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <DollarSign size={14} /> Unit Offer
+                </div>
+                {hasNegotiatedSettledPrice ? (
+                  <div style={{ marginTop: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontWeight: 700, fontSize: '1.15rem', color: 'hsl(var(--success))' }}>
+                        ${finalPrice.toFixed(2)} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>/case</span>
+                      </span>
+                      <span 
+                        style={{ 
+                          fontSize: '0.65rem', 
+                          fontWeight: 700, 
+                          padding: '1px 5px', 
+                          borderRadius: '4px', 
+                          backgroundColor: 'hsla(var(--success), 0.15)', 
+                          color: 'hsl(var(--success))',
+                          border: '1px solid hsla(var(--success), 0.3)',
+                          textTransform: 'uppercase'
+                        }}
+                      >
+                        Settled
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
+                      Initial Bid: ${unitPrice.toFixed(2)} /case
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'hsl(var(--success))', marginTop: '4px' }}>
+                    ${unitPrice.toFixed(2)} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>/case</span>
+                  </div>
+                )}
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', marginTop: '4px', fontFamily: 'monospace' }}>
+                Floor: ${reserveFloorPrice.toFixed(2)}
+              </div>
+            </div>
+
+            {/* Card 3: Volume Requested */}
+            <div 
+              data-testid="summary-volume-requested" 
+              style={{ 
+                padding: '12px 16px', 
+                backgroundColor: 'hsl(var(--bg-card))', 
+                borderRadius: '10px', 
+                border: '1px solid hsl(var(--border-color))',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Package size={14} /> Volume Requested
+                  </span>
+                  <span 
+                    style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 700,
+                      padding: '1px 6px',
+                      borderRadius: '4px',
+                      backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                      color: '#3b82f6',
+                      border: '1px solid rgba(59, 130, 246, 0.25)'
+                    }}
+                  >
+                    {allocationPct}% Lot
+                  </span>
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '4px', color: 'hsl(var(--text-primary))' }}>
+                  {quantity} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>cases</span>
+                </div>
+              </div>
+              <div style={{ marginTop: '4px' }}>
+                <span 
+                  style={{
                     fontSize: '0.68rem',
                     fontWeight: 600,
-                    color: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                    textTransform: 'uppercase',
                     padding: '1px 6px',
                     borderRadius: '4px',
-                    border: '1px solid rgba(16, 185, 129, 0.25)'
+                    backgroundColor: isFullClearing ? 'rgba(16, 185, 129, 0.12)' : 'hsl(var(--bg-main))',
+                    color: isFullClearing ? '#10b981' : 'hsl(var(--text-muted))',
+                    border: `1px solid ${isFullClearing ? 'rgba(16, 185, 129, 0.25)' : 'hsl(var(--border-color))'}`
                   }}
                 >
-                  <ShieldCheck size={12} /> Verified
+                  {isFullClearing ? 'Full Clearing' : 'Partial Clearing'}
                 </span>
               </div>
-              <div style={{ fontWeight: 600, fontSize: '0.95rem', marginTop: '6px', color: 'hsl(var(--text-primary))' }}>
-                {buyerCompany}
-              </div>
             </div>
-            <div style={{ marginTop: '6px', fontSize: '0.75rem' }}>
-              <a 
-                href={`mailto:${buyerEmail}`}
-                style={{ 
-                  color: 'hsl(var(--text-muted))', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '4px',
-                  textDecoration: 'none'
-                }}
-              >
-                <Mail size={12} /> {buyerEmail}
-              </a>
-            </div>
-          </div>
 
-          {/* Card 2: Unit Offer */}
-          <div 
-            data-testid="summary-unit-offer" 
-            style={{ 
-              padding: '12px 16px', 
-              backgroundColor: 'hsl(var(--bg-card))', 
-              borderRadius: '10px', 
-              border: '1px solid hsl(var(--border-color))',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <DollarSign size={14} /> Unit Offer
-              </div>
-              {hasNegotiatedSettledPrice ? (
-                <div style={{ marginTop: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '1.15rem', color: 'hsl(var(--success))' }}>
-                      ${finalPrice.toFixed(2)} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>/case</span>
-                    </span>
-                    <span 
-                      style={{ 
-                        fontSize: '0.65rem', 
-                        fontWeight: 700, 
-                        padding: '1px 5px', 
-                        borderRadius: '4px', 
-                        backgroundColor: 'hsla(var(--success), 0.15)', 
-                        color: 'hsl(var(--success))',
-                        border: '1px solid hsla(var(--success), 0.3)',
-                        textTransform: 'uppercase'
-                      }}
-                    >
-                      Settled
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-                    Initial Bid: ${unitPrice.toFixed(2)} /case
-                  </div>
+            {/* Card 4: Gross Recovery */}
+            <div 
+              data-testid="summary-gross-recovery" 
+              style={{ 
+                padding: '12px 16px', 
+                backgroundColor: 'hsl(var(--bg-card))', 
+                borderRadius: '10px', 
+                border: '1px solid hsl(var(--border-color))',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <DollarSign size={14} /> Gross Recovery
                 </div>
-              ) : (
-                <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'hsl(var(--success))', marginTop: '4px' }}>
-                  ${unitPrice.toFixed(2)} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>/case</span>
+                <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'hsl(var(--text-primary))', marginTop: '4px' }}>
+                  ${totalRecovery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-              )}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', marginTop: '4px', fontFamily: 'monospace' }}>
-              Floor: ${reserveFloorPrice.toFixed(2)}
-            </div>
-          </div>
-
-          {/* Card 3: Volume Requested */}
-          <div 
-            data-testid="summary-volume-requested" 
-            style={{ 
-              padding: '12px 16px', 
-              backgroundColor: 'hsl(var(--bg-card))', 
-              borderRadius: '10px', 
-              border: '1px solid hsl(var(--border-color))',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Package size={14} /> Volume Requested
-                </span>
-                <span 
-                  style={{
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
-                    padding: '1px 6px',
-                    borderRadius: '4px',
-                    backgroundColor: 'rgba(59, 130, 246, 0.12)',
-                    color: '#3b82f6',
-                    border: '1px solid rgba(59, 130, 246, 0.25)'
-                  }}
-                >
-                  {allocationPct}% Lot
-                </span>
               </div>
-              <div style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '4px', color: 'hsl(var(--text-primary))' }}>
-                {quantity} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>cases</span>
+              <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', marginTop: '4px', fontFamily: 'monospace' }}>
+                Net Est: ${netClearingTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
-            </div>
-            <div style={{ marginTop: '4px' }}>
-              <span 
-                style={{
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  padding: '1px 6px',
-                  borderRadius: '4px',
-                  backgroundColor: isFullClearing ? 'rgba(16, 185, 129, 0.12)' : 'hsl(var(--bg-main))',
-                  color: isFullClearing ? '#10b981' : 'hsl(var(--text-muted))',
-                  border: `1px solid ${isFullClearing ? 'rgba(16, 185, 129, 0.25)' : 'hsl(var(--border-color))'}`
-                }}
-              >
-                {isFullClearing ? 'Full Clearing' : 'Partial Clearing'}
-              </span>
-            </div>
-          </div>
-
-          {/* Card 4: Gross Recovery */}
-          <div 
-            data-testid="summary-gross-recovery" 
-            style={{ 
-              padding: '12px 16px', 
-              backgroundColor: 'hsl(var(--bg-card))', 
-              borderRadius: '10px', 
-              border: '1px solid hsl(var(--border-color))',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <DollarSign size={14} /> Gross Recovery
-              </div>
-              <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'hsl(var(--text-primary))', marginTop: '4px' }}>
-                ${totalRecovery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </div>
-            </div>
-            <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', marginTop: '4px', fontFamily: 'monospace' }}>
-              Net Est: ${netClearingTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
         </div>
@@ -1292,132 +1283,145 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
         {/* Mode Navigation Tabs */}
         <div 
           style={{
-            display: 'flex',
             borderBottom: '1px solid hsl(var(--border-color))',
-            padding: '0 24px',
             backgroundColor: 'hsl(var(--bg-card))',
-            gap: '8px'
+            width: '100%'
           }}
         >
-          <button
-            type="button"
-            onClick={() => setActiveMode('accept')}
+          <div 
+            data-testid="centralized-navigation-tabs-bar"
+            className="max-w-[1100px] mx-auto w-full flex justify-center"
             style={{
-              padding: '12px 18px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              background: activeMode === 'accept' ? 'rgba(16, 185, 129, 0.08)' : 'none',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '0.9rem',
               display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              borderBottom: activeMode === 'accept' ? '3px solid hsl(var(--primary))' : '3px solid transparent',
-              color: activeMode === 'accept' ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))'
+              justifyContent: 'center',
+              padding: '0 24px',
+              gap: '8px'
             }}
           >
-            <CheckCircle2 size={16} /> Accept Offer
-          </button>
-
-          <button
-            type="button"
-            data-testid="tab-counter"
-            aria-label="Negotiate (Re-negotiate / Counter)"
-            onClick={() => {
-              if (isAccepted) return;
-              setActiveMode('counter');
-              if (!counterMessage || counterMessage.trim() === '') {
-                setCounterMessage(DEFAULT_COUNTER_MESSAGE);
-              }
-            }}
-            disabled={isAccepted}
-            title={isAccepted ? 'Cannot counter an accepted offer.' : undefined}
-            style={{
-              padding: '12px 18px',
-              border: 'none',
-              background: activeMode === 'counter' ? 'rgba(245, 158, 11, 0.08)' : 'none',
-              cursor: isAccepted ? 'not-allowed' : 'pointer',
-              opacity: isAccepted ? 0.5 : 1,
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              borderBottom: activeMode === 'counter' ? '3px solid #f59e0b' : '3px solid transparent',
-              color: activeMode === 'counter' ? '#d97706' : 'hsl(var(--text-secondary))'
-            }}
-          >
-            <ArrowLeftRight size={16} /> Negotiate
-          </button>
-
-          <button
-            type="button"
-            data-testid="tab-decline"
-            aria-label="Decline (Decline Offer)"
-            onClick={() => {
-              if (isAccepted) return;
-              setActiveMode('decline');
-            }}
-            disabled={isAccepted}
-            title={isAccepted ? 'Cannot decline an accepted offer.' : undefined}
-            style={{
-              padding: '12px 18px',
-              border: 'none',
-              background: activeMode === 'decline' ? 'rgba(239, 68, 68, 0.06)' : 'none',
-              cursor: isAccepted ? 'not-allowed' : 'pointer',
-              opacity: isAccepted ? 0.5 : 1,
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              borderBottom: activeMode === 'decline' ? '3px solid #ef4444' : '3px solid transparent',
-              color: activeMode === 'decline' ? '#ef4444' : 'hsl(var(--text-secondary))'
-            }}
-          >
-            <XCircle size={16} /> Decline
-          </button>
-
-          <button
-            type="button"
-            data-testid="tab-timeline"
-            aria-label="Timeline"
-            onClick={() => setActiveMode('timeline')}
-            style={{
-              padding: '12px 18px',
-              border: 'none',
-              background: 'none',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              borderBottom: activeMode === 'timeline' ? '3px solid hsl(var(--primary))' : '3px solid transparent',
-              color: activeMode === 'timeline' ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))'
-            }}
-          >
-            <Clock size={16} /> Timeline
-            <span
-              data-testid="timeline-tab-badge"
+            <button
+              type="button"
+              onClick={() => setActiveMode('accept')}
               style={{
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                padding: '2px 7px',
-                borderRadius: '10px',
-                backgroundColor: activeMode === 'timeline' ? 'hsl(var(--primary))' : 'hsl(var(--border-color))',
-                color: activeMode === 'timeline' ? '#fff' : 'hsl(var(--text-secondary))'
+                padding: '12px 18px',
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                background: activeMode === 'accept' ? 'rgba(16, 185, 129, 0.08)' : 'none',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderBottom: activeMode === 'accept' ? '3px solid hsl(var(--primary))' : '3px solid transparent',
+                color: activeMode === 'accept' ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))'
               }}
             >
-              {getTimelineEvents().length}
-            </span>
-          </button>
+              <CheckCircle2 size={16} /> Accept Offer
+            </button>
+
+            <button
+              type="button"
+              data-testid="tab-counter"
+              aria-label="Negotiate (Re-negotiate / Counter)"
+              onClick={() => {
+                if (isAccepted) return;
+                setActiveMode('counter');
+                if (!counterMessage || counterMessage.trim() === '') {
+                  setCounterMessage(DEFAULT_COUNTER_MESSAGE);
+                }
+              }}
+              disabled={isAccepted}
+              title={isAccepted ? 'Cannot counter an accepted offer.' : undefined}
+              style={{
+                padding: '12px 18px',
+                border: 'none',
+                background: activeMode === 'counter' ? 'rgba(245, 158, 11, 0.08)' : 'none',
+                cursor: isAccepted ? 'not-allowed' : 'pointer',
+                opacity: isAccepted ? 0.5 : 1,
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderBottom: activeMode === 'counter' ? '3px solid #f59e0b' : '3px solid transparent',
+                color: activeMode === 'counter' ? '#d97706' : 'hsl(var(--text-secondary))'
+              }}
+            >
+              <ArrowLeftRight size={16} /> Negotiate
+            </button>
+
+            <button
+              type="button"
+              data-testid="tab-decline"
+              aria-label="Decline (Decline Offer)"
+              onClick={() => {
+                if (isAccepted) return;
+                setActiveMode('decline');
+              }}
+              disabled={isAccepted}
+              title={isAccepted ? 'Cannot decline an accepted offer.' : undefined}
+              style={{
+                padding: '12px 18px',
+                border: 'none',
+                background: activeMode === 'decline' ? 'rgba(239, 68, 68, 0.06)' : 'none',
+                cursor: isAccepted ? 'not-allowed' : 'pointer',
+                opacity: isAccepted ? 0.5 : 1,
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderBottom: activeMode === 'decline' ? '3px solid #ef4444' : '3px solid transparent',
+                color: activeMode === 'decline' ? '#ef4444' : 'hsl(var(--text-secondary))'
+              }}
+            >
+              <XCircle size={16} /> Decline
+            </button>
+
+            <button
+              type="button"
+              data-testid="tab-timeline"
+              aria-label="Timeline"
+              onClick={() => setActiveMode('timeline')}
+              style={{
+                padding: '12px 18px',
+                border: 'none',
+                background: 'none',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                borderBottom: activeMode === 'timeline' ? '3px solid hsl(var(--primary))' : '3px solid transparent',
+                color: activeMode === 'timeline' ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))'
+              }}
+            >
+              <Clock size={16} /> Timeline
+              <span
+                data-testid="timeline-tab-badge"
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  padding: '2px 7px',
+                  borderRadius: '10px',
+                  backgroundColor: activeMode === 'timeline' ? 'hsl(var(--primary))' : 'hsl(var(--border-color))',
+                  color: activeMode === 'timeline' ? '#fff' : 'hsl(var(--text-secondary))'
+                }}
+              >
+                {getTimelineEvents().length}
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* Tab Content Body */}
         <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+          <div 
+            data-testid="centralized-workspace-body"
+            className="max-w-[1100px] mx-auto w-full"
+          >
           {/* Mode: Accept Offer */}
           {activeMode === 'accept' && isAccepted && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1491,17 +1495,12 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
           {activeMode === 'accept' && !isAccepted && (
             <div 
               data-testid="accept-work-surface"
-              style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
-                gap: '20px',
-                alignItems: 'start'
-              }}
+              className="flex flex-col gap-6 w-full max-w-[1100px] mx-auto"
             >
-              {/* Left Column: Logistics Configuration */}
+              {/* Step 1: Logistics & Allocation Parameters Card */}
               <div 
                 data-testid="accept-left-pane"
-                style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+                className="w-full flex flex-col gap-4"
               >
                 {/* 1. Logistics & Allocation Configuration Card (TOP) */}
                 <section 
@@ -1523,6 +1522,9 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                          Step 1
+                        </span>
                         <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                           Logistics & Allocation
                         </h4>
@@ -1537,10 +1539,12 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                   </div>
                 </div>
 
-                <div>
+                {/* Row 1: DC Pickup Address */}
+                <div data-testid="logistics-row-address" className="w-full">
                   <label htmlFor="pickup-address-input" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      DC Pickup Address <span style={{ color: '#ef4444' }}>*</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>Step 1.1</span>
+                      <span>DC Pickup Address</span> <span style={{ color: '#ef4444' }}>*</span>
                     </span>
                     <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>
                       FOB Origin
@@ -1561,10 +1565,12 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                   </div>
                 </div>
 
-                <div>
+                {/* Row 2: Dock Operating Hours */}
+                <div data-testid="logistics-row-hours" className="w-full">
                   <label htmlFor="pickup-hours-input" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      Dock Operating Hours <span style={{ color: '#ef4444' }}>*</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>Step 1.2</span>
+                      <span>Dock Operating Hours</span> <span style={{ color: '#ef4444' }}>*</span>
                     </span>
                     <span style={{ fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>
                       Appointment Req.
@@ -1585,66 +1591,74 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label htmlFor="awarded-quantity-input" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
+                {/* Row 3: Awarded Quantity */}
+                <div data-testid="logistics-row-quantity" className="w-full">
+                  <label htmlFor="awarded-quantity-input" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>Step 1.3</span>
                       <span>Awarded Qty (cases)</span>
-                      <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>
-                        {lot?.availableQty || quantity} Max
-                      </span>
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <Package size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: 'hsl(var(--text-muted))', pointerEvents: 'none' }} />
-                      <input
-                        id="awarded-quantity-input"
-                        aria-label="Awarded Quantity"
-                        type="number"
-                        className="form-input"
-                        value={awardedQuantity}
-                        onChange={(e) => setAwardedQuantity(e.target.value)}
-                        placeholder="Cases to award"
-                        min={1}
-                        max={lot?.availableQty || quantity}
-                        style={{ width: '100%', paddingLeft: '34px' }}
-                      />
-                    </div>
+                    </span>
+                    <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>
+                      {lot?.availableQty || quantity} Max
+                    </span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Package size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: 'hsl(var(--text-muted))', pointerEvents: 'none' }} />
+                    <input
+                      id="awarded-quantity-input"
+                      aria-label="Awarded Quantity"
+                      type="number"
+                      className="form-input"
+                      value={awardedQuantity}
+                      onChange={(e) => setAwardedQuantity(e.target.value)}
+                      placeholder="Cases to award"
+                      min={1}
+                      max={lot?.availableQty || quantity}
+                      style={{ width: '100%', paddingLeft: '34px' }}
+                    />
                   </div>
-                  <div>
-                    <label htmlFor="agreed-price-input" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
+                </div>
+
+                {/* Row 4: Settled Unit Price */}
+                <div data-testid="logistics-row-price" className="w-full">
+                  <label htmlFor="agreed-price-input" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>Step 1.4</span>
                       <span>Agreed Price ($/cs)</span>
-                      <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
-                        Settled
-                      </span>
-                    </label>
-                    <div style={{ position: 'relative' }}>
-                      <Lock size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: 'hsl(var(--text-muted))', pointerEvents: 'none' }} />
-                      <input
-                        id="agreed-price-input"
-                        aria-label="Agreed Price"
-                        type="text"
-                        className="form-input"
-                        value={`$${effectiveUnitPrice.toFixed(2)}`}
-                        disabled
-                        style={{ width: '100%', paddingLeft: '34px', paddingRight: '48px', cursor: 'not-allowed', backgroundColor: 'hsl(var(--bg-main))', color: '#10b981', fontWeight: 700 }}
-                      />
-                      <span style={{ position: 'absolute', right: '12px', top: '10px', fontSize: '0.72rem', fontFamily: 'monospace', color: 'hsl(var(--text-muted))', fontWeight: 600 }}>
-                        USD
-                      </span>
-                    </div>
+                    </span>
+                    <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                      Settled
+                    </span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <Lock size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: 'hsl(var(--text-muted))', pointerEvents: 'none' }} />
+                    <input
+                      id="agreed-price-input"
+                      aria-label="Agreed Price"
+                      type="text"
+                      className="form-input"
+                      value={`$${effectiveUnitPrice.toFixed(2)}`}
+                      disabled
+                      style={{ width: '100%', paddingLeft: '34px', paddingRight: '48px', cursor: 'not-allowed', backgroundColor: 'hsl(var(--bg-main))', color: '#10b981', fontWeight: 700 }}
+                    />
+                    <span style={{ position: 'absolute', right: '12px', top: '10px', fontSize: '0.72rem', fontFamily: 'monospace', color: 'hsl(var(--text-muted))', fontWeight: 600 }}>
+                      USD
+                    </span>
                   </div>
                 </div>
               </section>
             </div>
 
-            {/* Right Column: Settlement Dispatch Card with TipTap Editor */}
+            {/* Step 2: Communication Card with TipTap Editor */}
             <div 
               data-testid="accept-right-pane"
-              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+              className="w-full flex flex-col gap-4"
             >
               {/* 2. Communication Card with Channel Selector */}
               <section 
                 data-testid="accept-communication-card"
                 id="accept-email-builder-section"
+                className="w-full"
                 style={{
                   backgroundColor: 'hsl(var(--bg-card))',
                   border: '1px solid hsl(var(--border-color))',
@@ -1675,6 +1689,9 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', border: '1px solid rgba(59, 130, 246, 0.25)' }}>
+                          Step 2
+                        </span>
                         <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                           Communication
                         </h4>
@@ -1832,10 +1849,15 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                   />
                 </div>
               </section>
+            </div>
 
-              {/* 3. Settlement Summary Footer Bar (BOTTOM) */}
-              <div 
-                data-testid="accept-settlement-footer"
+            {/* Step 3: Settlement Summary Bar */}
+            <div 
+              data-testid="accept-execution-bar"
+              className="sticky bottom-0 z-20 backdrop-blur w-full"
+            >
+                <div 
+                  data-testid="accept-settlement-footer"
                 style={{ 
                   backgroundColor: 'hsl(var(--bg-main))', 
                   border: '1px solid hsl(var(--border-color))', 
@@ -1854,6 +1876,9 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+                        Step 3
+                      </span>
                       <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                         Total Settlement Value:
                       </span>
@@ -1924,19 +1949,14 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
           </div>
         )}
 
-          {/* Mode: Counter / Negotiate — Two-Column Split Layout on Wide Screens */}
+          {/* Mode: Counter / Negotiate — Sequential Stacking & Clean Single-Column View */}
           {activeMode === 'counter' && (
             <div 
               data-testid="counter-split-work-surface"
-              style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', 
-                gap: '20px',
-                alignItems: 'start'
-              }}
+              className="flex flex-col gap-6 w-full max-w-[1100px] mx-auto"
             >
-              {/* Left Column: Counter-Offer Parameters Card */}
-              <div data-testid="counter-left-pane" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Step 1: Counter-Offer Parameters Card */}
+              <div data-testid="counter-left-pane" className="w-full flex flex-col gap-4">
                 <section
                   data-testid="negotiate-parameters-card"
                   style={{
@@ -1957,6 +1977,9 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                       </div>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#d97706', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                            Step 1
+                          </span>
                           <h2 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'hsl(var(--text-primary))', margin: 0 }}>
                             Counter-Offer Parameters
                           </h2>
@@ -1971,10 +1994,14 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
-                    <div>
+                  <div className="flex flex-col gap-4 w-full">
+                    {/* Row 1: Counter Price */}
+                    <div data-testid="counter-row-price" className="w-full">
                       <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', fontWeight: 600, marginBottom: '6px' }}>
-                        <span>Counter Unit Price ($/cs) <span style={{ color: '#d97706' }}>*</span></span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>Step 1.1</span>
+                          <span>Counter Unit Price ($/cs) <span style={{ color: '#d97706' }}>*</span></span>
+                        </span>
                         <span
                           data-testid="negotiate-uplift-badge"
                           style={{
@@ -1997,7 +2024,7 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                           type="number"
                           step="0.01"
                           className="form-input"
-                          style={{ paddingLeft: '24px' }}
+                          style={{ width: '100%', paddingLeft: '24px' }}
                           value={counterPrice}
                           onChange={(e) => setCounterPrice(e.target.value)}
                           placeholder="Enter counter price"
@@ -2010,9 +2037,13 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                       )}
                     </div>
 
-                    <div>
+                    {/* Row 2: Counter Volume */}
+                    <div data-testid="counter-row-quantity" className="w-full">
                       <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', fontWeight: 600, marginBottom: '6px' }}>
-                        <span>Counter Volume (cases)</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>Step 1.2</span>
+                          <span>Counter Volume (cases)</span>
+                        </span>
                         <span style={{ fontSize: '0.68rem', fontFamily: 'monospace', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>
                           {maxCounterVolume} Max
                         </span>
@@ -2024,7 +2055,7 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                           min="1"
                           max={maxCounterVolume}
                           className="form-input"
-                          style={{ paddingLeft: '32px' }}
+                          style={{ width: '100%', paddingLeft: '32px' }}
                           value={counterQuantity}
                           onChange={(e) => setCounterQuantity(e.target.value)}
                           placeholder="Enter counter quantity"
@@ -2037,9 +2068,13 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                       )}
                     </div>
 
-                    <div>
+                    {/* Row 3: Holding Window */}
+                    <div data-testid="counter-row-window" className="w-full">
                       <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', fontWeight: 600, marginBottom: '6px' }}>
-                        <span>Counter Holding Window</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>Step 1.3</span>
+                          <span>Counter Holding Window</span>
+                        </span>
                         <span style={{ fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>
                           Auto-expires
                         </span>
@@ -2051,14 +2086,18 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                           disabled
                           value="48 Hours"
                           className="form-input"
-                          style={{ paddingLeft: '32px', backgroundColor: 'hsl(var(--bg-main))', cursor: 'not-allowed', color: 'hsl(var(--text-secondary))' }}
+                          style={{ width: '100%', paddingLeft: '32px', backgroundColor: 'hsl(var(--bg-main))', cursor: 'not-allowed', color: 'hsl(var(--text-secondary))' }}
                         />
                       </div>
                     </div>
 
-                    <div>
+                    {/* Row 4: Reserve Floor */}
+                    <div data-testid="counter-row-floor" className="w-full">
                       <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', fontWeight: 600, marginBottom: '6px' }}>
-                        <span>Liquidation Reserve Floor</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>Step 1.4</span>
+                          <span>Liquidation Reserve Floor</span>
+                        </span>
                         <span style={{
                           fontSize: '0.68rem',
                           fontWeight: 600,
@@ -2078,7 +2117,7 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                           disabled
                           value={`$${reserveFloorPrice.toFixed(2)} /case ($${reserveFloorTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Floor)`}
                           className="form-input"
-                          style={{ paddingLeft: '32px', backgroundColor: 'hsl(var(--bg-main))', cursor: 'not-allowed', color: 'hsl(var(--text-secondary))', fontFamily: 'monospace', fontWeight: 600 }}
+                          style={{ width: '100%', paddingLeft: '32px', backgroundColor: 'hsl(var(--bg-main))', cursor: 'not-allowed', color: 'hsl(var(--text-secondary))', fontFamily: 'monospace', fontWeight: 600 }}
                         />
                       </div>
                     </div>
@@ -2086,11 +2125,11 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                 </section>
               </div>
 
-              {/* Right Column / Section 2 & 3 */}
-              <div data-testid="counter-right-pane" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {/* 2. Communication Card with Channel Selector (BELOW Parameters) */}
+              {/* Step 2: Multi-Channel Communication Card & TipTap Builder */}
+              <div data-testid="counter-right-pane" className="w-full flex flex-col gap-4">
+                {/* 2. Communication Card with Channel Selector */}
                 <section
-                  data-testid="negotiate-communication-card"
+                  data-testid="counter-communication-card"
                   style={{
                     backgroundColor: 'hsl(var(--bg-card))',
                     border: '1px solid hsl(var(--border-color))',
@@ -2098,194 +2137,205 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                     boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
                     overflow: 'hidden'
                   }}
+                  className="w-full"
                 >
-                  <div
-                    style={{
-                      backgroundColor: 'hsl(var(--bg-main) / 70%)',
-                      padding: '12px 16px',
-                      borderBottom: isCounterCommunicationAccordionOpen ? '1px solid hsl(var(--border-color))' : 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '12px',
-                      cursor: 'pointer',
-                      userSelect: 'none'
-                    }}
-                    onClick={() => setIsCounterCommunicationAccordionOpen(!isCounterCommunicationAccordionOpen)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
-                        <MessageSquare size={18} />
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                          <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
-                            Communication
-                          </h4>
-                          {/* Channel Selector Pills */}
-                          <div 
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '2px',
-                              backgroundColor: 'hsl(var(--bg-card))',
-                              border: '1px solid hsl(var(--border-color))',
-                              borderRadius: '8px',
-                              padding: '2px'
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <button
-                              type="button"
-                              aria-label="Email"
-                              data-active={counterActiveChannel === 'email'}
-                              onClick={() => setCounterActiveChannel('email')}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                border: counterActiveChannel === 'email' ? '1px solid #d97706' : '1px solid transparent',
-                                backgroundColor: counterActiveChannel === 'email' ? '#d97706' : 'transparent',
-                                color: counterActiveChannel === 'email' ? '#ffffff' : 'hsl(var(--text-muted))',
-                                transition: 'all 0.15s ease'
-                              }}
-                            >
-                              <Mail size={12} /> Email
-                            </button>
-                            <button
-                              type="button"
-                              aria-label="In-App"
-                              data-active={counterActiveChannel === 'in-app'}
-                              onClick={() => setCounterActiveChannel('in-app')}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                border: counterActiveChannel === 'in-app' ? '1px solid #d97706' : '1px solid transparent',
-                                backgroundColor: counterActiveChannel === 'in-app' ? '#d97706' : 'transparent',
-                                color: counterActiveChannel === 'in-app' ? '#ffffff' : 'hsl(var(--text-muted))',
-                                transition: 'all 0.15s ease'
-                              }}
-                            >
-                              <MessageSquare size={12} /> In-App
-                            </button>
-                            <button
-                              type="button"
-                              aria-label="SMS"
-                              data-active={counterActiveChannel === 'sms'}
-                              onClick={() => setCounterActiveChannel('sms')}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '2px 8px',
-                                borderRadius: '6px',
-                                fontSize: '0.72rem',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                border: counterActiveChannel === 'sms' ? '1px solid #d97706' : '1px solid transparent',
-                                backgroundColor: counterActiveChannel === 'sms' ? '#d97706' : 'transparent',
-                                color: counterActiveChannel === 'sms' ? '#ffffff' : 'hsl(var(--text-muted))',
-                                transition: 'all 0.15s ease'
-                              }}
-                            >
-                              <Smartphone size={12} /> SMS
-                            </button>
-                          </div>
+                  <div data-testid="negotiate-communication-card" style={{ width: '100%' }}>
+                    <div
+                      style={{
+                        backgroundColor: 'hsl(var(--bg-main) / 70%)',
+                        padding: '12px 16px',
+                        borderBottom: isCounterCommunicationAccordionOpen ? '1px solid hsl(var(--border-color))' : 'none',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        cursor: 'pointer',
+                        userSelect: 'none'
+                      }}
+                      onClick={() => setIsCounterCommunicationAccordionOpen(!isCounterCommunicationAccordionOpen)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
+                          <MessageSquare size={18} />
                         </div>
-                        <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span style={{ fontFamily: 'sans-serif' }}>Recipient:</span>
-                          <span style={{ fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>{buyerEmail}</span>
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#d97706', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                              Step 2
+                            </span>
+                            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
+                              Communication
+                            </h4>
+                            {/* Channel Selector Pills */}
+                            <div 
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '2px',
+                                backgroundColor: 'hsl(var(--bg-card))',
+                                border: '1px solid hsl(var(--border-color))',
+                                borderRadius: '8px',
+                                padding: '2px'
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                type="button"
+                                aria-label="Email"
+                                data-active={counterActiveChannel === 'email'}
+                                onClick={() => setCounterActiveChannel('email')}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  border: counterActiveChannel === 'email' ? '1px solid #d97706' : '1px solid transparent',
+                                  backgroundColor: counterActiveChannel === 'email' ? '#d97706' : 'transparent',
+                                  color: counterActiveChannel === 'email' ? '#ffffff' : 'hsl(var(--text-muted))',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                <Mail size={12} /> Email
+                              </button>
+                              <button
+                                type="button"
+                                aria-label="In-App"
+                                data-active={counterActiveChannel === 'in-app'}
+                                onClick={() => setCounterActiveChannel('in-app')}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  border: counterActiveChannel === 'in-app' ? '1px solid #d97706' : '1px solid transparent',
+                                  backgroundColor: counterActiveChannel === 'in-app' ? '#d97706' : 'transparent',
+                                  color: counterActiveChannel === 'in-app' ? '#ffffff' : 'hsl(var(--text-muted))',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                <MessageSquare size={12} /> In-App
+                              </button>
+                              <button
+                                type="button"
+                                aria-label="SMS"
+                                data-active={counterActiveChannel === 'sms'}
+                                onClick={() => setCounterActiveChannel('sms')}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '2px 8px',
+                                  borderRadius: '6px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  border: counterActiveChannel === 'sms' ? '1px solid #d97706' : '1px solid transparent',
+                                  backgroundColor: counterActiveChannel === 'sms' ? '#d97706' : 'transparent',
+                                  color: counterActiveChannel === 'sms' ? '#ffffff' : 'hsl(var(--text-muted))',
+                                  transition: 'all 0.15s ease'
+                                }}
+                              >
+                                <Smartphone size={12} /> SMS
+                              </button>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontFamily: 'sans-serif' }}>Recipient:</span>
+                            <span style={{ fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>{buyerEmail}</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontFamily: 'monospace' }}>
+                          <span style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#b45309', border: '1px solid rgba(245, 158, 11, 0.25)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                            {counterTokenCount} Dynamic Tokens
+                          </span>
+                          <span style={{ backgroundColor: 'hsl(var(--bg-main))', color: 'hsl(var(--text-muted))', border: '1px solid hsl(var(--border-color))', padding: '2px 8px', borderRadius: '4px' }}>
+                            {counterWordCount} Words
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          aria-label="Toggle negotiate communication accordion"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsCounterCommunicationAccordionOpen(!isCounterCommunicationAccordionOpen);
+                          }}
+                          style={{
+                            width: '28px',
+                            height: '28px',
+                            borderRadius: '6px',
+                            backgroundColor: 'hsl(var(--bg-card))',
+                            border: '1px solid hsl(var(--border-color))',
+                            color: 'hsl(var(--text-muted))',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <ChevronDown 
+                            size={16} 
+                            style={{ 
+                              transform: isCounterCommunicationAccordionOpen ? 'rotate(0deg)' : 'rotate(-90deg)', 
+                              transition: 'transform 0.2s ease' 
+                            }} 
+                          />
+                        </button>
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: 'auto' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', fontFamily: 'monospace' }}>
-                        <span style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#b45309', border: '1px solid rgba(245, 158, 11, 0.25)', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
-                          {counterTokenCount} Dynamic Tokens
-                        </span>
-                        <span style={{ backgroundColor: 'hsl(var(--bg-main))', color: 'hsl(var(--text-muted))', border: '1px solid hsl(var(--border-color))', padding: '2px 8px', borderRadius: '4px' }}>
-                          {counterWordCount} Words
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        aria-label="Toggle negotiate communication accordion"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsCounterCommunicationAccordionOpen(!isCounterCommunicationAccordionOpen);
-                        }}
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '6px',
-                          backgroundColor: 'hsl(var(--bg-card))',
-                          border: '1px solid hsl(var(--border-color))',
-                          color: 'hsl(var(--text-muted))',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <ChevronDown 
-                          size={16} 
-                          style={{ 
-                            transform: isCounterCommunicationAccordionOpen ? 'rotate(0deg)' : 'rotate(-90deg)', 
-                            transition: 'transform 0.2s ease' 
-                          }} 
-                        />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Accordion Body */}
-                  <div 
-                    data-testid="negotiate-communication-body"
-                    style={{
-                      display: isCounterCommunicationAccordionOpen ? 'flex' : 'none',
-                      flexDirection: 'column',
-                      padding: '16px',
-                      gap: '12px'
-                    }}
-                  >
-                    {counterActiveChannel !== 'email' && (
-                      <div style={{ padding: '8px 12px', backgroundColor: 'rgba(245, 158, 11, 0.08)', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.2)', fontSize: '0.75rem', color: '#b45309' }}>
-                        {counterActiveChannel === 'in-app' 
-                          ? 'In-App Channel Active: Message payload will synchronize into buyer dashboard notifications upon counter dispatch.'
-                          : 'SMS Channel Active: Message summary and counter action links will dispatch via SMS gateway.'}
-                      </div>
-                    )}
-                    <WorkflowTipTapBodyEditor
-                      contentHtml={counterMessage || DEFAULT_COUNTER_MESSAGE}
-                      onChange={(html) => setCounterMessage(html)}
-                      disabled={isSubmitting}
-                      availableTokens={NEGOTIATION_TOKENS}
-                      tokenValues={tokenValues}
-                    />
-                    <div style={{ display: 'none' }}>
-                      <textarea
-                        aria-label="Direct Message / Terms to Buyer Raw Input"
-                        placeholder="Explain your counter-offer parameters or logistics conditions..."
-                        value={counterMessage}
-                        onChange={(e) => setCounterMessage(e.target.value)}
+                    {/* Accordion Body */}
+                    <div 
+                      data-testid="negotiate-communication-body"
+                      style={{
+                        display: isCounterCommunicationAccordionOpen ? 'flex' : 'none',
+                        flexDirection: 'column',
+                        padding: '16px',
+                        gap: '12px'
+                      }}
+                    >
+                      {counterActiveChannel !== 'email' && (
+                        <div style={{ padding: '8px 12px', backgroundColor: 'rgba(245, 158, 11, 0.08)', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.2)', fontSize: '0.75rem', color: '#b45309' }}>
+                          {counterActiveChannel === 'in-app' 
+                            ? 'In-App Channel Active: Message payload will synchronize into buyer dashboard notifications upon counter dispatch.'
+                            : 'SMS Channel Active: Message summary and counter action links will dispatch via SMS gateway.'}
+                        </div>
+                      )}
+                      <WorkflowTipTapBodyEditor
+                        contentHtml={counterMessage || DEFAULT_COUNTER_MESSAGE}
+                        onChange={(html) => setCounterMessage(html)}
+                        disabled={isSubmitting}
+                        availableTokens={NEGOTIATION_TOKENS}
+                        tokenValues={tokenValues}
                       />
+                      <div style={{ display: 'none' }}>
+                        <textarea
+                          aria-label="Direct Message / Terms to Buyer Raw Input"
+                          placeholder="Explain your counter-offer parameters or logistics conditions..."
+                          value={counterMessage}
+                          onChange={(e) => setCounterMessage(e.target.value)}
+                        />
+                      </div>
                     </div>
                   </div>
                 </section>
+              </div>
 
-                {/* 3. Dynamic Summary & Dispatch Bar (BOTTOM) */}
+              {/* Step 3: Counter Summary Dispatch Bar */}
+              <div 
+                data-testid="counter-summary-bar"
+                className="sticky bottom-0 z-20 backdrop-blur w-full"
+              >
                 <div 
                   data-testid="negotiate-summary-bar"
                   style={{ 
@@ -2306,6 +2356,9 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                     </div>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#d97706', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+                          Step 3
+                        </span>
                         <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                           Counter Total Value:
                         </span>
@@ -2388,89 +2441,89 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
           )}
 
           {/* Mode: Decline Offer */}
+          {/* Mode: Decline Offer — Sequential Stacking & Clean Single-Column View */}
           {activeMode === 'decline' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div 
+              data-testid="decline-split-work-surface"
+              className="flex flex-col gap-6 w-full max-w-[1100px] mx-auto"
+            >
+              {/* Step 1: Rejection Specification Card */}
               <div 
-                data-testid="decline-split-work-surface"
-                style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))', 
-                  gap: '20px',
-                  alignItems: 'start'
-                }}
+                data-testid="decline-left-pane"
+                className="w-full flex flex-col gap-4"
               >
-                {/* Left Column */}
-                <div 
-                  data-testid="decline-left-pane"
-                  style={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    gap: '16px' 
+                {/* 1. Rejection Specification Card */}
+                <section
+                  data-testid="decline-specification-card"
+                  style={{
+                    backgroundColor: 'hsl(var(--bg-card))',
+                    border: '1px solid hsl(var(--border-color))',
+                    borderRadius: '12px',
+                    padding: '16px 20px',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '16px'
                   }}
+                  className="w-full"
                 >
-                  {/* 1. Rejection Specification Card */}
-                  <section
-                    data-testid="decline-specification-card"
-                    style={{
-                      backgroundColor: 'hsl(var(--bg-card))',
-                      border: '1px solid hsl(var(--border-color))',
-                      borderRadius: '12px',
-                      padding: '16px',
-                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid hsl(var(--border-color))', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0 }}>
+                        <XCircle size={18} />
+                      </div>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                            Step 1
+                          </span>
+                          <h2 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'hsl(var(--text-primary))', margin: 0 }}>
+                            Rejection Specification
+                          </h2>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 600, backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.25)', padding: '2px 6px', borderRadius: '4px' }}>
+                            Mandatory Justification
+                          </span>
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', margin: '2px 0 0 0' }}>
+                          Select structured reason code, provide audit memo notes, and configure inventory return.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div 
+                    style={{ 
+                      padding: '12px', 
+                      backgroundColor: 'rgba(239, 68, 68, 0.08)', 
+                      borderRadius: '8px', 
+                      border: '1px solid rgba(239, 68, 68, 0.25)',
                       display: 'flex',
-                      flexDirection: 'column',
-                      gap: '14px'
+                      gap: '10px',
+                      alignItems: 'flex-start'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '12px', borderBottom: '1px solid hsl(var(--border-color))', gap: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0 }}>
-                          <XCircle size={18} />
-                        </div>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                            <h2 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'hsl(var(--text-primary))', margin: 0 }}>
-                              Rejection Specification
-                            </h2>
-                            <span style={{ fontSize: '0.68rem', fontWeight: 600, backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '1px solid rgba(239, 68, 68, 0.25)', padding: '2px 6px', borderRadius: '4px' }}>
-                              Mandatory Justification
-                            </span>
-                          </div>
-                          <p style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', margin: '2px 0 0 0' }}>
-                            Select structured reason code, provide audit memo notes, and configure inventory return.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div 
-                      style={{ 
-                        padding: '12px', 
-                        backgroundColor: 'rgba(239, 68, 68, 0.08)', 
-                        borderRadius: '8px', 
-                        border: '1px solid rgba(239, 68, 68, 0.25)',
-                        display: 'flex',
-                        gap: '10px',
-                        alignItems: 'flex-start'
-                      }}
-                    >
-                      <AlertTriangle size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <div>
-                        <div style={{ fontWeight: 600, color: '#ef4444', fontSize: '0.82rem' }}>
-                          Decline Workflow Guardrails
-                        </div>
-                        <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', marginTop: '2px', lineHeight: 1.4 }}>
-                          Declining this offer marks its lifecycle status as <strong>rejected</strong>, logs the structured justification into the lot CRM timeline, and notifies the buyer. A decline reason is required.
-                        </div>
-                      </div>
-                    </div>
-
+                    <AlertTriangle size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
                     <div>
+                      <div style={{ fontWeight: 600, color: '#ef4444', fontSize: '0.82rem' }}>
+                        Decline Workflow Guardrails
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-secondary))', marginTop: '2px', lineHeight: 1.4 }}>
+                        Declining this offer marks its lifecycle status as <strong>rejected</strong>, logs the structured justification into the lot CRM timeline, and notifies the buyer. A decline reason is required.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-4 w-full">
+                    {/* Row 1: Mandatory Reason */}
+                    <div data-testid="decline-row-reason" className="w-full">
                       <label 
                         htmlFor="decline-reason-select"
-                        style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}
                       >
-                        Decline Reason <span style={{ color: '#ef4444' }}>*</span> (Mandatory)
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>
+                          Step 1.1
+                        </span>
+                        <span>Decline Reason <span style={{ color: '#ef4444' }}>*</span> (Mandatory)</span>
                       </label>
                       <select
                         id="decline-reason-select"
@@ -2489,12 +2542,16 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                       </select>
                     </div>
 
-                    <div>
+                    {/* Row 2: Internal Audit Memo / Notes */}
+                    <div data-testid="decline-row-memo" className="w-full">
                       <label 
                         htmlFor="decline-rationale-notes"
-                        style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', fontWeight: 600, marginBottom: '6px' }}
                       >
-                        Decline Rationale & Supplier Notes
+                        <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-main))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>
+                          Step 1.2
+                        </span>
+                        <span>Decline Rationale & Supplier Notes</span>
                       </label>
                       <textarea
                         id="decline-rationale-notes"
@@ -2504,11 +2561,14 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                         onChange={(e) => setDeclineRationale(e.target.value)}
                         placeholder="Add specific rationale or notes for the buyer and lot audit trail..."
                         style={{ width: '100%', resize: 'vertical', fontSize: '0.82rem' }}
-                      />
+                      >
+                      </textarea>
                     </div>
 
-                    {/* Auto-Relist Inventory Control */}
+                    {/* Row 3: Auto-Relist Inventory Control */}
                     <div 
+                      data-testid="decline-row-relist"
+                      className="w-full"
                       style={{ 
                         padding: '12px', 
                         backgroundColor: 'hsl(var(--bg-main))', 
@@ -2521,8 +2581,13 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
-                          Auto-Relist Inventory
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))' }}>
+                            Step 1.3
+                          </span>
+                          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
+                            Auto-Relist Inventory
+                          </span>
                         </div>
                         <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
                           Return cases to open surplus pool upon rejection
@@ -2542,17 +2607,14 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                         </span>
                       </label>
                     </div>
-                  </section>
-                </div>
+                  </div>
+                </section>
+              </div>
 
-              {/* Right Column: Communication Card & TipTap Email Builder */}
+              {/* Step 2: Communication Card & TipTap Decline Email Builder */}
               <div 
                 data-testid="decline-right-pane"
-                style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  gap: '16px'
-                }}
+                className="w-full flex flex-col gap-4"
               >
                 <section
                   data-testid="decline-communication-card"
@@ -2563,6 +2625,7 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                     boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
                     overflow: 'hidden'
                   }}
+                  className="w-full"
                 >
                   <div
                     style={{
@@ -2584,6 +2647,9 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                            Step 2
+                          </span>
                           <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                             Communication
                           </h4>
@@ -2760,47 +2826,50 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
                   </div>
                 </section>
               </div>
-            </div>
 
-            {/* 3. Decline Action Footer Bar (BOTTOM) */}
-            <div 
-              data-testid="decline-action-footer"
-              style={{ 
-                backgroundColor: 'hsl(var(--bg-main))', 
-                border: '1px solid hsl(var(--border-color))', 
-                borderRadius: '12px', 
-                padding: '14px 18px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between',
-                gap: '16px',
-                flexWrap: 'wrap'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0 }}>
-                  <RotateCcw size={20} />
-                </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
-                      Escrow Deposit Release Notice:
-                    </span>
-                    <span style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: 600 }}>
-                      Buyer deposit hold released immediately upon rejection
-                    </span>
+              {/* Step 3: Decline Action Footer Bar */}
+              <div 
+                data-testid="decline-action-footer"
+                className="sticky bottom-0 z-20 backdrop-blur w-full"
+                style={{ 
+                  backgroundColor: 'hsl(var(--bg-main))', 
+                  border: '1px solid hsl(var(--border-color))', 
+                  borderRadius: '12px', 
+                  padding: '14px 18px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  gap: '16px',
+                  flexWrap: 'wrap'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ef4444', flexShrink: 0 }}>
+                    <RotateCcw size={20} />
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontWeight: 600, color: autoRelist ? '#10b981' : '#f59e0b' }}>
-                      {autoRelist ? `Auto-Relist Active: ${quantity} cases returning to open surplus pool` : `Inventory Retained: ${quantity} cases held unallocated (not auto-relisted)`}
-                    </span>
-                    <span>•</span>
-                    <span>No settlement escrow captured</span>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+                        Step 3
+                      </span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
+                        Escrow Deposit Release Notice:
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: '#ef4444', fontWeight: 600 }}>
+                        Buyer deposit hold released immediately upon rejection
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontWeight: 600, color: autoRelist ? '#10b981' : '#f59e0b' }}>
+                        {autoRelist ? `Auto-Relist Active: ${quantity} cases returning to open surplus pool` : `Inventory Retained: ${quantity} cases held unallocated (not auto-relisted)`}
+                      </span>
+                      <span>•</span>
+                      <span>No settlement escrow captured</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -2860,8 +2929,8 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
 
         {/* Mode: Timeline */}
         {activeMode === 'timeline' && renderTimelineAuditTab()}
+          </div>
         </div>
-      </div>
 
       {/* Outbound Email Preview Modal Dialog */}
       {isPreviewModalOpen && (
