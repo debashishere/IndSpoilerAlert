@@ -106,6 +106,14 @@
 - **Counter Acceptance Direct Settlement**: The automated post-counter transition triggered upon buyer acceptance within the Buyer Negotiation Portal, generating an `Award` record at the agreed counter terms and immediately routing the buyer into the Deal Settlement Portal for payment and contract execution.
 - **Outbound Email Preview**: A dedicated modal dialog within the Bid Action Inspector displaying a faithful, read-only preview of the outbound HTML dispatch with all dynamic token badges resolved to actual contextual values before sending.
 
+## Lot Operations Hub
+
+- **Lot Operations Hub**: The centralized, high-density operational cockpit for managing a specific inventory lot across its entire surplus lifecycle, combining inventory health metrics, dynamic price decay simulation, buyer recommendations, regulatory compliance, bid trading desk actioning, and CRM activity timelines.
+  - _Avoid_: Monolithic view components mixing pricing elasticity SVG mathematics, Redux dispatch mutations, bid filtering, and activity composition.
+- **Price Decay Simulation Curve**: An algorithmic pricing projection model visualizing price and revenue decay over remaining shelf life (days remaining vs recovery revenue) based on product category price elasticity, volume discounts, and sigmoid sell-through probability.
+- **Lot CRM & Audit Timeline**: The consolidated, chronological event stream tracking all automated dispatches, supplier communications, notes, and regulatory actions associated with a specific inventory lot.
+- **Bid Status Normalization**: The mapping of raw bid states (`pending`, `countered`, `fully_accepted`, `partially_accepted`, `rejected`, and buyer counter message heuristics) into canonical operational badge representations (`Pending`, `Countered`, `Buyer Countered`, `Awarded`, `Declined`).
+
 
 
 
