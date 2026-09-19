@@ -29,77 +29,40 @@ export const CommercialStatCards: React.FC<CommercialStatCardsProps> = ({
   netClearingTotal
 }) => {
   return (
-    <div
-      style={{
-        position: 'relative',
-        backgroundColor: 'hsl(var(--bg-main) / 50%)',
-        borderBottom: '1px solid hsl(var(--border-color))',
-        width: '100%'
-      }}
-    >
+    <div className="relative bg-slate-50/70 dark:bg-slate-900/60 border-b border-slate-200 dark:border-slate-800 w-full">
       <div
         data-testid="centralized-commercial-stat-cards"
-        className="relative max-w-[1100px] mx-auto w-full"
-        style={{
-          padding: '16px 24px',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '12px'
-        }}
+        className="relative max-w-[1100px] mx-auto w-full px-6 py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5"
       >
         {/* Card 1: Buyer Organization */}
         <div
           data-testid="summary-buyer-org"
-          style={{
-            position: 'relative',
-            padding: '12px 16px',
-            backgroundColor: 'hsl(var(--bg-card))',
-            borderRadius: '10px',
-            border: '1px solid hsl(var(--border-color))',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}
+          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
         >
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Building2 size={14} /> Buyer Organization
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11.5px] font-medium mb-1.5">
+              <span className="flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" /> Buyer Organization
               </span>
               <span
                 data-testid="buyer-verified-badge"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  color: '#10b981',
-                  backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                  padding: '1px 6px',
-                  borderRadius: '4px',
-                  border: '1px solid rgba(16, 185, 129, 0.25)'
-                }}
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"
               >
-                <ShieldCheck size={12} /> Verified
+                <ShieldCheck className="w-3 h-3 text-emerald-500" /> Verified
               </span>
             </div>
-            <div style={{ fontWeight: 600, fontSize: '0.95rem', marginTop: '6px', color: 'hsl(var(--text-primary))' }}>
+            <div className="text-[14px] font-bold text-slate-900 dark:text-slate-100 truncate" title={buyerCompany}>
               {buyerCompany}
             </div>
           </div>
-          <div style={{ marginTop: '6px', fontSize: '0.75rem' }}>
+          <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 text-[11px] truncate mt-1">
+            <Mail className="w-3 h-3 text-slate-400 shrink-0" />
             <a
               href={`mailto:${buyerEmail}`}
-              style={{
-                color: 'hsl(var(--text-muted))',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                textDecoration: 'none'
-              }}
+              className="truncate font-mono hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              title={buyerEmail}
             >
-              <Mail size={12} /> {buyerEmail}
+              {buyerEmail}
             </a>
           </div>
         </div>
@@ -107,106 +70,80 @@ export const CommercialStatCards: React.FC<CommercialStatCardsProps> = ({
         {/* Card 2: Unit Offer */}
         <div
           data-testid="summary-unit-offer"
-          style={{
-            position: 'relative',
-            padding: '12px 16px',
-            backgroundColor: 'hsl(var(--bg-card))',
-            borderRadius: '10px',
-            border: '1px solid hsl(var(--border-color))',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}
+          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
         >
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <DollarSign size={14} /> Unit Offer
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11.5px] font-medium mb-1.5">
+              <span className="flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-slate-400 shrink-0" /> Unit Offer
+              </span>
+              {hasNegotiatedSettledPrice && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 font-mono">
+                  Settled
+                </span>
+              )}
             </div>
             {hasNegotiatedSettledPrice && finalPrice !== undefined ? (
-              <div style={{ marginTop: '4px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontWeight: 700, fontSize: '1.15rem', color: 'hsl(var(--success))' }}>
-                    ${finalPrice.toFixed(2)} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>/case</span>
+              <div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-[20px] font-bold font-mono text-emerald-600 dark:text-emerald-400 leading-none">
+                    ${finalPrice.toFixed(2)}
                   </span>
-                  <span
-                    style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      padding: '1px 5px',
-                      borderRadius: '4px',
-                      backgroundColor: 'hsla(var(--success), 0.15)',
-                      color: 'hsl(var(--success))',
-                      border: '1px solid hsla(var(--success), 0.3)',
-                      textTransform: 'uppercase'
-                    }}
-                  >
-                    Settled
-                  </span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[12px]">/case</span>
                 </div>
-                <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
                   Initial Bid: ${unitPrice.toFixed(2)} /case
                 </div>
               </div>
             ) : (
-              <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'hsl(var(--success))', marginTop: '4px' }}>
-                ${unitPrice.toFixed(2)} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>/case</span>
+              <div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-[20px] font-bold font-mono text-emerald-600 dark:text-emerald-400 leading-none">
+                    ${unitPrice.toFixed(2)}
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400 text-[12px]">/case</span>
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                  Floor: ${reserveFloorPrice.toFixed(2)}
+                </div>
               </div>
             )}
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', marginTop: '4px', fontFamily: 'monospace' }}>
-            Floor: ${reserveFloorPrice.toFixed(2)}
-          </div>
+          {hasNegotiatedSettledPrice && (
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">
+              Floor: ${reserveFloorPrice.toFixed(2)}
+            </div>
+          )}
         </div>
 
         {/* Card 3: Volume Requested */}
         <div
           data-testid="summary-volume-requested"
-          style={{
-            position: 'relative',
-            padding: '12px 16px',
-            backgroundColor: 'hsl(var(--bg-card))',
-            borderRadius: '10px',
-            border: '1px solid hsl(var(--border-color))',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}
+          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
         >
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Package size={14} /> Volume Requested
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11.5px] font-medium mb-1.5">
+              <span className="flex items-center gap-1.5">
+                <Package className="w-3.5 h-3.5 text-slate-400 shrink-0" /> Volume Requested
               </span>
-              <span
-                style={{
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  padding: '1px 6px',
-                  borderRadius: '4px',
-                  backgroundColor: 'rgba(59, 130, 246, 0.12)',
-                  color: '#3b82f6',
-                  border: '1px solid rgba(59, 130, 246, 0.25)'
-                }}
-              >
+              <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-1.5 py-0.5 rounded font-mono">
                 {allocationPct}% Lot
               </span>
             </div>
-            <div style={{ fontWeight: 700, fontSize: '1.15rem', marginTop: '4px', color: 'hsl(var(--text-primary))' }}>
-              {quantity} <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', fontWeight: 400 }}>cases</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-[20px] font-bold font-mono text-slate-900 dark:text-slate-100 leading-none">
+                {quantity}
+              </span>
+              <span className="text-slate-500 dark:text-slate-400 text-[12px]">cases</span>
             </div>
           </div>
-          <div style={{ marginTop: '4px' }}>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
             <span
-              style={{
-                fontSize: '0.68rem',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                padding: '1px 6px',
-                borderRadius: '4px',
-                backgroundColor: isFullClearing ? 'rgba(16, 185, 129, 0.12)' : 'hsl(var(--bg-main))',
-                color: isFullClearing ? '#10b981' : 'hsl(var(--text-muted))',
-                border: `1px solid ${isFullClearing ? 'rgba(16, 185, 129, 0.25)' : 'hsl(var(--border-color))'}`
-              }}
+              className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                isFullClearing
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600'
+              }`}
             >
               {isFullClearing ? 'Full Clearing' : 'Partial Clearing'}
             </span>
@@ -216,26 +153,24 @@ export const CommercialStatCards: React.FC<CommercialStatCardsProps> = ({
         {/* Card 4: Gross Recovery */}
         <div
           data-testid="summary-gross-recovery"
-          style={{
-            position: 'relative',
-            padding: '12px 16px',
-            backgroundColor: 'hsl(var(--bg-card))',
-            borderRadius: '10px',
-            border: '1px solid hsl(var(--border-color))',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between'
-          }}
+          className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
         >
           <div>
-            <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <DollarSign size={14} /> Gross Recovery
+            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-[11.5px] font-medium mb-1.5">
+              <span className="flex items-center gap-1.5">
+                <DollarSign className="w-3.5 h-3.5 text-slate-400 shrink-0" /> Gross Recovery
+              </span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
+                Target Margin
+              </span>
             </div>
-            <div style={{ fontWeight: 700, fontSize: '1.15rem', color: 'hsl(var(--text-primary))', marginTop: '4px' }}>
-              ${totalRecovery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div className="flex items-baseline gap-1">
+              <span className="text-[20px] font-bold font-mono text-slate-900 dark:text-slate-100 leading-none">
+                ${totalRecovery.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
             </div>
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', marginTop: '4px', fontFamily: 'monospace' }}>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-mono">
             Net Est: ${netClearingTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>

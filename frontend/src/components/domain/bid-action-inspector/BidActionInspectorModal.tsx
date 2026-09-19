@@ -25,65 +25,67 @@ export const BidActionInspectorModal: React.FC<BidActionInspectorModalProps> = (
       data-testid="bid-action-inspector-workspace"
       className="fixed inset-0 w-screen h-screen z-[1050] bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden text-slate-900 dark:text-slate-100"
     >
-      {/* Whole-page unified scroll container */}
+      {/* Whole-page unified scroll container with ambient backdrop styling */}
       <div
         data-testid="bid-action-inspector-scroll-container"
-        className="relative flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col"
+        className="relative flex-1 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center p-2 sm:p-4 md:p-6"
         style={{ scrollBehavior: 'smooth' }}
       >
-        <BidActionInspectorHeader
-          onClose={onClose}
-          lotNumber={calculations.lotNumber}
-          lotSku={calculations.lotSku}
-          productTitle={calculations.productTitle}
-          isRejected={calculations.isRejected}
-          isAccepted={calculations.isAccepted}
-          isCountered={calculations.isCountered}
-          isBuyerCountered={!!calculations.isBuyerCountered}
-          internalStatus={inspector.internalStatus}
-          bidStatus={bid.status}
-          rawStatus={calculations.rawStatus}
-          isSubmitting={isSubmitting}
-          onReset={inspector.handleResetToPending}
-        />
+        {/* Floating Modal Card Enclosure matching stitch-design-reference.html */}
+        <div className="w-full max-w-[1100px] bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 flex flex-col my-2 sm:my-4 transition-all">
+          <BidActionInspectorHeader
+            onClose={onClose}
+            lotNumber={calculations.lotNumber}
+            lotSku={calculations.lotSku}
+            productTitle={calculations.productTitle}
+            isRejected={calculations.isRejected}
+            isAccepted={calculations.isAccepted}
+            isCountered={calculations.isCountered}
+            isBuyerCountered={!!calculations.isBuyerCountered}
+            internalStatus={inspector.internalStatus}
+            bidStatus={bid.status}
+            rawStatus={calculations.rawStatus}
+            isSubmitting={isSubmitting}
+            onReset={inspector.handleResetToPending}
+            onOpenPreviewModal={() => inspector.setIsPreviewModalOpen(true)}
+          />
 
-        <StateAwareBanners
-          isRejected={calculations.isRejected}
-          selectedDeclineReason={inspector.selectedDeclineReason}
-          bidDeclineReason={bid.declineReason}
-          declineRationale={inspector.declineRationale}
-          isSubmitting={isSubmitting}
-          onReset={onReset ? inspector.handleResetToPending : undefined}
-          inSituToast={inspector.inSituToast}
-        />
+          <StateAwareBanners
+            isRejected={calculations.isRejected}
+            selectedDeclineReason={inspector.selectedDeclineReason}
+            bidDeclineReason={bid.declineReason}
+            declineRationale={inspector.declineRationale}
+            isSubmitting={isSubmitting}
+            onReset={onReset ? inspector.handleResetToPending : undefined}
+            inSituToast={inspector.inSituToast}
+          />
 
-        <CommercialStatCards
-          buyerCompany={calculations.buyerCompany}
-          buyerEmail={calculations.buyerEmail}
-          hasNegotiatedSettledPrice={!!calculations.hasNegotiatedSettledPrice}
-          finalPrice={calculations.finalPrice}
-          unitPrice={calculations.unitPrice}
-          reserveFloorPrice={calculations.reserveFloorPrice}
-          allocationPct={calculations.allocationPct}
-          quantity={calculations.quantity}
-          isFullClearing={calculations.isFullClearing}
-          totalRecovery={calculations.totalRecovery}
-          netClearingTotal={calculations.netClearingTotal}
-        />
+          <CommercialStatCards
+            buyerCompany={calculations.buyerCompany}
+            buyerEmail={calculations.buyerEmail}
+            hasNegotiatedSettledPrice={!!calculations.hasNegotiatedSettledPrice}
+            finalPrice={calculations.finalPrice}
+            unitPrice={calculations.unitPrice}
+            reserveFloorPrice={calculations.reserveFloorPrice}
+            allocationPct={calculations.allocationPct}
+            quantity={calculations.quantity}
+            isFullClearing={calculations.isFullClearing}
+            totalRecovery={calculations.totalRecovery}
+            netClearingTotal={calculations.netClearingTotal}
+          />
 
-        <ModeNavigationTabs
-          activeMode={inspector.activeMode}
-          setActiveMode={inspector.setActiveMode}
-          isAccepted={calculations.isAccepted}
-          counterMessage={inspector.counterMessage}
-          setCounterMessage={inspector.setCounterMessage}
-          timelineEventCount={timeline.allEvents.length}
-        />
+          <ModeNavigationTabs
+            activeMode={inspector.activeMode}
+            setActiveMode={inspector.setActiveMode}
+            isAccepted={calculations.isAccepted}
+            counterMessage={inspector.counterMessage}
+            setCounterMessage={inspector.setCounterMessage}
+            timelineEventCount={timeline.allEvents.length}
+          />
 
-        <div className="relative flex-1 w-full" style={{ padding: '24px' }}>
           <div
             data-testid="centralized-workspace-body"
-            className="relative max-w-[1100px] mx-auto w-full"
+            className="relative max-w-[1100px] mx-auto w-full px-6 pb-6 pt-5"
           >
           {inspector.activeMode === 'accept' && (
             <AcceptOfferStage

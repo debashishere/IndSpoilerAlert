@@ -21,42 +21,23 @@ export const ModeNavigationTabs: React.FC<ModeNavigationTabsProps> = ({
   timelineEventCount
 }) => {
   return (
-    <div
-      style={{
-        position: 'relative',
-        borderBottom: '1px solid hsl(var(--border-color))',
-        backgroundColor: 'hsl(var(--bg-card))',
-        width: '100%'
-      }}
-    >
+    <div className="relative border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 w-full select-none">
       <div
         data-testid="centralized-navigation-tabs-bar"
-        className="relative max-w-[1100px] mx-auto w-full flex justify-center"
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          padding: '0 24px',
-          gap: '8px'
-        }}
+        className="relative max-w-[1100px] mx-auto w-full px-6 flex items-center gap-2 sm:gap-4 overflow-x-auto"
+        style={{ justifyContent: 'center' }}
       >
         <button
           type="button"
           onClick={() => setActiveMode('accept')}
-          style={{
-            padding: '12px 18px',
-            border: 'none',
-            background: activeMode === 'accept' ? 'rgba(16, 185, 129, 0.08)' : 'none',
-            cursor: 'pointer',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            borderBottom: activeMode === 'accept' ? '3px solid hsl(var(--primary))' : '3px solid transparent',
-            color: activeMode === 'accept' ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))'
-          }}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] border-b-[3px] -mb-[1px] transition-all cursor-pointer ${
+            activeMode === 'accept'
+              ? 'font-bold text-emerald-600 dark:text-emerald-400 border-emerald-500 bg-emerald-50/40 dark:bg-emerald-950/20'
+              : 'font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 border-transparent hover:border-slate-300 dark:hover:border-slate-700'
+          }`}
         >
-          <CheckCircle2 size={16} /> Accept Offer
+          <CheckCircle2 className="w-4 h-4" />
+          <span>Accept Offer</span>
         </button>
 
         <button
@@ -72,22 +53,16 @@ export const ModeNavigationTabs: React.FC<ModeNavigationTabsProps> = ({
           }}
           disabled={isAccepted}
           title={isAccepted ? 'Cannot counter an accepted offer.' : undefined}
-          style={{
-            padding: '12px 18px',
-            border: 'none',
-            background: activeMode === 'counter' ? 'rgba(245, 158, 11, 0.08)' : 'none',
-            cursor: isAccepted ? 'not-allowed' : 'pointer',
-            opacity: isAccepted ? 0.5 : 1,
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            borderBottom: activeMode === 'counter' ? '3px solid #f59e0b' : '3px solid transparent',
-            color: activeMode === 'counter' ? '#d97706' : 'hsl(var(--text-secondary))'
-          }}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] border-b-[3px] -mb-[1px] transition-all ${
+            isAccepted ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+          } ${
+            activeMode === 'counter'
+              ? 'font-bold text-amber-600 dark:text-amber-400 border-amber-500 bg-amber-50/40 dark:bg-amber-950/20'
+              : 'font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 border-transparent hover:border-slate-300 dark:hover:border-slate-700'
+          }`}
         >
-          <ArrowLeftRight size={16} /> Negotiate
+          <ArrowLeftRight className="w-4 h-4" />
+          <span>Negotiate</span>
         </button>
 
         <button
@@ -100,22 +75,16 @@ export const ModeNavigationTabs: React.FC<ModeNavigationTabsProps> = ({
           }}
           disabled={isAccepted}
           title={isAccepted ? 'Cannot decline an accepted offer.' : undefined}
-          style={{
-            padding: '12px 18px',
-            border: 'none',
-            background: activeMode === 'decline' ? 'rgba(239, 68, 68, 0.06)' : 'none',
-            cursor: isAccepted ? 'not-allowed' : 'pointer',
-            opacity: isAccepted ? 0.5 : 1,
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            borderBottom: activeMode === 'decline' ? '3px solid #ef4444' : '3px solid transparent',
-            color: activeMode === 'decline' ? '#ef4444' : 'hsl(var(--text-secondary))'
-          }}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] border-b-[3px] -mb-[1px] transition-all ${
+            isAccepted ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+          } ${
+            activeMode === 'decline'
+              ? 'font-bold text-rose-600 dark:text-rose-400 border-rose-500 bg-rose-50/40 dark:bg-rose-950/20'
+              : 'font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 border-transparent hover:border-slate-300 dark:hover:border-slate-700'
+          }`}
         >
-          <XCircle size={16} /> Decline
+          <XCircle className="w-4 h-4" />
+          <span>Decline</span>
         </button>
 
         <button
@@ -123,31 +92,21 @@ export const ModeNavigationTabs: React.FC<ModeNavigationTabsProps> = ({
           data-testid="tab-timeline"
           aria-label="Timeline"
           onClick={() => setActiveMode('timeline')}
-          style={{
-            padding: '12px 18px',
-            border: 'none',
-            background: 'none',
-            cursor: 'pointer',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            borderBottom: activeMode === 'timeline' ? '3px solid hsl(var(--primary))' : '3px solid transparent',
-            color: activeMode === 'timeline' ? 'hsl(var(--primary))' : 'hsl(var(--text-secondary))'
-          }}
+          className={`flex items-center gap-2 px-3.5 sm:px-4 py-3 text-[13px] border-b-[3px] -mb-[1px] transition-all cursor-pointer ${
+            activeMode === 'timeline'
+              ? 'font-bold text-blue-600 dark:text-blue-400 border-blue-600 bg-blue-50/40 dark:bg-blue-950/20'
+              : 'font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 border-transparent hover:border-slate-300 dark:hover:border-slate-700'
+          }`}
         >
-          <Clock size={16} /> Timeline
+          <Clock className="w-4 h-4" />
+          <span>Timeline</span>
           <span
             data-testid="timeline-tab-badge"
-            style={{
-              fontSize: '0.72rem',
-              fontWeight: 700,
-              padding: '2px 7px',
-              borderRadius: '10px',
-              backgroundColor: activeMode === 'timeline' ? 'hsl(var(--primary))' : 'hsl(var(--border-color))',
-              color: activeMode === 'timeline' ? '#fff' : 'hsl(var(--text-secondary))'
-            }}
+            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+              activeMode === 'timeline'
+                ? 'bg-blue-600 text-white'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+            }`}
           >
             {timelineEventCount}
           </span>

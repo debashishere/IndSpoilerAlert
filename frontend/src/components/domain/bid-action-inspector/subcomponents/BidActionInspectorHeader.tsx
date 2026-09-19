@@ -74,35 +74,35 @@ export const BidActionInspectorHeader: React.FC<BidActionInspectorHeaderProps> =
   return (
     <header
       role="banner"
-      className="relative px-6 py-4 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm flex items-center justify-between gap-4 flex-wrap sm:flex-nowrap transition-colors duration-150 shadow-xs"
+      className="relative px-6 py-5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-start justify-between gap-4 flex-wrap sm:flex-nowrap rounded-t-2xl transition-colors duration-150 shadow-2xs"
     >
-      <div className="min-w-0 flex-1">
-        {/* Top Metadata Tranche: Breadcrumbs, Lot ID, SKU, Status Pill */}
-        <div className="flex items-center gap-2 flex-wrap mb-1 text-xs text-slate-500 dark:text-slate-400">
+      <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+        {/* Top Metadata Tranche: Breadcrumbs, Eyebrow, Lot ID, SKU, Status Pill */}
+        <div className="flex items-center gap-2 flex-wrap text-[12px] font-medium text-slate-500 dark:text-slate-400">
           <button
             type="button"
             data-testid="back-to-bids-btn"
             onClick={onClose}
             aria-label="Back to Bids & Offers"
-            className="group inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 cursor-pointer"
+            className="group inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-medium rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white transition-all cursor-pointer shadow-2xs"
           >
-            <ArrowLeft className="w-3.5 h-3.5 transition-transform duration-150 group-hover:-translate-x-0.5" />
+            <ArrowLeft className="w-3 h-3 transition-transform duration-150 group-hover:-translate-x-0.5" />
             <span>← Back to Bids &amp; Offers</span>
           </button>
 
           <span className="text-slate-300 dark:text-slate-700 select-none">•</span>
 
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <span className="font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-400 text-[11px]">
             Bid Action Inspector
           </span>
 
           <span className="text-slate-300 dark:text-slate-700 select-none">•</span>
 
-          <span className="font-mono text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 tracking-tight">
-            {lotNumber.startsWith('LOT') ? lotNumber : `LOT #${lotNumber}`}
+          <span className="font-mono text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-xs tracking-tight">
+            {lotNumber.startsWith('LOT') ? lotNumber : `Lot #${lotNumber}`}
           </span>
 
-          <span className="font-mono text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 tracking-tight">
+          <span className="font-mono text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/80 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 text-xs tracking-tight">
             SKU: {lotSku}
           </span>
 
@@ -110,28 +110,38 @@ export const BidActionInspectorHeader: React.FC<BidActionInspectorHeaderProps> =
 
           <span
             data-testid="modal-status-badge"
-            className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full border capitalize transition-colors duration-150 ${statusTokens.badge}`}
+            className={`inline-flex items-center gap-1.5 text-[11.5px] font-semibold px-2.5 py-0.5 rounded-full border capitalize transition-colors duration-150 ${statusTokens.badge}`}
           >
             <span className={`w-1.5 h-1.5 rounded-full ${statusTokens.dot}`} aria-hidden="true" />
             {displayStatus}
           </span>
         </div>
 
-        {/* Primary Screen Title: High-Contrast Typographic Anchor */}
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 truncate max-w-[700px] leading-snug">
+        {/* Primary Screen Title: High-Contrast Typographic Anchor (22px/24px, tracking-tight, leading-snug) */}
+        <h1 className="text-[22px] sm:text-[24px] font-bold text-slate-900 dark:text-slate-100 tracking-tight leading-snug truncate max-w-[850px]">
           {productTitle}
         </h1>
       </div>
 
-      {/* Right Control Actions: Adaptive Lifecycle Action & Close Workspace Exit Anchor */}
-      <div className="flex items-center gap-2.5 shrink-0">
+      {/* Right Control Actions: Optional Preview Email, Adaptive Reset, and Compact Close */}
+      <div className="flex items-center gap-2.5 shrink-0 ml-4">
+        {onOpenPreviewModal && (
+          <button
+            type="button"
+            onClick={onOpenPreviewModal}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[12px] font-medium shadow-2xs transition-colors cursor-pointer"
+          >
+            <span>Preview Email</span>
+          </button>
+        )}
+
         {/* Adaptive Lifecycle Action: Reset to Pending for re-actioning */}
         {rawStatus !== 'pending' && (
           <button
             type="button"
             onClick={onReset}
             disabled={isSubmitting}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border border-amber-300 dark:border-amber-700/70 bg-amber-50/60 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-1 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium rounded-lg border border-amber-300 dark:border-amber-700/70 bg-amber-50/60 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors shadow-2xs active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset Bid to Pending</span>
@@ -143,10 +153,11 @@ export const BidActionInspectorHeader: React.FC<BidActionInspectorHeaderProps> =
           data-testid="close-workspace-btn"
           aria-label="Close Workspace"
           onClick={onClose}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-rose-50 dark:hover:bg-rose-950/30 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-200 dark:hover:border-rose-800 transition-all duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-1 cursor-pointer"
+          className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 transition-colors flex items-center justify-center cursor-pointer text-[14px] shadow-2xs"
+          title="Close Workspace"
         >
+          <span className="sr-only">Close Workspace</span>
           <X className="w-4 h-4" />
-          <span>Close Workspace</span>
         </button>
       </div>
     </header>
