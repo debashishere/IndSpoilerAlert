@@ -1403,7 +1403,7 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       }
     };
 
-    it('renders modal shell with Stitch styling and header elements including Preview Email button', () => {
+    it('renders modal shell with Stitch styling and header exit control (header preview button removed)', () => {
       const { container } = render(
         <BidActionInspectorModal
           isOpen={true}
@@ -1429,8 +1429,8 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
       expect(within(header!).getByTestId('modal-status-badge')).toHaveTextContent(/pending/i);
       expect(within(header!).getByText(/Premium Honeycrisp Apples/i)).toBeInTheDocument();
 
-      // Preview Email action and close control (maximize button removed)
-      expect(screen.getByRole('button', { name: /preview email/i })).toBeInTheDocument();
+      // Header preview email button removed; close control preserved
+      expect(within(header!).queryByTestId('header-preview-email-btn')).toBeNull();
       expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /maximize inspector/i })).toBeNull();
     });
@@ -2752,6 +2752,62 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
         const rejectDot = within(rejectCard).getByTestId('timeline-node-dot');
         expect(rejectDot).toHaveStyle({ backgroundColor: '#ef4444' });
       });
+
+      it('renders email messages cleanly without HTML tags, markup, or inline styling in Timeline event description', () => {
+        const rawEmailHtmlMessage =
+          '<p>Dear <span data-token="buyer_name">Apex Liquidators</span>,</p>' +
+          '<p>We propose a counter-offer for <span data-token="product_name">Valencia Oranges Grade A</span> at <span data-token="counter_price">$31.00/cs</span> for <span data-token="counter_quantity">100</span> cases (original offer: <span data-token="original_price">$25.00/cs</span>).</p>' +
+          '<p><a href="http://example.com/accept" class="btn-counter-accept" style="display: inline-block; background-color: #10b981; color: #ffffff; padding: 12px 22px;">Accept Counter-Offer ($31.00/cs • 100)</a>' +
+          '<a href="http://example.com/renegotiate" class="btn-counter-renegotiate" style="display: inline-block; background-color: #3b82f6; color: #ffffff;">Propose New Terms / Re-bid</a></p>';
+
+        const bidWithHtmlEmail = {
+          ...sampleBidWithHistory,
+          messages: [
+            {
+              sender: 'buyer',
+              content: 'Initial offer submitted at $4.00/cs for 200 cases.',
+              timestamp: '2026-09-08T10:00:00.000Z'
+            },
+            {
+              sender: 'supplier',
+              proposedPrice: 31.00,
+              proposedQuantity: 100,
+              content: rawEmailHtmlMessage,
+              timestamp: '2026-09-08T11:30:00.000Z'
+            }
+          ]
+        };
+
+        render(
+          <BidActionInspectorModal
+            isOpen={true}
+            onClose={vi.fn()}
+            bid={bidWithHtmlEmail}
+            lot={sampleLot}
+          />
+        );
+
+        // Switch to Timeline tab
+        fireEvent.click(screen.getByRole('button', { name: /timeline/i }));
+
+        const counterCard = screen.getByTestId(/timeline-event-card-msg-1-/);
+        expect(counterCard).toBeInTheDocument();
+
+        const descElem = within(counterCard).getByTestId('timeline-event-description');
+        // Must NOT contain any raw HTML tags
+        expect(descElem.innerHTML).not.toContain('<p>');
+        expect(descElem.innerHTML).not.toContain('</p>');
+        expect(descElem.innerHTML).not.toContain('<span');
+        expect(descElem.innerHTML).not.toContain('<a href');
+        expect(descElem.innerHTML).not.toContain('btn-counter-accept');
+        expect(descElem.innerHTML).not.toContain('style=');
+
+        // Must render email plain content
+        expect(descElem.textContent).toContain('Dear Apex Liquidators,');
+        expect(descElem.textContent).toContain('We propose a counter-offer for Valencia Oranges Grade A at $31.00/cs for 100 cases (original offer: $25.00/cs).');
+        expect(descElem.textContent).toContain('Accept Counter-Offer ($31.00/cs • 100)');
+        expect(descElem.textContent).toContain('Propose New Terms / Re-bid');
+      });
     });
 
     describe('Seam 3: Category Filter Dropdown', () => {
@@ -2895,10 +2951,13 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
           />
         );
 
-        // 1. Header trigger button
-        const headerPreviewBtn = screen.getByTestId('header-preview-email-btn');
-        expect(headerPreviewBtn).toBeInTheDocument();
-        fireEvent.click(headerPreviewBtn);
+        // 1. Header preview button is eliminated in favor of dedicated tab preview buttons
+        expect(screen.queryByTestId('header-preview-email-btn')).toBeNull();
+
+        // 2. Accept mode footer trigger button
+        const acceptFooterBtn = screen.getByTestId('footer-preview-accept-btn');
+        expect(acceptFooterBtn).toBeInTheDocument();
+        fireEvent.click(acceptFooterBtn);
 
         // Verify overlay dialog opens
         const previewDialog = screen.getByTestId('email-preview-dialog');
@@ -2915,11 +2974,8 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
         expect(onCloseMock).not.toHaveBeenCalled();
         expect(screen.getByText(/Bid Action Inspector/i)).toBeInTheDocument();
 
-        // 2. Accept mode footer trigger button
-        const acceptFooterBtn = screen.getByTestId('footer-preview-accept-btn');
-        expect(acceptFooterBtn).toBeInTheDocument();
+        // Re-open via Accept mode footer trigger button
         fireEvent.click(acceptFooterBtn);
-
         expect(screen.getByTestId('email-preview-dialog')).toBeInTheDocument();
 
         // Close via footer Done button
@@ -2974,7 +3030,7 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
         );
 
         // 1. Accept Mode
-        fireEvent.click(screen.getByTestId('header-preview-email-btn'));
+        fireEvent.click(screen.getByTestId('footer-preview-accept-btn'));
         const previewDialog = screen.getByTestId('email-preview-dialog');
         expect(previewDialog).toBeInTheDocument();
 
@@ -3026,7 +3082,7 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
           />
         );
 
-        fireEvent.click(screen.getByTestId('header-preview-email-btn'));
+        fireEvent.click(screen.getByTestId('footer-preview-accept-btn'));
         expect(screen.getByTestId('email-preview-recipient')).toHaveTextContent('To: partner@directwholesale.com');
       });
     });
@@ -3053,7 +3109,7 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
         fireEvent.change(hoursInput, { target: { value: 'Mon-Fri 06:00 AM - 02:00 PM EST' } });
 
         // Trigger preview modal
-        fireEvent.click(screen.getByTestId('header-preview-email-btn'));
+        fireEvent.click(screen.getByTestId('footer-preview-accept-btn'));
 
         const previewBody = screen.getByTestId('email-preview-body');
         expect(previewBody).toBeInTheDocument();
@@ -3270,7 +3326,7 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
         expect(within(header).getByText(/SKU-APPLES/i)).toBeInTheDocument();
         expect(within(header).getByTestId('modal-status-badge')).toBeInTheDocument();
         expect(within(header).getByText(/Organic Honeycrisp Apples/i)).toBeInTheDocument();
-        expect(within(header).getByTestId('header-preview-email-btn')).toBeInTheDocument();
+        expect(within(header).queryByTestId('header-preview-email-btn')).toBeNull();
         expect(within(header).getByRole('button', { name: /reset bid to pending/i })).toBeInTheDocument();
       });
     });
@@ -4046,6 +4102,137 @@ describe('Frontend Seam A: BidActionInspectorModal (Issue #02)', () => {
         fireEvent.click(screen.getByTestId('done-email-preview-btn'));
         expect(screen.queryByTestId('email-preview-dialog')).not.toBeInTheDocument();
         expect(onCloseMock).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Issue 12: High-End UI/UX Refinement (ux-v1) — Whole-Page Scrolling, Relative Positioning & Correlated Input Ergonomics', () => {
+    it('provides whole-page scrollability via a unified scroll container and relative positioning', () => {
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={sampleBid}
+          lot={sampleLot}
+        />
+      );
+
+      // 1. Whole-page scroll container wraps header, cards, tabs, and workspace body
+      const scrollContainer = screen.getByTestId('bid-action-inspector-scroll-container');
+      expect(scrollContainer).toBeInTheDocument();
+      expect(scrollContainer.className).toContain('overflow-y-auto');
+      expect(scrollContainer.className).toContain('relative');
+
+      // 2. Relative positioning on key layout anchors
+      const header = screen.getByRole('banner');
+      expect(header.className).toContain('relative');
+
+      const statCardsContainer = screen.getByTestId('centralized-commercial-stat-cards');
+      expect(statCardsContainer.className).toContain('relative');
+
+      const tabsBar = screen.getByTestId('centralized-navigation-tabs-bar');
+      expect(tabsBar.className).toContain('relative');
+
+      const workspaceBody = screen.getByTestId('centralized-workspace-body');
+      expect(workspaceBody.className).toContain('relative');
+    });
+
+    it('implements correlated input box widths, increased height (44px), border radius, and low-contrast borders', () => {
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={sampleBid}
+          lot={sampleLot}
+        />
+      );
+
+      // Address input vs quantity & price inputs:
+      const addressInput = screen.getByLabelText(/DC Pickup Address/i);
+      const addressWrapper = addressInput.parentElement;
+      expect(addressWrapper).toHaveStyle({ maxWidth: '680px' });
+      expect(addressInput).toHaveStyle({
+        height: '44px',
+        borderRadius: '8px',
+        border: '1px solid rgba(148, 163, 184, 0.25)'
+      });
+
+      const hoursInput = screen.getByLabelText(/Dock Operating Hours/i);
+      const hoursWrapper = hoursInput.parentElement;
+      expect(hoursWrapper).toHaveStyle({ maxWidth: '380px' });
+      expect(hoursInput).toHaveStyle({
+        height: '44px',
+        borderRadius: '8px',
+        border: '1px solid rgba(148, 163, 184, 0.25)'
+      });
+
+      const quantityInput = screen.getByLabelText(/Awarded Quantity/i);
+      const quantityWrapper = quantityInput.parentElement;
+      expect(quantityWrapper).toHaveStyle({ maxWidth: '220px' });
+      expect(quantityInput).toHaveStyle({
+        height: '44px',
+        borderRadius: '8px',
+        border: '1px solid rgba(148, 163, 184, 0.25)'
+      });
+
+      const priceInput = screen.getByLabelText(/Agreed Price/i);
+      const priceWrapper = priceInput.parentElement;
+      expect(priceWrapper).toHaveStyle({ maxWidth: '220px' });
+      expect(priceInput).toHaveStyle({
+        height: '44px',
+        borderRadius: '8px'
+      });
+    });
+
+    it('applies correlated input sizing and border radius to negotiate and decline modes', () => {
+      render(
+        <BidActionInspectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          bid={sampleBid}
+          lot={sampleLot}
+        />
+      );
+
+      // Switch to Negotiate tab
+      fireEvent.click(screen.getByRole('button', { name: /re-negotiate/i }));
+
+      const counterPriceInput = screen.getByPlaceholderText(/Enter counter price/i);
+      const counterPriceWrapper = counterPriceInput.parentElement;
+      expect(counterPriceWrapper).toHaveStyle({ maxWidth: '220px' });
+      expect(counterPriceInput).toHaveStyle({
+        height: '44px',
+        borderRadius: '8px',
+        border: '1px solid rgba(148, 163, 184, 0.25)'
+      });
+
+      const counterQtyInput = screen.getByPlaceholderText(/Enter counter quantity/i);
+      const counterQtyWrapper = counterQtyInput.parentElement;
+      expect(counterQtyWrapper).toHaveStyle({ maxWidth: '220px' });
+      expect(counterQtyInput).toHaveStyle({
+        height: '44px',
+        borderRadius: '8px',
+        border: '1px solid rgba(148, 163, 184, 0.25)'
+      });
+
+      // Switch to Decline tab
+      fireEvent.click(screen.getByRole('button', { name: /decline offer/i }));
+
+      const declineReasonSelect = screen.getByLabelText(/decline reason/i);
+      const declineReasonWrapper = declineReasonSelect.parentElement;
+      expect(declineReasonWrapper).toHaveStyle({ maxWidth: '460px' });
+      expect(declineReasonSelect).toHaveStyle({
+        height: '44px',
+        borderRadius: '8px',
+        border: '1px solid rgba(148, 163, 184, 0.25)'
+      });
+
+      const declineMemo = screen.getByPlaceholderText(/Add specific rationale/i);
+      const declineMemoWrapper = declineMemo.parentElement;
+      expect(declineMemoWrapper).toHaveStyle({ maxWidth: '680px' });
+      expect(declineMemo).toHaveStyle({
+        borderRadius: '8px',
+        border: '1px solid rgba(148, 163, 184, 0.25)'
       });
     });
   });

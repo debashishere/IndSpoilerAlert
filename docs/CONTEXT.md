@@ -269,4 +269,21 @@ Dedicated backend API routes (`/api/auth/otp/request` and `/api/auth/otp/verify`
 ### Session Gate
 The conditional rendering logic in `App` that reads `isLoading` and `isAuthenticated` from `AuthContext` to decide which root-level view to display: Auth Resolution Screen (loading), Public Landing Page (unauthenticated), or Platform Shell (authenticated).
 
+### Bid Action Inspector Workspace
+The dedicated institutional trading desk operational workspace where suppliers evaluate incoming buyer offers, configure logistics settlement terms, dispatch counter-offers, or execute structured rejections.
+_Avoid_: Bid details popup, offer modal, action drawer
+
+### Settlement Execution
+The terminal phase of an accepted bid transaction where logistics parameters (DC address, dock hours, awarded cases) are bound and transactional settlement communications are dispatched to the buyer.
+_Avoid_: Accept click, order finalizer
+
+### Counter Proposal Dispatch
+The interactive negotiation workflow allowing suppliers to propose adjusted unit prices and tranche volumes with margin uplift telemetry and automated expiration holding windows.
+_Avoid_: Re-bid prompt, haggle bar
+
+### Decline Workflow Guardrails
+A structured rejection process requiring mandatory reason codes, audit trail memo logging, and automated surplus inventory re-listing configuration upon offer decline.
+_Avoid_: Cancel button, reject flag
+
+
 
