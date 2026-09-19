@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layers, Award, Activity } from 'lucide-react';
+import { Box, Award, History } from 'lucide-react';
 import type { LotHubSubTab } from '../types/lotOperations.types';
 
 interface LotOperationsSubTabsProps {
@@ -16,28 +16,99 @@ export const LotOperationsSubTabs: React.FC<LotOperationsSubTabsProps> = ({
   activitiesCount,
 }) => {
   return (
-    <div className="lot-hub-nav-tabs">
+    <nav
+      aria-label="Terminal Tabs"
+      className="grid grid-cols-1 sm:grid-cols-3 gap-2 border-b border-surface-border pt-2 mb-6 w-full"
+    >
+      {/* Tab 1: Lot Details & Operations */}
       <button
-        className={`lot-hub-tab-btn ${subTab === 'details' ? 'active' : ''}`}
+        id="tabLotDetails"
+        type="button"
+        role="tab"
+        aria-selected={subTab === 'details'}
         onClick={() => onSubTabChange('details')}
+        className={`px-5 py-3 text-sm font-mono flex items-center justify-center space-x-2 transition rounded-t-lg w-full cursor-pointer relative ${
+          subTab === 'details'
+            ? 'font-semibold text-brand-900 bg-white shadow-2xs border border-surface-border border-b-2 border-b-brand-500'
+            : 'font-medium text-slate-600 hover:text-brand-900 hover:bg-brand-50/60 border-b-2 border-transparent'
+        }`}
       >
-        <Layers size={18} />
-        <span>Lot Details & Operations</span>
+        <Box
+          className={`w-4 h-4 shrink-0 ${
+            subTab === 'details' ? 'text-brand-500' : 'text-slate-500'
+          }`}
+        />
+        <span className="tracking-wide truncate">Lot Details & Operations</span>
+        <span
+          className={`ml-1.5 px-2 py-0.5 rounded-full text-xs font-mono border shrink-0 hidden sm:inline ${
+            subTab === 'details'
+              ? 'bg-brand-100 text-brand-900 border-brand-300 font-bold'
+              : 'bg-slate-100 text-slate-600 border-slate-200'
+          }`}
+        >
+          Spec • Docs
+        </span>
       </button>
+
+      {/* Tab 2: Bid & Offer */}
       <button
-        className={`lot-hub-tab-btn ${subTab === 'bids' ? 'active' : ''}`}
+        id="tabBidOffer"
+        type="button"
+        role="tab"
+        aria-selected={subTab === 'bids'}
         onClick={() => onSubTabChange('bids')}
+        className={`px-5 py-3 text-sm font-mono flex items-center justify-center space-x-2 transition rounded-t-lg w-full cursor-pointer relative ${
+          subTab === 'bids'
+            ? 'font-semibold text-brand-900 bg-white shadow-2xs border border-surface-border border-b-2 border-b-brand-500'
+            : 'font-medium text-slate-600 hover:text-brand-900 hover:bg-brand-50/60 border-b-2 border-transparent'
+        }`}
       >
-        <Award size={18} />
-        <span>Bid & Offer (Bidding & Awarding) ({bidsCount})</span>
+        <Award
+          className={`w-4 h-4 shrink-0 ${
+            subTab === 'bids' ? 'text-brand-500' : 'text-slate-500'
+          }`}
+        />
+        <span className="truncate">Bid & Offer (Bidding & Awarding)</span>
+        <span
+          className={`ml-1.5 px-2 py-0.5 rounded-full text-xs font-mono border font-bold shrink-0 ${
+            subTab === 'bids'
+              ? 'bg-brand-100 text-brand-900 border-brand-300'
+              : 'bg-slate-100 text-slate-600 border-slate-200'
+          }`}
+        >
+          {bidsCount} Active
+        </span>
       </button>
+
+      {/* Tab 3: Lot CRM & Audit Timeline */}
       <button
-        className={`lot-hub-tab-btn ${subTab === 'activities' ? 'active' : ''}`}
+        id="tabLotCRM"
+        type="button"
+        role="tab"
+        aria-selected={subTab === 'activities'}
         onClick={() => onSubTabChange('activities')}
+        className={`px-5 py-3 text-sm font-mono flex items-center justify-center space-x-2 transition rounded-t-lg w-full cursor-pointer relative ${
+          subTab === 'activities'
+            ? 'font-semibold text-brand-900 bg-white shadow-2xs border border-surface-border border-b-2 border-b-brand-500'
+            : 'font-medium text-slate-600 hover:text-brand-900 hover:bg-brand-50/60 border-b-2 border-transparent'
+        }`}
       >
-        <Activity size={18} />
-        <span>Lot CRM & Audit Timeline ({activitiesCount})</span>
+        <History
+          className={`w-4 h-4 shrink-0 ${
+            subTab === 'activities' ? 'text-brand-500' : 'text-slate-500'
+          }`}
+        />
+        <span className="truncate">Lot CRM & Audit Timeline</span>
+        <span
+          className={`ml-1.5 px-2 py-0.5 rounded-full text-xs font-mono border shrink-0 ${
+            subTab === 'activities'
+              ? 'bg-brand-100 text-brand-900 border-brand-300 font-bold'
+              : 'bg-slate-100 text-slate-600 border-slate-200 font-medium'
+          }`}
+        >
+          {activitiesCount}
+        </span>
       </button>
-    </div>
+    </nav>
   );
 };

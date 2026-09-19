@@ -42,12 +42,17 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
 
   if (!lot) {
     return (
-      <div className="lot-hub-container text-center py-16 px-5">
-        <p className="text-[hsl(var(--text-muted))] text-sm">
+      <div className="max-w-[1680px] mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center font-mono">
+        <p className="text-slate-500 text-sm mb-4">
           No inventory lot selected. Please select an item from the Inventory tab.
         </p>
-        <button className="btn btn-secondary mt-4 text-xs font-medium" onClick={handleBack}>
-          <ArrowLeft size={16} /> {backButtonLabel}
+        <button
+          type="button"
+          className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-mono font-medium shadow-2xs transition cursor-pointer"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>{backButtonLabel}</span>
         </button>
       </div>
     );
@@ -61,8 +66,8 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
   const activitiesCount = (props.lotActivities || []).length;
 
   return (
-    <div className="lot-hub-container">
-      {/* Top Header */}
+    <main className="max-w-[1680px] mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
+      {/* Top Header & Action Bar */}
       <LotOperationsHeader
         lot={lot}
         backButtonLabel={backButtonLabel}
@@ -73,7 +78,7 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
         onRecycle={handleRecycleAction}
       />
 
-      {/* Sub-Tab Navigation Bar */}
+      {/* Sub-Tab Navigation Bar: 3-Way Interactive Tabs */}
       <LotOperationsSubTabs
         subTab={subTab}
         onSubTabChange={handleSubTabChange}
@@ -81,11 +86,11 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
         activitiesCount={activitiesCount}
       />
 
-      {/* Stage: Details & Operations */}
+      {/* Stage 1: Lot Details & Operations */}
       {subTab === 'details' && (
-        <div className="lot-hub-grid">
-          {/* Left Column */}
-          <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 transition-opacity duration-200" id="viewLotDetails">
+          {/* Left Column (7 cols): Operational Ground Truth */}
+          <div className="lg:col-span-7 space-y-6">
             <LotDetailsOverview
               lot={lot}
               onUpdateProductAllergens={handleUpdateProductAllergensAction}
@@ -96,11 +101,12 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
               onSetComplianceFile={handleSetComplianceFile}
               onUploadComplianceDoc={handleUploadComplianceDocAction}
               onUpdateLotCompliance={handleUpdateLotComplianceAction}
+              onUpdateProductAllergens={handleUpdateProductAllergensAction}
             />
           </div>
 
-          {/* Right Column */}
-          <div className="flex flex-col gap-6">
+          {/* Right Column (5 cols): AI Distressed Risk Engine & Execution Queue */}
+          <div className="lg:col-span-5 space-y-6">
             <LotPricingSimulator
               lot={lot}
               riskProfile={riskProfile}
@@ -115,38 +121,38 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
         </div>
       )}
 
-      {/* Stage: Bid & Offer Workspace */}
+      {/* Stage 2: Bid & Offer Workbench */}
       {subTab === 'bids' && (
-        <LotBidsTradingDesk
-          lot={lot}
-          bidsTradingDesk={bidsTradingDesk}
-        />
+        <div className="w-full transition-opacity duration-200" id="viewBidOffer">
+          <LotBidsTradingDesk
+            lot={lot}
+            bidsTradingDesk={bidsTradingDesk}
+          />
+        </div>
       )}
 
-      {/* Stage: Activities & Audit Timeline */}
+      {/* Stage 3: Lot CRM & Audit Timeline */}
       {subTab === 'activities' && (
-        <div className="lot-hub-grid">
-          <div className="lot-hub-card col-span-full flex flex-col gap-4">
-            <LotActivityComposer
-              activityTypeInput={activitiesStream.activityTypeInput}
-              activityContentInput={activitiesStream.activityContentInput}
-              onActivityTypeChange={activitiesStream.handleActivityTypeInputChange}
-              onActivityContentChange={activitiesStream.handleActivityContentInputChange}
-              onCreateActivity={activitiesStream.handleCreateLotActivityAction}
-            />
-            <LotActivityTimeline
-              filteredActivities={activitiesStream.filteredActivities}
-              activityFilter={activitiesStream.activityFilter}
-              onActivityFilterChange={activitiesStream.handleActivityFilterChange}
-            />
-          </div>
+        <div className="w-full space-y-6 transition-opacity duration-200" id="viewLotCRM">
+          <LotActivityComposer
+            activityTypeInput={activitiesStream.activityTypeInput}
+            activityContentInput={activitiesStream.activityContentInput}
+            onActivityTypeChange={activitiesStream.handleActivityTypeInputChange}
+            onActivityContentChange={activitiesStream.handleActivityContentInputChange}
+            onCreateActivity={activitiesStream.handleCreateLotActivityAction}
+          />
+          <LotActivityTimeline
+            filteredActivities={activitiesStream.filteredActivities}
+            activityFilter={activitiesStream.activityFilter}
+            onActivityFilterChange={activitiesStream.handleActivityFilterChange}
+          />
         </div>
       )}
 
       {/* Feedback Toast Notification */}
       <LotFeedbackToast toast={feedbackToast} />
 
-      {/* Bid Action Inspector Full-Screen Operational Workspace */}
+      {/* Bid Action Inspector Operational Workspace */}
       <BidActionInspectorModal
         isOpen={props.isBidInspectorOpen !== undefined ? props.isBidInspectorOpen : bidsTradingDesk.isInspectorOpen}
         onClose={() => {
@@ -162,7 +168,7 @@ export const LotOperationsHubView: React.FC<LotOperationsHubViewProps> = (props)
         onResendSettlement={bidsTradingDesk.handleResendSettlementAction}
         isSubmitting={bidsTradingDesk.isSubmittingAction}
       />
-    </div>
+    </main>
   );
 };
 
