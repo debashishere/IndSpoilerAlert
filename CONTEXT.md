@@ -1,5 +1,22 @@
 # Domain Glossary & Model
 
+## Global Navigation Shell
+
+- **Global Navigation Bar**: The top-level horizontal navigation shell replacing the legacy vertical sidebar, housing the brand emblem, rounded pill routing tabs (`Ingestion`, `Insight`, `Workflow`, `Marketplace`, `Inbox`, `Settings`), notifications trigger, and verified user profile pill.
+  _Avoid_: `Sidebar Navigation`, `Left Navigation Menu`, `Sidebar Shell`.
+- **Institutional Control Menu**: The centralized popover dropdown anchored to the User Profile Pill in the Global Navigation Bar. It consolidates authenticated identity details, active supplier/facility selection, dark/light theme switching, service telemetry (Backend & Sidecar health), and console session termination (`logout`).
+  _Avoid_: `Simple User Menu`, `Floating Theme Button`.
+- **Quick Notifications Popover**: The lightweight floating notification flyout triggered by the notification bell in the Global Navigation Bar and Mobile Nav Bar, rendering time-stamped alerts for inbound bids, workflow runs, and compliance actions with a direct jump to the Emails Hub.
+  _Avoid_: `Notifications Page`, `Full Page Notifications`.
+- **Operational Metric Hydration**: The reactive data binding mechanism linking drawer matrix cards (`Active Lots`, `Pending Bids`, `Unread Alerts`) and navigation tab badges to live Redux and domain store states, with graceful baseline fallbacks during network initialization.
+  _Avoid_: `Static Drawer Numbers`, `Hardcoded Stats`.
+- **Hybrid High-Fidelity Asset Pipeline**: The visual integration architecture combining Google Font CDN typography (`Hanken Grotesk`, `Inter`) and Material Symbols with embedded SVG/Lucide component fallbacks for offline environments and CI unit test resilience.
+  _Avoid_: `Pure Icon Font Dependency`, `Unstyled System Fallback`.
+- **Mobile Navigation Drawer**: The responsive slide-over drawer overlay triggered by the mobile header hamburger toggle, displaying user credentials, live operational metrics (Active Lots, Pending Bids, Unread Alerts), primary routing items with contextual badges, terminal node status, and session termination controls.
+  _Avoid_: `Bottom Navigation Bar`, `Mobile Tab Strip`.
+- **Terminal Node Status**: The institutional telemetry indicator in the drawer and navigation shell reflecting the connected distribution clearinghouse node (`Node: NA-SOUTH-TX-HUB`) and network compliance status (`FSMA 204 Audited`, `TLS 1.3 End-to-End`).
+
+
 ## Email Builder Engine
 
 - **Workflow Email Editor**: The integrated email editing component inside `WorkflowEmailBuilder.tsx` where users configure workflow stage metadata (Template, Subject, From Email, Signature) and directly edit the email body via the embedded TipTap editor.

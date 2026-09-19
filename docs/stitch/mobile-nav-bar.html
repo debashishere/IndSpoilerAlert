@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IndSpoiler Alert - Mobile Nav Bar Component</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Hanken Grotesk', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#0d47a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#f0f4f9] min-h-screen text-slate-800 font-sans p-4 antialiased">
+  <!-- Mobile Navbar Specimen -->
+  <div class="max-w-md mx-auto bg-white rounded-2xl border border-slate-200/90 shadow-md p-4">
+    <header class="w-full bg-white rounded-xl border border-slate-200 px-3.5 py-2.5 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-[#0d47a1] text-white flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+          </svg>
+        </div>
+        <div>
+          <div class="text-sm font-bold text-slate-900 leading-tight">IndSpoiler Alert</div>
+          <div class="text-[9px] font-bold tracking-widest text-slate-400 uppercase">OS v4.2</div>
+        </div>
+      </div>
+      
+      <div class="flex items-center gap-2">
+        <button class="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center text-slate-600" aria-label="Notifications">
+          <span class="material-symbols-outlined text-base">notifications</span>
+        </button>
+        <div class="w-8 h-8 rounded-full bg-[#0d47a1] text-white flex items-center justify-center font-bold text-xs">
+          DH
+        </div>
+        <button class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-700" aria-label="Open Navigation Menu">
+          <span class="material-symbols-outlined text-lg">menu</span>
+        </button>
+      </div>
+    </header>
+  </div>
+</body>
+</html>

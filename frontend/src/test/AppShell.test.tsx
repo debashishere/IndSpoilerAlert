@@ -5,14 +5,14 @@ import { Provider } from 'react-redux';
 import { store } from '../store';
 import { setActiveTab, setSidebarExpanded, setHealthStatus } from '../store/slices/coreSlice';
 
-describe('Cycle 4: AppShell, Sidebar & Header Integration', () => {
+describe('Cycle 4: AppShell, GlobalNavigationBar & Header Integration', () => {
   beforeEach(() => {
     store.dispatch(setActiveTab('ingestion'));
     store.dispatch(setSidebarExpanded(false));
     store.dispatch(setHealthStatus({ backendHealthy: true, sidecarHealthy: false }));
   });
 
-  it('should render AppShell with Sidebar containing exact classes, brand, nav links, and health indicators', async () => {
+  it('should render AppShell with modern GlobalNavigationBar by default as the primary top header shell', async () => {
     const { AppShell } = await import('../components/shell/AppShell');
 
     const { container } = render(
@@ -27,32 +27,11 @@ describe('Cycle 4: AppShell, Sidebar & Header Integration', () => {
     expect(container.querySelector('.app-container')).toBeInTheDocument();
     expect(container.querySelector('.main-content')).toBeInTheDocument();
 
-    // Verify Sidebar classes and brand
-    const sidebar = container.querySelector('aside.sidebar');
-    expect(sidebar).toBeInTheDocument();
-    expect(sidebar?.classList.contains('collapsed')).toBe(true);
-
-    const brand = container.querySelector('.brand');
-    expect(brand).toBeInTheDocument();
-    expect(container.querySelector('.brand-icon')?.textContent).toBe('⚡');
-    expect(container.querySelector('.brand-name')?.textContent).toBe('InventoryFlowing');
-
-    // Verify navigation links for base release (Distressed Analytics & Freight Logistics deferred via feature flags)
-    const navLinks = container.querySelectorAll('.nav-link');
-    expect(navLinks.length).toBe(6);
-    expect(screen.getByText('Ingestion Engine')).toBeInTheDocument();
-    expect(screen.getByText('Inventory')).toBeInTheDocument();
-    expect(screen.getByText('Workflow Setup')).toBeInTheDocument();
-    expect(screen.getByText('Buyer Marketplace')).toBeInTheDocument();
-    expect(screen.getByText('Emails')).toBeInTheDocument();
-    expect(screen.getByText('Settings')).toBeInTheDocument();
-    expect(screen.queryByText('Distressed Analytics')).not.toBeInTheDocument();
-    expect(screen.queryByText('Freight Logistics')).not.toBeInTheDocument();
-
-    // Verify health status indicators
-    expect(container.querySelector('.sidebar-health-status')).toBeInTheDocument();
-    expect(screen.getByText('MongoDB: Connected')).toBeInTheDocument();
-    expect(screen.getByText('FastAPI: Offline')).toBeInTheDocument();
+    // Verify modern GlobalNavigationBar is rendered
+    expect(screen.getByText('IndSpoiler Alert')).toBeInTheDocument();
+    expect(screen.getByText('Enterprise Liquidation OS')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Ingestion/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Insight/i })).toBeInTheDocument();
 
     // Verify Header
     expect(container.querySelector('header.header')).toBeInTheDocument();
@@ -63,7 +42,34 @@ describe('Cycle 4: AppShell, Sidebar & Header Integration', () => {
     expect(screen.getByTestId('child-content')).toBeInTheDocument();
   });
 
-  it('should dispatch setActiveTab when clicking navigation links', async () => {
+  it('should render AppShell with legacy Sidebar when showLegacySidebar is true', async () => {
+    const { AppShell } = await import('../components/shell/AppShell');
+
+    const { container } = render(
+      <Provider store={store}>
+        <AppShell showLegacySidebar header={{ title: 'Test Title', subtitle: 'Test Subtitle' }}>
+          <div data-testid="child-content">Content</div>
+        </AppShell>
+      </Provider>
+    );
+
+    // Verify Sidebar classes and brand
+    const sidebar = container.querySelector('aside.sidebar');
+    expect(sidebar).toBeInTheDocument();
+    expect(sidebar?.classList.contains('collapsed')).toBe(true);
+
+    const brand = container.querySelector('.brand');
+    expect(brand).toBeInTheDocument();
+    expect(container.querySelector('.brand-icon')?.textContent).toBe('⚡');
+    expect(container.querySelector('.brand-name')?.textContent).toBe('InventoryFlowing');
+
+    // Verify health status indicators
+    expect(container.querySelector('.sidebar-health-status')).toBeInTheDocument();
+    expect(screen.getByText('MongoDB: Connected')).toBeInTheDocument();
+    expect(screen.getByText('FastAPI: Offline')).toBeInTheDocument();
+  });
+
+  it('should dispatch setActiveTab when clicking navigation tabs in AppShell', async () => {
     const { AppShell } = await import('../components/shell/AppShell');
 
     render(
@@ -72,14 +78,13 @@ describe('Cycle 4: AppShell, Sidebar & Header Integration', () => {
       </Provider>
     );
 
-    const inventoryLink = screen.getAllByText('Inventory')[0].closest('.nav-link');
-    expect(inventoryLink).not.toBeNull();
-    fireEvent.click(inventoryLink!);
+    const insightBtn = screen.getByRole('button', { name: /Insight/i });
+    fireEvent.click(insightBtn);
 
     expect(store.getState().core.activeTab).toBe('inventory');
   });
 
-  it('should expand and collapse sidebar on clicks', async () => {
+  it('should expand and collapse sidebar on clicks when testing Sidebar component', async () => {
     const { Sidebar } = await import('../components/shell/Sidebar');
 
     const { container } = render(
@@ -125,8 +130,6 @@ describe('Cycle 5: ErrorBoundary Integration & Recovery', () => {
       const retryBtn = screen.getByRole('button', { name: /try again/i });
       expect(retryBtn).toBeInTheDocument();
 
-      // Now rerender with shouldThrow=false inside the same tree when clicking Try Again
-      // When the button is clicked, ErrorBoundary resets its hasError state
       rerender(
         <ErrorBoundary>
           <ThrowingComponent shouldThrow={false} />

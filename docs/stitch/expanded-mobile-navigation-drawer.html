@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IndSpoiler Alert - Mobile Navigation Drawer (Expanded View)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Hanken Grotesk"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#e3f2fd',
+              100: '#bbdefb',
+              200: '#90caf9',
+              500: '#2196f3',
+              700: '#1976d2',
+              900: '#0d47a1',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 24;
+    }
+    .material-symbols-outlined.fill {
+      font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-[#f8faff] font-sans min-h-screen text-slate-800 antialiased flex flex-col items-center justify-start sm:py-6">
+  <!-- Component Frame Showcase Container -->
+  <main class="w-full max-w-md mx-auto min-h-screen sm:min-h-0 sm:my-4 flex flex-col bg-white sm:rounded-2xl shadow-xl sm:border border-slate-200 overflow-hidden">
+    <!-- Header -->
+    <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-b from-blue-50/50 to-white">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0d47a1] to-[#1976d2] flex items-center justify-center text-white shadow-md shadow-blue-900/20">
+          <span class="material-symbols-outlined text-xl fill">bolt</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold text-slate-900 text-base tracking-tight leading-none">IndSpoiler Alert</span>
+            <span class="px-1.5 py-0.5 text-[10px] font-mono font-semibold bg-blue-100 text-[#0d47a1] rounded">OS v4.2</span>
+          </div>
+          <p class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase mt-1">Enterprise Liquidation</p>
+        </div>
+      </div>
+      <button class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors" aria-label="Close Drawer">
+        <span class="material-symbols-outlined text-xl">close</span>
+      </button>
+    </div>
+
+    <!-- User Profile Card -->
+    <div class="p-4 mx-4 mt-3 bg-gradient-to-br from-[#f1f5fb] to-[#e8effd] border border-blue-100 rounded-2xl flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="relative">
+          <div class="w-11 h-11 rounded-xl bg-[#0d47a1] text-white flex items-center justify-center font-bold text-sm shadow-sm tracking-wide">DH</div>
+          <span class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full"></span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-semibold text-slate-900 text-sm">Debashishere007</span>
+            <span class="material-symbols-outlined text-blue-600 text-xs fill">verified</span>
+          </div>
+          <div class="flex items-center gap-2 mt-0.5">
+            <span class="text-[11px] text-emerald-700 font-medium bg-emerald-100/70 px-1.5 py-0.5 rounded">Verified Agent</span>
+            <span class="text-[10px] font-mono text-slate-500">ID: #AGT-402</span>
+          </div>
+        </div>
+      </div>
+      <button class="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-white/60">
+        <span class="material-symbols-outlined text-lg">expand_more</span>
+      </button>
+    </div>
+
+    <!-- Stats Matrix Grid -->
+    <div class="grid grid-cols-3 gap-2 px-4 mt-3">
+      <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+        <span class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Active Lots</span>
+        <span class="text-sm font-bold text-slate-900">100</span>
+      </div>
+      <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+        <span class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Pending Bids</span>
+        <span class="text-sm font-bold text-amber-600">3 Active</span>
+      </div>
+      <div class="bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+        <span class="block text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Unread</span>
+        <span class="text-sm font-bold text-blue-600">4 Alerts</span>
+      </div>
+    </div>
+
+    <!-- Primary Navigation Links -->
+    <div class="px-4 mt-4 flex-1">
+      <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold mb-2 px-2">Primary Navigation</div>
+      <nav class="space-y-1">
+        <!-- Ingestion -->
+        <a href="#" class="flex items-center justify-between px-3.5 py-3 rounded-xl bg-[#0d47a1] text-white shadow-md shadow-blue-950/20 font-medium text-sm">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] fill">database</span>
+            <span>Ingestion</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-white/20 text-white">Active</span>
+        </a>
+
+        <!-- Insight -->
+        <a href="#" class="flex items-center justify-between px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-100 font-medium text-sm transition-colors">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-slate-500">query_stats</span>
+            <span>Insight</span>
+          </div>
+          <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+        </a>
+
+        <!-- Workflow -->
+        <a href="#" class="flex items-center justify-between px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-100 font-medium text-sm transition-colors">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-slate-500">account_tree</span>
+            <span>Workflow</span>
+          </div>
+          <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+        </a>
+
+        <!-- Marketplace -->
+        <a href="#" class="flex items-center justify-between px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-100 font-medium text-sm transition-colors">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-slate-500">storefront</span>
+            <span>Marketplace</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700">Live 94.8%</span>
+        </a>
+
+        <!-- Inbox -->
+        <a href="#" class="flex items-center justify-between px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-100 font-medium text-sm transition-colors">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-slate-500">notifications</span>
+            <span>Inbox</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">4 New</span>
+          </div>
+        </a>
+
+        <!-- Settings -->
+        <a href="#" class="flex items-center justify-between px-3.5 py-3 rounded-xl text-slate-700 hover:bg-slate-100 font-medium text-sm transition-colors">
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-[20px] text-slate-500">settings</span>
+            <span>Settings</span>
+          </div>
+          <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+        </a>
+      </nav>
+
+      <!-- Terminal Node Card -->
+      <div class="mt-4 pt-3 border-t border-slate-100">
+        <div class="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold mb-2 px-2">Terminal Node</div>
+        <div class="p-3 bg-slate-50 border border-slate-200/70 rounded-xl flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg bg-slate-200 text-slate-700 flex items-center justify-center">
+              <span class="material-symbols-outlined text-base">hub</span>
+            </div>
+            <div>
+              <span class="text-xs font-semibold text-slate-800 block">Northeast Hub Newark</span>
+              <span class="text-[10px] font-mono text-emerald-600">Node: NA-SOUTH-TX-HUB</span>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-slate-400 text-sm">sync_alt</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="p-4 border-t border-slate-100 bg-slate-50/70 mt-auto">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-base text-slate-500">shield_lock</span>
+          <span class="text-xs font-semibold text-slate-700">FSMA 204 Audited</span>
+        </div>
+        <span class="text-[10px] font-mono text-slate-400">TLS 1.3 End-to-End</span>
+      </div>
+      <button class="w-full py-2.5 px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-colors">
+        <span class="material-symbols-outlined text-sm">logout</span>
+        <span>Sign Out / Lock Console</span>
+      </button>
+      <div class="text-center mt-2.5">
+        <span class="text-[10px] text-slate-400">© 2026 IndSpoiler Alert • Clearinghouse Node v4.2</span>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

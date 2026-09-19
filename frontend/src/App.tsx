@@ -26,6 +26,7 @@ import {
 import { getBuyers } from './services/networkService';
 import { DEFAULT_SUPPLIERS, getCurrentSupplier } from './services/coreService';
 import { ThemeToggle } from './components/shell';
+import { GlobalNavigationBar } from './components/navigation';
 const LotOperationsHubView = React.lazy(() => import('./components/LotOperationsHubView').then(m => ({ default: m.LotOperationsHubView })));
 const WorkflowsView = React.lazy(() => import('./components/WorkflowsView').then(m => ({ default: m.WorkflowsView })));
 const LogisticsView = React.lazy(() => import('./views/LogisticsView').then(m => ({ default: m.LogisticsView || m.default })));
@@ -1523,207 +1524,46 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
     );
   }
 
+  const handleAppLogout = () => {
+    logout();
+    setSelectedSupplier(DEFAULT_SUPPLIERS[0]._id);
+    setInventoryList([]);
+    setLiquidationCycles([]);
+    setAutomationList([]);
+    setSalesRecords([]);
+    setBids([]);
+    setAllBids([]);
+    setSelectedCycleId('');
+    setSelectedLot(null);
+    setSelectedLotForNegotiation(null);
+    setSuppliers(DEFAULT_SUPPLIERS);
+    dispatch(clearSupplierState());
+    dispatch(clearWorkflowState());
+    dispatch(clearInventoryState());
+    setForceLanding(true);
+  };
+
   return (
-    <div className="app-container">
-      {/* Top Right Moon/Sun Theme Toggle */}
-      <ThemeToggle />
-      {/* Sidebar Navigation */}
-      <aside ref={sidebarRef as any} className={`sidebar ${sidebarExpanded ? '' : 'collapsed'}`} onClick={!sidebarExpanded ? () => setSidebarExpanded(true) : undefined}>
-        <div className="brand" onClick={(e) => { e.stopPropagation(); setSidebarExpanded(!sidebarExpanded); }}>
-          <div className="brand-icon">⚡</div>
-          <span className="brand-name">IndSpoiler Alert</span>
-          {sidebarExpanded && (
-            <button className="sidebar-toggle-btn" style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'hsl(var(--text-muted))', cursor: 'pointer', fontSize: '0.8rem', padding: '4px', display: 'flex', alignItems: 'center' }} title="Collapse Sidebar">
-              ◀
-            </button>
-          )}
-        </div>
-        
-        {(() => {
-          const effectiveTab = activeTab === 'lot-hub' ? (returnTab || 'inventory') : activeTab;
-          return (
-        <nav>
-          <ul className="nav-links">
-            {isSupplier && (
-              <>
-                <li 
-                  className={`nav-link ${effectiveTab === 'ingestion' ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveTab('ingestion');
-                    dispatch(setActiveTabRedux('ingestion'));
-                    setSelectedLot(null);
-                  }}
-                >
-                  <FileText size={18} />
-                  <span>Ingestion Engine</span>
-                </li>
-                <li 
-                  className={`nav-link ${effectiveTab === 'inventory' ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveTab('inventory');
-                    dispatch(setActiveTabRedux('inventory'));
-                    setSelectedLot(null);
-                  }}
-                >
-                  <List size={18} />
-                  <span>Insight</span>
-                </li>
-
-                <li 
-                  className={`nav-link ${effectiveTab === 'workflows' ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveTab('workflows');
-                    dispatch(setActiveTabRedux('workflows'));
-                    setSelectedLot(null);
-                  }}
-                >
-                  <Cpu size={18} />
-                  <span>Workflow Setup</span>
-                </li>
-              </>
-            )}
-
-            <li 
-              className={`nav-link ${effectiveTab === 'marketplace' ? 'active' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTab('marketplace');
-                dispatch(setActiveTabRedux('marketplace'));
-                setSelectedLot(null);
-              }}
-            >
-              <ShoppingBag size={18} />
-              <span>Buyer Marketplace</span>
-            </li>
-            {SHOW_DISTRESSED_ANALYTICS && (
-              <li 
-                className={`nav-link ${effectiveTab === 'analytics' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveTab('analytics');
-                  dispatch(setActiveTabRedux('analytics'));
-                  setSelectedLot(null);
-                }}
-              >
-                <BarChart3 size={18} />
-                <span>Distressed Analytics</span>
-              </li>
-            )}
-            {SHOW_FREIGHT_LOGISTICS && (
-              <li 
-                className={`nav-link ${effectiveTab === 'logistics' ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveTab('logistics');
-                  dispatch(setActiveTabRedux('logistics'));
-                  setSelectedLot(null);
-                }}
-              >
-                <Truck size={18} />
-                <span>Freight Logistics</span>
-              </li>
-            )}
-            <li 
-              className={`nav-link ${effectiveTab === 'inbox' ? 'active' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTab('inbox');
-                dispatch(setActiveTabRedux('inbox'));
-                setSelectedLot(null);
-              }}
-            >
-              <Inbox size={18} />
-              <span>Inbox</span>
-            </li>
-            <li 
-              className={`nav-link ${effectiveTab === 'settings' ? 'active' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setActiveTab('settings');
-                dispatch(setActiveTabRedux('settings'));
-                setSelectedLot(null);
-              }}
-            >
-              <Users size={18} />
-              <span>Settings</span>
-            </li>
-          </ul>
-        </nav>
-          );
-        })()}
-
-
-        {/* System Health Indicators & User Profile */}
-        <div className="sidebar-health-status" style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ 
-              width: '8px', 
-              height: '8px', 
-              borderRadius: '50%', 
-              backgroundColor: backendHealthy ? 'hsl(var(--success))' : 'hsl(var(--error))' 
-            }} title={`MongoDB Connection: ${backendHealthy ? 'Connected' : 'Offline'}`} />
-            <span className="health-text">MongoDB: {backendHealthy ? 'Connected' : 'Offline'}</span>
-          </div>
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ 
-              width: '8px', 
-              height: '8px', 
-              borderRadius: '50%', 
-              backgroundColor: sidecarHealthy ? 'hsl(var(--success))' : 'hsl(var(--error))' 
-            }} title={`FastAPI Sidecar: ${sidecarHealthy ? 'Online' : 'Offline'}`} />
-            <span className="health-text">FastAPI: {sidecarHealthy ? 'Online' : 'Offline'}</span>
-          </div>
-
-          {user && (
-            <div style={{ paddingTop: '10px', borderTop: '1px solid hsl(var(--border-color))', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'hsl(var(--text-main))', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {user.email}
-              </div>
-              <button
-                onClick={() => {
-                  logout();
-                  setSelectedSupplier(DEFAULT_SUPPLIERS[0]._id);
-                  setInventoryList([]);
-                  setLiquidationCycles([]);
-                  setAutomationList([]);
-                  setSalesRecords([]);
-                  setBids([]);
-                  setAllBids([]);
-                  setSelectedCycleId('');
-                  setSelectedLot(null);
-                  setSelectedLotForNegotiation(null);
-                  setSuppliers(DEFAULT_SUPPLIERS);
-                  dispatch(clearSupplierState());
-                  dispatch(clearWorkflowState());
-                  dispatch(clearInventoryState());
-                  setForceLanding(true);
-                }}
-                style={{
-                  padding: '6px 10px',
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  borderRadius: '6px',
-                  border: '1px solid hsl(var(--border-color))',
-                  backgroundColor: 'hsl(var(--destructive) / 10%)',
-                  color: 'hsl(var(--destructive))',
-                  cursor: 'pointer',
-                  width: '100%',
-                  textAlign: 'center'
-                }}
-              >
-                Sign Out / Public Landing
-              </button>
-            </div>
-          )}
-        </div>
-      </aside>
+    <div className="app-container flex flex-col min-h-screen w-full">
+      {/* Top-Anchored Global Navigation Bar */}
+      <GlobalNavigationBar
+        onTabChange={(tab) => {
+          setActiveTab(tab);
+          dispatch(setActiveTabRedux(tab));
+          setSelectedLot(null);
+        }}
+        selectedSupplier={selectedSupplier}
+        onSelectSupplier={(supplierId) => {
+          setSelectedSupplier(supplierId);
+          dispatch(setSelectedSupplierIngestion(supplierId));
+          dispatch(fetchCoreReferenceData({ supplierId, token }) as any);
+          dispatch(fetchBuyerLists(supplierId) as any);
+        }}
+        onLogout={handleAppLogout}
+      />
 
       {/* Main Content Pane */}
-      <main className="main-content">
+      <main className="main-content w-full flex-1">
         
         {/* Tab 1: Ingestion Engine */}
         {activeTab === 'ingestion' && (
