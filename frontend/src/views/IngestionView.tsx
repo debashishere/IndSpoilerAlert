@@ -1,58 +1,123 @@
-import { Database, DollarSign, Users } from 'lucide-react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setPipelineTab } from '../store/slices/ingestionSlice';
+import { setPipelineTab, type PipelineTab } from '../store/slices/ingestionSlice';
 import { 
   BuyerRegistryPanel,
   SalesRegistryPanel,
-  InventoryRegistryPanel 
+  InventoryRegistryPanel,
+  IngestionTelemetryBar,
+  IngestionHubConnectors,
+  PipelineSwitcherBar,
+  UnifiedIngestionModal,
+  type IngestionTarget
 } from '../components/domain/ingestion';
+import { INGESTION_CONSTANTS } from '../components/domain/ingestion/constants/ingestionConstants';
+import type { IngestionViewProps } from '../components/domain/ingestion/types/ingestion.types';
 
-export const IngestionView: React.FC<{ onOpenLotHub?: (lot: any) => void }> = ({ onOpenLotHub }) => {
+export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) => {
   const dispatch = useAppDispatch();
   const pipelineTab = useAppSelector((state) => state.ingestion.pipelineTab);
-  const buyers = useAppSelector((state) => state.core.buyers);
+
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [modalTarget, setModalTarget] = useState<IngestionTarget>('inventory');
+
+  const handleTabChange = useCallback((tab: PipelineTab) => {
+    dispatch(setPipelineTab(tab));
+    // Reset toggle-all state and notify switcher bar
+    window.dispatchEvent(new CustomEvent('toggle-all-state-changed', { detail: { allOpen: false } }));
+  }, [dispatch]);
+
+  const handleOpenBuyerLists = useCallback(() => {
+    dispatch(setPipelineTab('buyers'));
+    window.dispatchEvent(new CustomEvent('open-buyer-list-manager'));
+  }, [dispatch]);
+
+  const handleAddBuyer = useCallback(() => {
+    dispatch(setPipelineTab('buyers'));
+    window.dispatchEvent(new CustomEvent('open-add-buyer-modal'));
+  }, [dispatch]);
+
+  const handleToggleAll = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('toggle-all-rows'));
+  }, []);
+
+  const handleOpenUploadModal = useCallback((target?: IngestionTarget) => {
+    setModalTarget(target || (pipelineTab as IngestionTarget) || 'inventory');
+    setIsUploadModalOpen(true);
+  }, [pipelineTab]);
+
+  const handleCloseUploadModal = useCallback(() => {
+    setIsUploadModalOpen(false);
+  }, []);
+
+  // Listen for open-ingestion-upload-modal event (can be dispatched from child panels or global actions)
+  useEffect(() => {
+    const handleOpenEvent = (e: CustomEvent<{ target?: IngestionTarget }> | Event) => {
+      const customEvent = e as CustomEvent<{ target?: IngestionTarget }>;
+      const customTarget = customEvent.detail?.target;
+      handleOpenUploadModal(customTarget);
+    };
+
+    window.addEventListener('open-ingestion-upload-modal', handleOpenEvent);
+    return () => {
+      window.removeEventListener('open-ingestion-upload-modal', handleOpenEvent);
+    };
+  }, [handleOpenUploadModal]);
 
   return (
-    <div className="ingestion-view-wrapper">
-      <header className="header" style={{ marginBottom: '20px' }}>
-        <h1 className="header-title">Surplus Ingestion Pipeline</h1>
-        <p className="header-subtitle">
-          Upload unstructured invoice lists and sales reports for AI-driven parsing and reconciliation.
+    <div className="w-full px-4 sm:px-6 py-4 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans text-slate-900 dark:text-slate-100" id="ingestion-view">
+      {/* 1. Master Header */}
+      <header className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+          {INGESTION_CONSTANTS.TITLE}
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+          {INGESTION_CONSTANTS.SUBTITLE}
         </p>
       </header>
 
-      <div className="ingestion-tabs-container">
-        <button
-          onClick={() => dispatch(setPipelineTab('inventory'))}
-          className={`ingestion-tab-btn ${pipelineTab === 'inventory' ? 'active-inventory' : ''}`}
-        >
-          <Database size={16} />
-          <span>📦 Inventory Pipeline</span>
-        </button>
-        <button
-          onClick={() => dispatch(setPipelineTab('sales'))}
-          className={`ingestion-tab-btn ${pipelineTab === 'sales' ? 'active-sales' : ''}`}
-        >
-          <DollarSign size={16} />
-          <span>💰 Sales Pipeline</span>
-        </button>
-        <button
-          onClick={() => dispatch(setPipelineTab('buyers'))}
-          className={`ingestion-tab-btn ${pipelineTab === 'buyers' ? 'active-buyers' : ''}`}
-        >
-          <Users size={16} />
-          <span>👥 Buyer List</span>
-          <span className="buyer-count-badge">
-            {buyers.length}
-          </span>
-        </button>
+      {/* 2. Operational Telemetry Bar (4 KPI Cards) */}
+      <IngestionTelemetryBar />
+
+      {/* 3. Collapsible Dedicated Ingestion Hub & Connectors */}
+      <IngestionHubConnectors onOpenUploadModal={() => handleOpenUploadModal(pipelineTab as IngestionTarget)} />
+
+      {/* 4. Master Pipeline Switcher Bar */}
+      <PipelineSwitcherBar
+        activeTab={pipelineTab}
+        onTabChange={handleTabChange}
+        onOpenBuyerLists={handleOpenBuyerLists}
+        onAddBuyer={handleAddBuyer}
+        onToggleAll={handleToggleAll}
+      />
+
+      {/* 5. Active Pipeline Workbenches */}
+      <div className="w-full transition-opacity duration-150">
+        {pipelineTab === 'inventory' && (
+          <div id="panel-inventory">
+            <InventoryRegistryPanel onOpenLotHub={onOpenLotHub} />
+          </div>
+        )}
+
+        {pipelineTab === 'sales' && (
+          <div id="panel-sales">
+            <SalesRegistryPanel />
+          </div>
+        )}
+
+        {pipelineTab === 'buyers' && (
+          <div id="panel-buyer">
+            <BuyerRegistryPanel />
+          </div>
+        )}
       </div>
 
-      {pipelineTab === 'inventory' && <InventoryRegistryPanel onOpenLotHub={onOpenLotHub} />}
-
-      {pipelineTab === 'sales' && <SalesRegistryPanel />}
-
-      {pipelineTab === 'buyers' && <BuyerRegistryPanel />}
+      {/* 6. Unified Surplus Data Ingestion Modal (Root Overlay) */}
+      <UnifiedIngestionModal
+        isOpen={isUploadModalOpen}
+        initialTarget={modalTarget}
+        onClose={handleCloseUploadModal}
+      />
     </div>
   );
 };

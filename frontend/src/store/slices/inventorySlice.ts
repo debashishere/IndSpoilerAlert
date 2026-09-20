@@ -540,10 +540,20 @@ export const selectFilteredInventoryLots = createSelector(
       const categoryName = lot.productId?.category || lot.category || '';
       const matchesCategory = !category || categoryName === category;
 
-      const matchesStatus =
-        !status ||
-        lot.status?.toLowerCase() === status.toLowerCase() ||
-        (status.toLowerCase() === 'active' && (lot.status?.toLowerCase() === 'active listing' || lot.status?.toLowerCase() === 'active'));
+      const lotStatusLower = (lot.status || '').toLowerCase();
+      const filterStatusLower = status.toLowerCase();
+      let matchesStatus = !status || lotStatusLower === filterStatusLower;
+      if (!matchesStatus && status) {
+        if (filterStatusLower === 'active' || filterStatusLower === 'active list') {
+          matchesStatus = lotStatusLower === 'active' || lotStatusLower === 'active list' || lotStatusLower === 'active listing';
+        } else if (filterStatusLower === 'critical rsl' || filterStatusLower === 'critical') {
+          matchesStatus = lotStatusLower === 'critical' || lotStatusLower === 'critical rsl';
+        } else if (filterStatusLower === 'stable rsl' || filterStatusLower === 'stable') {
+          matchesStatus = lotStatusLower === 'stable' || lotStatusLower === 'stable rsl';
+        } else if (filterStatusLower === 'urgent rsl' || filterStatusLower === 'urgent') {
+          matchesStatus = lotStatusLower === 'urgent' || lotStatusLower === 'urgent rsl';
+        }
+      }
 
       return matchesSearch && matchesSupplier && matchesDC && matchesCategory && matchesStatus;
     });

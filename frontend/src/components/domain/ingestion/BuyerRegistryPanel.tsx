@@ -1,63 +1,28 @@
-import { useEffect, useRef, useState } from 'react';
-import { Users, CheckCircle2, AlertTriangle, UploadCloud, Check, X, Maximize2, Minimize2, ListFilter } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Users, UploadCloud, ListFilter, Plus } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { 
-  setBuyerSearch,
-  setBuyerTierFilter,
-  setBuyerNewName,
-  setBuyerNewEmail,
-  setBuyerNewTier,
-  setBuyerFile,
-  setBuyerParsedResult,
-  updateBuyerMapping,
-  addBuyerThunk,
-  uploadBuyerThunk,
-  confirmBuyerThunk,
+  setBuyerFile, 
+  setBuyerParsedResult, 
+  updateBuyerMapping, 
+  uploadBuyerThunk, 
+  confirmBuyerThunk 
 } from '../../../store/slices/ingestionSlice';
-import { fetchCoreReferenceData, fetchBuyerLists, type Buyer } from '../../../store/slices/coreSlice';
+import { fetchCoreReferenceData, fetchBuyerLists } from '../../../store/slices/coreSlice';
 import { useAuth } from '../../../context/AuthContext';
 import { BuyerDetailDrawer } from './BuyerDetailDrawer';
 import { BuyerListManagerModal } from './BuyerListManagerModal';
-import { BuyerTable } from '../inventory/BuyerTable';
+import { useBuyerPipeline } from './hooks/useBuyerPipeline';
+import { BuyerFilterBar } from './subcomponents/BuyerFilterBar';
+import { BuyerModernTable } from './subcomponents/BuyerModernTable';
+import { AddBuyerModal } from './subcomponents/AddBuyerModal';
+import { BuyerUploadModal } from './subcomponents/BuyerUploadModal';
+import { BuyerMappingPreview } from './subcomponents/BuyerMappingPreview';
 
-const BUYER_OPTIONS = [
-  { value: 'companyName', label: 'Company / Buyer Name' },
-  { value: 'email', label: 'Email Address' },
-  { value: 'tier', label: 'Buyer Tier' },
-  { value: 'acceptsShortDated', label: 'Accepts Short-Dated' },
-  { value: 'minShelfLife', label: 'Min Shelf Life (Days)' },
-  { value: 'categories', label: 'Categories' },
-  { value: 'transportRadius', label: 'Transport Radius (Miles)' },
-  { value: 'excludedAllergens', label: 'Excluded Allergens' },
-  { value: 'phone', label: 'Phone Number' },
-  { value: 'address', label: 'Address' },
-];
-
-export const BuyerRegistryPanel = () => {
+export const BuyerRegistryPanel: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { user, token } = useAuth();
-  const buyers = useAppSelector((state) => state.core.buyers);
+  const { token } = useAuth();
   const selectedSupplier = useAppSelector((state) => state.ingestion?.selectedSupplier || '');
-
-  const [selectedBuyer, setSelectedBuyer] = useState<Buyer | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [showInactive, setShowInactive] = useState(false);
-  const [selectedModalListId, setSelectedModalListId] = useState<string | undefined>(undefined);
-  const [statusFilter, setStatusFilter] = useState('');
-
-  useEffect(() => {
-    dispatch(fetchCoreReferenceData({ all: showInactive, supplierId: selectedSupplier, token: token || undefined, email: user?.email }));
-    dispatch(fetchBuyerLists({ supplierId: selectedSupplier, token: token || undefined }));
-  }, [dispatch, showInactive, selectedSupplier, token, user?.email]);
-
-  const search = useAppSelector((state) => state.ingestion.buyerSearch);
-  const tierFilter = useAppSelector((state) => state.ingestion.buyerTierFilter);
-  const newName = useAppSelector((state) => state.ingestion.buyerNewName);
-  const newEmail = useAppSelector((state) => state.ingestion.buyerNewEmail);
-  const newTier = useAppSelector((state) => state.ingestion.buyerNewTier);
-  const saving = useAppSelector((state) => state.ingestion.buyerSaving);
-  const success = useAppSelector((state) => state.ingestion.buyerSuccess);
-  const error = useAppSelector((state) => state.ingestion.buyerError);
 
   const buyerParsedResult = useAppSelector((state) => state.ingestion.buyerParsedResult);
   const buyerMappings = useAppSelector((state) => state.ingestion.buyerMappings);
@@ -66,67 +31,26 @@ export const BuyerRegistryPanel = () => {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isAddBuyerModalOpen, setIsAddBuyerModalOpen] = useState(false);
-  const [isBuyerListModalOpen, setIsBuyerListModalOpen] = useState(false);
-
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const getMappedField = (headerName: string): string => {
-    const found = Object.entries(buyerMappings).find(([, h]) => h === headerName)?.[0] || '';
-    if (found === 'name') return 'companyName';
-    return found;
+  // Headless hook orchestrating pipeline state, filters, drawers, and modal visibility
+  const pipeline = useBuyerPipeline();
+
+  useEffect(() => {
+    dispatch(fetchCoreReferenceData({ all: pipeline.showInactive, supplierId: selectedSupplier, token: token || undefined }));
+    dispatch(fetchBuyerLists({ supplierId: selectedSupplier, token: token || undefined }));
+  }, [dispatch, pipeline.showInactive, selectedSupplier, token]);
+
+  const handleCsvSelect = async (file: File) => {
+    setIsImportModalOpen(false);
+    dispatch(setBuyerFile({ name: file.name, size: file.size }));
+    await dispatch(uploadBuyerThunk({ file }));
   };
 
-  const getFieldNameLabel = (fieldValue: string): string => {
-    const norm = fieldValue === 'name' ? 'companyName' : fieldValue;
-    const found = BUYER_OPTIONS.find((o) => o.value === norm);
-    return found ? found.label : fieldValue;
-  };
-
-  const handleMappingChange = (dbField: string, headerName: string) => {
-    dispatch(updateBuyerMapping({ dbField, headerName }));
-    if (dbField === 'companyName') {
-      dispatch(updateBuyerMapping({ dbField: 'name', headerName }));
-    }
-  };
-
-  const filteredBuyers = buyers.filter((b) => {
-    const isInactive = b.isActive === false;
-    if (!showInactive && isInactive) return false;
-    const q = search.toLowerCase();
-    const nm = (b.companyName || b.name || '').toLowerCase();
-    const em = (b.email || '').toLowerCase();
-    const matchSearch = !search || nm.includes(q) || em.includes(q);
-    const matchTier = tierFilter === 'all' || b.tier === tierFilter;
-
-    let matchStatus = true;
-    if (statusFilter === 'active') matchStatus = !isInactive;
-    else if (statusFilter === 'inactive') matchStatus = isInactive;
-    else if (statusFilter === 'no-bidding') matchStatus = b.optInBidding === false;
-    else if (statusFilter === 'no-sales') matchStatus = b.optInSales === false;
-
-    return matchSearch && matchTier && matchStatus;
-  });
-
-
-
-
-
-  const handleAddBuyer = async () => {
-    if (!newName || !newEmail) return;
-    await dispatch(addBuyerThunk({ companyName: newName, email: newEmail, tier: newTier }));
-    dispatch(setBuyerNewName(''));
-    dispatch(setBuyerNewEmail(''));
-    // Automatically re-fetch buyers into core slice
-    dispatch(fetchCoreReferenceData({ supplierId: selectedSupplier }));
-  };
-
-  const handleCsvSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleHiddenFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    setIsImportModalOpen(false);
-    dispatch(setBuyerFile({ name: f.name, size: f.size }));
-    await dispatch(uploadBuyerThunk({ file: f }));
+    await handleCsvSelect(f);
     if (e.target) e.target.value = '';
   };
 
@@ -153,833 +77,155 @@ export const BuyerRegistryPanel = () => {
     setIsFullscreen(false);
   };
 
+  const handleMappingChange = (dbField: string, headerName: string) => {
+    dispatch(updateBuyerMapping({ dbField, headerName }));
+    if (dbField === 'companyName') {
+      dispatch(updateBuyerMapping({ dbField: 'name', headerName }));
+    }
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {/* Top Header & Ingestion Actions */}
-      <div className="card" style={{ borderLeft: '4px solid hsl(var(--primary))' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+    <div className="flex flex-col gap-5" id="panel-buyer">
+      {/* 1. Buyer Pipeline Subheader */}
+      <div className="card bg-white p-5 rounded-xl border border-slate-200 shadow-xs border-l-4 border-l-blue-600">
+        <div className="flex justify-between items-center flex-wrap gap-4">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-              <Users size={20} style={{ color: 'hsl(var(--primary))' }} />
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Buyer List Ingestion</h3>
-              <span
-                style={{
-                  background: 'hsl(var(--primary) / 0.15)',
-                  color: 'hsl(var(--primary))',
-                  border: '1px solid hsl(var(--primary) / 0.3)',
-                  fontSize: '11px',
-                  fontWeight: 600,
-                  padding: '2px 10px',
-                  borderRadius: '10px',
-                }}
-              >
-                {buyers.length} Registered Buyers
+            <div className="flex items-center gap-3 mb-1.5">
+              <Users className="w-5 h-5 text-blue-600" />
+              <h3 className="m-0 text-[1.05rem] font-bold text-slate-900">
+                Buyer Network &amp; Allocation Accounts
+              </h3>
+              <span className="sr-only">Buyer List Ingestion</span>
+              <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
+                {pipeline.buyers.length} Verified Buyers
               </span>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-muted))', margin: 0 }}>
-              Manage your registered buyer network. Add individual buyers manually or bulk-import via CSV. Buyers added here are available across all workflows.
+            <p className="text-xs text-slate-500 m-0">
+              50 verified liquidation buyers, discount channels, and salvage partners. Manage your registered buyer network and cross-dock allocation agreements.
             </p>
           </div>
 
           {/* Action Buttons in Place */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="flex items-center gap-2.5 flex-wrap">
             <button
               type="button"
-              onClick={() => setIsImportModalOpen(true)}
-              style={{
-                padding: '9px 16px',
-                borderRadius: '8px',
-                border: '1px solid hsl(var(--primary) / 0.4)',
-                background: 'hsl(var(--primary) / 0.12)',
-                color: 'hsl(var(--primary))',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              }}
+              onClick={() => pipeline.setIsBuyerListModalOpen(true)}
+              className="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
             >
-              <UploadCloud size={16} /> Bulk Import via CSV
+              <ListFilter className="w-4 h-4 text-slate-500" />
+              <span>Buyer Lists</span>
             </button>
 
             <button
               type="button"
-              onClick={() => setIsAddBuyerModalOpen(true)}
-              style={{
-                padding: '9px 16px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
-                color: 'white',
-                fontSize: '13px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 4px 14px hsl(262, 83%, 53% / 0.35)',
-              }}
-            >
-              <Users size={16} /> Add Buyer Manually
-            </button>
-
-            <button
-              type="button"
+              aria-label="Bulk Import via CSV"
               onClick={() => {
-                setSelectedModalListId(undefined);
-                setIsBuyerListModalOpen(true);
+                window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'buyers' } }));
+                setIsImportModalOpen(true);
               }}
-              style={{
-                padding: '9px 16px',
-                borderRadius: '8px',
-                border: '1px solid hsl(var(--success) / 0.4)',
-                background: 'hsl(var(--success) / 0.15)',
-                color: 'hsl(var(--success))',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              }}
+              className="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
             >
-              <ListFilter size={16} /> Buyer Lists
+              <UploadCloud className="w-4 h-4 text-blue-600" />
+              <span>Import CSV</span>
+            </button>
+
+            <button
+              type="button"
+              aria-label="Add Buyer Manually"
+              onClick={() => pipeline.setIsAddBuyerModalOpen(true)}
+              className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>+ Add Buyer</span>
             </button>
           </div>
         </div>
       </div>
 
+      {/* Hidden File Input for ref/test compatibility */}
+      <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleHiddenFileInputChange} />
 
+      {/* Loading Step Banner */}
+      {buyerLoading && (
+        <div className="card bg-white p-8 rounded-xl border border-slate-200 shadow-xs text-center">
+          <div className="loader mx-auto mb-3" />
+          <p className="text-sm font-semibold text-slate-800 m-0 mb-1">Processing Buyer CSV...</p>
+          <p className="text-xs text-slate-500 m-0">{buyerLoadingStep || 'Analyzing columns...'}</p>
+        </div>
+      )}
 
+      {/* Mapping Confirmation Screen */}
+      {!buyerLoading && buyerParsedResult && (
+        <BuyerMappingPreview
+          buyerParsedResult={buyerParsedResult}
+          buyerMappings={buyerMappings}
+          buyerLoading={buyerLoading}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={() => setIsFullscreen(!isFullscreen)}
+          onConfirm={handleConfirmBuyerImport}
+          onCancel={handleCancelBuyerImport}
+          onMappingChange={handleMappingChange}
+        />
+      )}
+
+      {/* 2. Dedicated Buyer Filter Bar */}
+      <BuyerFilterBar
+        search={pipeline.search}
+        tier={pipeline.tier}
+        status={pipeline.status}
+        showInactive={pipeline.showInactive}
+        tiersList={pipeline.tiersList}
+        statusesList={pipeline.statusesList}
+        onSearchChange={pipeline.handleSearchChange}
+        onTierChange={pipeline.handleTierChange}
+        onStatusChange={pipeline.handleStatusChange}
+        onShowInactiveChange={pipeline.handleShowInactiveChange}
+        onClearFilters={pipeline.handleClearFilters}
+      />
+
+      {/* 3. Loaded Buyer Data Modern Grid Table */}
+      <BuyerModernTable
+        buyers={pipeline.paginatedBuyers}
+        expandedRowIds={pipeline.expandedRowIds}
+        onToggleRow={pipeline.toggleRow}
+        onEditBuyerProfile={pipeline.handleEditBuyerProfile}
+        onSendLotTender={pipeline.handleSendLotTender}
+        onForwardShortDatedOffers={pipeline.handleForwardShortDatedOffers}
+        onRouteZeroWasteDonation={pipeline.handleRouteZeroWasteDonation}
+        currentPage={pipeline.currentPage}
+        totalPages={pipeline.totalPages}
+        onPageChange={pipeline.setCurrentPage}
+        totalCount={pipeline.filteredBuyers.length}
+      />
+
+      {/* Modals & Slide-over Drawers (Mounted at Root Shell) */}
       <BuyerListManagerModal 
-        isOpen={isBuyerListModalOpen} 
-        onClose={() => setIsBuyerListModalOpen(false)}
-        initialSelectedListId={selectedModalListId}
+        isOpen={pipeline.isBuyerListModalOpen} 
+        onClose={() => pipeline.setIsBuyerListModalOpen(false)}
         supplierId={selectedSupplier}
       />
 
-      {/* Hidden File Input (Always in DOM for ref & tests) */}
-      <input ref={fileRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleCsvSelect} />
+      <AddBuyerModal
+        isOpen={pipeline.isAddBuyerModalOpen}
+        onClose={() => pipeline.setIsAddBuyerModalOpen(false)}
+        supplierId={selectedSupplier}
+      />
 
-      {/* Ingestion Mapping State OR Processing State */}
-      {buyerLoading ? (
-        <div className="card" style={{ textAlign: 'center', padding: '32px' }}>
-          <div className="loader" style={{ margin: '0 auto 12px' }} />
-          <p style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 4px' }}>Processing Buyer CSV...</p>
-          <p style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', margin: 0 }}>{buyerLoadingStep || 'Analyzing columns...'}</p>
-        </div>
-      ) : buyerParsedResult ? (
-        <div
-          className="card"
-          style={{
-            border: '1px solid hsl(var(--primary) / 0.5)',
-            background: 'hsl(var(--bg-card))',
-            minHeight: '400px',
-            display: 'flex',
-            flexDirection: 'column',
-            ...(isFullscreen
-              ? {
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 9999,
-                  background: 'hsl(var(--bg-card))',
-                  padding: '24px',
-                  borderRadius: 0,
-                  overflow: 'hidden',
-                }
-              : {}),
-          }}
-        >
-          <div className="preview-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
-            <div className="preview-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-                  <CheckCircle2 size={20} style={{ color: 'hsl(var(--primary))' }} />
-                  <h3 style={{ fontSize: '1.2rem', margin: 0, color: 'white', fontWeight: 700 }}>
-                    Confirm Buyer CSV Mapping
-                  </h3>
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      background: 'hsl(var(--primary) / 0.2)',
-                      color: 'hsl(var(--primary))',
-                      border: '1px solid hsl(var(--primary) / 0.4)',
-                      padding: '2px 10px',
-                      borderRadius: '12px',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {buyerParsedResult.fileName}
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.85rem', color: 'hsl(var(--text-muted))', margin: 0 }}>
-                  Map CSV columns to database fields before importing into buyer registry. Scroll horizontally to review raw grid extraction.
-                </p>
-              </div>
+      <BuyerUploadModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onFileSelect={handleCsvSelect}
+      />
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => setIsFullscreen(!isFullscreen)}
-                  title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 12px',
-                    fontSize: '12px',
-                    borderRadius: '8px',
-                    border: '1px solid hsl(var(--border-color))',
-                    background: 'hsl(var(--bg-card))',
-                    color: 'white',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-                  <span>{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmBuyerImport}
-                  disabled={buyerLoading}
-                  style={{
-                    padding: '9px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    fontWeight: 700,
-                    fontSize: '13px',
-                    cursor: buyerLoading ? 'not-allowed' : 'pointer',
-                    background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
-                    color: 'white',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    boxShadow: '0 4px 14px hsl(262, 83%, 53% / 0.3)',
-                  }}
-                >
-                  <Check size={16} /> Confirm & Ingest Buyers
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancelBuyerImport}
-                  style={{
-                    padding: '9px 12px',
-                    borderRadius: '8px',
-                    border: '1px solid hsl(var(--border-color))',
-                    background: 'hsl(var(--bg-card))',
-                    color: 'hsl(var(--text-muted))',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                  title="Cancel"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            </div>
-
-            <div
-              className="preview-grid-wrapper"
-              style={{
-                maxHeight: isFullscreen ? 'calc(100vh - 180px)' : '550px',
-                overflow: 'auto',
-                borderRadius: '8px',
-                border: '1px solid hsl(var(--border-color))',
-              }}
-            >
-              <table className="preview-table">
-                <thead>
-                  <tr>
-                    {(buyerParsedResult.rawGrid?.[0] || []).map((header: string, colIdx: number) => {
-                      const mappedField = getMappedField(header);
-                      return (
-                        <th key={colIdx} className={mappedField ? 'mapping-highlight' : ''}>
-                          <div className="mapping-badge-container">
-                            <span style={{ fontWeight: 'bold' }}>{header}</span>
-                            <select
-                              className="mapping-select"
-                              value={mappedField}
-                              onChange={(e) => handleMappingChange(e.target.value, header)}
-                            >
-                              <option value="">Unmapped</option>
-                              {BUYER_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>
-                                  {opt.label}
-                                </option>
-                              ))}
-                            </select>
-                            {mappedField && (
-                              <span className="badge badge-info" style={{ marginTop: '4px', fontSize: '0.65rem' }}>
-                                {getFieldNameLabel(mappedField)}
-                              </span>
-                            )}
-                          </div>
-                        </th>
-                      );
-                    })}
-                  </tr>
-                </thead>
-                <tbody>
-                  {(buyerParsedResult.rawGrid?.slice(1) || []).map((row: string[], rowIdx: number) => (
-                    <tr key={rowIdx}>
-                      {row.map((cell: string, cellIdx: number) => {
-                        const header = buyerParsedResult.rawGrid[0]?.[cellIdx];
-                        const mappedField = header ? getMappedField(header) : '';
-                        return (
-                          <td key={cellIdx} className={mappedField ? 'mapping-highlight' : ''}>
-                            {cell || <span style={{ color: 'hsl(var(--text-muted))', fontStyle: 'italic' }}>empty</span>}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {/* Modal 1: Bulk Import via CSV Modal */}
-      {isImportModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'hsl(var(--bg-card) / 0.8)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '20px',
-          }}
-          onClick={() => setIsImportModalOpen(false)}
-        >
-          <div
-            style={{
-              background: 'hsl(var(--bg-card))',
-              border: '1px solid hsl(var(--primary) / 0.35)',
-              borderRadius: '16px',
-              width: '100%',
-              maxWidth: '540px',
-              padding: '28px',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.6), 0 0 20px hsl(var(--primary) / 0.15)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div
-                  style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '12px',
-                    background: 'hsl(var(--primary) / 0.15)',
-                    border: '1px solid hsl(var(--primary) / 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'hsl(var(--primary))',
-                  }}
-                >
-                  <UploadCloud size={22} />
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'white' }}>
-                    Bulk Import Buyers via CSV
-                  </h3>
-                  <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'hsl(var(--text-muted))' }}>
-                    Upload a structured CSV file to import multiple buyers into your registry.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsImportModalOpen(false)}
-                style={{
-                  background: 'hsl(var(--bg-card))',
-                  border: '1px solid hsl(var(--border-color))',
-                  borderRadius: '8px',
-                  color: 'hsl(var(--text-muted))',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Drop Zone */}
-            <div
-              onClick={() => fileRef.current?.click()}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onDrop={async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const f = e.dataTransfer.files?.[0];
-                if (!f) return;
-                setIsImportModalOpen(false);
-                dispatch(setBuyerFile({ name: f.name, size: f.size }));
-                await dispatch(uploadBuyerThunk({ file: f }));
-              }}
-              style={{
-                border: '2px dashed hsl(var(--primary) / 0.4)',
-                borderRadius: '12px',
-                background: 'hsl(var(--primary) / 0.04)',
-                padding: '32px 20px',
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-              }}
-            >
-              <UploadCloud size={38} style={{ color: 'hsl(var(--primary))', marginBottom: '10px' }} />
-              <h4 style={{ margin: '0 0 6px', fontSize: '0.95rem', fontWeight: 600, color: 'white' }}>
-                Select or drag your CSV file here
-              </h4>
-              <p style={{ margin: 0, fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
-                Supports <code style={{ color: 'hsl(var(--primary))' }}>.csv</code> files up to 500 records per import
-              </p>
-            </div>
-
-            {/* Header info */}
-            <div
-              style={{
-                background: 'hsl(var(--bg-card))',
-                borderRadius: '10px',
-                padding: '12px 16px',
-                border: '1px solid hsl(var(--border-color))',
-                fontSize: '0.8rem',
-              }}
-            >
-              <div style={{ fontWeight: 600, color: 'hsl(var(--text-secondary))', marginBottom: '6px' }}>
-                Supported CSV Column Format:
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <span style={{ background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
-                  name / companyName
-                </span>
-                <span style={{ background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
-                  email
-                </span>
-                <span style={{ background: 'hsl(var(--primary) / 0.15)', color: 'hsl(var(--primary))', padding: '3px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>
-                  tier
-                </span>
-              </div>
-            </div>
-
-            {/* Footer buttons */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button
-                type="button"
-                onClick={() => setIsImportModalOpen(false)}
-                style={{
-                  padding: '9px 18px',
-                  borderRadius: '8px',
-                  border: '1px solid hsl(var(--border-color))',
-                  background: 'hsl(var(--bg-card))',
-                  color: 'hsl(var(--text-muted))',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                style={{
-                  padding: '9px 20px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))',
-                  color: 'white',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 14px hsl(262, 83%, 53% / 0.3)',
-                }}
-              >
-                <UploadCloud size={16} /> Select CSV File
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 2: Add Buyer Manually Modal */}
-      {isAddBuyerModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'hsl(var(--bg-card) / 0.8)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '20px',
-          }}
-          onClick={() => setIsAddBuyerModalOpen(false)}
-        >
-          <div
-            style={{
-              background: 'hsl(var(--bg-card))',
-              border: '1px solid hsl(var(--primary) / 0.35)',
-              borderRadius: '16px',
-              width: '100%',
-              maxWidth: '500px',
-              padding: '28px',
-              boxShadow: '0 24px 48px rgba(0, 0, 0, 0.6), 0 0 20px hsl(var(--primary) / 0.15)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '20px',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div
-                  style={{
-                    width: '42px',
-                    height: '42px',
-                    borderRadius: '12px',
-                    background: 'hsl(var(--primary) / 0.15)',
-                    border: '1px solid hsl(var(--primary) / 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'hsl(var(--primary))',
-                  }}
-                >
-                  <Users size={22} />
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: 'white' }}>
-                    Add Buyer Manually
-                  </h3>
-                  <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'hsl(var(--text-muted))' }}>
-                    Register a new buyer into your global network.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsAddBuyerModalOpen(false)}
-                style={{
-                  background: 'hsl(var(--bg-card))',
-                  border: '1px solid hsl(var(--border-color))',
-                  borderRadius: '8px',
-                  color: 'hsl(var(--text-muted))',
-                  width: '32px',
-                  height: '32px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {success && (
-              <div
-                style={{
-                  background: 'hsl(var(--success) / 0.1)',
-                  border: '1px solid hsl(var(--success) / 0.3)',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  fontSize: '13px',
-                  color: 'hsl(var(--success))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <CheckCircle2 size={16} /> {success}
-              </div>
-            )}
-            {error && (
-              <div
-                style={{
-                  background: 'hsl(var(--error) / 0.1)',
-                  border: '1px solid hsl(var(--error) / 0.3)',
-                  borderRadius: '8px',
-                  padding: '10px 14px',
-                  fontSize: '13px',
-                  color: 'hsl(var(--error))',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <AlertTriangle size={16} /> {error}
-              </div>
-            )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'hsl(var(--text-secondary))', display: 'block', marginBottom: '6px' }}>
-                  Company / Buyer Name *
-                </label>
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => dispatch(setBuyerNewName(e.target.value))}
-                  placeholder="e.g. Costco Wholesale"
-                  style={{
-                    width: '100%',
-                    background: 'hsl(var(--bg-card))',
-                    border: '1px solid hsl(var(--border-color))',
-                    borderRadius: '8px',
-                    padding: '10px 12px',
-                    color: 'white',
-                    fontSize: '13px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'hsl(var(--text-secondary))', display: 'block', marginBottom: '6px' }}>
-                  Email Address *
-                </label>
-                <input
-                  type="email"
-                  value={newEmail}
-                  onChange={(e) => dispatch(setBuyerNewEmail(e.target.value))}
-                  placeholder="buyer@company.com"
-                  style={{
-                    width: '100%',
-                    background: 'hsl(var(--bg-card))',
-                    border: '1px solid hsl(var(--border-color))',
-                    borderRadius: '8px',
-                    padding: '10px 12px',
-                    color: 'white',
-                    fontSize: '13px',
-                    boxSizing: 'border-box',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: '12px', fontWeight: 600, color: 'hsl(var(--text-secondary))', display: 'block', marginBottom: '6px' }}>
-                  Buyer Tier
-                </label>
-                <select
-                  value={newTier}
-                  onChange={(e) => dispatch(setBuyerNewTier(e.target.value))}
-                  style={{
-                    width: '100%',
-                    background: 'hsl(var(--bg-card))',
-                    border: '1px solid hsl(var(--border-color))',
-                    borderRadius: '8px',
-                    padding: '10px 12px',
-                    color: 'white',
-                    fontSize: '13px',
-                    outline: 'none',
-                  }}
-                >
-                  <option value="tier1">Tier 1 — Primary Retailer</option>
-                  <option value="tier2">Tier 2 — Regional Retailer</option>
-                  <option value="liquidator">Liquidator / Secondary Market</option>
-                  <option value="custom">Custom / Other</option>
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-              <button
-                type="button"
-                onClick={() => setIsAddBuyerModalOpen(false)}
-                style={{
-                  padding: '9px 18px',
-                  borderRadius: '8px',
-                  border: '1px solid hsl(var(--border-color))',
-                  background: 'hsl(var(--bg-card))',
-                  color: 'hsl(var(--text-muted))',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={!newName || !newEmail || saving}
-                onClick={handleAddBuyer}
-                style={{
-                  padding: '9px 20px',
-                  borderRadius: '8px',
-                  border: 'none',
-                  fontWeight: 700,
-                  fontSize: '13px',
-                  cursor: newName && newEmail && !saving ? 'pointer' : 'not-allowed',
-                  background:
-                    newName && newEmail
-                      ? 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary)))'
-                      : 'hsl(var(--border-color))',
-                  color: 'white',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: newName && newEmail ? '0 4px 14px hsl(262, 83%, 53% / 0.3)' : 'none',
-                }}
-              >
-                {saving ? '⏳ Saving...' : '+ Add to Buyer Registry'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bottom Section: Buyer Data List Section with Migrated Filter Panel */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div
-          className="collapsible-filters-panel"
-          style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}
-        >
-          <div className="filter-input-group">
-            <label>Search Buyer</label>
-            <input
-              className="filter-search"
-              placeholder="Search by name, company, email..."
-              type="text"
-              value={search}
-              onChange={(e) => dispatch(setBuyerSearch(e.target.value))}
-            />
-          </div>
-
-          <div className="filter-input-group">
-            <label>Buyer Tier</label>
-            <select
-              className="filter-select"
-              value={tierFilter}
-              onChange={(e) => dispatch(setBuyerTierFilter(e.target.value))}
-            >
-              <option value="all">All Tiers</option>
-              <option value="tier1">Tier 1 Retailer</option>
-              <option value="tier2">Tier 2 Regional</option>
-              <option value="liquidator">Liquidator</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-
-          <div className="filter-input-group">
-            <label>Status & Channel</label>
-            <select
-              className="filter-select"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <option value="">All Statuses</option>
-              <option value="active">Active Buyers</option>
-              <option value="inactive">Inactive Buyers</option>
-              <option value="no-bidding">Opt-Out Bidding</option>
-              <option value="no-sales">Opt-Out Sales</option>
-            </select>
-          </div>
-
-          <div className="filter-input-group" style={{ justifyContent: 'center' }}>
-            <label style={{ visibility: 'hidden' }}>Inactive</label>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '13px',
-                color: 'hsl(var(--text-secondary))',
-                cursor: 'pointer',
-                userSelect: 'none',
-                height: '38px',
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={showInactive}
-                onChange={(e) => setShowInactive(e.target.checked)}
-                style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-              />
-              Show inactive buyers
-            </label>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'flex-end', width: '100%', justifyContent: 'flex-end' }}>
-            {(search || tierFilter !== 'all' || statusFilter || showInactive) && (
-              <button
-                className="btn btn-sm btn-secondary"
-                onClick={() => {
-                  dispatch(setBuyerSearch(''));
-                  dispatch(setBuyerTierFilter('all'));
-                  setStatusFilter('');
-                  setShowInactive(false);
-                }}
-              >
-                Clear Filters
-              </button>
-            )}
-          </div>
-        </div>
-
-        <BuyerTable
-          filteredBuyers={filteredBuyers}
-          onBuyerClick={(buyer) => {
-            setSelectedBuyer(buyer);
-            setIsDrawerOpen(true);
-          }}
-          showInactive={showInactive}
-        />
-      </div>
-
-      {/* Slide-over Buyer Detail Drawer */}
       <BuyerDetailDrawer
-        buyer={selectedBuyer}
-        isOpen={isDrawerOpen}
+        buyer={pipeline.selectedBuyer}
+        isOpen={pipeline.isDetailDrawerOpen}
         onClose={() => {
-          setIsDrawerOpen(false);
-          setSelectedBuyer(null);
-          dispatch(fetchCoreReferenceData({ all: showInactive, supplierId: selectedSupplier }));
+          pipeline.handleCloseDetailDrawer();
+          dispatch(fetchCoreReferenceData({ all: pipeline.showInactive, supplierId: selectedSupplier }));
         }}
-        onBuyerUpdated={(updatedBuyer) => {
-          setSelectedBuyer(updatedBuyer);
-          dispatch(fetchCoreReferenceData({ all: showInactive, supplierId: selectedSupplier }));
+        onBuyerUpdated={() => {
+          dispatch(fetchCoreReferenceData({ all: pipeline.showInactive, supplierId: selectedSupplier }));
         }}
       />
     </div>

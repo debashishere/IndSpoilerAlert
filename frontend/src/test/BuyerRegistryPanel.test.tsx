@@ -210,9 +210,13 @@ describe('BuyerRegistryPanel — Live CSV Ingestion & Unified Buyer Registry (Is
     expect(await screen.findByText('Inactive Retailer')).toBeDefined();
     expect(screen.getByTestId('inactive-badge-b-inactive-1')).toBeDefined();
 
-    // Click active buyer row to open drawer
+    // Click active buyer row to toggle progressive drawer
     const row = screen.getByTestId('buyer-row-b-active-1');
     fireEvent.click(row);
+
+    // Click Edit Buyer Profile button in progressive drawer (ADR 0043)
+    const editBtn = await screen.findByRole('button', { name: /Edit Buyer Profile/i });
+    fireEvent.click(editBtn);
 
     // Verify drawer opens with Active Retailer details
     expect(await screen.findByTestId('buyer-detail-drawer')).toBeDefined();
@@ -260,6 +264,9 @@ describe('BuyerRegistryPanel — Live CSV Ingestion & Unified Buyer Registry (Is
     // Open drawer
     const row = screen.getByTestId('buyer-row-b-active-2');
     fireEvent.click(row);
+
+    const editBtn = await screen.findByRole('button', { name: /Edit Buyer Profile/i });
+    fireEvent.click(editBtn);
 
     const closeBtn = await screen.findByTestId('buyer-drawer-close-btn');
     fireEvent.click(closeBtn);

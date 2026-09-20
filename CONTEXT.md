@@ -131,16 +131,22 @@
 - **Lot CRM & Audit Timeline**: The consolidated, chronological event stream tracking all automated dispatches, supplier communications, notes, and regulatory actions associated with a specific inventory lot.
 - **Bid Status Normalization**: The mapping of raw bid states (`pending`, `countered`, `fully_accepted`, `partially_accepted`, `rejected`, and buyer counter message heuristics) into canonical operational badge representations (`Pending`, `Countered`, `Buyer Countered`, `Awarded`, `Declined`).
 
+## Dedicated Ingestion Hub & Surplus Pipelines
 
-
-
-
-
-
-
-
-
-
-
-
-
+- **Dedicated Ingestion Hub & Connectors**: The collapsible top-level multi-source ingestion workbench in the Ingestion Tab displaying ingestion channel cards (`Zapier Webhooks`, `Google Sheets Sync`, `Image & Doc Scanner`, `CSV / Excel Upload`, and `+ Add Integration` Directory) with real-time status and sync telemetry.
+  _Avoid_: `Simple File Dropzone`, `Upload-Only Banner`.
+- **Unified Surplus Data Ingestion Modal**: The centralized modal overlay triggered by the "CSV / Excel Upload" connector or pipeline import action buttons, providing a 2-step batch upload flow: 1) dataset destination selection (`Inventory Data`, `Sales Data`, or `Buyer Data`), and 2) file drag-and-drop / selection that advances to the Ingestion Mapping Window.
+  _Avoid_: `Fragmented Upload Modals`, `Per-Tab File Uploaders`.
+- **Progressive Row Inspection Drawer**: The collapsible in-situ accordion inspection workbench expanding directly beneath table rows (across Inventory, Sales, and Buyer pipelines) when selected, presenting detailed cold-chain/environmental telemetry, FEFO lifecycle matrix, date audit logs, financial settlement remittance, and context-sensitive operational actions.
+  _Avoid_: `Full Page Lot Redirection on Row Click`, `Modal-Only Details Dialog`.
+- **Global Table Accordion Toggle ("Toggle All")**: The master control in the pipeline action strip that bulk-expands or bulk-collapses all visible Progressive Row Inspection Drawers across the active dataset.
+  _Avoid_: `Manual Per-Row Expansion Only`.
+- **Ingestion Mapping Window**: The dynamic spreadsheet column matching and semantic translation interface that renders parsed tabular rows and enables user-confirmed mapping of source headers to target domain attributes before committing records to the registry.
+- **Live ERP Clearing Connected Badge**: The operational telemetry indicator within the Sales Filter Bar reflecting real-time ERP synchronization and total ledger records cleared across financial accounts.
+  _Avoid_: `Static Sales Count Label`.
+- **Sales Contextual Action CTAs**: The domain-aware operational action triggers embedded in the Sales Progressive Row Inspection Drawer (`Reconcile Invoice`, `Authorize Dock Gate Pass`, `Live Fleet Telemetry`) initiating in-situ transaction clearance, dock authorization, or carrier tracking.
+  _Avoid_: `Generic Row Actions Menu`.
+- **Master Pipeline Synchronizer**: The event-driven coordination protocol connecting `PipelineSwitcherBar`, pipeline datasets, and progressive inspection drawers via `toggle-all-rows` and `toggle-all-state-changed` DOM CustomEvents. Ensures that the master "Toggle All" control accurately reflects visible drawer states and cleanly resets upon pipeline tab transitions.
+  _Avoid_: `Stale Cross-Tab Toggle State`, `Unsynchronized Master Button`.
+- **Multi-Theme Ingestion Tokens**: The institutional Tailwind CSS color and typography taxonomy harmonizing `IngestionView`, `IngestionTelemetryBar`, and connector workbenches across light and dark modes (`dark:bg-slate-950`, `dark:bg-slate-900`, `dark:border-slate-800`, `dark:text-slate-100`) while honoring the 4px/8pt optical density standard.
+  _Avoid_: `Hardcoded White Backgrounds`, `Inconsistent Dark Mode Surfaces`.
