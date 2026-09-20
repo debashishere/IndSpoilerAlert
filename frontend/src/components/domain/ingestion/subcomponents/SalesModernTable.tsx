@@ -13,6 +13,9 @@ export const SalesModernTable: React.FC<SalesModernTableProps> = ({
   currentPage = 1,
   totalPages = 1,
   onPageChange,
+  pageSize = 10,
+  onPageSizeChange,
+  totalCount,
 }) => {
   const formatCurrency = (amount?: number) => {
     if (amount === undefined || amount === null) return '$0.00';
@@ -273,35 +276,73 @@ export const SalesModernTable: React.FC<SalesModernTableProps> = ({
         </div>
       </div>
 
-      {/* Pagination Footer */}
-      {totalPages > 1 && onPageChange && (
-        <div className="px-4 py-3 bg-white border-t border-slate-200/80 flex items-center justify-between">
-          <div className="text-[12px] text-slate-500">
-            Page <span className="font-semibold text-slate-900">{currentPage}</span> of{' '}
-            <span className="font-semibold text-slate-900">{totalPages}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              disabled={currentPage <= 1}
-              onClick={() => onPageChange(currentPage - 1)}
-              className="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-colors cursor-pointer"
-            >
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span>Previous</span>
-            </button>
-            <button
-              type="button"
-              disabled={currentPage >= totalPages}
-              onClick={() => onPageChange(currentPage + 1)}
-              className="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 transition-colors cursor-pointer"
-            >
-              <span>Next</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
+      {/* Pagination & Count Footer */}
+      <div className="px-4 py-3 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+        <div>
+          Showing{' '}
+          <strong className="text-slate-800 font-semibold font-mono">
+            {(totalCount ?? records.length) === 0 ? 0 : (currentPage - 1) * pageSize + 1}
+          </strong>{' '}
+          to{' '}
+          <strong className="text-slate-800 font-semibold font-mono">
+            {Math.min(totalCount ?? records.length, currentPage * pageSize)}
+          </strong>{' '}
+          of{' '}
+          <strong className="text-slate-800 font-semibold font-mono">
+            {totalCount ?? records.length} Sales Records
+          </strong>
         </div>
-      )}
+
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Page Size Selector */}
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="sales-page-size" className="text-slate-500 text-xs">
+              Page size:
+            </label>
+            <select
+              id="sales-page-size"
+              data-testid="sales-page-size-select"
+              value={pageSize}
+              onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+              className="px-2 py-1 rounded-md border border-slate-300 bg-white text-slate-700 text-xs font-semibold cursor-pointer shadow-2xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+
+          {/* Page Navigation */}
+          {onPageChange && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={currentPage <= 1}
+                onClick={() => onPageChange(currentPage - 1)}
+                aria-label="Previous Page"
+                className="px-2.5 py-1 rounded-md border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Previous</span>
+              </button>
+              <span className="font-mono text-[11px] text-slate-600 px-1">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={currentPage >= totalPages}
+                onClick={() => onPageChange(currentPage + 1)}
+                aria-label="Next Page"
+                className="px-2.5 py-1 rounded-md border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

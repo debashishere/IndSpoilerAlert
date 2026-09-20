@@ -32,60 +32,55 @@ describe('BuyerRegistryPanel — Live CSV Ingestion & Unified Buyer Registry (Is
     );
   });
 
-  it('should render initial state with manual buyer in the list and top-level action buttons', () => {
+  it('should render initial state with manual buyer in the list and pagination controls', () => {
     render(
       <Provider store={store}>
         <BuyerRegistryPanel />
       </Provider>
     );
 
-    expect(screen.getByText('Buyer List Ingestion')).toBeDefined();
     expect(screen.getByText('Manual Buyer Corp')).toBeDefined();
     expect(screen.getByText('manual@corp.com')).toBeDefined();
-    expect(screen.getByRole('button', { name: /Bulk Import via CSV/i })).toBeDefined();
-    expect(screen.getByRole('button', { name: /Add Buyer Manually/i })).toBeDefined();
+    expect(screen.getByTestId('buyer-page-size-select')).toBeDefined();
+    expect(screen.getByRole('button', { name: /Previous Page/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Next Page/i })).toBeDefined();
   });
 
-  it('should open and close Bulk Import modal on button click', () => {
+  it('should support page size changing on the buyer registry table', () => {
     render(
       <Provider store={store}>
         <BuyerRegistryPanel />
       </Provider>
     );
 
-    const importBtn = screen.getByRole('button', { name: /Bulk Import via CSV/i });
-    fireEvent.click(importBtn);
-
-    expect(screen.getByText('Bulk Import Buyers via CSV')).toBeDefined();
-    expect(screen.getByText('Select or drag your CSV file here')).toBeDefined();
-
-    const cancelBtn = screen.getByRole('button', { name: /Cancel/i });
-    fireEvent.click(cancelBtn);
-
-    expect(screen.queryByText('Bulk Import Buyers via CSV')).toBeNull();
+    const pageSizeSelect = screen.getByTestId('buyer-page-size-select') as HTMLSelectElement;
+    expect(pageSizeSelect.value).toBe('10');
+    fireEvent.change(pageSizeSelect, { target: { value: '20' } });
+    expect(pageSizeSelect.value).toBe('20');
   });
 
-  it('should open and close Add Buyer Manually modal on button click', () => {
+  it('should open and close Add Buyer Manually modal on open-add-buyer-modal event', async () => {
     render(
       <Provider store={store}>
         <BuyerRegistryPanel />
       </Provider>
     );
 
-    const addBtn = screen.getByRole('button', { name: /Add Buyer Manually/i });
-    fireEvent.click(addBtn);
+    fireEvent(window, new CustomEvent('open-add-buyer-modal'));
 
-    expect(screen.getByText('Register a new buyer into your global network.')).toBeDefined();
+    expect(await screen.findByText('Register a new buyer into your global network.')).toBeDefined();
     expect(screen.getByPlaceholderText('e.g. Costco Wholesale')).toBeDefined();
     expect(screen.getByPlaceholderText('buyer@company.com')).toBeDefined();
 
     const cancelBtn = screen.getByRole('button', { name: /Cancel/i });
     fireEvent.click(cancelBtn);
 
-    expect(screen.queryByText('Register a new buyer into your global network.')).toBeNull();
+    await waitFor(() => {
+      expect(screen.queryByText('Register a new buyer into your global network.')).toBeNull();
+    });
   });
 
-  it('should handle file selection from Bulk Import modal, close the modal, call uploadBuyerThunk, and render column mapping preview', async () => {
+  it('should handle file selection from hidden file input, call uploadBuyerThunk, and render column mapping preview', async () => {
     const mockParsedResult = {
       documentId: 'doc-buyer-123',
       fileName: 'buyers_100_seed.csv',
@@ -109,11 +104,6 @@ describe('BuyerRegistryPanel — Live CSV Ingestion & Unified Buyer Registry (Is
       </Provider>
     );
 
-    // Open Bulk Import Modal
-    const importBtn = screen.getByRole('button', { name: /Bulk Import via CSV/i });
-    fireEvent.click(importBtn);
-    expect(screen.getByText('Bulk Import Buyers via CSV')).toBeDefined();
-
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
     expect(fileInput).toBeDefined();
 
@@ -126,9 +116,6 @@ describe('BuyerRegistryPanel — Live CSV Ingestion & Unified Buyer Registry (Is
     await waitFor(() => {
       expect(ingestionService.uploadBuyerFile).toHaveBeenCalled();
     });
-
-    // Bulk import modal should be closed
-    expect(screen.queryByText('Bulk Import Buyers via CSV')).toBeNull();
 
     // Column mapping confirmation / Data preview should be rendered
     expect(screen.getByText('Confirm Buyer CSV Mapping')).toBeDefined();
@@ -288,7 +275,7 @@ describe('BuyerRegistryPanel — Live CSV Ingestion & Unified Buyer Registry (Is
     expect(screen.queryByText('Buyer Lists & Segments')).toBeNull();
   });
 
-  it('should open BuyerListManagerModal when clicking "Buyer Lists" header button to configure buyer lists and segments', async () => {
+  it('should open BuyerListManagerModal on open-buyer-list-manager event to configure buyer lists and segments', async () => {
     const { setBuyerLists } = await import('../store/slices/coreSlice');
     store.dispatch(setBuyerLists([
       { _id: 'l1', name: 'Primary Buyers', type: 'primary', buyerIds: [] },
@@ -301,10 +288,9 @@ describe('BuyerRegistryPanel — Live CSV Ingestion & Unified Buyer Registry (Is
       </Provider>
     );
 
-    const buyerListsBtn = screen.getByRole('button', { name: /Buyer Lists/i });
-    fireEvent.click(buyerListsBtn);
+    fireEvent(window, new CustomEvent('open-buyer-list-manager'));
 
-    expect(screen.getByText('Buyer List Manager')).toBeDefined();
+    expect(await screen.findByText('Buyer List Manager')).toBeDefined();
     expect(screen.getByText('Primary Buyers')).toBeDefined();
     expect(screen.getByText('Secondary Liquidators')).toBeDefined();
   });

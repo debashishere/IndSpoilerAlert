@@ -39,7 +39,7 @@ export function useSalesPipeline({
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   // Expanded row drawers
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
@@ -171,17 +171,22 @@ export function useSalesPipeline({
     });
   }, [salesRecords, search, lotNumber, buyer, dc, createDate, priceRange, status]);
 
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  }, []);
+
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, lotNumber, buyer, dc, createDate, priceRange, status]);
+  }, [search, lotNumber, buyer, dc, createDate, priceRange, status, pageSize]);
 
   // Paginated records
-  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
   const paginatedRecords = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredRecords.slice(start, start + itemsPerPage);
-  }, [filteredRecords, currentPage, itemsPerPage]);
+    const start = (currentPage - 1) * pageSize;
+    return filteredRecords.slice(start, start + pageSize);
+  }, [filteredRecords, currentPage, pageSize]);
 
   // Drawer toggling
   const toggleRow = useCallback((recordId: string) => {
@@ -324,6 +329,12 @@ export function useSalesPipeline({
     clearingRecordCount,
     expandedRowIds,
     allAreOpen,
+    currentPage,
+    pageSize,
+    totalPages,
+    paginatedRecords,
+    setCurrentPage,
+    setPageSize: handlePageSizeChange,
     toggleRow,
     expandAllRows,
     collapseAllRows,

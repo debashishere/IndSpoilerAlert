@@ -77,6 +77,12 @@ export interface InventoryModernTableProps {
   onOpenLotHub?: (lot: any) => void;
   onOpenRiskModal?: (lot: any) => void;
   onOpenComplianceModal?: (lot: any) => void;
+  currentPage?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
+  pageSize?: number;
+  onPageSizeChange?: (size: number) => void;
+  totalCount?: number;
 }
 
 export interface SalesRecord {
@@ -160,6 +166,9 @@ export interface SalesModernTableProps {
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
+  pageSize?: number;
+  onPageSizeChange?: (size: number) => void;
+  totalCount?: number;
 }
 
 export interface BuyerRecord {
@@ -221,6 +230,8 @@ export interface BuyerModernTableProps {
   totalPages?: number;
   onPageChange?: (page: number) => void;
   totalCount?: number;
+  pageSize?: number;
+  onPageSizeChange?: (size: number) => void;
 }
 
 export interface AddBuyerModalProps {

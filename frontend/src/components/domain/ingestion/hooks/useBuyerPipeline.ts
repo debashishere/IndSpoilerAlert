@@ -89,7 +89,7 @@ export function useBuyerPipeline({
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   // Drawer / Modal states
   const [expandedRowIds, setExpandedRowIds] = useState<Set<string>>(new Set());
@@ -180,17 +180,22 @@ export function useBuyerPipeline({
     });
   }, [buyers, search, tier, status, showInactive]);
 
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  }, []);
+
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, tier, status, showInactive]);
+  }, [search, tier, status, showInactive, pageSize]);
 
   // Paginated records
-  const totalPages = Math.max(1, Math.ceil(filteredBuyers.length / itemsPerPage));
+  const totalPages = Math.max(1, Math.ceil(filteredBuyers.length / pageSize));
   const paginatedBuyers = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredBuyers.slice(start, start + itemsPerPage);
-  }, [filteredBuyers, currentPage, itemsPerPage]);
+    const start = (currentPage - 1) * pageSize;
+    return filteredBuyers.slice(start, start + pageSize);
+  }, [filteredBuyers, currentPage, pageSize]);
 
   // Drawer toggling
   const toggleRow = useCallback((buyerId: string) => {
@@ -342,6 +347,12 @@ export function useBuyerPipeline({
     statusesList,
     expandedRowIds,
     allAreOpen,
+    currentPage,
+    pageSize,
+    totalPages,
+    paginatedBuyers,
+    setCurrentPage,
+    setPageSize: handlePageSizeChange,
     isDetailDrawerOpen,
     selectedBuyer,
     isAddBuyerModalOpen,

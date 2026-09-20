@@ -12,30 +12,69 @@ describe('InventoryRegistryPanel Component', () => {
     store.dispatch(setInventoryParsedResult(null));
   });
 
-  it('should render Inventory Data Ingestion header and inventory lots count badge', () => {
+  it('should render inventory pipeline table and pagination controls', () => {
+    store.dispatch(
+      setInventoryList([
+        {
+          _id: 'lot-init-1',
+          productId: {
+            description: 'Organic Milk',
+            sku: 'SKU-MILK-01',
+            category: 'Dairy',
+          },
+          lotNumber: 'LOT-MILK-01',
+          distributionCenterId: { name: 'Dallas Warehouse' },
+          availableQty: 100,
+          costPerCase: 10,
+          expirationDate: new Date('2026-10-01').toISOString(),
+          status: 'Active',
+        },
+      ])
+    );
+
     render(
       <Provider store={store}>
         <InventoryRegistryPanel />
       </Provider>
     );
 
-    expect(screen.getByText('Inventory Data Ingestion')).toBeDefined();
-    expect(screen.getByText('0 Inventory Lots')).toBeDefined();
-    expect(screen.getByRole('button', { name: /Upload Inventory Document/i })).toBeDefined();
+    // Redundant header card 'Inventory Data Ingestion' was removed; verify panel and filter controls render
+    expect(screen.getByText('Search Product')).toBeDefined();
+    expect(screen.getByTestId('inventory-page-size-select')).toBeDefined();
+    expect(screen.getByRole('button', { name: /Previous Page/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Next Page/i })).toBeDefined();
   });
 
-  it('should open Upload Inventory Document modal when action button is clicked', () => {
+  it('should support page size changing and pagination interactions', () => {
+    store.dispatch(
+      setInventoryList([
+        {
+          _id: 'lot-init-1',
+          productId: {
+            description: 'Organic Milk',
+            sku: 'SKU-MILK-01',
+            category: 'Dairy',
+          },
+          lotNumber: 'LOT-MILK-01',
+          distributionCenterId: { name: 'Dallas Warehouse' },
+          availableQty: 100,
+          costPerCase: 10,
+          expirationDate: new Date('2026-10-01').toISOString(),
+          status: 'Active',
+        },
+      ])
+    );
+
     render(
       <Provider store={store}>
         <InventoryRegistryPanel />
       </Provider>
     );
 
-    const uploadBtn = screen.getByRole('button', { name: /Upload Inventory Document/i });
-    fireEvent.click(uploadBtn);
-
-    expect(screen.getByText('Upload Inventory Document')).toBeDefined();
-    expect(screen.getByText('CPG Supplier Company *')).toBeDefined();
+    const pageSizeSelect = screen.getByTestId('inventory-page-size-select') as HTMLSelectElement;
+    expect(pageSizeSelect.value).toBe('10');
+    fireEvent.change(pageSizeSelect, { target: { value: '20' } });
+    expect(pageSizeSelect.value).toBe('20');
   });
 
   it('should render loaded inventory lots in the inventory data frame', () => {

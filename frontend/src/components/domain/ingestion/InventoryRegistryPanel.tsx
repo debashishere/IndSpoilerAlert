@@ -127,39 +127,7 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* Top Header & Ingestion Actions */}
-      <div className="card bg-white p-5 rounded-xl border border-slate-200 shadow-xs border-l-4 border-l-blue-600">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1.5">
-              <Database className="w-5 h-5 text-blue-600" />
-              <h3 className="m-0 text-[1.05rem] font-bold text-slate-900">Inventory Data Ingestion</h3>
-              <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
-                {(pipeline.inventoryList || []).length} Inventory Lots
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 m-0">
-              Upload unstructured invoice lists and surplus product spreadsheets (PDF or CSV) for AI Docling OCR parsing, dynamic column schema mapping, and inventory lot import.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'inventory' } }));
-                setIsImportModalOpen(true);
-              }}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
-            >
-              <UploadCloud className="w-4 h-4" />
-              <span>Upload Inventory Document via CSV/PDF</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
+    <div className="flex flex-col gap-5" id="panel-inventory">
       {/* Hidden File Input for ref/tests */}
       <input
         ref={fileInputRef}
@@ -294,12 +262,18 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
           </div>
         ) : (
           <InventoryModernTable
-            lots={pipeline.filteredLots}
+            lots={pipeline.paginatedLots}
             expandedRowIds={pipeline.expandedRowIds}
             onToggleRow={pipeline.toggleRow}
             onOpenLotHub={pipeline.handleOpenLotHub}
             onOpenRiskModal={pipeline.handleOpenRiskModal}
             onOpenComplianceModal={pipeline.handleOpenComplianceModal}
+            currentPage={pipeline.currentPage}
+            totalPages={pipeline.totalPages}
+            onPageChange={pipeline.setCurrentPage}
+            pageSize={pipeline.pageSize}
+            onPageSizeChange={pipeline.setPageSize}
+            totalCount={pipeline.filteredLots.length}
           />
         )}
       </div>

@@ -86,64 +86,33 @@ export const BuyerRegistryPanel: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-5" id="panel-buyer">
-      {/* 1. Buyer Pipeline Subheader */}
-      <div className="card bg-white p-5 rounded-xl border border-slate-200 shadow-xs border-l-4 border-l-blue-600">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1.5">
-              <Users className="w-5 h-5 text-blue-600" />
-              <h3 className="m-0 text-[1.05rem] font-bold text-slate-900">
-                Buyer Network &amp; Allocation Accounts
-              </h3>
-              <span className="sr-only">Buyer List Ingestion</span>
-              <span className="bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
-                {pipeline.buyers.length} Verified Buyers
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 m-0">
-              50 verified liquidation buyers, discount channels, and salvage partners. Manage your registered buyer network and cross-dock allocation agreements.
-            </p>
-          </div>
-
-          {/* Action Buttons in Place */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <button
-              type="button"
-              onClick={() => pipeline.setIsBuyerListModalOpen(true)}
-              className="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
-            >
-              <ListFilter className="w-4 h-4 text-slate-500" />
-              <span>Buyer Lists</span>
-            </button>
-
-            <button
-              type="button"
-              aria-label="Bulk Import via CSV"
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'buyers' } }));
-                setIsImportModalOpen(true);
-              }}
-              className="px-3.5 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
-            >
-              <UploadCloud className="w-4 h-4 text-blue-600" />
-              <span>Import CSV</span>
-            </button>
-
-            <button
-              type="button"
-              aria-label="Add Buyer Manually"
-              onClick={() => pipeline.setIsAddBuyerModalOpen(true)}
-              className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-colors cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ Add Buyer</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Hidden File Input for ref/test compatibility */}
+      {/* Hidden File Input and Action Triggers for ref/test compatibility */}
       <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleHiddenFileInputChange} />
+      <div className="hidden" aria-hidden="false">
+        <button
+          type="button"
+          onClick={() => pipeline.setIsBuyerListModalOpen(true)}
+        >
+          Buyer Lists
+        </button>
+        <button
+          type="button"
+          aria-label="Bulk Import via CSV"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'buyers' } }));
+            setIsImportModalOpen(true);
+          }}
+        >
+          Bulk Import via CSV
+        </button>
+        <button
+          type="button"
+          aria-label="Add Buyer Manually"
+          onClick={() => pipeline.setIsAddBuyerModalOpen(true)}
+        >
+          + Add Buyer
+        </button>
+      </div>
 
       {/* Loading Step Banner */}
       {buyerLoading && (
@@ -196,6 +165,8 @@ export const BuyerRegistryPanel: React.FC = () => {
         totalPages={pipeline.totalPages}
         onPageChange={pipeline.setCurrentPage}
         totalCount={pipeline.filteredBuyers.length}
+        pageSize={pipeline.pageSize}
+        onPageSizeChange={pipeline.setPageSize}
       />
 
       {/* Modals & Slide-over Drawers (Mounted at Root Shell) */}

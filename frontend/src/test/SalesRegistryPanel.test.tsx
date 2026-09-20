@@ -11,30 +11,31 @@ describe('SalesRegistryPanel Component', () => {
     store.dispatch(setSalesParsedResult(null));
   });
 
-  it('should render Sales Data Ingestion header and sales records count badge', () => {
+  it('should render sales pipeline filters, table, and pagination controls', () => {
     render(
       <Provider store={store}>
         <SalesRegistryPanel />
       </Provider>
     );
 
-    expect(screen.getByText('Sales Data Ingestion')).toBeDefined();
-    expect(screen.getByText('0 Sales Records')).toBeDefined();
-    expect(screen.getByRole('button', { name: /Upload Sales Report/i })).toBeDefined();
+    // Redundant header card 'Sales Data Ingestion' was removed; verify panel and filter controls render
+    expect(screen.getByText('Search Sales')).toBeDefined();
+    expect(screen.getByTestId('sales-page-size-select')).toBeDefined();
+    expect(screen.getByRole('button', { name: /Previous Page/i })).toBeDefined();
+    expect(screen.getByRole('button', { name: /Next Page/i })).toBeDefined();
   });
 
-  it('should open Upload Sales Report modal when action button is clicked', () => {
+  it('should support page size changing and pagination interactions', () => {
     render(
       <Provider store={store}>
         <SalesRegistryPanel />
       </Provider>
     );
 
-    const uploadBtn = screen.getByRole('button', { name: /Upload Sales Report/i });
-    fireEvent.click(uploadBtn);
-
-    expect(screen.getByText('Upload Sales Report')).toBeDefined();
-    expect(screen.getByText('CPG Supplier Company *')).toBeDefined();
+    const pageSizeSelect = screen.getByTestId('sales-page-size-select') as HTMLSelectElement;
+    expect(pageSizeSelect.value).toBe('10');
+    fireEvent.change(pageSizeSelect, { target: { value: '20' } });
+    expect(pageSizeSelect.value).toBe('20');
   });
 
   it('should render loaded sales records in the sales data frame', () => {

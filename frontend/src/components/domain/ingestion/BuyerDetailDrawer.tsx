@@ -314,7 +314,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'white' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                     {buyer.companyName || buyer.name}
                   </h2>
                   <span
@@ -447,7 +447,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
             <div data-testid="buyer-drawer-tab-profile" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               {/* Profile Details & Inline Edit Form */}
               <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'white' }}>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                   Profile Information
                 </h3>
 
@@ -467,7 +467,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                         border: '1px solid hsl(var(--border-color))',
                         borderRadius: '8px',
                         padding: '8px 12px',
-                        color: 'white',
+                        color: 'hsl(var(--text-primary))',
                         fontSize: '13px',
                         boxSizing: 'border-box',
                       }}
@@ -489,7 +489,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                         border: '1px solid hsl(var(--border-color))',
                         borderRadius: '8px',
                         padding: '8px 12px',
-                        color: 'white',
+                        color: 'hsl(var(--text-primary))',
                         fontSize: '13px',
                         boxSizing: 'border-box',
                       }}
@@ -510,15 +510,15 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                         border: '1px solid hsl(var(--border-color))',
                         borderRadius: '8px',
                         padding: '8px 12px',
-                        color: 'white',
+                        color: 'hsl(var(--text-primary))',
                         fontSize: '13px',
                         boxSizing: 'border-box',
                       }}
                     >
-                      <option value="tier1">Tier 1 Retailer</option>
-                      <option value="tier2">Tier 2 Regional</option>
-                      <option value="liquidator">Liquidator</option>
-                      <option value="custom">Custom</option>
+                      <option value="tier1" style={{ background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-primary))' }}>Tier 1 Retailer</option>
+                      <option value="tier2" style={{ background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-primary))' }}>Tier 2 Regional</option>
+                      <option value="liquidator" style={{ background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-primary))' }}>Liquidator</option>
+                      <option value="custom" style={{ background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-primary))' }}>Custom</option>
                     </select>
                   </div>
 
@@ -538,7 +538,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                         border: '1px solid hsl(var(--border-color))',
                         borderRadius: '8px',
                         padding: '8px 12px',
-                        color: 'white',
+                        color: 'hsl(var(--text-primary))',
                         fontSize: '13px',
                         boxSizing: 'border-box',
                       }}
@@ -562,7 +562,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                       border: '1px solid hsl(var(--border-color))',
                       borderRadius: '8px',
                       padding: '8px 12px',
-                      color: 'white',
+                      color: 'hsl(var(--text-primary))',
                       fontSize: '13px',
                       boxSizing: 'border-box',
                     }}
@@ -574,22 +574,49 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                     <label style={{ fontSize: '12px', fontWeight: 600, color: 'hsl(var(--text-secondary))', display: 'block', marginBottom: '4px' }}>
                       Accepts Short-Dated
                     </label>
+                    {/* Radio Button Options for Accepts Short-Dated */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '6px 0' }}>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'hsl(var(--text-primary))', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          name="acceptsShortDated"
+                          data-testid="radio-acceptsShortDated-yes"
+                          checked={formData.acceptsShortDated === true}
+                          onChange={() => handleInputChange('acceptsShortDated', true)}
+                          style={{ accentColor: 'hsl(var(--primary))', width: '15px', height: '15px', cursor: 'pointer' }}
+                        />
+                        <span>Yes</span>
+                      </label>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'hsl(var(--text-primary))', cursor: 'pointer' }}>
+                        <input
+                          type="radio"
+                          name="acceptsShortDated"
+                          data-testid="radio-acceptsShortDated-no"
+                          checked={formData.acceptsShortDated === false}
+                          onChange={() => handleInputChange('acceptsShortDated', false)}
+                          style={{ accentColor: 'hsl(var(--primary))', width: '15px', height: '15px', cursor: 'pointer' }}
+                        />
+                        <span>No</span>
+                      </label>
+                    </div>
+                    {/* Select for test and automation compatibility */}
                     <select
                       data-testid="select-acceptsShortDated"
                       value={formData.acceptsShortDated ? 'true' : 'false'}
                       onChange={(e) => handleInputChange('acceptsShortDated', e.target.value === 'true')}
                       style={{
+                        display: 'none',
                         width: '100%',
                         background: 'hsl(var(--bg-card))',
                         border: '1px solid hsl(var(--border-color))',
                         borderRadius: '8px',
                         padding: '8px 12px',
-                        color: 'white',
+                        color: 'hsl(var(--text-primary))',
                         fontSize: '13px',
                       }}
                     >
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
+                      <option value="true" style={{ background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-primary))' }}>Yes</option>
+                      <option value="false" style={{ background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-primary))' }}>No</option>
                     </select>
                   </div>
 
@@ -608,7 +635,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                         border: '1px solid hsl(var(--border-color))',
                         borderRadius: '8px',
                         padding: '8px 12px',
-                        color: 'white',
+                        color: 'hsl(var(--text-primary))',
                         fontSize: '13px',
                         boxSizing: 'border-box',
                       }}
@@ -630,7 +657,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                         border: '1px solid hsl(var(--border-color))',
                         borderRadius: '8px',
                         padding: '8px 12px',
-                        color: 'white',
+                        color: 'hsl(var(--text-primary))',
                         fontSize: '13px',
                         boxSizing: 'border-box',
                       }}
@@ -654,7 +681,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                       border: '1px solid hsl(var(--border-color))',
                       borderRadius: '8px',
                       padding: '8px 12px',
-                      color: 'white',
+                      color: 'hsl(var(--text-primary))',
                       fontSize: '13px',
                       boxSizing: 'border-box',
                       resize: 'vertical',
@@ -719,7 +746,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
               {/* Opt-Out Controls */}
               <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'white' }}>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                     Opt-Out Controls
                   </h3>
                   <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
@@ -741,7 +768,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                         Bidding Sessions
                       </span>
                       <button
@@ -808,7 +835,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '13px', fontWeight: 700, color: 'white' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                         Sales Sessions
                       </span>
                       <button
@@ -867,7 +894,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
               {/* List Memberships */}
               <div className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'white' }}>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                     Buyer List Memberships
                   </h3>
                   <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
@@ -902,9 +929,9 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                             data-testid={`checkbox-list-${list._id}`}
                             checked={isMember}
                             onChange={() => handleToggleListMember(list._id, isMember)}
-                            style={{ cursor: 'pointer' }}
+                            style={{ accentColor: 'hsl(var(--primary))', width: '16px', height: '16px', cursor: 'pointer' }}
                           />
-                          <span style={{ fontSize: '13px', fontWeight: 600, color: 'white' }}>
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
                             {list.name}
                           </span>
                         </div>
@@ -961,7 +988,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                           border: '1px solid hsl(var(--error) / 0.5)',
                           borderRadius: '8px',
                           padding: '8px 12px',
-                          color: 'white',
+                          color: 'hsl(var(--text-primary))',
                           fontSize: '13px',
                           boxSizing: 'border-box',
                         }}
@@ -1058,7 +1085,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
             <div data-testid="buyer-drawer-tab-communications" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'white' }}>
+                  <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
                     Email Communication History
                   </h3>
                   <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
@@ -1121,7 +1148,7 @@ export const BuyerDetailDrawer: React.FC<BuyerDetailDrawerProps> = ({
                               }}
                             />
                           )}
-                          <span style={{ fontWeight: 700, fontSize: '13px', color: 'white' }}>
+                          <span style={{ fontWeight: 700, fontSize: '13px', color: 'hsl(var(--text-primary))' }}>
                             {thread.subject}
                           </span>
                         </div>

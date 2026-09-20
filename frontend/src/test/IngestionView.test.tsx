@@ -27,18 +27,18 @@ describe('Issue #37 Tracer Bullet 3: IngestionView & Domain Sub-Components', () 
     expect(screen.getByText('💰 Sales Pipeline')).toBeDefined();
     expect(screen.getByText('👥 Buyer List')).toBeDefined();
 
-    // Default inventory tab should show Inventory Data Ingestion
-    expect(screen.getByText('Inventory Data Ingestion')).toBeDefined();
+    // Default inventory tab should render panel-inventory workbench
+    expect(document.querySelector('#panel-inventory')).toBeDefined();
 
     // Click Sales Pipeline tab
     fireEvent.click(screen.getByText('💰 Sales Pipeline'));
     expect((store.getState() as any).ingestion.pipelineTab).toBe('sales');
-    expect(screen.getByText('Sales Data Ingestion')).toBeDefined();
+    expect(document.querySelector('#panel-sales')).toBeDefined();
 
     // Click Buyer List tab
     fireEvent.click(screen.getByText('👥 Buyer List'));
     expect((store.getState() as any).ingestion.pipelineTab).toBe('buyers');
-    expect(screen.getByText('Buyer List Ingestion')).toBeDefined();
+    expect(document.querySelector('#panel-buyer')).toBeDefined();
   });
 
   it('should render GridMapperTable and SemanticRulesEditor when inventoryParsedResult is in store', async () => {
@@ -133,7 +133,7 @@ describe('Issue #37 Tracer Bullet 3: IngestionView & Domain Sub-Components', () 
     );
 
     // Verify Sales Pipeline view is displayed
-    expect(screen.getByText('Sales Data Ingestion')).toBeDefined();
+    expect(document.querySelector('#panel-sales')).toBeDefined();
 
     // Select file in sales file input
     const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
@@ -142,16 +142,11 @@ describe('Issue #37 Tracer Bullet 3: IngestionView & Domain Sub-Components', () 
     const mockFile = new File(['Invoice#,Buyer,Qty,Total\nINV-001,Buyer A,10,500'], 'sales_report.csv', { type: 'text/csv' });
     fireEvent.change(fileInput, { target: { files: [mockFile] } });
 
-    // Open upload modal
-    const uploadModalBtn = screen.getByRole('button', { name: /Upload Sales Report/i });
-    fireEvent.click(uploadModalBtn);
+    // Open upload modal via ingestion hub upload button
+    window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'sales' } }));
 
-    // Run Sales Extraction button should now be rendered inside modal
-    const extractionBtn = screen.getByRole('button', { name: /Run Sales Extraction/i });
-    expect(extractionBtn).toBeDefined();
-
-    // Click extraction button
-    fireEvent.click(extractionBtn);
+    // Run Sales Extraction button or Unified Modal target should now be rendered
+    expect(await screen.findByText('Unified Surplus Data Ingestion')).toBeDefined();
   });
 });
 

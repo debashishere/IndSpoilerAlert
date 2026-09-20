@@ -21,6 +21,8 @@ export const BuyerModernTable: React.FC<BuyerModernTableProps> = ({
   totalPages = 1,
   onPageChange,
   totalCount,
+  pageSize = 10,
+  onPageSizeChange,
 }) => {
   const getTierBadgeStyle = (tier?: string) => {
     const t = (tier || '').toLowerCase();
@@ -204,11 +206,15 @@ export const BuyerModernTable: React.FC<BuyerModernTableProps> = ({
       </div>
 
       {/* Pagination & Count Footer */}
-      <div className="px-4 py-3 bg-slate-50/80 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+      <div className="px-4 py-3 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
         <div>
           Showing{' '}
           <strong className="text-slate-800 font-semibold font-mono">
-            {buyers.length}
+            {(totalCount || buyers.length) === 0 ? 0 : (currentPage - 1) * pageSize + 1}
+          </strong>{' '}
+          to{' '}
+          <strong className="text-slate-800 font-semibold font-mono">
+            {Math.min(totalCount || buyers.length, currentPage * pageSize)}
           </strong>{' '}
           of{' '}
           <strong className="text-slate-800 font-semibold font-mono">
@@ -216,31 +222,55 @@ export const BuyerModernTable: React.FC<BuyerModernTableProps> = ({
           </strong>
         </div>
 
-        {totalPages > 1 && onPageChange && (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={currentPage <= 1}
-              onClick={() => onPageChange(currentPage - 1)}
-              aria-label="Previous Page"
-              className="p-1 rounded border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+        <div className="flex items-center gap-4 flex-wrap">
+          {/* Page Size Selector */}
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="buyer-page-size" className="text-slate-500 text-xs">
+              Page size:
+            </label>
+            <select
+              id="buyer-page-size"
+              data-testid="buyer-page-size-select"
+              value={pageSize}
+              onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+              className="px-2 py-1 rounded-md border border-slate-300 bg-white text-slate-700 text-xs font-semibold cursor-pointer shadow-2xs focus:ring-1 focus:ring-blue-500 focus:outline-none"
             >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="font-mono text-[11px]">
-              Page {currentPage} of {totalPages}
-            </span>
-            <button
-              type="button"
-              disabled={currentPage >= totalPages}
-              onClick={() => onPageChange(currentPage + 1)}
-              aria-label="Next Page"
-              className="p-1 rounded border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
           </div>
-        )}
+
+          {/* Page Navigation */}
+          {onPageChange && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={currentPage <= 1}
+                onClick={() => onPageChange(currentPage - 1)}
+                aria-label="Previous Page"
+                className="px-2.5 py-1 rounded-md border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Previous</span>
+              </button>
+              <span className="font-mono text-[11px] text-slate-600 px-1">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={currentPage >= totalPages}
+                onClick={() => onPageChange(currentPage + 1)}
+                aria-label="Next Page"
+                className="px-2.5 py-1 rounded-md border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

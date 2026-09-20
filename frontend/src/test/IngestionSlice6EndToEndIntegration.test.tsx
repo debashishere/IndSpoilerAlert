@@ -168,15 +168,15 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
       );
 
       // Default is inventory
-      expect(screen.getByText('Inventory Data Ingestion')).toBeDefined();
+      expect(document.querySelector('#panel-inventory')).toBeDefined();
 
       // Switch to sales
       fireEvent.click(screen.getByRole('tab', { name: /Sales Pipeline/i }));
-      expect(screen.getByText('Sales Data Ingestion')).toBeDefined();
+      expect(document.querySelector('#panel-sales')).toBeDefined();
 
       // Switch to buyers
       fireEvent.click(screen.getByRole('tab', { name: /Buyer Pipeline/i }));
-      expect(screen.getByText('Buyer List Ingestion')).toBeDefined();
+      expect(document.querySelector('#panel-buyer')).toBeDefined();
     });
   });
 

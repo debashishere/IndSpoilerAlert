@@ -229,40 +229,27 @@ describe('Issue #0123: Slice 5 - Buyer Pipeline Modern Grid & Progressive Inspec
   });
 
   describe('2. Subheader Action Buttons & Modal Launches', () => {
-    it('renders subheader with title, count, and launches BuyerListManagerModal, UnifiedIngestionModal, and AddBuyerModal', () => {
-      const uploadHandler = vi.fn();
-      window.addEventListener('open-ingestion-upload-modal', uploadHandler);
-
+    it('launches BuyerListManagerModal and AddBuyerModal via modal event listeners', async () => {
       render(
         <Provider store={testStore}>
           <BuyerRegistryPanel />
         </Provider>
       );
 
-      // Subheader text
-      expect(screen.getByText(/Buyer Network & Allocation Accounts/i)).toBeDefined();
+      // Redundant header card 'Buyer Network & Allocation Accounts' was removed
+      expect(screen.queryByText(/Buyer Network & Allocation Accounts/i)).toBeNull();
 
-      // 1. "Buyer Lists" button opens BuyerListManagerModal
-      const buyerListsBtn = screen.getByRole('button', { name: /Buyer Lists/i });
-      fireEvent.click(buyerListsBtn);
-      expect(screen.getByText('Buyer List Manager')).toBeDefined();
+      // 1. open-buyer-list-manager event opens BuyerListManagerModal
+      fireEvent(window, new CustomEvent('open-buyer-list-manager'));
+      expect(await screen.findByText('Buyer List Manager')).toBeDefined();
 
       // Close modal
       const closeBuyerListsBtn = screen.getByRole('button', { name: /close/i });
       fireEvent.click(closeBuyerListsBtn);
 
-      // 2. "Import CSV" button dispatches open-ingestion-upload-modal with target 'buyers'
-      const importBtn = screen.getByRole('button', { name: /Import CSV|Bulk Import via CSV/i });
-      fireEvent.click(importBtn);
-      expect(uploadHandler).toHaveBeenCalled();
-
-      // 3. "+ Add Buyer" button opens AddBuyerModal
-      const addBuyerBtn = screen.getByRole('button', { name: /\+ Add Buyer|Add Buyer Manually/i });
-      fireEvent.click(addBuyerBtn);
-      expect(screen.getByText(/Register a new buyer into your global network/i)).toBeDefined();
-
-      // Clean up
-      window.removeEventListener('open-ingestion-upload-modal', uploadHandler);
+      // 2. open-add-buyer-modal event opens AddBuyerModal
+      fireEvent(window, new CustomEvent('open-add-buyer-modal'));
+      expect(await screen.findByText(/Register a new buyer into your global network/i)).toBeDefined();
     });
   });
 

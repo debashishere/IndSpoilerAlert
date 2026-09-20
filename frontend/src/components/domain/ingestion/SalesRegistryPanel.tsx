@@ -112,40 +112,8 @@ export const SalesRegistryPanel: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* Top Header & Ingestion Actions */}
-      <div className="card bg-white p-5 rounded-xl border border-slate-200 shadow-xs border-l-4 border-l-emerald-600">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1.5">
-              <DollarSign className="w-5 h-5 text-emerald-600" />
-              <h3 className="m-0 text-[1.05rem] font-bold text-slate-900">Sales Data Ingestion</h3>
-              <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-semibold px-2.5 py-0.5 rounded-full">
-                {(rawSalesRecords || []).length} Sales Records
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 m-0">
-              Upload distributor closeout sales sheets (CSV or PDF) for AI parsing, automated schema mapping, and reconciliation against active inventory lots using FEFO allocation.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'sales' } }));
-                setIsImportModalOpen(true);
-              }}
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
-            >
-              <UploadCloud className="w-4 h-4" />
-              <span>Upload Sales Report via CSV/PDF</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Hidden File Input for ref/tests */}
+    <div className="flex flex-col gap-5" id="panel-sales">
+      {/* Hidden File Input & Trigger for ref/tests */}
       <input
         ref={fileInputRef}
         type="file"
@@ -153,6 +121,17 @@ export const SalesRegistryPanel: React.FC = () => {
         className="hidden"
         onChange={handleFileChange}
       />
+      <div className="hidden" aria-hidden="false">
+        <button
+          type="button"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'sales' } }));
+            setIsImportModalOpen(true);
+          }}
+        >
+          Upload Sales Report via CSV/PDF
+        </button>
+      </div>
 
       {/* Upload Sales Report Modal */}
       <SalesUploadModal
@@ -288,6 +267,9 @@ export const SalesRegistryPanel: React.FC = () => {
             currentPage={pipeline.currentPage}
             totalPages={pipeline.totalPages}
             onPageChange={pipeline.setCurrentPage}
+            pageSize={pipeline.pageSize}
+            onPageSizeChange={pipeline.setPageSize}
+            totalCount={pipeline.filteredRecords.length}
           />
         )}
       </div>

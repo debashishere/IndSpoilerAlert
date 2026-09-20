@@ -113,25 +113,34 @@ export function useInventoryPipeline({ onOpenLotHub }: UseInventoryPipelineOptio
     };
   }, [filteredLots]);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   // Filter actions
   const handleSearchChange = useCallback((val: string) => {
     dispatch(setFilterSearch(val));
+    setCurrentPage(1);
   }, [dispatch]);
 
   const handleSupplierChange = useCallback((val: string) => {
     dispatch(setFilterSupplier(val));
+    setCurrentPage(1);
   }, [dispatch]);
 
   const handleDCChange = useCallback((val: string) => {
     dispatch(setFilterDC(val));
+    setCurrentPage(1);
   }, [dispatch]);
 
   const handleCategoryChange = useCallback((val: string) => {
     dispatch(setFilterCategory(val));
+    setCurrentPage(1);
   }, [dispatch]);
 
   const handleStatusChange = useCallback((val: string) => {
     dispatch(setFilterStatus(val));
+    setCurrentPage(1);
   }, [dispatch]);
 
   const handleClearFilters = useCallback(() => {
@@ -140,7 +149,25 @@ export function useInventoryPipeline({ onOpenLotHub }: UseInventoryPipelineOptio
     dispatch(setFilterDC(''));
     dispatch(setFilterCategory(''));
     dispatch(setFilterStatus(''));
+    setCurrentPage(1);
   }, [dispatch]);
+
+  const handlePageSizeChange = useCallback((newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+  }, []);
+
+  // Reset pagination when raw filter values change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, supplier, dc, category, status]);
+
+  // Paginated records
+  const totalPages = Math.max(1, Math.ceil(filteredLots.length / pageSize));
+  const paginatedLots = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredLots.slice(start, start + pageSize);
+  }, [filteredLots, currentPage, pageSize]);
 
   // Action dispatches
   const handleOpenLotHub = useCallback((lot: any) => {
@@ -175,6 +202,12 @@ export function useInventoryPipeline({ onOpenLotHub }: UseInventoryPipelineOptio
     statusesList,
     expandedRowIds,
     allAreOpen,
+    currentPage,
+    pageSize,
+    totalPages,
+    paginatedLots,
+    setCurrentPage,
+    setPageSize: handlePageSizeChange,
     toggleRow,
     expandAllRows,
     collapseAllRows,
