@@ -169,12 +169,17 @@ export async function placeBid(listingId: string, bidData: any) {
     throw new Error('Listing not found.');
   }
 
-  const opportunity = await Opportunity.findById(listing.opportunityId);
-  if (!opportunity) {
-    throw new Error('Opportunity not found.');
+  let lot: any = null;
+  let opportunity: any = null;
+  if (listing.opportunityId) {
+    opportunity = await Opportunity.findById(listing.opportunityId);
+    if (opportunity?.lotId) {
+      lot = await InventoryLot.findById(opportunity.lotId);
+    }
   }
-
-  const lot = await InventoryLot.findById(opportunity.lotId);
+  if (!lot && listing.lotId) {
+    lot = await InventoryLot.findById(listing.lotId);
+  }
   if (!lot) {
     throw new Error('Inventory Lot not found.');
   }
@@ -301,6 +306,9 @@ export async function placeBid(listingId: string, bidData: any) {
     lot.availableQty = Math.max(0, lot.availableQty - offerQty);
     lot.latestSalesDate = new Date();
     await lot.save();
+
+    // Synchronize volume and unlisting projection to MarketplaceListing
+    await syncMarketplaceListingVolume(lot._id, lot.availableQty, listing._id);
 
     // Log direct purchase system message
     offer.messages.push({
@@ -439,16 +447,27 @@ export async function getMarketplaceListings(filters: {
 } = {}) {
   const query: any = {
     status: { $in: ['published', 'active'] },
-    availableQuantity: { $gt: 0 }
+    availableQuantity: { $gt: 0 },
+    $and: [
+      {
+        $or: [
+          { expiresAt: { $exists: false } },
+          { expiresAt: null },
+          { expiresAt: { $gt: new Date() } }
+        ]
+      }
+    ]
   };
 
   if (filters.search && filters.search.trim()) {
     const searchRegex = new RegExp(filters.search.trim(), 'i');
-    query.$or = [
-      { publicTitle: searchRegex },
-      { category: searchRegex },
-      { description: searchRegex }
-    ];
+    query.$and.push({
+      $or: [
+        { publicTitle: searchRegex },
+        { category: searchRegex },
+        { description: searchRegex }
+      ]
+    });
   }
 
   if (filters.category && filters.category !== 'All') {
@@ -471,6 +490,41 @@ export async function getMarketplaceListings(filters: {
     }
     return doc;
   });
+}
+
+export async function syncMarketplaceListingVolume(
+  lotId?: string | any,
+  availableQty: number = 0,
+  listingId?: string | any
+) {
+  let listing: any = null;
+
+  if (listingId) {
+    listing = await MarketplaceListing.findById(listingId);
+  }
+
+  if (!listing && lotId) {
+    listing = await MarketplaceListing.findOne({ lotId });
+    if (!listing) {
+      const opportunity = await Opportunity.findOne({ lotId });
+      if (opportunity) {
+        listing = await MarketplaceListing.findOne({ opportunityId: opportunity._id });
+      }
+    }
+  }
+
+  if (listing) {
+    const qty = Math.max(0, availableQty);
+    listing.availableQuantity = qty;
+    if (qty <= 0) {
+      listing.status = 'closed';
+    } else if (listing.status === 'closed' || listing.status === 'unlisted') {
+      listing.status = 'published';
+    }
+    await listing.save();
+  }
+
+  return listing;
 }
 
 

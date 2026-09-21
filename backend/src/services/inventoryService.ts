@@ -24,6 +24,7 @@ import { sendEmailHelper } from './emailService';
 import PDFDocument from 'pdfkit';
 import path from 'path';
 import os from 'os';
+import { syncMarketplaceListingVolume } from './marketplaceService';
 
 
 
@@ -534,11 +535,7 @@ export async function awardBid(
   await lot.save();
 
   // Conditionally update listing and opportunity only if present
-  if (listing) {
-    listing.availableQuantity = remainingQty;
-    listing.status = remainingQty <= 0 ? 'closed' : 'published';
-    await listing.save();
-  }
+  await syncMarketplaceListingVolume(lot._id, remainingQty, listing?._id);
   if (opportunity && remainingQty <= 0) {
     opportunity.status = 'completed';
     await opportunity.save();

@@ -8,6 +8,7 @@ import DistributionCenter from '../models/DistributionCenter';
 import crypto from 'crypto';
 import { compileTemplate, compileSubject } from './emailTemplateService';
 import { sendCampaignEmail, sendEmailHelper, syncEmailToThread } from './emailService';
+import { syncMarketplaceListingVolume } from './marketplaceService';
 
 /**
  * Shared helper to resolve associated inventory lot and product for an offer,
@@ -203,6 +204,7 @@ async function rollbackAcceptedAwardIfAny(offer: any) {
           lot.status = 'active';
         }
         await lot.save();
+        await syncMarketplaceListingVolume(lot._id, lot.availableQty, offer.listingId);
       }
     }
     await Award.deleteMany({ offerId: offer._id });
@@ -736,6 +738,23 @@ export async function acceptBid(
     }
 
     lot = updatedLot;
+
+    // Synchronize volume and unlisting projection to MarketplaceListing
+    await syncMarketplaceListingVolume(lot._id, lot.availableQty, offer.listingId);
+
+    // Reject other pending bids if lot is sold out
+    if (lot.availableQty <= 0) {
+      if (offer.listingId) {
+        await Offer.updateMany(
+          { listingId: offer.listingId, _id: { $ne: offer._id }, status: 'pending' },
+          { status: 'rejected' }
+        );
+      }
+      await Offer.updateMany(
+        { lotId: lot._id, _id: { $ne: offer._id }, status: 'pending' },
+        { status: 'rejected' }
+      );
+    }
   }
 
   // Status transition: partially_accepted vs fully_accepted
