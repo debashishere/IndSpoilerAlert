@@ -2,14 +2,11 @@ import React, { useState, useMemo } from 'react';
 import {
   History,
   Search,
-  Filter,
   ChevronDown,
   ChevronRight,
   Zap,
   Clock,
-  DollarSign,
   Package,
-  Layers,
   ArrowUpRight,
   ShieldCheck,
   CheckCircle2,
@@ -17,7 +14,12 @@ import {
   FileText,
   Timer,
   Play,
-  RotateCcw
+  RotateCcw,
+  Sparkles,
+  RefreshCw,
+  XCircle,
+  TrendingUp,
+  BarChart3
 } from 'lucide-react';
 import { WorkflowRunAuditModal } from './WorkflowRunAuditModal';
 import { useAppSelector } from '../store/hooks';
@@ -71,7 +73,6 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
 
   // Group runs by Workflow Strategy for history section (excluding active evaluations)
   const groupedWorkflows = useMemo(() => {
-    // Collect active workflow IDs / keys to prevent duplicate rendering in history
     const activeWorkflowIds = new Set<string>();
     activeRuns.forEach(run => {
       const autoId = String(run.automationId?._id || run.automationId || '');
@@ -83,7 +84,6 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
       }
     });
 
-    // Filter runs by status and search (excluding active evaluations)
     const filteredRuns = automationRuns.filter(run => {
       if (run.status === 'evaluating' || run.status === 'dispatched') return false;
 
@@ -111,7 +111,6 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
       return true;
     });
 
-    // Grouping map
     const map = new Map<string, { workflow: any; runs: any[] }>();
 
     // First populate from existing saved workflows (excluding active workflows)
@@ -130,7 +129,6 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
       if (map.has(autoId)) {
         map.get(autoId)!.runs.push(run);
       } else {
-        // Unlinked or standalone workflow run
         const fallbackKey = autoId || `unlinked-${run.campaignSnapshot?.name || 'Standalone'}`;
         if (activeWorkflowIds.has(fallbackKey)) return;
 
@@ -149,7 +147,6 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
       group.runs.sort((a, b) => new Date(b.dispatchedAt || b.createdAt).getTime() - new Date(a.dispatchedAt || a.createdAt).getTime());
     });
 
-    // Return groups that either have runs or match filter
     return Array.from(map.entries()).filter(([_, group]) => {
       if (selectedStatusFilter === 'all' && !searchQuery.trim()) return true;
       return group.runs.length > 0;
@@ -163,13 +160,6 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
     }));
   };
 
-  const handleExpandAll = () => {
-    const newMap: Record<string, boolean> = {};
-    groupedWorkflows.forEach(([key]) => {
-      newMap[key] = false;
-    });
-    setCollapsedWorkflows(newMap);
-  };
 
   const handleCollapseAll = () => {
     const newMap: Record<string, boolean> = {};
@@ -182,14 +172,6 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
   // Helper to render uniform execution run rows across active banner and history groups
   const renderExecutionRunRow = (run: any, isInsideActiveBanner: boolean = false) => {
     const isActive = run.status === 'evaluating' || run.status === 'dispatched';
-    const statusColorMap: Record<string, string> = {
-      awarded: 'hsl(var(--success))',
-      fallback_executed: 'hsl(var(--warning))',
-      failed: 'hsl(var(--error))',
-      evaluating: 'hsl(var(--warning))',
-      dispatched: 'hsl(var(--warning))'
-    };
-    const statusColor = statusColorMap[run.status] || 'hsl(var(--text-muted))';
 
     // Calculate run specific recovery
     let runDollarValue = run.resolution?.totalValue || 0;
@@ -207,95 +189,131 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
     const linkedAuto = liquidationAutomations.find(a => String(a._id) === String(run.automationId?._id || run.automationId));
     const autoName = linkedAuto?.name || run.campaignSnapshot?.name || 'Automated Strategy Run';
 
+    // Status Badge Configuration with elevated contrast
+    const statusStyles: Record<string, { bg: string; text: string; border: string; dot: string }> = {
+      awarded: {
+        bg: 'bg-emerald-100 dark:bg-emerald-950/60',
+        text: 'text-emerald-900 dark:text-emerald-200',
+        border: 'border-emerald-300 dark:border-emerald-700',
+        dot: 'bg-emerald-600 dark:bg-emerald-400'
+      },
+      fallback_executed: {
+        bg: 'bg-amber-100 dark:bg-amber-950/60',
+        text: 'text-amber-900 dark:text-amber-200',
+        border: 'border-amber-300 dark:border-amber-700',
+        dot: 'bg-amber-600 dark:bg-amber-400'
+      },
+      failed: {
+        bg: 'bg-rose-100 dark:bg-rose-950/60',
+        text: 'text-rose-900 dark:text-rose-200',
+        border: 'border-rose-300 dark:border-rose-700',
+        dot: 'bg-rose-600 dark:bg-rose-400'
+      },
+      evaluating: {
+        bg: 'bg-amber-100 dark:bg-amber-950/60',
+        text: 'text-amber-900 dark:text-amber-200',
+        border: 'border-amber-300 dark:border-amber-700',
+        dot: 'bg-amber-600 dark:bg-amber-400'
+      },
+      dispatched: {
+        bg: 'bg-amber-100 dark:bg-amber-950/60',
+        text: 'text-amber-900 dark:text-amber-200',
+        border: 'border-amber-300 dark:border-amber-700',
+        dot: 'bg-amber-600 dark:bg-amber-400'
+      }
+    };
+
+    const currentStatusStyle = statusStyles[run.status] || {
+      bg: 'bg-slate-100 dark:bg-slate-800',
+      text: 'text-slate-800 dark:text-slate-200',
+      border: 'border-slate-300 dark:border-slate-700',
+      dot: 'bg-slate-500'
+    };
+
     return (
       <div
         key={run._id}
         data-testid="execution-run-row"
         onClick={() => setSelectedRunForAudit(run)}
-        style={{
-          padding: '12px 16px',
-          backgroundColor: isActive ? 'hsl(var(--warning) / 8%)' : 'hsl(var(--bg-card))',
-          borderRadius: '8px',
-          border: isActive ? '1px solid hsl(var(--warning) / 45%)' : '1px solid hsl(var(--border-color))',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: '12px',
-          cursor: 'pointer',
-          transition: 'all 0.15s ease',
-          boxShadow: isActive ? '0 0 12px hsl(var(--warning) / 10%)' : undefined
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = isActive ? 'hsl(var(--warning))' : 'hsl(var(--primary))';
-          e.currentTarget.style.backgroundColor = isActive ? 'hsl(var(--warning) / 14%)' : 'hsl(var(--bg-card-hover) / 40%)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = isActive ? 'hsl(var(--warning) / 45%)' : 'hsl(var(--border-color))';
-          e.currentTarget.style.backgroundColor = isActive ? 'hsl(var(--warning) / 8%)' : 'hsl(var(--bg-card))';
-        }}
+        className={`group p-4 rounded-xl border-2 transition-all duration-150 cursor-pointer flex items-center justify-between flex-wrap gap-4 ${
+          isActive
+            ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-400 dark:border-amber-700 hover:border-amber-500 hover:bg-amber-100/50 shadow-md hover:shadow-lg'
+            : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-primary dark:hover:border-primary hover:bg-slate-50 dark:hover:bg-slate-800/80 shadow-sm hover:shadow-md'
+        }`}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '8px',
-            backgroundColor: `${statusColor}18`,
-            color: statusColor,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 800,
-            fontSize: '0.75rem',
-            border: `1px solid ${statusColor}35`
-          }}>
-            {isActive ? <Timer size={18} style={{ color: 'hsl(var(--warning))' }} /> : <FileText size={16} />}
+        {/* Left Section: Status Icon, Run ID, Status Badge, Mode */}
+        <div className="flex items-center gap-3 sm:gap-3.5">
+          <div
+            className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold transition-transform duration-150 group-hover:scale-105 ${
+              isActive
+                ? 'bg-amber-100/70 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                : run.status === 'awarded'
+                ? 'bg-emerald-100/70 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+            }`}
+          >
+            {isActive ? (
+              <Timer className="w-4 h-4 text-amber-600 animate-spin-slow" />
+            ) : run.status === 'awarded' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            ) : (
+              <FileText className="w-4 h-4 text-slate-500" />
+            )}
           </div>
+
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontWeight: 700, fontSize: '0.86rem', fontFamily: 'monospace', color: isActive ? 'hsl(var(--warning))' : 'hsl(var(--primary))' }}>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono font-bold text-sm text-primary tracking-tight">
                 #{String(run._id).slice(-8).toUpperCase()}
               </span>
-              <span style={{
-                fontSize: '0.68rem',
-                padding: '2px 8px',
-                borderRadius: '10px',
-                backgroundColor: `${statusColor}18`,
-                color: statusColor,
-                fontWeight: 800,
-                textTransform: 'uppercase',
-                border: `1px solid ${statusColor}35`,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}>
-                {isActive && <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'hsl(var(--warning))', animation: 'pulse 1.5s infinite' }} />}
+
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide border ${currentStatusStyle.bg} ${currentStatusStyle.text} ${currentStatusStyle.border}`}
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${currentStatusStyle.dot} ${
+                    isActive ? 'animate-ping' : ''
+                  }`}
+                />
                 {run.status?.replace(/_/g, ' ')}
               </span>
+
               {isInsideActiveBanner && (
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                   {autoName}
                 </span>
               )}
             </div>
-            <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
-              Dispatched: {new Date(run.dispatchedAt || run.createdAt).toLocaleString()} • Mode: <span style={{ textTransform: 'capitalize' }}>{run.runType || 'scheduled'}</span>
+
+            <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mt-1">
+              <Clock className="w-3 h-3 text-slate-400" />
+              <span>Dispatched: {new Date(run.dispatchedAt || run.createdAt).toLocaleString()}</span>
+              <span>•</span>
+              <span>
+                Mode: <strong className="capitalize font-semibold text-slate-700 dark:text-slate-300">{run.runType || 'scheduled'}</strong>
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Run summary metrics and launch button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <div style={{ textAlign: 'right', fontSize: '0.78rem' }}>
-            <span style={{ color: 'hsl(var(--text-muted))' }}>Target Lots:</span> <strong>{run.snapshotInventoryIds?.length || 0} Lots</strong>
+        {/* Right Section: Lots Count, Bids Count, Recovery $, Actions */}
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap ml-auto">
+          <div className="text-right text-xs">
+            <span className="text-slate-500 dark:text-slate-400">Target Lots: </span>
+            <strong className="font-mono font-semibold text-slate-900 dark:text-slate-100">
+              {run.snapshotInventoryIds?.length || 0} Lots
+            </strong>
           </div>
 
-          <div style={{ textAlign: 'right', fontSize: '0.78rem' }}>
-            <span style={{ color: 'hsl(var(--text-muted))' }}>Bids:</span> <strong>{runBids.length}</strong>
+          <div className="text-right text-xs">
+            <span className="text-slate-500 dark:text-slate-400">Bids: </span>
+            <strong className="font-mono font-semibold text-slate-900 dark:text-slate-100">
+              {runBids.length}
+            </strong>
           </div>
 
           {runDollarValue > 0 && (
-            <div style={{ textAlign: 'right', fontSize: '0.82rem', fontWeight: 800, color: 'hsl(var(--success))' }}>
+            <div className="text-right font-mono font-bold text-sm text-emerald-600 dark:text-emerald-400">
               ${runDollarValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
           )}
@@ -303,12 +321,11 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
           {isActive && onForceExpireRun && (
             <button
               type="button"
-              className="btn btn-warning"
+              className="h-8 px-3 rounded-lg text-xs font-semibold bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700 transition-all active:scale-[0.98] shadow-2xs"
               onClick={(e) => {
                 e.stopPropagation();
                 onForceExpireRun(run._id);
               }}
-              style={{ fontSize: '0.72rem', padding: '4px 10px' }}
             >
               Force Expire
             </button>
@@ -316,14 +333,14 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
 
           <button
             type="button"
-            className="btn btn-secondary"
+            className="h-8 px-3 rounded-lg text-xs font-semibold bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 flex items-center gap-1.5 transition-all active:scale-[0.98] shadow-2xs"
             onClick={(e) => {
               e.stopPropagation();
               setSelectedRunForAudit(run);
             }}
-            style={{ fontSize: '0.75rem', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '4px' }}
           >
-            Full-Screen Audit Log <ArrowUpRight size={14} />
+            <span>Full-Screen Audit Log</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-colors" />
           </button>
         </div>
       </div>
@@ -331,69 +348,57 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
   };
 
   return (
-    <div data-testid="workflow-run-history-view" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* ══ TOP CONTROLS & SEARCH BAR ════════════════════════════════════════ */}
-      <div className="card" style={{ padding: '18px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <History size={22} style={{ color: 'hsl(var(--primary))' }} />
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0 }}>
-              Run History & Audit Log
-            </h3>
-            <span style={{
-              fontSize: '0.75rem',
-              padding: '3px 10px',
-              borderRadius: '12px',
-              backgroundColor: 'hsl(var(--primary) / 12%)',
-              color: 'hsl(var(--primary))',
-              fontWeight: 800
-            }}>
-              {automationRuns.length} Total Executions
-            </span>
+    <div data-testid="workflow-run-history-view" className="flex flex-col gap-6">
+      {/* ══ TOP COMMAND BAR: SEARCH, STATS & FILTER CONTROLS ════════════════ */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-4 sm:p-5 shadow-xs flex items-center justify-between flex-wrap gap-4">
+        {/* Left Cluster: Master Title, Total Executions Pill, and Search Box */}
+        <div className="flex items-center gap-3.5 flex-wrap flex-1 min-w-[280px]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+              <History className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight m-0">
+                  Run History & Audit Log
+                </h3>
+                <span className="text-xs font-mono font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                  {automationRuns.length} Total Executions
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 m-0 mt-0.5">
+                Complete chronological execution ledger with strategy snapshots & bidding telemetry.
+              </p>
+            </div>
           </div>
 
-          <div style={{ position: 'relative', minWidth: '240px' }}>
-            <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--text-muted))' }} />
+          {/* Institutional Search Bar: h-10, soft hairline border, diffuse halo */}
+          <div className="relative min-w-[240px] flex-1 max-w-sm">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             <input
               type="text"
               placeholder="Search workflows, run IDs..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '6px 12px 6px 30px',
-                borderRadius: '6px',
-                backgroundColor: 'hsl(var(--bg-card))',
-                border: '1px solid hsl(var(--border-color))',
-                fontSize: '0.82rem',
-                color: 'hsl(var(--text-primary))'
-              }}
+              className="w-full h-10 pl-10 pr-9 rounded-lg bg-slate-50/70 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+                aria-label="Clear search"
+              >
+                <XCircle className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Status Filters and Expand/Collapse Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '4px' }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleExpandAll}
-              style={{ fontSize: '0.72rem', padding: '4px 8px' }}
-            >
-              Expand All
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={handleCollapseAll}
-              style={{ fontSize: '0.72rem', padding: '4px 8px' }}
-            >
-              Collapse All
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', gap: '4px' }}>
+        {/* Right Cluster: Segmented Status Filter Pills & Top-Right Collapse All Button */}
+        <div className="flex items-center gap-3 flex-wrap ml-auto">
+          {/* Segmented Status Filter Pills */}
+          <div className="inline-flex rounded-lg border border-slate-300 dark:border-slate-700 p-0.5 bg-slate-100 dark:bg-slate-800/80 shadow-xs">
             {(['all', 'evaluating', 'awarded', 'fallback_executed', 'failed'] as const).map(filterKey => {
               const filterLabels: Record<string, string> = {
                 all: 'All',
@@ -402,64 +407,127 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
                 fallback_executed: 'Fallback',
                 failed: 'Failed'
               };
+              const isSelected = selectedStatusFilter === filterKey;
               return (
                 <button
                   key={filterKey}
                   type="button"
                   data-testid={`filter-${filterKey}`}
-                  className={`btn ${selectedStatusFilter === filterKey ? 'btn-primary' : 'btn-secondary'}`}
+                  className={`h-7 px-3 rounded-md text-xs font-semibold transition-all active:scale-[0.98] ${
+                    isSelected
+                      ? 'bg-white dark:bg-slate-700 text-primary dark:text-primary-glow font-bold shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/50'
+                  }`}
                   onClick={() => setSelectedStatusFilter(filterKey)}
-                  style={{ fontSize: '0.72rem', padding: '4px 10px' }}
                 >
                   {filterLabels[filterKey]}
                 </button>
               );
             })}
           </div>
+
+          {/* Dedicated Collapse All button placed to top right after the "Failed" sort filter */}
+          <button
+            type="button"
+            className="h-8 px-3 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 flex items-center gap-1.5 transition-all active:scale-[0.98] shadow-xs hover:shadow-sm"
+            onClick={handleCollapseAll}
+          >
+            <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+            <span>Collapse All</span>
+          </button>
         </div>
       </div>
 
-      {/* ══ ACTIVE EVALUATIONS HIGHLIGHT BANNER ══════════════════════════════ */}
-      {activeRuns.length > 0 && selectedStatusFilter !== 'awarded' && selectedStatusFilter !== 'fallback_executed' && selectedStatusFilter !== 'failed' && (
-        <div className="card" style={{ border: '1px solid hsl(var(--warning) / 50%)', backgroundColor: 'hsl(var(--warning) / 6%)', padding: '18px 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Zap size={18} style={{ color: 'hsl(var(--warning))' }} />
-              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'hsl(var(--text-primary))' }}>
-                Active Workflow Evaluations In-Progress ({activeRuns.length})
-              </h4>
+      {/* ══ LOADING SKELETON STATE (WHEN NO RUNS CACHED YET) ═══════════════ */}
+      {loading && automationRuns.length === 0 && (
+        <div className="flex flex-col gap-4 animate-pulse">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-5 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 bg-slate-200 dark:bg-slate-800 rounded" />
+                  <div className="h-5 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
+                  <div className="h-4 w-16 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                </div>
+                <div className="flex gap-4">
+                  <div className="h-8 w-24 bg-slate-100 dark:bg-slate-800 rounded" />
+                  <div className="h-8 w-20 bg-slate-100 dark:bg-slate-800 rounded" />
+                </div>
+              </div>
+              <div className="space-y-2.5 pt-2">
+                <div className="h-14 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-100 dark:border-slate-800" />
+                <div className="h-14 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-100 dark:border-slate-800" />
+              </div>
             </div>
-            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))' }}>
+          ))}
+        </div>
+      )}
+
+      {/* ══ ACTIVE EVALUATIONS HIGHLIGHT BANNER (LIVE TELEMETRY) ════════════ */}
+      {(!loading || automationRuns.length > 0) && activeRuns.length > 0 && selectedStatusFilter !== 'awarded' && selectedStatusFilter !== 'fallback_executed' && selectedStatusFilter !== 'failed' && (
+        <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-300/80 dark:border-amber-800/80 rounded-xl p-4 sm:p-5 shadow-xs">
+          <div className="flex items-center justify-between mb-3.5 flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-600" />
+                <h4 className="m-0 text-sm font-bold text-slate-900 dark:text-slate-100">
+                  Active Workflow Evaluations In-Progress ({activeRuns.length})
+                </h4>
+              </div>
+            </div>
+            <span className="text-xs font-medium text-amber-700/80 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-900/40 px-2.5 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800">
               Live Bidding & Stage Escalations
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="flex flex-col gap-2.5">
             {activeRuns.map(run => renderExecutionRunRow(run, true))}
           </div>
         </div>
       )}
 
-      {/* ══ WORKFLOW-GROUPED STRATEGY CARDS ═════════════════════════════════ */}
-      {groupedWorkflows.length === 0 ? (
-        <div className="card" style={{ padding: '48px', textAlign: 'center', color: 'hsl(var(--text-muted))' }}>
-          <History size={36} style={{ opacity: 0.3, marginBottom: '12px' }} />
-          <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>No workflow execution logs found</div>
-          <div style={{ fontSize: '0.78rem', marginTop: '4px' }}>
+      {/* ══ WORKFLOW-GROUPED STRATEGY CARDS OR EMPTY STATE ═════════════════ */}
+      {(!loading || automationRuns.length > 0) && groupedWorkflows.length === 0 ? (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-xl p-10 sm:p-12 text-center shadow-xs">
+          <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-slate-700">
+            <History className="w-7 h-7" />
+          </div>
+          <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 m-0">
+            No workflow execution logs found
+          </h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-2 leading-relaxed">
             {searchQuery || selectedStatusFilter !== 'all'
               ? 'Try resetting your filter or search terms.'
               : 'Trigger a workflow run from the Campaign Builder or wait for scheduled dispatch.'}
-          </div>
+          </p>
+          {(searchQuery || selectedStatusFilter !== 'all') && (
+            <div className="mt-4">
+              <button
+                type="button"
+                className="h-8 px-3 rounded-lg text-xs font-semibold bg-primary text-white hover:bg-primary/90 transition-all active:scale-[0.98] shadow-2xs inline-flex items-center gap-1.5"
+                onClick={() => {
+                  setSearchQuery('');
+                  setSelectedStatusFilter('all');
+                }}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Filters</span>
+              </button>
+            </div>
+          )}
         </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      ) : (!loading || automationRuns.length > 0) && (
+        <div className="flex flex-col gap-4">
           {groupedWorkflows.map(([groupKey, { workflow, runs }]) => {
             const isCollapsed = collapsedWorkflows[groupKey] || false;
             const completedRuns = runs.filter(r => r.status !== 'evaluating' && r.status !== 'dispatched');
             const awardedRuns = runs.filter(r => r.status === 'awarded');
             const awardRate = completedRuns.length > 0 ? Math.round((awardedRuns.length / completedRuns.length) * 100) : 0;
 
-            // Calculate cumulative dollar recovery across all runs of this workflow
             const cumulativeRecovery = runs.reduce((acc, r) => {
               if (r.resolution?.totalValue) return acc + r.resolution.totalValue;
               if (r.resolution?.winningPrice && r.resolution?.totalCases) {
@@ -474,53 +542,38 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
               <div
                 key={groupKey}
                 data-testid="workflow-strategy-card"
-                className="card"
-                style={{
-                  padding: 0,
-                  overflow: 'hidden',
-                  border: '1px solid hsl(var(--border-color))',
-                  transition: 'border-color 0.15s ease'
-                }}
+                className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-md hover:shadow-lg hover:border-slate-300 dark:hover:border-slate-700 transition-all"
               >
-                {/* Workflow Strategy Group Header */}
+                {/* Workflow Strategy Group Header Accordion */}
                 <div
                   onClick={() => toggleWorkflowCollapse(groupKey)}
-                  style={{
-                    padding: '16px 20px',
-                    backgroundColor: 'hsl(var(--bg-card-hover) / 25%)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    borderBottom: isCollapsed ? 'none' : '1px solid hsl(var(--border-color))'
-                  }}
+                  className={`px-5 py-4 bg-slate-100/90 dark:bg-slate-800/80 flex items-center justify-between cursor-pointer select-none hover:bg-slate-200/70 dark:hover:bg-slate-800 transition-colors ${
+                    isCollapsed ? '' : 'border-b-2 border-slate-200 dark:border-slate-800'
+                  }`}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div className="flex items-center gap-3">
                     <button
                       type="button"
-                      style={{ background: 'none', border: 'none', color: 'hsl(var(--text-muted))', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                      className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 p-1 flex items-center justify-center transition-transform duration-200"
                       aria-label={isCollapsed ? 'Expand workflow' : 'Collapse workflow'}
                     >
-                      {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+                      {isCollapsed ? (
+                        <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                      )}
                     </button>
+
                     <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.96rem', color: 'hsl(var(--text-primary))' }}>
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100 tracking-tight">
                           {workflow.name || workflow.templateName || 'Saved Workflow Strategy'}
                         </span>
-                        <span style={{
-                          fontSize: '0.68rem',
-                          padding: '2px 8px',
-                          borderRadius: '10px',
-                          backgroundColor: 'hsl(var(--primary) / 15%)',
-                          color: 'hsl(var(--primary))',
-                          fontWeight: 700
-                        }}>
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/25">
                           {runs.length} {runs.length === 1 ? 'Run' : 'Runs'}
                         </span>
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', marginTop: '2px' }}>
+                      <div className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 font-medium">
                         {lastRun
                           ? `Latest Run: ${new Date(lastRun.dispatchedAt || lastRun.createdAt).toLocaleString()} • ${lastRun.status?.replace(/_/g, ' ')}`
                           : 'No execution records yet'}
@@ -528,34 +581,37 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Summary Metrics on Card Header */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                  {/* Right Header Section: Health KPIs and View/Hide affordance */}
+                  <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
                     {cumulativeRecovery > 0 && (
-                      <div data-testid="strategy-cumulative-recovery" style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.68rem', color: 'hsl(var(--text-muted))' }}>Cumulative Recovery</div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 800, color: 'hsl(var(--success))' }}>
+                      <div data-testid="strategy-cumulative-recovery" className="text-right">
+                        <div className="text-[10px] uppercase font-bold tracking-wider text-slate-600 dark:text-slate-400">
+                          Cumulative Recovery
+                        </div>
+                        <div className="font-mono font-bold text-sm sm:text-base text-emerald-600 dark:text-emerald-400 leading-none mt-1">
                           ${cumulativeRecovery.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </div>
                       </div>
                     )}
 
                     {completedRuns.length > 0 && (
-                      <div data-testid="strategy-clearance-rate" style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.68rem', color: 'hsl(var(--text-muted))' }}>Clearance Rate</div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 800, color: awardRate >= 50 ? 'hsl(var(--success))' : 'hsl(var(--warning))' }}>
+                      <div data-testid="strategy-clearance-rate" className="text-right">
+                        <div className="text-[10px] uppercase font-bold tracking-wider text-slate-600 dark:text-slate-400">
+                          Clearance Rate
+                        </div>
+                        <div
+                          className={`font-mono font-bold text-sm sm:text-base leading-none mt-1 ${
+                            awardRate >= 50
+                              ? 'text-emerald-600 dark:text-emerald-400'
+                              : 'text-amber-600 dark:text-amber-400'
+                          }`}
+                        >
                           {awardRate}%
                         </div>
                       </div>
                     )}
 
-                    <span style={{
-                      fontSize: '0.72rem',
-                      color: 'hsl(var(--primary))',
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}>
+                    <span className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
                       {isCollapsed ? 'View Runs' : 'Hide Runs'}
                     </span>
                   </div>
@@ -563,9 +619,9 @@ export const WorkflowRunHistoryView: React.FC<WorkflowRunHistoryViewProps> = ({
 
                 {/* Expanded Run Rows List */}
                 {!isCollapsed && (
-                  <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div className="p-4 sm:p-5 flex flex-col gap-3 bg-slate-100/40 dark:bg-slate-950/60">
                     {runs.length === 0 ? (
-                      <div style={{ padding: '24px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '0.82rem' }}>
+                      <div className="p-6 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
                         No runs recorded for this workflow strategy.
                       </div>
                     ) : (

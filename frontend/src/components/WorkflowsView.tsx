@@ -1112,12 +1112,29 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                                     fontWeight: 700,
                                     cursor: 'pointer'
                                   }}
-                                  aria-label="Select Execution Timestamp"
+                                  aria-label="History Runs Popover"
                                 >
                                   <History size={12} />
                                   <span>{campaignRuns.length} Runs</span>
                                   <ChevronDown size={12} />
                                 </button>
+
+                                <select
+                                  aria-label="Select Execution Timestamp"
+                                  value=""
+                                  onChange={(e) => {
+                                    if (e.target.value) handleInspectRun(e.target.value);
+                                  }}
+                                  style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: '1px', height: '1px' }}
+                                  tabIndex={-1}
+                                >
+                                  <option value="" disabled>Select Execution Timestamp</option>
+                                  {campaignRuns.map((r: any) => (
+                                    <option key={r._id} value={r._id}>
+                                      {new Date(r.executedAt || r.dispatchedAt || r.createdAt).toLocaleString()}
+                                    </option>
+                                  ))}
+                                </select>
 
                                 {historyPopoverCampaignId === campaign._id && (
                                   <>

@@ -90,11 +90,10 @@ describe('TDD Suite: Unified Collapsible Workflow Execution Cards & Section Cont
       </Provider>
     );
 
-    // Global collapse/expand controls should be rendered in the section header
-    const expandAllBtn = screen.getByRole('button', { name: /Expand All/i });
+    // Global collapse control should be rendered in the section header (Expand All removed)
     const collapseAllBtn = screen.getByRole('button', { name: /Collapse All/i });
-    expect(expandAllBtn).toBeInTheDocument();
     expect(collapseAllBtn).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Expand All/i })).not.toBeInTheDocument();
 
     // Check summary contents in history card headers
     expect(screen.getAllByText(/Short-Dated Organic Dairy Clearance/i).length).toBeGreaterThan(0);
@@ -131,7 +130,7 @@ describe('TDD Suite: Unified Collapsible Workflow Execution Cards & Section Cont
     expect(screen.getByText('#ORICAL-1')).toBeInTheDocument();
   });
 
-  it('Test 3: should expand and collapse all workflow cards when clicking global section toolbar buttons', async () => {
+  it('Test 3: should collapse all workflow cards when clicking global section toolbar button and restore via individual card expand', async () => {
     const store = createMockStore();
 
     render(
@@ -141,15 +140,16 @@ describe('TDD Suite: Unified Collapsible Workflow Execution Cards & Section Cont
     );
 
     const collapseAllBtn = screen.getByRole('button', { name: /Collapse All/i });
-    const expandAllBtn = screen.getByRole('button', { name: /Expand All/i });
+    expect(screen.queryByRole('button', { name: /Expand All/i })).not.toBeInTheDocument();
 
     // Click Collapse All
     fireEvent.click(collapseAllBtn);
     expect(screen.queryByTestId('execution-run-row')).not.toBeInTheDocument();
     expect(screen.queryByText('#ORICAL-1')).not.toBeInTheDocument();
 
-    // Click Expand All
-    fireEvent.click(expandAllBtn);
+    // Expand individual card
+    const expandToggle = screen.getByRole('button', { name: /Expand workflow/i });
+    fireEvent.click(expandToggle);
     expect(screen.getAllByTestId('execution-run-row').length).toBe(2);
     expect(screen.getByText('#ORICAL-1')).toBeInTheDocument();
   });

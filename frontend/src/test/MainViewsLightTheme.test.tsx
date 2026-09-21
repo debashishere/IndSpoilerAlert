@@ -151,10 +151,10 @@ describe('Main Views Light Theme Support (Issue 08)', () => {
         </div>
       );
 
-      const activeBadge = screen.getByText(/Active/i);
+      const activeBadge = container.querySelector('.badge.status-badge-active') || screen.getByText('Active', { selector: '.badge' });
       expect(activeBadge).toBeInTheDocument();
       // Status badge should use semantic badge classes/tokens
-      expect(activeBadge.className).toContain('badge');
+      expect(activeBadge?.className).toContain('badge');
     });
   });
 });

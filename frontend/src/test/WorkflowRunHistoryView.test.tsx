@@ -106,7 +106,7 @@ describe('Slice 1: WorkflowRunHistoryView - Grouping, Health Metrics & Accordion
     expect(screen.getByText('4 Total Executions')).toBeInTheDocument();
   });
 
-  it('should support individual accordion toggling and global Expand All / Collapse All controls', () => {
+  it('should support individual accordion toggling and dedicated Collapse All control (Expand All removed)', () => {
     render(
       <WorkflowRunHistoryView
         supplierId="sup-101"
@@ -120,7 +120,10 @@ describe('Slice 1: WorkflowRunHistoryView - Grouping, Health Metrics & Accordion
     expect(screen.getByText('#RUN-001')).toBeInTheDocument();
     expect(screen.getByText('#RUN-002')).toBeInTheDocument();
 
-    // Click Collapse All
+    // Verify Expand All button has been removed
+    expect(screen.queryByRole('button', { name: /expand all/i })).not.toBeInTheDocument();
+
+    // Click dedicated Collapse All button
     const collapseAllBtn = screen.getByRole('button', { name: /collapse all/i });
     fireEvent.click(collapseAllBtn);
 
@@ -133,12 +136,9 @@ describe('Slice 1: WorkflowRunHistoryView - Grouping, Health Metrics & Accordion
     expect(screen.getByText('#RUN-001')).toBeInTheDocument();
     expect(screen.getByText('#RUN-002')).toBeInTheDocument();
 
-    // Click Expand All
-    const expandAllBtn = screen.getByRole('button', { name: /expand all/i });
-    fireEvent.click(expandAllBtn);
-    expect(screen.getByText('#RUN-001')).toBeInTheDocument();
-    expect(screen.getAllByText('#RUN-003').length).toBeGreaterThan(0);
-    expect(screen.getByText('#RUN-004')).toBeInTheDocument();
+    // Individual accordion can be collapsed again
+    fireEvent.click(screen.getByText('Dairy Quick Clearance'));
+    expect(screen.queryByText('#RUN-001')).not.toBeInTheDocument();
   });
 
   it('should filter workflows and runs by search query', () => {
