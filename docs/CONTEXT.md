@@ -1,289 +1,170 @@
-# InventoryFlowing Platform Domain Context
-
-This document outlines the core domain model, glossary of terms, and architectural design constraints for the InventoryFlowing Platform (formerly IndSpoiler Alert).
-
-
-## Core Glossary
-
-### Surplus Inventory
-CPG products (dairy, produce, dry goods, etc.) that are near expiration, overproduced, or otherwise surplus, requiring liquidation.
-
-### Ingestion Engine (Messy Data AI Normalizer)
-The system responsible for taking unstructured files (PDF invoices, messy CSV sheets) from suppliers (e.g., Unilever, Mondelez) and converting them into standardized, structured JSON payloads.
-
-### Yield Optimization (Dynamic Discount Engine)
-An analytical model that recommends discount percentages based on the days left to expiration (`days_until_expiration`), volume, and price elasticity, with the goal of liquidating stock before expiration while maximizing recovered value.
-
-### Demand Matching (Smart Buyer Matching)
-A recommendation engine that scores and pairs newly ingested surplus inventory with the top retail buyers based on buyer preferences (e.g., "accepts short-dated dairy") and past purchase history.
-
-### Offer Sheet / Listing
-A compiled catalog or batch of surplus inventory items made available to retail buyers for bidding or direct purchase.
-
-### Buyer Marketplace (Public Buyer Portal)
-A standalone public-facing portal (`marketplace.indspoileralert.com`) and product landing page where secondary market retail buyers browse active, compliance-verified Marketplace Listings, evaluate Remaining Shelf Life (RSL), and submit bids using email identification. It is architecturally and visually isolated from the authenticated Supplier Inventory Platform. *(See [ADR 0026](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0026-separation-of-buyer-marketplace-and-inventory-platform.md)).*
-
-
-### Bidding & Awarding
-A competitive transaction flow where secondary market buyers submit bid offers (price and volume) on a listing. Suppliers can perform partial awarding, selling fractional quantities to different buyers, which keeps the listing active until the remaining inventory is fully liquidated.
-
-### Bid (Offer)
-A formal bid submission from a retail buyer specifying the desired quantity of cases and the price per case they are willing to pay for a specific listing.
-
-### Remaining Shelf Life (RSL)
-The proportion of a product's shelf life left at the time of ingestion or transaction, used to determine markdown urgency and discount decay schedules.
-
-### Alternative Disposal (Donation / Recycling)
-Off-channel options to redirect distressed inventory to food banks (donation) or processing centers (recycling) when liquidation sales are no longer viable, helping CPG brands avoid landfill waste and fees.
-
-### Distressed Inventory Analytics
-Decision intelligence reporting (e.g., "Remaining Shelf Life" and "Leftovers" reports) assessing team efficiency, cost of goods sold (COGS) recovery rates, and landfill diversion stats. *(Note: The Distressed Analytics navigation section is hidden for the base version release via `SHOW_DISTRESSED_ANALYTICS = false` feature flag to ensure a streamlined base release; see [ADR 0025](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0025-defer-distressed-analytics-and-freight-logistics-for-base-release.md)).*
-
-
-### AI Bid Evaluator
-An intelligent decision support module that automatically scores and classifies incoming Bids against the calculated Yield Optimization curve, advising suppliers on whether to accept, counter, or divert the bid to donation.
-
-### Award Notice (Email Draft)
-An editable notification template generated upon accepting a bid, permitting the supplier to customize logistics details (pickup window, dock instructions) before notifying the buyer.
-
-### Inventory Analytics & Charts View
-A visual decision intelligence view of Surplus Inventory metrics, presenting high-level KPI cards and interactive performance charts (COGS Risk Trajectory, RSL & Category Distribution, Landfill Diversion Velocity, and Buyer Bidding Heatmap; marked as Coming Soon). Raw Inventory Data and Buyer Data lists are centralized within the Surplus Ingestion Pipeline (`IngestionView`). *(See [ADR 0028](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0028-relocate-inventory-and-buyer-lists-to-ingestion-pipeline-and-transition-inventory-tab-to-charts.md)).*
-
-### Lot Operations Hub
-A dedicated workspace view for a single Surplus Inventory lot that consolidates item management, active bid evaluations and awarding, and chronological activity tracking into structured sub-tabs.
-_Avoid_: Action tab, manage bids drawer, details popup
-
-### Bid Negotiation (Communication Chain)
-An interactive chronological transaction flow where suppliers and buyers exchange messages and counter-offers on an active listing, simulating negotiation dynamics before a bid is awarded or rejected.
-
-### Buyer Email Identification & Auto-Registration
-The use of a buyer's email address as their primary identifier during bidding, which triggers automatic buyer profile registration using domain-derived company names if the email does not exist in the database.
-
-### Compliance Document (COA / Batch Record / Attestation)
-Legal food safety documentation (e.g., Certificate of Analysis or Lot Batch Record) that must be uploaded and verified for FDA-regulated products before an Inventory Lot can be promoted to an active marketplace listing.
-
-### Purchase Order (PO)
-An official document automatically generated as a PDF upon the final award of a bid. It captures the agreed quantity, price, buyer details, and lot information.
-
-### Bill of Lading (BOL)
-A standard freight document generated upon bid award, detailing the carrier, shipper, consignee, and quantity of cases being transported.
-
-### Dock Appointment Confirmation
-The process by which a buyer or carrier schedules and confirms a specific `pickupWindow` at a distribution center's dock door, transitioning a shipment from `'scheduled'` to `'confirmed'`.
-
-### Cold Chain Temperature Logging
-The FSMA-compliant recording of temperatures during a lot's shipment phase to ensure that cold storage ranges (e.g. 34–38°F) were maintained throughout transport.
-
-### Dynamic Data Translator
-A semantic normalization layer that transforms heterogeneous supplier product parameters into standardized canonical attributes and typed semantic attributes during ingestion.
-
-### Dynamic Semantic Attributes
-Category-specific or supplier-specific product attributes (e.g., certifications, pallet Ti/Hi, Brix score) stored in a structured dictionary on the inventory lot while preserving strictly typed canonical invariants for core transaction and pricing mechanics.
-
-### Semantic Transformation Rule
-A declarative rule mapping an incoming supplier product parameter to a canonical or semantic attribute key, including data type coercion and unit conversion (e.g., Celsius to Fahrenheit).
-
-### Dynamic Facet Discovery
-An aggregation mechanism that inspects active inventory lots to dynamically discover available semantic attribute keys and their distinct values or counts for context-sensitive buyer filtering.
-
-### Sale (Sales Record)
-A transaction record stored in a dedicated collection representing closeout or liquidated stock sales, populated either through direct bidding awards or bulk spreadsheet ingestion, and linked to surplus inventory via lot number or SKU.
-
-### Liquidation Cycle
-A high-level campaign container that groups related surplus inventory lots, sales reports, and liquidation activities for a supplier during a specific timeframe.
-_Avoid_: ParentList, Campaign Group
-
-### Liquidation Automation
-A configurable rule-based process that automatically filters surplus inventory, ranks buyers, applies discount logic, and initiates bidding/donation actions based on a template.
-_Avoid_: AutoFlow, Liquidation Bot
-
-### Stage-Gate Workflow Template
-A structured sequence containing triggering rules, wait delays, customized email templates, and conditional resolution branches (Success vs. Fallback) designed for sales representatives.
-_Avoid_: Node Map, Zapier Flow
-
-### Hybrid Inventory Selector
-A selection mechanism combining dynamic query filters (such as `createdAt`, `expirationDate`, and `supplier`) with granular manual check-boxes to curate specific lots attached to a workflow.
-
-### Dynamic Email Table Token
-A template placeholder (`{{inventory_table}}`) that automatically compiles details of multiple selected surplus lots (SKU, description, quantity, price) into a styled table inside buyer-facing emails.
-
-### Liquidation Automation Studio
-The primary full-page workflow creation and execution workspace where suppliers specify campaign cycle metadata, select automation templates, define dynamic inventory rules, configure stage-gate buyer lists, and trigger immediate or scheduled runs.
-_Avoid_: Workflow Modal, Automation Wizard Popup, Create Campaign Drawer
-
-### Live Impact & Allocation Panel
-A real-time sticky sidebar or drawer in the Liquidation Automation Studio that dynamically calculates and renders matched lot counts, case volumes, total COGS recovery value, and buyer allocation metrics as filters are adjusted.
-_Avoid_: Summary Box, Calculation Drawer
-
-### Pre-Flight Launch Audit
-A mandatory modal summary step prior to workflow execution that provides a final verification of matched lots, total value at risk, target buyer counts, rendered email preview, and scheduled timing parameters.
-_Avoid_: Confirmation Popup, Run Prompt
-
-### Interactive Tour Tab Isolation
-A design pattern that scopes interactive guide overlays and floating tour widgets strictly to their target view (e.g., Ingestion tab) to prevent z-index layering conflicts with workspace footers and side drawers on other tabs.
-
-### Campaign & Strategy Save Persistence
-The capability within the Liquidation Automation Studio to explicitly save and persist campaign cycle parameters and automated stage-gate rules for specific active date windows (e.g., 3-day short-term clearance vs. future-dated category campaigns) to the database without requiring an immediate pre-flight audit trigger.
-
-### React Email Builder Engine
-A code-first block-based email template authoring interface integrated within the Liquidation Automation Studio. It leverages modern design tokens and dynamic template placeholders (e.g., `{{inventory_table}}`, `{{buyer_name}}`, `{{discount_percent}}`) to construct high-conversion, responsive B2B surplus offer sheets.
-_Avoid_: Heavyweight MJML Canvas, Plain Text Email Editor
-
-### Dynamic Offer Sheet Template
-A structured email layout configuration composed of modular blocks (Header, Text, Inventory Table, CTA Button, Logistics) and dynamic context variables, compiled into responsive HTML for buyer dispatch during stage-gate campaigns.
-
-### Saved Campaigns Workspace
-The primary management tab within the Workflow module that lists all persisted liquidation campaign strategies, enabling sales representatives to monitor status (`Draft`, `Active`, `Stopped`, `Completed`), track creation metadata, and execute lifecycle operations via a 3-dots action menu.
-
-### Campaign Lifecycle State
-The discrete status states of a liquidation campaign: `Draft` (configured but unlaunched), `Active` (live stage-gate execution), `Stopped` (manually halted before completion), and `Completed` (all stages finished or inventory fully awarded).
-
-### Campaign Save Invariant
-The mandatory validation rule requiring at least 1 valid, non-expired surplus inventory lot and at least 1 total case selected before a campaign strategy can be persisted as Draft or Active.
-
-### Campaign Studio Entry Invariant
-The mandatory validation rule requiring a supplier to have successfully authenticated an OAuth Mailbox Integration *before* they can enter the Liquidation Automation Studio to build a campaign. This "Hard Gate" ensures all drafted strategies are guaranteed to have a valid dispatch channel from the start.
-
-### Mailbox Connection Canvas
-A dedicated empty-state screen rendered inside the Liquidation Automation Studio tab when the Campaign Studio Entry Invariant fails. It presents the value proposition of connecting an email account and houses the primary OAuth trigger, preventing jarring navigation intercepts.
-
-### Mailbox Authentication Soft Lock
-A UI state triggered when a previously authenticated OAuth Mailbox token expires or is revoked. It permits read-only access to the Liquidation Automation Studio for viewing past campaigns, but displays a persistent warning banner and disables all campaign launch and communication actions until the connection is restored.
-
-### Buyer Segment Roster Inspection
-An interactive modal inspection drawer attached to stage buyer segment tabs that lists all registered buyers matching a target segment (including company name, email address, and registration date).
-
-### Multi-Entity Donation Diversion
-A dynamic configuration model permitting distressed inventory fallbacks or direct donation stages to split surplus cases across multiple certified non-profit and food bank entities according to configurable case caps and diversion strategies (`percentage_split` or `priority_cascade`). *(Note: The Section 5 UI card in `LiquidationAutomationStudio.tsx` is hidden for the base release via `SHOW_DYNAMIC_DONATION_SECTION = false` feature flag to ensure a streamlined base version, while backend models remain fully functional for future activation; see [ADR 0024](file:///Users/debashisroy/Documents/IndSpoilerAlert/docs/adr/0024-defer-dynamic-donation-section-in-workflow-builder.md)).*
-
-### Campaign Builder Editing Session Indicator
-A prominent Amber/Gold banner and control bar displayed at the top of the Liquidation Automation Studio when editing an existing campaign strategy, indicating active editing mode and offering actions to "Clear & Start New" or "Update Strategy".
-
-### Matched Inventory Inspection Modal
-A dedicated modal dialog accessible via an Eye button in the Saved Campaigns list that displays all surplus inventory lots matched by a strategy's targeting rules.
-
-### In-Place Evaluation Bids Panel
-An inline expandable view within an active workflow evaluation card that renders live buyer bids and award/rejection controls directly without navigating away from the workflow tab.
-
-### Scoped Unique Strategy Name
-The compound unique constraint (`{ supplierId, name }`) that guarantees every saved liquidation strategy has a distinct, unambiguous title within a supplier account, preventing naming collisions and ensuring clear identification across active evaluation windows and run history logs.
-
-### Collapsible Workflow Execution Card
-A unified card component layout used across both Active Workflow Evaluations and Run History & Audit Log sections. It supports a compact collapsed summary view optimized for mobile/tablet devices and an expanded view displaying execution metrics, buyer bids, stage timeline step cards, and run details.
-
-### Execution Details Panel
-An inline sub-view within a workflow execution card that consolidates detailed execution parameters, including dispatched/resolution timestamps, total bids received, winning bid amount, total dollar value recovered, case counts, snapshot inventory lot references, and audit logs.
-
-### Workflow Strategy Stage & Action Timeline Viewer
-An interactive modal visualization in the Saved Campaigns tab displaying a step-by-step pipeline breakdown: Stage 1 (Dispatch & Buyer Blast with email payload preview), Stage 2 (Active Bidding Window with floor price and match score guardrails), and Stage 3 (Resolution Gate for auto-award vs. auto-donation fallback), along with cron timing and historical dispatch statistics.
-
-### Saved Workflow Lineage Filter Bar
-A filter toolbar control on the Runs & History sub-tab that dynamically filters active evaluation windows and historical execution runs by any selected saved strategy name.
-
-### OAuth Mailbox Integration
-A seamless connection method (e.g., via Nylas) allowing suppliers to authenticate their corporate email accounts (Google Workspace, Microsoft 365) via OAuth, bypassing manual SMTP configuration for dispatching offer sheets and bid notifications.
-
-### Platform Default Mailer
-The baseline transactional email service powered by SendGrid (Free Tier) used for zero-config outbound supplier campaign emails, buyer thread replies, and platform system notifications.
-
-### Email Communication Hub (Mails Workspace)
-A dedicated workspace embedded directly within Centralized Platform Settings consolidating outbound campaign email dispatches, incoming buyer responses, pixel open telemetry, and bid negotiation histories into structured message threads.
-
-### Centralized Platform Settings
-A unified configuration workspace managing supplier credentials/login, OAuth Mailbox Integration status, SendGrid Platform Default Mailer, Mails Workspace, and system-wide application preferences.
-
-### Email Campaign Workspace
-A centralized workspace that allows suppliers to compose, preview, and dispatch ad-hoc email broadcasts to targeted retail buyers, while also managing reusable email templates utilized by automated Stage-Gate Workflows.
-
-### Ad-Hoc Email Broadcast
-A manual email dispatch initiated by a sales representative outside of automated workflow schedules, targeting selected retail buyers with specific surplus inventory lots or promotional offer sheets.
-
-### Email Template Reference (templateId)
-A string or entity reference identifying an Email Template used across broadcasts and automation workflows, resolving to "default" for platform baseline templates unless overridden by a custom supplier template reference.
-
-### Template Variable Token
-A standardized Handlebars placeholder tag (e.g., `{{buyer_name}}`, `{{inventory_table}}`, `{{quick_bid_link}}`) inserted into email template bodies and dynamically substituted during template compilation.
-
-### Buyer Account Name Token
-A dynamic variable token chip (`{{buyer_name}}` / `"Buyer Account Name"`) inserted into Email Templates. In standalone template authoring, it acts as an unbound placeholder. When attached to a workflow stage, it dynamically binds to the workflow's target buyer selection.
-
-### Workflow Email Template Token Binding
-The mechanism where selecting/attaching a saved email template to a workflow stage in the Workflow Builder automatically binds embedded token chips (such as `{{buyer_name}}`) to that stage's buyer selection dropdown (`buyerSegment` or `customBuyers`), resolving recipient data dynamically at dispatch time.
-
-### Zero-Buyer Workflow Stage Invariant
-The strict validation rule governing stage-gate workflows:
-1. In the Workflow Builder UI: Selecting an empty buyer segment or custom list immediately displays a blocking validation error, restricting workflow creation/save until at least 1 valid buyer is attached.
-2. In Workflow Engine Execution: If a stage evaluates to 0 target buyers at execution time, execution immediately fails, transitions the run status to `'error'`, and logs a detailed string error reason in the execution audit history.
-
-### Buyer List Registry
-A centralized management catalog within Buyer Ingestion enabling suppliers to curate, organize, and inspect buyer accounts into system-protected or user-defined lists for campaign targeting.
-
-### System Default Buyer List
-Permanent, system-protected list containers (`Primary Buyers` and `Secondary Buyers`) present for all suppliers that cannot be deleted, but whose buyer account memberships can be updated.
-
-### Custom Buyer List
-A user-defined, named collection of buyers created by a supplier with full CRUD capabilities (create, rename, update members, delete list) for granular workflow and broadcast targeting.
-
-### Buyer Detail Drawer
-A full-screen slide-over panel that opens from the right when a supplier clicks any buyer row in the Buyer Registry. Contains two tabs: **Profile & Settings** (editable fields, opt-in toggles, deactivation control, list-membership checkboxes) and **Communications** (a scoped list of `EmailThread` records matching that buyer's email, with snippet, date, and a link into the Email Communications Hub). Only one drawer is open at a time.
-_Avoid_: Buyer popup, buyer modal, buyer edit page
-
-### Buyer Deactivation
-A soft-kill state (`isActive: false`) applied to a Buyer record. A deactivated buyer is silently excluded from all workflow executions, email dispatches, and UI registry lists without removing their database document or list-membership records. Reactivation restores the buyer to all their previous lists automatically. The deactivation is permanent until a supplier explicitly reactivates the buyer.
-_Avoid_: Buyer deletion, hard remove, archive
-
-### Buyer Opt-Out
-A per-channel suppression state on a Buyer record, controlled by two independent boolean flags: `optInBidding` (default `true`) and `optInSales` (default `true`). When a flag is `false`, the buyer is skipped in that channel's workflow email triggers while remaining active, list-enrolled, and visible in the registry. The supplier toggles these flags in the Buyer Detail Drawer. "Temporary" opt-out is implemented by the supplier flipping the flag back on when ready — there is no automatic expiry.
-_Avoid_: Buyer blacklist, session-scoped opt-out, timed suppression
-
-### Buyer List Manager
-A modal opened from the Buyer Registry header (button labelled "Buyer Lists") that provides two capabilities: (1) list-level CRUD — create, rename, and delete Custom Buyer Lists (System Default Lists are protected from renaming and deletion); (2) per-list bulk member assignment — a two-panel interface showing current list members on one side and all registered active buyers on the other, allowing bulk add/remove. Individual per-buyer list assignments are also available in the Buyer Detail Drawer.
-_Avoid_: List admin panel, segment manager
-
-
-
-
-
-### Smart Audience Targeting
-The capability within the Email Campaign Workspace to dynamically resolve broadcast recipients based on buyer categories, historical bid profiles, or explicit buyer selection.
-
-### Personalized Quick-Bid CTA Token
-A recipient-unique secure URL token generated during campaign dispatch that allows a retail buyer to submit a 1-click bid on featured inventory lots directly from their email payload.
-
-### Public Landing Page
-The unauthenticated entry point rendered by the platform when no active Firebase session is detected. It presents the product value proposition and houses the Central Auth Modal for login and signup. Once authentication succeeds, the reactive `isAuthenticated` flag in `AuthContext` causes the platform shell to replace it automatically — no explicit callback navigation is needed.
-
-### Auth Resolution Screen
-A full-screen branded loading state rendered while Firebase asynchronously resolves the current session on cold page load. It prevents any flash of the landing page for returning authenticated users, or flash of the platform shell for logged-out users.
-
-### Central Passwordless OTP Authentication
-A passwordless authentication mechanism for central platform accounts ("Sign In to Platform" and "Create Central Account") where users register dual profiles (CPG Supplier / Retail Buyer) or log in by entering their work email and verifying a 6-digit OTP delivered via email, generating an authenticated central user session without passwords.
-
-### Google OAuth Single Sign-On
-An authentication mechanism integrated into "Sign In to Platform" and "Create Central Account" modal views (`CentralAuthModal`) leveraging Firebase JS SDK (`GoogleAuthProvider` & `signInWithPopup`). It allows users to log in or create central accounts using Google credentials, preserving selected dual-profile roles (CPG Supplier / Retail Buyer) upon signup or defaulting to dual profiles for new users upon login.
-
-### Central Auth OTP Endpoints
-Dedicated backend API routes (`/api/auth/otp/request` and `/api/auth/otp/verify`) powered by `centralAuthService.ts` that manage 6-digit OTP generation (with a 15-minute TTL), email dispatch via `emailService.ts` (exposing `devOtp` in development), OTP verification, and central user profile/session creation.
-
-
-### Session Gate
-The conditional rendering logic in `App` that reads `isLoading` and `isAuthenticated` from `AuthContext` to decide which root-level view to display: Auth Resolution Screen (loading), Public Landing Page (unauthenticated), or Platform Shell (authenticated).
-
-### Bid Action Inspector Workspace
-The dedicated institutional trading desk operational workspace where suppliers evaluate incoming buyer offers, configure logistics settlement terms, dispatch counter-offers, or execute structured rejections.
-_Avoid_: Bid details popup, offer modal, action drawer
-
-### Settlement Execution
-The terminal phase of an accepted bid transaction where logistics parameters (DC address, dock hours, awarded cases) are bound and transactional settlement communications are dispatched to the buyer.
-_Avoid_: Accept click, order finalizer
-
-### Counter Proposal Dispatch
-The interactive negotiation workflow allowing suppliers to propose adjusted unit prices and tranche volumes with margin uplift telemetry and automated expiration holding windows.
-_Avoid_: Re-bid prompt, haggle bar
-
-### Decline Workflow Guardrails
-A structured rejection process requiring mandatory reason codes, audit trail memo logging, and automated surplus inventory re-listing configuration upon offer decline.
-_Avoid_: Cancel button, reject flag
-
-
+# Domain Glossary & Model
+
+## Global Navigation Shell
+
+- **Global Navigation Bar**: The top-level horizontal navigation shell replacing the legacy vertical sidebar, housing the brand emblem, rounded pill routing tabs (`Ingestion`, `Insight`, `Workflow`, `Marketplace`, `Inbox`, `Settings`), notifications trigger, and verified user profile pill.
+  _Avoid_: `Sidebar Navigation`, `Left Navigation Menu`, `Sidebar Shell`.
+- **Institutional Control Menu**: The centralized popover dropdown anchored to the User Profile Pill in the Global Navigation Bar. It consolidates authenticated identity details, active supplier/facility selection, dark/light theme switching, service telemetry (Backend & Sidecar health), and console session termination (`logout`).
+  _Avoid_: `Simple User Menu`, `Floating Theme Button`.
+- **Quick Notifications Popover**: The lightweight floating notification flyout triggered by the notification bell in the Global Navigation Bar and Mobile Nav Bar, rendering time-stamped alerts for inbound bids, workflow runs, and compliance actions with a direct jump to the Emails Hub.
+  _Avoid_: `Notifications Page`, `Full Page Notifications`.
+- **Operational Metric Hydration**: The reactive data binding mechanism linking drawer matrix cards (`Active Lots`, `Pending Bids`, `Unread Alerts`) and navigation tab badges to live Redux and domain store states, with graceful baseline fallbacks during network initialization.
+  _Avoid_: `Static Drawer Numbers`, `Hardcoded Stats`.
+- **Hybrid High-Fidelity Asset Pipeline**: The visual integration architecture combining Google Font CDN typography (`Hanken Grotesk`, `Inter`) and Material Symbols with embedded SVG/Lucide component fallbacks for offline environments and CI unit test resilience.
+  _Avoid_: `Pure Icon Font Dependency`, `Unstyled System Fallback`.
+- **Mobile Navigation Drawer**: The responsive slide-over drawer overlay triggered by the mobile header hamburger toggle, displaying user credentials, live operational metrics (Active Lots, Pending Bids, Unread Alerts), primary routing items with contextual badges, terminal node status, and session termination controls.
+  _Avoid_: `Bottom Navigation Bar`, `Mobile Tab Strip`.
+- **Terminal Node Status**: The institutional telemetry indicator in the drawer and navigation shell reflecting the connected distribution clearinghouse node (`Node: NA-SOUTH-TX-HUB`) and network compliance status (`FSMA 204 Audited`, `TLS 1.3 End-to-End`).
+
+
+## Email Builder Engine
+
+- **Workflow Email Editor**: The integrated email editing component inside `WorkflowEmailBuilder.tsx` where users configure workflow stage metadata (Template, Subject, From Email, Signature) and directly edit the email body via the embedded TipTap editor.
+- **Prebuilt Email Template**: A re-usable email template preset containing pre-formatted layout HTML and dynamic merge tokens. When selected from the Template dropdown, its content populates the TipTap editor for live inline editing, modification, saving back, or applying directly to the workflow step.
+- **TipTap Custom Toolbar**: The rich formatting toolbar positioned above the TipTap editor canvas. It includes:
+  - **Font Family Dropdown**: Allows picking fonts (e.g. Verdana, Inter, Arial, Georgia, Monospace).
+  - **Text Size Dropdown**: Select font size in points (e.g., 9pt, 11pt, 12pt, 14pt, 18pt, 24pt, 36pt).
+  - **Named Formats Dropdown**: Allows switching block types (Paragraph, Heading 1, Heading 2, Heading 3, Blockquote, Code Block).
+  - **Tags / Dynamic Tokens Dropdown**: Enables inserting workflow merge fields directly at the cursor position.
+  - **Alignment Controls**: Align text left, center, right, or justify.
+  - **Link & Image Modals**: Small dedicated icons to insert/edit hyperlink attributes and image source URLs.
+  - **Color Pickers**: Foreground text color and background highlight color.
+- **Local File & Drag-and-Drop Image Insertion**: Users can click the Image icon to upload local image files or drag-and-drop images directly into the TipTap canvas. Uploaded images are stored as Base64/Object Data URLs within the template body.
+- **Interactive Token Badges**: Dynamic merge tags inserted into TipTap render as atomic inline badge nodes, protecting them from syntax corruption while allowing easy deletion or re-positioning.
+- **Template Load Confirmation**: Loading a prebuilt template into an editor with unsaved body modifications triggers a confirmation prompt to prevent accidental data loss.
+- **Scoped Integration**: The TipTap editor is focused specifically on replacing the body area within `WorkflowEmailBuilder.tsx` and connecting with prebuilt template loading/updating/saving.
+
+## Emails Hub
+
+- **Emails Hub**: The top-level navigation section (formerly labelled "Inbox") that houses all email-related functionality for a supplier. Routed by `activeTab === 'inbox'` and rendered by `EmailsHubView`.
+- **Inbox Sub-Tab**: The default active sub-tab inside the Emails Hub. Renders the full supplier–buyer thread workspace (`EmailCommunicationsView`) with no behavioural changes from the pre-hub experience.
+- **Template Gallery**: The second sub-tab inside the Emails Hub reserved for browsing and managing reusable email templates. Currently shows a placeholder pending the Template Builder feature.
+- **Template Editor**: The forthcoming editor surface inside the Template Gallery where suppliers will create and modify reusable email templates.
+- **Email Template**: A reusable, pre-formatted email body (with optional merge tokens) that can be applied to outbound communications or workflow stages.
+- **Google OAuth Mailbox**: The authenticated mail connection bound to a supplier ID, authorizing outbound email dispatch via Google's OAuth 2.0 API (`https://mail.google.com/` scope). Serves as the single unified transport engine for all outbound email types (campaign broadcasts, direct inbox thread replies, and automated workflow notifications) whenever connected. Tracks access/refresh tokens and connection status (`connected`, `expired`, `missing`).
+
+## Authentication & User Identity
+
+- **Disallowed Mock Email Domain**: Any email domain address matching mock/test domain patterns (such as `@example.com`, `@mock.com`, `@test.com`, `@invalid`, `@localhost`, or containing `mock` in the domain name). Email addresses matching these patterns are strictly prohibited from authenticating or registering on the platform.
+
+## Stage-Gate Escalation Model
+
+- **Stage Type**: The operational classification (`liquidation` | `donation` | `landfill`) determining a stage's audience targeting, pricing, timing constraints, and inventory allocation rules.
+- **Liquidation Stage**: A commercial clearance stage targeting commercial buyers or liquidator tiers with algorithmic/fixed pricing discounts and response wait windows.
+- **Donation Stage**: A non-commercial philanthropic stage targeting charitable and non-profit partners with customizable offer expiration windows and dedicated inventory allocations (omitting pricing and discount logic).
+- **Landfill Stage**: A terminal disposal stage configured with mandatory disposal deadlines and inventory allocation for authorized waste/recycling partners.
+- **Master Inventory Pool**: The total collection of inventory lots matched by the workflow's Section 2 filters (category, RSL threshold, explicit lot IDs).
+- **Stage Inventory Allocation**: The granular subset of inventory lots (`allocatedLotIds`) assigned specifically to an individual stage, allowing distinct lots to be divided and offered among different buyers, donors, or disposal partners.
+- **Offer Expiration Window**: The response timeframe (duration in Days/Hours/Mins) configured on a Donation stage before the donation transfer offer expires or cascades.
+- **Disposal Deadline**: The mandatory removal/pickup cutoff date configured on a Landfill stage by which inventory must be collected or disposed of.
+- **Stage Type Switcher**: The interactive toggle control located in the stage card title bar replacing the static token binding badge, allowing direct switching between Liquidation, Donation, and Landfill stage types.
+- **Unified Partner Registry**: The centralized directory (managed via Buyer Registry & Buyer List Manager) serving as the single repository for commercial buyers, non-profit / food bank donation partners, and waste management / landfill operators.
+- **Context-Aware Stage Tokens**: Dynamic merge tokens (`{{current_stage_discount}}`, `{{expiry_hours}}`, `{{offer_expiration_time}}`, `{{disposal_deadline}}`, `{{inventory_table}}`) that adapt their resolution automatically based on the stage's operational type.
+- **Stage Validation Guardrails**: Type-specific validation enforcing that Liquidation stages have buyers + pricing rules, Donation stages have non-profit partners + allocated lots + expiration windows, and Landfill stages have disposal partners + removal deadline dates.
+- **Private Stage Exclusivity Window**: The designated response timeframe during an active Liquidation Stage targeting specific or customized buyers, during which the evaluated inventory lots remain unlisted on the public marketplace and can only be bid upon via private, tokenized 1-click buyer action links.
+- **Marketplace Broadcast Fallback**: A terminal fallback rule configuration where remaining unsold inventory lots from prior private stages or stages targeting "All Buyers" are automatically published to the public `MarketplaceListing` catalog (subject to compliance verification) as a final commercial recovery attempt before non-commercial diversion.
+- **Compliance Hold Gate**: An automated regulatory safeguard during Marketplace Broadcast execution where lots with verified compliance documentation (COA/Batch Record) publish immediately to the public marketplace, while unverified FDA-regulated lots are held in a `compliance_hold` status pending supplier document upload and verification.
+- **Stage Balance Carry-Forward**: The automated mechanism where unawarded or partially remaining inventory quantities from a prior stage execution remain active for the duration of the current stage window and then carry forward as the available inventory pool for downstream stages or marketplace broadcast.
+- **Campaign Scope**: The macro-orchestration boundary (`AutomationRun`) managing multi-lot inventory snapshots (`snapshotInventoryIds`), stage escalation timers, and buyer tier dispatches across multiple lots.
+- **Atomic Offer Granularity**: The micro-transactional unit (`Offer` and `Award`) representing a buyer's commercial and legal commitment to a single physical inventory lot (`lotId`), ensuring warehouse DC pickup accuracy, SKU-level valuation, and independent negotiation.
+- **Strict Listing Reference Invariant**: The database relational integrity rule requiring `Offer.listingId` (and `Award.listingId`) to be strictly null or undefined unless a matching document exists in the `MarketplaceListing` collection, preventing foreign key cross-contamination with unlisted inventory lot IDs.
+
+## Workflow Run History & Audit Trail
+
+- **Workflow Run Group**: A grouped collection of all historical executions belonging to a specific saved Workflow Strategy, surfacing high-level aggregated health metrics (total run count, success/award rate, cumulative dollar recovery, and latest dispatch timestamp).
+- **Execution Run Record**: An individual historical execution instance of a workflow (dispatched manually or on schedule), capturing immutable snapshots of matched inventory lots, buyer dispatches, stage evaluation timeline, and final resolution outcome.
+- **Full-Screen Execution Audit Inspector**: A comprehensive modal overlay offering an end-to-end, "A-to-Z" chronological trace and granular breakdown of a single workflow execution run.
+- **Execution Audit Tabs**:
+  - **Summary & Timeline Tab**: High-level resolution overview and visual step-by-step stage escalation stepper tracking triggers, evaluations, and final resolutions.
+  - **Strategy Snapshot Tab**: Immutable record of workflow configuration, discount formulas, wait windows, and partner segments active at dispatch time.
+  - **Inventory Scope Tab**: Complete itemized roster of lots and SKUs evaluated during the execution window (quantities, expiration dates, RSL %, baseline valuation).
+  - **Communications Log Tab**: Itemized outbound email delivery ledger logging recipient addresses, timestamps, template snapshot, and OAuth mailbox dispatches.
+  - **Bids & Offers Ledger Tab**: Comprehensive log of all buyer bids received, comparative ranking, unit pricing, and awarding decisions.
+  - **Raw Telemetry & JSON Tab**: Complete machine-readable execution audit payload with search, filter, and JSON export capabilities.
+- **Audit Report Export**: Formatted JSON / CSV data generation containing full execution run telemetry, inventory snapshots, bidding logs, and resolution metrics for compliance and reporting.
+- **Evaluation Override**: Administrative control allowing immediate manual termination of an in-flight evaluation window to force immediate resolution (awarding top bid or cascading to next stage).
+- **Run Re-Trigger Dispatch**: On-demand action enabling an immediate fresh execution run using the parameters and scope of a saved workflow strategy or prior run.
+- **Stage Execution Window**: The configured duration (in Minutes, Hours, or Days) allocated for partner responses, bidding evaluations, or transfer actions in a specific stage.
+- **Active Stage Window Countdown**: A real-time countdown timer rendering the remaining time left within the currently active stage's configured evaluation window alongside total duration and elapsed time.
+- **Formatted Execution Window**: A human-readable representation of stage evaluation windows that preserves user input units (`Mins`, `Hours`, `Days`) and provides backward-compatible duration inference for legacy execution records.
+
+## Bid & Offer Management
+
+- **Bid & Offer Workspace**: The unified management view within the Operation Hub (replacing the split "Incoming Bids & Offers" and "Live Negotiation Chat" panels) that renders a consolidated list of all incoming buyer offers associated with the active inventory lot across both private workflow dispatches (`lotId`) and public marketplace listings (`listingId`).
+- **Bid Action Inspector**: The dedicated full-screen operational workspace (replacing the pop-up modal dialog) that opens upon selecting a bid row in the Bid & Offer Workspace, featuring mode-driven action tabs (`Accept Offer`, `Negotiate / Counter`, `Decline Offer`, `Timeline`), centralized content containers, and vertically stacked parameter capture and TipTap-powered Email Builder with dynamic token population.
+- **Decline Reason Rationale**: Mandatory justification required when declining a buyer offer (e.g., Price below recovery floor, Inventory committed, Delivery/transport constraints, or Custom reason) embedded in the outbound rejection notice.
+- **Deal Settlement Portal**: The dedicated, standalone web interface accessible by the buyer via an email token link (`/deal/:dealId` or tokenized action link) that renders a distraction-free external buyer settlement experience (omitting supplier internal sidebars and admin chrome). Facilitates a two-step post-award settlement: Payment Confirmation (QR code / Pay Now trigger) followed by legal E-Signature execution of the B2B Surplus Asset Purchase Agreement.
+- **Hybrid Deal Token Authorization**: The dual-mode security model protecting the Deal Settlement Portal: permits frictionless guest execution via cryptographic HMAC `dealToken` parameter from outbound emails, while also honoring authenticated buyer JWT sessions matched to `buyerId` (and supplier admin preview access).
+- **Payment-Gated E-Sign**: An operational safeguard requiring transaction payment status to be `confirmed` before the digital signature canvas and legal agreement execution controls are unlocked for the buyer.
+- **Immediate Payment Clearance Event**: The backend event and CRM audit log triggered upon buyer payment simulation/confirmation (`POST /api/deals/:dealId/confirm-payment`), immediately persisting `paymentStatus: 'confirmed'` to the database and unlocking Step 2 across browser reloads while recording an audit entry in the Lot CRM timeline.
+- **Adaptive Bid State Machine**: The lifecycle model governing buyer offers where `pending` and `countered` bids allow standard actioning (`Accept`, `Re-negotiate`, `Decline`), while already decided bids (`fully_accepted`, `rejected`) provide state-aware management actions (Resend Settlement/E-Sign Link, Re-open/Re-negotiate Terms, and Revoke/Cancel Award with rationale) rather than terminal UI lockdown.
+- **Award Revocation**: An administrative override action allowing a supplier to cancel an existing acceptance/award, returning inventory back to available allocation and notifying the buyer with a mandatory decline rationale.
+- **Bid Communication Dispatcher**: The messaging service routing outbound bid communications (Acceptance & Settlement, Counter-Offer Negotiations, and Decline Notices) through the supplier's authenticated Google OAuth Mailbox while automatically synchronizing records into the Lot CRM Timeline, Emails Hub thread repository, and Offer message history.
+- **Settlement Tokens**: Dynamic merge tokens (`{{pickup_location}}`, `{{pickup_hours}}`, `{{payment_link}}`, `{{deal_document_link}}`, `{{total_amount}}`) resolved during acceptance email generation from inventory distribution center data and deal settlement session.
+- **B2B Surplus Asset Purchase Agreement**: The standardized legal deal contract executed within the Deal Settlement Portal governing the transfer of surplus inventory, incorporating commercial terms, DC pickup logistics, pickup hours, payment confirmation record, and legally binding digital e-signatures.
+- **Executed Deal Document**: The finalized, immutable purchase contract generated upon buyer signature submission via authoritative backend PDF compilation (`GET /api/deals/:dealId/pdf`), streaming a formal vector agreement embedding commercial terms, DC pickup logistics, legal disclaimers, and the digital signature audit block, with its artifact reference saved to `Award.poPdfUrl`.
+- **Execution Audit Record**: The tamper-evident legal audit metadata captured at signature submission (`POST /api/deals/:dealId/sign`), encapsulating the signer's legal name, corporate title, authorization acknowledgment, signature data (canvas vector/data URL or typed glyph), client IP address, user agent, execution ISO timestamp, and cryptographic verification hash.
+- **Downstream Fulfillment Provisioning**: The automated operational trigger executed immediately upon contract execution (`signatureStatus === 'executed'`) that auto-instantiates a linked `Shipment` record in `status: 'scheduled'` (carrier: "Buyer Arranged Freight (FOB Origin)") with the agreed DC pickup address, bridging commercial settlement directly into the supplier's warehouse logistics and dock scheduling queue while appending an execution memo to the offer history and Lot CRM timeline.
+- **Dual-Mode Signature Capture**: The signing input interface supporting both interactive HTML5 canvas touch/mouse drawing and legal typed name rendered in cursive script, paired with mandatory corporate title input and legal authorization acknowledgment.
+- **Executed Deal Portal Dashboard**: The terminal state view rendered when visiting or revisiting an already executed deal (`/deal/:dealId`), locking input controls, surfacing the executed audit certificate badge and timestamp, providing real-time agreement PDF download, and displaying DC dock pickup logistics instructions.
+- **Counter Negotiation Email Preset**: The pre-built, tokenized email template populated with dynamic merge tags (`{{buyer_name}}`, `{{product_name}}`, `{{counter_price}}`, `{{counter_quantity}}`, `{{original_price}}`) pre-loaded into the TipTap editor during a counter-offer action.
+- **Live-Evaluating Token Badge**: An atomic inline TipTap editor node that displays the active value of a commercial parameter (e.g. `$14.50/cs`) while preserving its underlying template token attribute (`data-token="counter_price"`) to prevent template destruction during supplier text composition.
+- **Baseline Bid Preservation**: The domain constraint guaranteeing that the buyer's original submitted price and volume on the root offer entity remain immutable throughout negotiation rounds, with active supplier adjustments recorded in the message ledger.
+- **Final Unit Price (Settled Price)**: The negotiated and agreed price per case (`finalPrice`) established upon offer acceptance (by supplier award or buyer counter-acceptance), preserved alongside the original immutable `price` (Initial Unit Price). In the Bid List view, accepted bids with negotiated terms render in a stacked presentation (prominent green settled price with subtitle initial bid reference) and compute Total Recovery from finalized terms. In the Bid Action Inspector modal, the header summary card highlights the settled price alongside the initial bid subtitle, and the post-award settlement banner explicitly details both the final agreed rate and the initial bid baseline.
+- **Resilient Counter Dispatch**: The transactional policy for counter-offer negotiations ensuring offer state progression, CRM activity logging, and Emails Hub thread synchronization proceed unblocked even if third-party email transport encounters transient delivery failure, returning delivery telemetry to the caller.
+- **In-Situ Negotiation Continuity**: The UX principle within the Bid Action Inspector where dispatching a counter-offer preserves the inspector session, immediately appending the sent proposal to the Timeline audit stream and updating the active lifecycle badge without abrupt modal dismissal.
+- **Decline Notice Email Preset**: The pre-built, tokenized email template populated with dynamic merge tags (`{{buyer_name}}`, `{{product_name}}`, `{{decline_reason}}`, `{{decline_rationale}}`, `{{lot_number}}`) pre-loaded into the TipTap editor during a decline action in the Bid Action Inspector.
+- **Resilient Decline Dispatch**: The transactional policy for offer decline notifications ensuring offer rejection state progression, CRM activity logging, and Emails Hub thread synchronization proceed unblocked even if third-party email transport encounters transient delivery failure, returning delivery telemetry to the caller.
+- **Buyer Negotiation Portal**: The dedicated guest portal accessible via cryptographic token from counter-offer emails (`/portal/negotiation/:offerId?token=...`) where buyers can review negotiation history, accept supplier counter-proposals (advancing directly to post-award Deal Settlement), or submit revised counter-bids (`proposedPrice`, `proposedQuantity`, notes).
+- **Counter Action CTA Tokens**: Dynamic email tokens (`{{accept_counter_link}}`, `{{renegotiate_link}}`) embedded in outbound counter-offer emails allowing buyers direct frictionless access to the Buyer Negotiation Portal.
+- **Superseded Proposal Invalidation**: The domain rule stipulating that once a newer counter-offer or revision is dispatched in the negotiation thread, all prior financial proposals from that party are rendered historical and cannot be accepted.
+- **Decline Catalog Redirection**: An engagement safeguard embedded within outbound decline notices providing buyers with a direct tokenized link (`{{catalog_link}}` / `{{marketplace_link}}`) to explore alternative available inventory lots following an unawarded or declined bid.
+- **Turn-Taking Negotiation State**: The state management principle whereby an incoming buyer counter-bid reverts the offer's operational status to `'pending'` while rendering a contextual "Buyer Countered" visual indicator, signaling supplier action is required without perturbing the canonical status enum.
+- **Counter Acceptance Direct Settlement**: The automated post-counter transition triggered upon buyer acceptance within the Buyer Negotiation Portal, generating an `Award` record at the agreed counter terms and immediately routing the buyer into the Deal Settlement Portal for payment and contract execution.
+- **Outbound Email Preview**: A dedicated modal dialog within the Bid Action Inspector displaying a faithful, read-only preview of the outbound HTML dispatch with all dynamic token badges resolved to actual contextual values before sending.
+
+## Lot Operations Hub
+
+- **Lot Operations Hub**: The centralized, high-density operational cockpit for managing a specific inventory lot across its entire surplus lifecycle, combining inventory health metrics, dynamic price decay simulation, buyer recommendations, regulatory compliance, bid trading desk actioning, and CRM activity timelines.
+  - _Avoid_: Monolithic view components mixing pricing elasticity SVG mathematics, Redux dispatch mutations, bid filtering, and activity composition.
+- **Price Decay Simulation Curve**: An algorithmic pricing projection model visualizing price and revenue decay over remaining shelf life (days remaining vs recovery revenue) based on product category price elasticity, volume discounts, and sigmoid sell-through probability.
+- **Lot CRM & Audit Timeline**: The consolidated, chronological event stream tracking all automated dispatches, supplier communications, notes, and regulatory actions associated with a specific inventory lot.
+- **Bid Status Normalization**: The mapping of raw bid states (`pending`, `countered`, `fully_accepted`, `partially_accepted`, `rejected`, and buyer counter message heuristics) into canonical operational badge representations (`Pending`, `Countered`, `Buyer Countered`, `Awarded`, `Declined`).
+
+## Dedicated Ingestion Hub & Surplus Pipelines
+
+- **Dedicated Ingestion Hub & Connectors**: The collapsible top-level multi-source ingestion workbench in the Ingestion Tab displaying ingestion channel cards (`Zapier Webhooks`, `Google Sheets Sync`, `Image & Doc Scanner`, `CSV / Excel Upload`, and `+ Add Integration` Directory) with real-time status and sync telemetry.
+  _Avoid_: `Simple File Dropzone`, `Upload-Only Banner`.
+- **Unified Surplus Data Ingestion Modal**: The centralized modal overlay triggered by the "CSV / Excel Upload" connector or pipeline import action buttons, providing a 2-step batch upload flow: 1) dataset destination selection (`Inventory Data`, `Sales Data`, or `Buyer Data`), and 2) file drag-and-drop / selection that advances to the Ingestion Mapping Window.
+  _Avoid_: `Fragmented Upload Modals`, `Per-Tab File Uploaders`.
+- **Progressive Row Inspection Drawer**: The collapsible in-situ accordion inspection workbench expanding directly beneath table rows (across Inventory, Sales, and Buyer pipelines) when selected, presenting detailed cold-chain/environmental telemetry, FEFO lifecycle matrix, date audit logs, financial settlement remittance, and context-sensitive operational actions.
+  _Avoid_: `Full Page Lot Redirection on Row Click`, `Modal-Only Details Dialog`.
+- **Global Table Accordion Toggle ("Toggle All")**: The master control in the pipeline action strip that bulk-expands or bulk-collapses all visible Progressive Row Inspection Drawers across the active dataset.
+  _Avoid_: `Manual Per-Row Expansion Only`.
+- **Ingestion Mapping Window**: The dynamic spreadsheet column matching and semantic translation interface that renders parsed tabular rows and enables user-confirmed mapping of source headers to target domain attributes before committing records to the registry.
+- **Live ERP Clearing Connected Badge**: The operational telemetry indicator within the Sales Filter Bar reflecting real-time ERP synchronization and total ledger records cleared across financial accounts.
+  _Avoid_: `Static Sales Count Label`.
+- **Sales Contextual Action CTAs**: The domain-aware operational action triggers embedded in the Sales Progressive Row Inspection Drawer (`Reconcile Invoice`, `Authorize Dock Gate Pass`, `Live Fleet Telemetry`) initiating in-situ transaction clearance, dock authorization, or carrier tracking.
+  _Avoid_: `Generic Row Actions Menu`.
+- **Master Pipeline Synchronizer**: The event-driven coordination protocol connecting `PipelineSwitcherBar`, pipeline datasets, and progressive inspection drawers via `toggle-all-rows` and `toggle-all-state-changed` DOM CustomEvents. Ensures that the master "Toggle All" control accurately reflects visible drawer states and cleanly resets upon pipeline tab transitions.
+  _Avoid_: `Stale Cross-Tab Toggle State`, `Unsynchronized Master Button`.
+- **Multi-Theme Ingestion Tokens**: The institutional Tailwind CSS color and typography taxonomy harmonizing `IngestionView`, `IngestionTelemetryBar`, and connector workbenches across light and dark modes (`dark:bg-slate-950`, `dark:bg-slate-900`, `dark:border-slate-800`, `dark:text-slate-100`) while honoring the 4px/8pt optical density standard.
+  _Avoid_: `Hardcoded White Backgrounds`, `Inconsistent Dark Mode Surfaces`.
+
+## Liquidation Automation Studio Architecture
+
+- **Workflow Studio Orchestrator**: The top-level composition container within `WorkflowsView.tsx` (`workflowSubTab === 'builder'`) responsible for mounting the workflow authoring pipeline and binding headless campaign state to presentation slices.
+  _Avoid_: `Monolithic Studio File`, `Inline Heavy Workflow Component`.
+- **Progressive Section Accordion**: The layout paradigm structuring the Workflow Builder into numbered, collapsible cards (Strategy & Scope, Stage-Gate Timeline, Review & Dispatch) that condense into single-line visual summary chip strips when collapsed to preserve viewport headroom.
+  _Avoid_: `Permanently Expanded Canvas Dump`, `Rigid Multi-Page Wizard Pagination`.
+- **Headless Workflow Studio Hook (`useWorkflowStudio`)**: The state and calculation engine encapsulating all reactive campaign draft values, lot filtering algorithms, polymorphic stage array mutations, validation guardrails, and execution submission handlers away from the visual view layers.
+  _Avoid_: `Transient Redux Form State`, `Component-Coupled Business Logic`.
+- **Workflow Header & Scheduling Bar**: The ergonomic top-rail control strip consolidating campaign identity, strategy presets, scheduling trigger popover, and OAuth mailbox security posture within a compact, non-congesting (<25% viewport height) frame.
+  _Avoid_: `Multi-tier Sticky Header`, `Floating Uncontained Schedule Card`.
+- **Inventory Matching Scope Panel**: The faceted inventory filtering and lot selection surface evaluating available warehouse surplus by Category, Maximum Remaining Shelf Life (RSL %), and Minimum Cases with live lot diff inspection.
+  _Avoid_: `Unpaginated Lot Table Dump`, `Rigid Fixed Filter Grid`.
+- **Stage-Gate Escalation Canvas**: The dynamic, polymorphic stage sequence manager rendering Liquidation, Donation, and Landfill escalation cards with granular buyer targeting, discount curve sliders, and wait-time duration units.
+  _Avoid_: `Static Non-Polymorphic Stage List`, `Hardcoded Buyer Radio Buttons`.
+- **Pre-Flight Dispatch & Audit Engine**: The multi-point validation and execution gate confirming mailbox readiness, buyer reachability, and inventory allocation before triggering an immediate workflow run or persisting a saved strategy.
+  _Avoid_: `Unchecked Workflow Submission`, `Silent Dispatch Failures`.
 
