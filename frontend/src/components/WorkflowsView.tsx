@@ -1,6 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Cpu, Activity, Zap, Timer, Eye, AlertTriangle, Info, History, X, Layers, MoreVertical, Edit3, Play, Square, Trash2, Clock, Box, Mail, Sliders, CheckCircle2, Filter, ChevronDown, ChevronRight } from 'lucide-react';
+import {
+  Cpu, Activity, Zap, Timer, Eye, AlertTriangle, Info, History, X, Layers,
+  MoreVertical, Edit3, Play, Square, Trash2, Clock, Box, Mail, Sliders,
+  CheckCircle2, Filter, ChevronDown, ChevronRight, Search, Plus, ArrowRight,
+  Check, Sparkles, RefreshCw, Calendar, ShieldCheck, Tag, ExternalLink
+} from 'lucide-react';
 import type { AppDispatch, RootState } from '../store';
 import {
   setWorkflowSubTab,
@@ -98,7 +103,8 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
     loading
   } = useSelector((state: RootState) => state.workflow);
 
-  const inventoryList = useSelector((state: RootState) => state.inventory?.inventoryList || inventoryLots);
+  const reduxInventoryList = useSelector((state: RootState) => state.inventory?.inventoryList);
+  const inventoryList = (reduxInventoryList && reduxInventoryList.length > 0) ? reduxInventoryList : inventoryLots;
   const allBids = useSelector((state: RootState) => state.inventory?.lotHubData?.bidsList || []);
   const buyerLists = useSelector(selectBuyerLists) || [];
   const allBuyers = useSelector(selectBuyers) || [];
@@ -140,6 +146,10 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
   const [collapsedActiveRunIds, setCollapsedActiveRunIds] = useState<Record<string, boolean>>({});
   const [collapsedHistoryRunIds, setCollapsedHistoryRunIds] = useState<Record<string, boolean>>({});
   const [historyDetailsTabMap, setHistoryDetailsTabMap] = useState<Record<string, 'overview' | 'lots' | 'stages' | 'audit'>>({});
+  const [campaignSearchQuery, setCampaignSearchQuery] = useState('');
+  const [campaignStatusFilter, setCampaignStatusFilter] = useState<'all' | 'active' | 'stopped' | 'draft'>('all');
+  const [historyPopoverCampaignId, setHistoryPopoverCampaignId] = useState<string | null>(null);
+  const [matchedScopeSearch, setMatchedScopeSearch] = useState('');
 
   const handleToggleDropdown = (campaignId: string, btnElement: HTMLElement, isBottomRow: boolean = false) => {
     if (activeDropdownId === campaignId) {
@@ -278,6 +288,39 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
     return { lotCount, caseCount, matchedLots: matched };
   };
 
+  const filteredCampaigns = useMemo(() => {
+    return liquidationAutomations.filter((c: any) => {
+      const status = c.status || 'draft';
+      if (campaignStatusFilter !== 'all' && status !== campaignStatusFilter) {
+        return false;
+      }
+      if (!campaignSearchQuery.trim()) return true;
+      const q = campaignSearchQuery.toLowerCase();
+      const name = (c.name || '').toLowerCase();
+      const template = (c.templateName || c.templateKey || '').toLowerCase();
+      const category = (c.inventoryFilters?.category || '').toLowerCase();
+      const author = (c.createdBy || '').toLowerCase();
+      return name.includes(q) || template.includes(q) || category.includes(q) || author.includes(q);
+    });
+  }, [liquidationAutomations, campaignStatusFilter, campaignSearchQuery]);
+
+  const campaignStats = useMemo(() => {
+    const total = liquidationAutomations.length;
+    const active = liquidationAutomations.filter((c: any) => c.status === 'active').length;
+    const stopped = liquidationAutomations.filter((c: any) => c.status === 'stopped').length;
+    const draft = liquidationAutomations.filter((c: any) => !c.status || c.status === 'draft').length;
+    
+    let totalLotsInScope = 0;
+    let totalCasesInScope = 0;
+    liquidationAutomations.forEach((c: any) => {
+      const scope = getCampaignMatchedScope(c.inventoryFilters);
+      totalLotsInScope += scope.lotCount;
+      totalCasesInScope += scope.caseCount;
+    });
+
+    return { total, active, stopped, draft, totalLotsInScope, totalCasesInScope };
+  }, [liquidationAutomations, inventoryList]);
+
   const renderStatusBadge = (status?: string) => {
     const currentStatus = status || 'draft';
     switch (currentStatus) {
@@ -358,7 +401,15 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
   const renderNextRunTime = (campaign: any) => {
     if (campaign.status === 'stopped' || campaign.status === 'completed' || campaign.isActive === false) {
       return (
-        <span style={{ background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-muted))', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>
+        <span style={{
+          background: 'hsl(var(--bg-card-hover) / 50%)',
+          color: 'hsl(var(--text-muted))',
+          padding: '3px 8px',
+          borderRadius: '12px',
+          fontSize: '11px',
+          fontWeight: 600,
+          border: '1px solid hsl(var(--border-color) / 40%)'
+        }}>
           Not Active
         </span>
       );
@@ -367,11 +418,12 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
     if (campaign.nextRunAt) {
       const nextDate = new Date(campaign.nextRunAt);
       return (
-        <div>
-          <div style={{ fontWeight: 600, fontSize: '0.78rem', color: 'hsl(var(--primary))' }}>
-            {nextDate.toLocaleDateString()}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <div style={{ fontWeight: 600, fontSize: '0.78rem', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Calendar size={12} />
+            <span>{nextDate.toLocaleDateString()}</span>
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))' }}>
+          <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', paddingLeft: '16px' }}>
             {nextDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
@@ -381,8 +433,19 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
     const sched = campaign.schedule;
     if (!sched || sched.type === 'immediate') {
       return (
-        <span style={{ color: 'hsl(var(--secondary))', fontSize: '0.75rem', fontWeight: 600 }}>
-          ⚡ Immediate
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          color: 'hsl(var(--primary))',
+          backgroundColor: 'hsl(var(--primary) / 10%)',
+          border: '1px solid hsl(var(--primary) / 25%)',
+          padding: '3px 8px',
+          borderRadius: '10px',
+          fontSize: '0.74rem',
+          fontWeight: 600
+        }}>
+          <Zap size={12} /> Immediate
         </span>
       );
     }
@@ -411,11 +474,12 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
       };
 
       return (
-        <div>
-          <div style={{ fontWeight: 600, fontSize: '0.78rem', color: 'hsl(var(--primary))' }}>
-            🕐 {dayNames || 'Weekly'}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+          <div style={{ fontWeight: 600, fontSize: '0.78rem', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Clock size={12} />
+            <span>{dayNames || 'Weekly'}</span>
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))' }}>
+          <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', paddingLeft: '16px' }}>
             @ {format12H(timeStr)} ({sched.timezone ? sched.timezone.split('/')[1] || sched.timezone : 'Local'})
           </div>
         </div>
@@ -552,305 +616,732 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
 
       {/* ======== SAVED CAMPAIGNS SUB-TAB ======== */}
       {workflowSubTab === 'saved' && (
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Layers size={20} style={{ color: 'hsl(var(--primary))' }} />
-              <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0 }}>Saved Campaign Strategies</h3>
-            </div>
-            <span style={{ fontSize: '0.8rem', color: 'hsl(var(--text-muted))' }}>
-              {liquidationAutomations.length} strategy campaigns saved
-            </span>
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Executive KPI Metric Strip (Miller's Law 4-Tranche Overview) */}
+          {liquidationAutomations.length > 0 && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '12px'
+            }}>
+              <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '10px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'hsl(var(--primary) / 12%)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Layers size={20} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'hsl(var(--text-muted))' }}>
+                    Total Strategies
+                  </div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'monospace', lineHeight: 1.1, color: 'hsl(var(--text-primary))', marginTop: '2px' }}>
+                    {campaignStats.total}
+                  </div>
+                </div>
+              </div>
 
-          {liquidationAutomations.length === 0 ? (
-            <div style={{ padding: '48px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '0.88rem' }}>
-              <Layers size={36} style={{ opacity: 0.3, marginBottom: '12px' }} />
-              <div style={{ fontWeight: 600 }}>No saved campaigns found.</div>
-              <div style={{ fontSize: '0.78rem', marginTop: '4px' }}>Click "+ New Campaign" above to create and save a new liquidation strategy.</div>
-            </div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
-                <thead>
-                  <tr style={{ borderBottom: '2px solid hsl(var(--border-color))', textAlign: 'left' }}>
-                    <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase' }}>Campaign Name & Template</th>
-                    <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase' }}>Status</th>
-                    <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase' }}>Matched Inventory</th>
-                    <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase' }}>ExecutedAt</th>
-                    <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase' }}>Next Run Time</th>
-                    <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase' }}>Created At</th>
-                    <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase' }}>Created By</th>
-                    <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {liquidationAutomations.map((campaign: any, cIdx: number) => {
-                    const scope = getCampaignMatchedScope(campaign.inventoryFilters);
-                    const formattedTemplate = (campaign.templateName || campaign.templateKey || 'Strategy Template').replace(/_/g, ' ');
-                    const createdDate = campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : 'Today';
+              <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '10px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'hsl(var(--success) / 12%)', color: 'hsl(var(--success))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Zap size={20} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'hsl(var(--text-muted))' }}>
+                    Active Dispatchers
+                  </div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'monospace', lineHeight: 1.1, color: 'hsl(var(--success))', marginTop: '2px' }}>
+                    {campaignStats.active}
+                  </div>
+                </div>
+              </div>
 
-                    const campaignRuns = automationRuns.filter((r: any) =>
-                      r.automationId === campaign._id ||
-                      r.automationId?._id === campaign._id ||
-                      (typeof r.automationId === 'string' && r.automationId === campaign._id)
-                    );
+              <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '10px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'hsl(var(--primary) / 12%)', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Box size={20} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'hsl(var(--text-muted))' }}>
+                    Inventory In Scope
+                  </div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'monospace', lineHeight: 1.1, color: 'hsl(var(--text-primary))', marginTop: '2px' }}>
+                    {campaignStats.totalCasesInScope.toLocaleString()} <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'hsl(var(--text-muted))' }}>cs</span>
+                  </div>
+                </div>
+              </div>
 
-                    return (
-                      <tr
-                        key={campaign._id}
-                        style={{
-                          borderBottom: '1px solid hsl(var(--border-color) / 50%)',
-                          transition: 'background-color 0.15s'
-                        }}
-                      >
-                        <td style={{ padding: '12px 14px' }}>
-                          <div
-                            style={{ fontWeight: 700, fontSize: '0.88rem', color: 'hsl(var(--primary))', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
-                            onClick={() => setInspectingCampaignStages(campaign)}
-                            title="Click to view Strategy Stage Pipeline & Action Breakdown"
-                          >
-                            <span>{campaign.name || formattedTemplate}</span>
-                            <span style={{ fontSize: '0.68rem', padding: '1px 6px', borderRadius: '4px', background: 'hsl(var(--primary) / 15%)', border: '1px solid hsl(var(--primary) / 30%)', color: 'hsl(var(--primary))' }}>
-                              Stages →
-                            </span>
-                          </div>
-                          <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', textTransform: 'capitalize', marginTop: '2px' }}>
-                            {formattedTemplate}
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px 14px' }}>
-                          {renderStatusBadge(campaign.status)}
-                        </td>
-                        <td style={{ padding: '12px 14px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                            <div>
-                              <div style={{ fontWeight: 600 }}>{scope.lotCount} lots</div>
-                              <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))' }}>{scope.caseCount.toLocaleString()} cases</div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setInspectingMatchedCampaign(campaign)}
-                              style={{
-                                background: 'hsl(var(--primary) / 12%)',
-                                border: '1px solid hsl(var(--primary) / 30%)',
-                                color: 'hsl(var(--primary))',
-                                borderRadius: '6px',
-                                padding: '4px 8px',
-                                fontSize: '0.72rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px'
-                              }}
-                              title="Inspect Matched Inventory Scope"
-                            >
-                              <Eye size={13} /> View
-                            </button>
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px 14px' }}>
-                          {campaignRuns.length === 0 ? (
-                            <span style={{ background: 'hsl(var(--bg-card))', color: 'hsl(var(--text-muted))', padding: '3px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 600 }}>
-                              Never Executed
-                            </span>
-                          ) : campaignRuns.length === 1 ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-primary))' }}>
-                                {new Date(campaignRuns[0].executedAt || campaignRuns[0].dispatchedAt || campaignRuns[0].createdAt).toLocaleDateString()}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleInspectRun(campaignRuns[0]._id)}
-                                style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', cursor: 'pointer', padding: '2px' }}
-                                title="Inspect Execution Timeline Data"
-                                aria-label="Inspect Run Data"
-                              >
-                                <Eye size={14} />
-                              </button>
-                            </div>
-                          ) : (
-                            <select
-                              defaultValue=""
-                              onChange={(e) => {
-                                if (e.target.value) {
-                                  handleInspectRun(e.target.value);
-                                  e.target.value = "";
-                                }
-                              }}
-                              style={{
-                                background: 'hsl(var(--bg-card))',
-                                border: '1px solid hsl(var(--border-color))',
-                                borderRadius: '6px',
-                                color: 'hsl(var(--primary))',
-                                padding: '4px 6px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                cursor: 'pointer'
-                              }}
-                              aria-label="Select Execution Timestamp"
-                            >
-                              <option value="" disabled>History ({campaignRuns.length} runs)...</option>
-                              {campaignRuns.map((r: any) => (
-                                <option key={r._id} value={r._id}>
-                                  {new Date(r.executedAt || r.dispatchedAt || r.createdAt).toLocaleString()}
-                                </option>
-                              ))}
-                            </select>
-                          )}
-                        </td>
-                        <td style={{ padding: '12px 14px' }}>
-                          {renderNextRunTime(campaign)}
-                        </td>
-                        <td style={{ padding: '12px 14px', color: 'hsl(var(--text-muted))' }}>
-                          {createdDate}
-                        </td>
-                        <td style={{ padding: '12px 14px', color: 'hsl(var(--text-muted))' }}>
-                          {campaign.createdBy || 'Debashis Roy (Sales Mgr)'}
-                        </td>
-                        <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                          <button
-                            className="btn btn-secondary"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleDropdown(campaign._id, e.currentTarget, cIdx >= Math.max(1, liquidationAutomations.length - 1));
-                            }}
-                            style={{ padding: '6px 10px', fontSize: '0.8rem' }}
-                            aria-label="Actions"
-                          >
-                            <MoreVertical size={16} />
-                          </button>
-
-                          {activeDropdownId === campaign._id && dropdownPos && (
-                            <>
-                              <div
-                                style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setActiveDropdownId(null);
-                                  setDropdownPos(null);
-                                }}
-                              />
-                              <div
-                                style={{
-                                  position: 'fixed',
-                                  right: `${dropdownPos.right}px`,
-                                  top: dropdownPos.bottom ? 'auto' : `${dropdownPos.top}px`,
-                                  bottom: dropdownPos.bottom || '',
-                                  zIndex: 9999,
-                                  backgroundColor: 'hsl(var(--bg-card))',
-                                  border: '1px solid hsl(var(--border-color))',
-                                  borderRadius: '8px',
-                                  boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  width: '150px',
-                                  overflow: 'hidden'
-                                }}
-                              >
-                                <button
-                                  onClick={() => {
-                                    handleEditCampaign(campaign._id);
-                                    setActiveDropdownId(null);
-                                    setDropdownPos(null);
-                                  }}
-                                  style={{
-                                    padding: '10px 14px',
-                                    textAlign: 'left',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'hsl(var(--text-primary))',
-                                    fontSize: '0.78rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                  }}
-                                >
-                                  <Edit3 size={14} /> Edit
-                                </button>
-                                {campaign.status !== 'active' ? (
-                                  <button
-                                    onClick={() => {
-                                      handleActivateCampaign(campaign._id);
-                                      setActiveDropdownId(null);
-                                      setDropdownPos(null);
-                                    }}
-                                    style={{
-                                      padding: '10px 14px',
-                                      textAlign: 'left',
-                                      background: 'none',
-                                      border: 'none',
-                                      color: 'hsl(var(--success))',
-                                      fontSize: '0.78rem',
-                                      fontWeight: 600,
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '8px'
-                                    }}
-                                  >
-                                    <Play size={14} /> Activate
-                                  </button>
-                                ) : (
-                                  <button
-                                    onClick={() => {
-                                      handleStopCampaign(campaign._id);
-                                      setActiveDropdownId(null);
-                                      setDropdownPos(null);
-                                    }}
-                                    style={{
-                                      padding: '10px 14px',
-                                      textAlign: 'left',
-                                      background: 'none',
-                                      border: 'none',
-                                      color: 'hsl(var(--warning))',
-                                      fontSize: '0.78rem',
-                                      fontWeight: 600,
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '8px'
-                                    }}
-                                  >
-                                    <Square size={14} /> Stop
-                                  </button>
-                                )}
-                                <button
-                                  onClick={() => {
-                                    handleDeleteCampaign(campaign._id);
-                                    setActiveDropdownId(null);
-                                    setDropdownPos(null);
-                                  }}
-                                  style={{
-                                    padding: '10px 14px',
-                                    textAlign: 'left',
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'hsl(var(--error))',
-                                    fontSize: '0.78rem',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                  }}
-                                >
-                                  <Trash2 size={14} /> Delete
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div className="card" style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '10px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'hsl(var(--warning) / 12%)', color: 'hsl(var(--warning))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Activity size={20} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'hsl(var(--text-muted))' }}>
+                    Live Executing Runs
+                  </div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 800, fontFamily: 'monospace', lineHeight: 1.1, color: activeRuns.length > 0 ? 'hsl(var(--warning))' : 'hsl(var(--text-primary))', marginTop: '2px' }}>
+                    {activeRuns.length}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
+
+          {/* Main Saved Campaigns Table Container */}
+          <div className="card" style={{ padding: '20px', borderRadius: '12px' }}>
+            {/* Header with Title and Primary CTA */}
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '12px',
+              marginBottom: '16px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '8px',
+                  background: 'hsl(var(--primary) / 12%)',
+                  color: 'hsl(var(--primary))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Layers size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: 'hsl(var(--text-primary))' }}>
+                    Saved Campaign Strategies
+                  </h3>
+                  <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', marginTop: '1px' }}>
+                    {liquidationAutomations.length} strategy campaign{liquidationAutomations.length !== 1 ? 's' : ''} saved
+                  </div>
+                </div>
+              </div>
+
+              {/* + New Campaign Strategy Primary CTA */}
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  dispatch(setEditingCampaignId(null));
+                  dispatch(setWorkflowSubTab('builder'));
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                <Plus size={15} />
+                <span>New Campaign</span>
+              </button>
+            </div>
+
+            {/* Ergonomic Search & Status Filter Toolbar */}
+            {liquidationAutomations.length > 0 && (
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+                padding: '10px 14px',
+                marginBottom: '16px',
+                borderRadius: '8px',
+                backgroundColor: 'hsl(var(--bg-card-hover) / 40%)',
+                border: '1px solid hsl(var(--border-color) / 50%)'
+              }}>
+                {/* Search Input with Clear Button */}
+                <div style={{ position: 'relative', flex: '1 1 240px', maxWidth: '340px' }}>
+                  <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--text-muted))' }} />
+                  <input
+                    type="text"
+                    value={campaignSearchQuery}
+                    onChange={(e) => setCampaignSearchQuery(e.target.value)}
+                    placeholder="Search campaigns by name, template..."
+                    style={{
+                      width: '100%',
+                      padding: '7px 28px 7px 30px',
+                      fontSize: '0.8rem',
+                      borderRadius: '6px',
+                      border: '1px solid hsl(var(--border-color))',
+                      backgroundColor: 'hsl(var(--bg-card))',
+                      color: 'hsl(var(--text-primary))',
+                      outline: 'none'
+                    }}
+                  />
+                  {campaignSearchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setCampaignSearchQuery('')}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: 'hsl(var(--text-muted))',
+                        cursor: 'pointer',
+                        padding: '2px'
+                      }}
+                      aria-label="Clear Search"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Status Filter Chips */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'hsl(var(--text-muted))', marginRight: '4px' }}>
+                    Status:
+                  </span>
+                  {[
+                    { id: 'all', label: 'All', count: campaignStats.total },
+                    { id: 'active', label: 'Active Pipelines', count: campaignStats.active },
+                    { id: 'stopped', label: 'Stopped Pipelines', count: campaignStats.stopped },
+                    { id: 'draft', label: 'Draft Pipelines', count: campaignStats.draft }
+                  ].map(tab => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setCampaignStatusFilter(tab.id as any)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '0.74rem',
+                        fontWeight: campaignStatusFilter === tab.id ? 700 : 500,
+                        border: campaignStatusFilter === tab.id ? '1px solid hsl(var(--primary))' : '1px solid transparent',
+                        background: campaignStatusFilter === tab.id ? 'hsl(var(--primary) / 15%)' : 'transparent',
+                        color: campaignStatusFilter === tab.id ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <span>{tab.label}</span>
+                      <span style={{
+                        fontSize: '0.65rem',
+                        padding: '1px 5px',
+                        borderRadius: '10px',
+                        background: campaignStatusFilter === tab.id ? 'hsl(var(--primary) / 25%)' : 'hsl(var(--border-color) / 50%)',
+                        color: campaignStatusFilter === tab.id ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))'
+                      }}>
+                        {tab.count}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 7 UI States: Loading / Zero Total Empty / Filter Empty / Ideal Table */}
+            {loading && liquidationAutomations.length === 0 ? (
+              <div style={{ padding: '32px 16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {[1, 2, 3].map(i => (
+                  <div key={i} style={{
+                    height: '52px',
+                    borderRadius: '8px',
+                    backgroundColor: 'hsl(var(--bg-card-hover) / 50%)',
+                    animation: 'pulse 1.5s ease-in-out infinite'
+                  }} />
+                ))}
+              </div>
+            ) : liquidationAutomations.length === 0 ? (
+              <div style={{
+                padding: '48px 24px',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px'
+              }}>
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'hsl(var(--primary) / 12%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'hsl(var(--primary))'
+                }}>
+                  <Layers size={28} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'hsl(var(--text-primary))' }}>
+                    No saved campaigns found.
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-muted))', maxWidth: '440px', marginTop: '4px', lineHeight: 1.4 }}>
+                    Click "+ New Campaign" above to create and save a new liquidation strategy.
+                  </div>
+                </div>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    dispatch(setEditingCampaignId(null));
+                    dispatch(setWorkflowSubTab('builder'));
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '9px 18px',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    borderRadius: '8px',
+                    marginTop: '6px'
+                  }}
+                >
+                  <Plus size={16} />
+                  <span>Create First Campaign Strategy</span>
+                </button>
+              </div>
+            ) : filteredCampaigns.length === 0 ? (
+              <div style={{
+                padding: '40px 20px',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                <Filter size={32} style={{ opacity: 0.4, color: 'hsl(var(--text-muted))' }} />
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'hsl(var(--text-primary))' }}>
+                  No matching campaign strategies
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))' }}>
+                  No saved campaigns matched your current search and filter criteria.
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCampaignSearchQuery('');
+                    setCampaignStatusFilter('all');
+                  }}
+                  style={{
+                    marginTop: '6px',
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.76rem',
+                    fontWeight: 600,
+                    border: '1px solid hsl(var(--border-color))',
+                    background: 'hsl(var(--bg-card))',
+                    color: 'hsl(var(--primary))',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Reset Filters
+                </button>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid hsl(var(--border-color))', textAlign: 'left' }}>
+                      <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Campaign Name & Template</th>
+                      <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Status</th>
+                      <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Matched Inventory</th>
+                      <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>ExecutedAt</th>
+                      <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Next Run Time</th>
+                      <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Created At</th>
+                      <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Created By</th>
+                      <th style={{ padding: '12px 14px', fontWeight: 700, color: 'hsl(var(--text-muted))', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCampaigns.map((campaign: any, cIdx: number) => {
+                      const scope = getCampaignMatchedScope(campaign.inventoryFilters);
+                      const formattedTemplate = (campaign.templateName || campaign.templateKey || 'Strategy Template').replace(/_/g, ' ');
+                      const createdDate = campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : 'Today';
+
+                      const campaignRuns = automationRuns.filter((r: any) =>
+                        r.automationId === campaign._id ||
+                        r.automationId?._id === campaign._id ||
+                        (typeof r.automationId === 'string' && r.automationId === campaign._id)
+                      );
+
+                      return (
+                        <tr
+                          key={campaign._id}
+                          style={{
+                            borderBottom: '1px solid hsl(var(--border-color) / 40%)',
+                            transition: 'background-color 0.15s ease'
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'hsl(var(--bg-card-hover) / 40%)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                        >
+                          <td style={{ padding: '12px 14px' }}>
+                            <div
+                              style={{ fontWeight: 700, fontSize: '0.88rem', color: 'hsl(var(--primary))', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                              onClick={() => setInspectingCampaignStages(campaign)}
+                              title="Click to view Strategy Stage Pipeline & Action Breakdown"
+                            >
+                              <span>{campaign.name || formattedTemplate}</span>
+                              <span style={{
+                                fontSize: '0.68rem',
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                background: 'hsl(var(--primary) / 12%)',
+                                border: '1px solid hsl(var(--primary) / 28%)',
+                                color: 'hsl(var(--primary))',
+                                fontWeight: 600,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}>
+                                Stages →
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
+                              <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', textTransform: 'capitalize' }}>
+                                {formattedTemplate}
+                              </span>
+                              {campaign.inventoryFilters?.category && (
+                                <span style={{
+                                  fontSize: '0.66rem',
+                                  padding: '1px 6px',
+                                  borderRadius: '6px',
+                                  backgroundColor: 'hsl(var(--bg-card-hover))',
+                                  color: 'hsl(var(--text-muted))',
+                                  border: '1px solid hsl(var(--border-color) / 40%)',
+                                  textTransform: 'capitalize'
+                                }}>
+                                  {campaign.inventoryFilters.category}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td style={{ padding: '12px 14px' }}>
+                            {renderStatusBadge(campaign.status)}
+                          </td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                              <div>
+                                <div style={{ fontWeight: 700, fontFamily: 'monospace', fontSize: '0.85rem', color: 'hsl(var(--text-primary))' }}>
+                                  {scope.lotCount} <span style={{ fontWeight: 500, fontFamily: 'inherit', fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>lots</span>
+                                </div>
+                                <div style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', fontFamily: 'monospace' }}>
+                                  {scope.caseCount.toLocaleString()} cases
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setInspectingMatchedCampaign(campaign)}
+                                style={{
+                                  background: 'hsl(var(--primary) / 12%)',
+                                  border: '1px solid hsl(var(--primary) / 30%)',
+                                  color: 'hsl(var(--primary))',
+                                  borderRadius: '6px',
+                                  padding: '4px 8px',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  transition: 'all 0.15s ease'
+                                }}
+                                title="Inspect Matched Inventory Scope"
+                              >
+                                <Eye size={13} /> View
+                              </button>
+                            </div>
+                          </td>
+                          <td style={{ padding: '12px 14px' }}>
+                            {campaignRuns.length === 0 ? (
+                              <span style={{
+                                background: 'hsl(var(--bg-card-hover) / 50%)',
+                                color: 'hsl(var(--text-muted))',
+                                border: '1px solid hsl(var(--border-color) / 40%)',
+                                padding: '3px 8px',
+                                borderRadius: '12px',
+                                fontSize: '11px',
+                                fontWeight: 600
+                              }}>
+                                Never Executed
+                              </span>
+                            ) : campaignRuns.length === 1 ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-primary))', fontWeight: 600 }}>
+                                  {new Date(campaignRuns[0].executedAt || campaignRuns[0].dispatchedAt || campaignRuns[0].createdAt).toLocaleDateString()}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleInspectRun(campaignRuns[0]._id)}
+                                  style={{
+                                    background: 'hsl(var(--primary) / 10%)',
+                                    border: '1px solid hsl(var(--primary) / 25%)',
+                                    color: 'hsl(var(--primary))',
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    padding: '2px 5px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                    fontSize: '0.7rem',
+                                    fontWeight: 600
+                                  }}
+                                  title="Inspect Execution Timeline Data"
+                                  aria-label="Inspect Run Data"
+                                >
+                                  <Eye size={12} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ position: 'relative' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setHistoryPopoverCampaignId(historyPopoverCampaignId === campaign._id ? null : campaign._id)}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    background: 'hsl(var(--primary) / 10%)',
+                                    border: '1px solid hsl(var(--primary) / 30%)',
+                                    color: 'hsl(var(--primary))',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer'
+                                  }}
+                                  aria-label="Select Execution Timestamp"
+                                >
+                                  <History size={12} />
+                                  <span>{campaignRuns.length} Runs</span>
+                                  <ChevronDown size={12} />
+                                </button>
+
+                                {historyPopoverCampaignId === campaign._id && (
+                                  <>
+                                    <div
+                                      style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                                      onClick={() => setHistoryPopoverCampaignId(null)}
+                                    />
+                                    <div style={{
+                                      position: 'absolute',
+                                      left: 0,
+                                      top: '100%',
+                                      marginTop: '4px',
+                                      zIndex: 9999,
+                                      backgroundColor: 'hsl(var(--bg-card))',
+                                      border: '1px solid hsl(var(--border-color))',
+                                      borderRadius: '8px',
+                                      boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                                      width: '210px',
+                                      maxHeight: '180px',
+                                      overflowY: 'auto',
+                                      padding: '4px 0'
+                                    }}>
+                                      <div style={{ padding: '6px 10px', fontSize: '0.68rem', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', borderBottom: '1px solid hsl(var(--border-color) / 40%)' }}>
+                                        Execution Runs ({campaignRuns.length})
+                                      </div>
+                                      {campaignRuns.map((r: any) => (
+                                        <button
+                                          key={r._id}
+                                          type="button"
+                                          onClick={() => {
+                                            handleInspectRun(r._id);
+                                            setHistoryPopoverCampaignId(null);
+                                          }}
+                                          style={{
+                                            width: '100%',
+                                            padding: '7px 10px',
+                                            textAlign: 'left',
+                                            background: 'none',
+                                            border: 'none',
+                                            color: 'hsl(var(--text-primary))',
+                                            fontSize: '0.74rem',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '6px'
+                                          }}
+                                          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'hsl(var(--bg-card-hover))')}
+                                          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                                        >
+                                          <span>{new Date(r.executedAt || r.dispatchedAt || r.createdAt).toLocaleDateString()}</span>
+                                          <span style={{ fontSize: '0.68rem', color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                            <Eye size={11} /> View
+                                          </span>
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ padding: '12px 14px' }}>
+                            {renderNextRunTime(campaign)}
+                          </td>
+                          <td style={{ padding: '12px 14px', color: 'hsl(var(--text-muted))' }}>
+                            {createdDate}
+                          </td>
+                          <td style={{ padding: '12px 14px', color: 'hsl(var(--text-muted))' }}>
+                            {campaign.createdBy || 'Sales Mgr'}
+                          </td>
+                          <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                            <button
+                              className="btn btn-secondary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleDropdown(campaign._id, e.currentTarget, cIdx >= Math.max(1, filteredCampaigns.length - 1));
+                              }}
+                              style={{ padding: '6px 10px', fontSize: '0.8rem' }}
+                              aria-label="Actions"
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+
+                            {activeDropdownId === campaign._id && dropdownPos && (
+                              <>
+                                <div
+                                  style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveDropdownId(null);
+                                    setDropdownPos(null);
+                                  }}
+                                />
+                                <div
+                                  style={{
+                                    position: 'fixed',
+                                    right: `${dropdownPos.right}px`,
+                                    top: dropdownPos.bottom ? 'auto' : `${dropdownPos.top}px`,
+                                    bottom: dropdownPos.bottom || '',
+                                    zIndex: 9999,
+                                    backgroundColor: 'hsl(var(--bg-card))',
+                                    border: '1px solid hsl(var(--border-color))',
+                                    borderRadius: '10px',
+                                    boxShadow: '0 12px 28px rgba(0,0,0,0.4)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    width: '160px',
+                                    overflow: 'hidden',
+                                    padding: '4px 0'
+                                  }}
+                                >
+                                  <button
+                                    onClick={() => {
+                                      handleEditCampaign(campaign._id);
+                                      setActiveDropdownId(null);
+                                      setDropdownPos(null);
+                                    }}
+                                    style={{
+                                      padding: '9px 14px',
+                                      textAlign: 'left',
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'hsl(var(--text-primary))',
+                                      fontSize: '0.78rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px'
+                                    }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'hsl(var(--bg-card-hover))')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                                  >
+                                    <Edit3 size={14} /> Edit
+                                  </button>
+                                  {campaign.status !== 'active' ? (
+                                    <button
+                                      onClick={() => {
+                                        handleActivateCampaign(campaign._id);
+                                        setActiveDropdownId(null);
+                                        setDropdownPos(null);
+                                      }}
+                                      style={{
+                                        padding: '9px 14px',
+                                        textAlign: 'left',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'hsl(var(--success))',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                      }}
+                                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'hsl(var(--bg-card-hover))')}
+                                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                                    >
+                                      <Play size={14} /> Activate
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        handleStopCampaign(campaign._id);
+                                        setActiveDropdownId(null);
+                                        setDropdownPos(null);
+                                      }}
+                                      style={{
+                                        padding: '9px 14px',
+                                        textAlign: 'left',
+                                        background: 'none',
+                                        border: 'none',
+                                        color: 'hsl(var(--warning))',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px'
+                                      }}
+                                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'hsl(var(--bg-card-hover))')}
+                                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                                    >
+                                      <Square size={14} /> Stop
+                                    </button>
+                                  )}
+                                  <div style={{ height: '1px', backgroundColor: 'hsl(var(--border-color) / 40%)', margin: '3px 0' }} />
+                                  <button
+                                    onClick={() => {
+                                      handleDeleteCampaign(campaign._id);
+                                      setActiveDropdownId(null);
+                                      setDropdownPos(null);
+                                    }}
+                                    style={{
+                                      padding: '9px 14px',
+                                      textAlign: 'left',
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'hsl(var(--error))',
+                                      fontSize: '0.78rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '8px'
+                                    }}
+                                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'hsl(var(--error) / 10%)')}
+                                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                                  >
+                                    <Trash2 size={14} /> Delete
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -888,7 +1379,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
           buyerLists={buyerLists}
           loading={loading}
           onForceExpireRun={(runId) => {
-            dispatch(forceExpireRunThunk({ supplierId, runId }));
+            dispatch(forceExpireRunThunk(runId));
           }}
           onEditCampaign={(campaignId) => {
             dispatch(setEditingCampaignId(campaignId));
@@ -1094,6 +1585,28 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               </div>
 
             </div>
+
+            {/* Ergonomic Modal Footer */}
+            <div style={{
+              padding: '12px 20px',
+              borderTop: '1px solid hsl(var(--border-color))',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'hsl(var(--bg-card))'
+            }}>
+              <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>
+                Run Snapshot ID: <strong style={{ color: 'hsl(var(--primary))' }}>{inspectingRun._id || inspectingRun.runId}</strong>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setInspectingRun(null)}
+                style={{ padding: '7px 16px', fontSize: '0.8rem', fontWeight: 600, borderRadius: '8px' }}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1108,6 +1621,17 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
           return acc + (cases * unitCost);
         }, 0);
 
+        const filteredScopeLots = matchedLots.filter((l: any) => {
+          if (!matchedScopeSearch.trim()) return true;
+          const q = matchedScopeSearch.toLowerCase();
+          const lotNum = (l.lotNumber || l.lotId || '').toLowerCase();
+          const sku = (l.productId?.sku || l.sku || '').toLowerCase();
+          const title = (l.productId?.name || l.description || l.productName || '').toLowerCase();
+          const category = (l.productId?.category || l.category || '').toLowerCase();
+          const location = (l.warehouseLocation || l.dcLocation || '').toLowerCase();
+          return lotNum.includes(q) || sku.includes(q) || title.includes(q) || category.includes(q) || location.includes(q);
+        });
+
         return (
           <div style={{
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999,
@@ -1116,13 +1640,24 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
           }}>
             <div style={{
               backgroundColor: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))',
-              borderRadius: '14px', width: '820px', maxWidth: '95vw', maxHeight: '85vh',
+              borderRadius: '14px', width: '840px', maxWidth: '95vw', maxHeight: '85vh',
               display: 'flex', flexDirection: 'column', boxShadow: '0 16px 40px rgba(0,0,0,0.6)', overflow: 'hidden'
             }}>
               {/* Modal Header */}
               <div style={{ padding: '16px 20px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Box size={20} color="hsl(var(--primary))" />
+                  <div style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '8px',
+                    background: 'hsl(var(--primary) / 12%)',
+                    color: 'hsl(var(--primary))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Box size={18} />
+                  </div>
                   <div>
                     <h3 style={{ fontSize: '1.05rem', fontWeight: 700, margin: 0, color: 'hsl(var(--text-primary))' }}>
                       Matched Inventory Scope & Bidding Audit
@@ -1132,47 +1667,103 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                     </div>
                   </div>
                 </div>
-                <button type="button" onClick={() => setInspectingMatchedCampaign(null)} style={{ background: 'none', border: 'none', color: 'hsl(var(--text-muted))', cursor: 'pointer', padding: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setInspectingMatchedCampaign(null);
+                    setMatchedScopeSearch('');
+                  }}
+                  style={{ background: 'none', border: 'none', color: 'hsl(var(--text-muted))', cursor: 'pointer', padding: '6px' }}
+                  aria-label="Close Scope Modal"
+                >
                   <X size={20} />
                 </button>
               </div>
 
               {/* Impact Summary Bar */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', padding: '14px 20px', background: 'hsl(var(--bg-card))', borderBottom: '1px solid hsl(var(--border-color) / 50%)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', padding: '14px 20px', background: 'hsl(var(--bg-card-hover) / 30%)', borderBottom: '1px solid hsl(var(--border-color) / 50%)' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'hsl(var(--primary))' }}>{scopeData.lotCount}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))' }}>Matched Lots</div>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 800, fontFamily: 'monospace', color: 'hsl(var(--primary))' }}>{scopeData.lotCount}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', fontWeight: 600 }}>Matched Lots</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'hsl(var(--success))' }}>{scopeData.caseCount.toLocaleString()}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))' }}>Total Cases</div>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 800, fontFamily: 'monospace', color: 'hsl(var(--success))' }}>{scopeData.caseCount.toLocaleString()}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', fontWeight: 600 }}>Total Cases</div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'hsl(var(--text-primary))' }}>${totalValue.toLocaleString()}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))' }}>Est. COGS Value</div>
+                  <div style={{ fontSize: '1.15rem', fontWeight: 800, fontFamily: 'monospace', color: 'hsl(var(--text-primary))' }}>${totalValue.toLocaleString()}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', fontWeight: 600 }}>Est. COGS Value</div>
                 </div>
               </div>
 
+              {/* In-Modal Filter / Search Bar */}
+              {matchedLots.length > 0 && (
+                <div style={{ padding: '10px 20px', borderBottom: '1px solid hsl(var(--border-color) / 40%)', backgroundColor: 'hsl(var(--bg-card))' }}>
+                  <div style={{ position: 'relative' }}>
+                    <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--text-muted))' }} />
+                    <input
+                      type="text"
+                      value={matchedScopeSearch}
+                      onChange={(e) => setMatchedScopeSearch(e.target.value)}
+                      placeholder="Filter matched lots by SKU, title, lot number, or DC..."
+                      style={{
+                        width: '100%',
+                        padding: '6px 28px 6px 30px',
+                        fontSize: '0.78rem',
+                        borderRadius: '6px',
+                        border: '1px solid hsl(var(--border-color))',
+                        backgroundColor: 'hsl(var(--bg-card))',
+                        color: 'hsl(var(--text-primary))',
+                        outline: 'none'
+                      }}
+                    />
+                    {matchedScopeSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setMatchedScopeSearch('')}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: 'hsl(var(--text-muted))',
+                          cursor: 'pointer',
+                          padding: '2px'
+                        }}
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Modal Body: Table of matched lots */}
-              <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+              <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1 }}>
                 {matchedLots.length === 0 ? (
-                  <div style={{ padding: '32px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '0.85rem' }}>
+                  <div style={{ padding: '36px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '0.85rem' }}>
                     No active surplus inventory lots match this strategy's current filter criteria.
+                  </div>
+                ) : filteredScopeLots.length === 0 ? (
+                  <div style={{ padding: '32px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '0.82rem' }}>
+                    No lots match "{matchedScopeSearch}". <button type="button" onClick={() => setMatchedScopeSearch('')} style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', cursor: 'pointer', textDecoration: 'underline' }}>Clear search</button>
                   </div>
                 ) : (
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
                     <thead>
                       <tr style={{ borderBottom: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))', textAlign: 'left' }}>
-                        <th style={{ padding: '8px' }}>Lot Number</th>
-                        <th style={{ padding: '8px' }}>SKU / Title</th>
-                        <th style={{ padding: '8px' }}>Category</th>
-                        <th style={{ padding: '8px' }}>Cases</th>
-                        <th style={{ padding: '8px' }}>RSL %</th>
-                        <th style={{ padding: '8px' }}>DC Location</th>
+                        <th style={{ padding: '8px 10px', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Lot Number</th>
+                        <th style={{ padding: '8px 10px', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>SKU / Title</th>
+                        <th style={{ padding: '8px 10px', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Category</th>
+                        <th style={{ padding: '8px 10px', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Cases</th>
+                        <th style={{ padding: '8px 10px', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>RSL %</th>
+                        <th style={{ padding: '8px 10px', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>DC Location</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {matchedLots.map((lot: any, idx: number) => {
+                      {filteredScopeLots.map((lot: any, idx: number) => {
                         const lotNum = lot.lotNumber || lot.lotId || `LOT-${idx + 101}`;
                         const sku = lot.productId?.sku || lot.sku || 'N/A';
                         const title = lot.productId?.name || lot.description || lot.productName || 'Surplus Item';
@@ -1182,24 +1773,29 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                         const location = lot.warehouseLocation || lot.dcLocation || 'Main DC';
 
                         return (
-                          <tr key={lot._id || lot.id || idx} style={{ borderBottom: '1px solid hsl(var(--border-color) / 30%)' }}>
-                            <td style={{ padding: '10px 8px', fontWeight: 700, color: 'hsl(var(--primary))' }}>{lotNum}</td>
-                            <td style={{ padding: '10px 8px' }}>
+                          <tr
+                            key={lot._id || lot.id || idx}
+                            style={{ borderBottom: '1px solid hsl(var(--border-color) / 30%)', transition: 'background-color 0.15s ease' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'hsl(var(--bg-card-hover) / 40%)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
+                          >
+                            <td style={{ padding: '10px', fontWeight: 700, fontFamily: 'monospace', color: 'hsl(var(--primary))' }}>{lotNum}</td>
+                            <td style={{ padding: '10px' }}>
                               <div style={{ fontWeight: 600, color: 'hsl(var(--text-primary))' }}>{title}</div>
                               <div style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))' }}>SKU: {sku}</div>
                             </td>
-                            <td style={{ padding: '10px 8px' }}>
+                            <td style={{ padding: '10px' }}>
                               <span style={{ padding: '2px 8px', borderRadius: '10px', backgroundColor: 'hsl(var(--primary)/0.12)', color: 'hsl(var(--primary))', fontSize: '0.72rem', fontWeight: 600, textTransform: 'capitalize' }}>
                                 {category}
                               </span>
                             </td>
-                            <td style={{ padding: '10px 8px', fontWeight: 700 }}>{cases.toLocaleString()} cases</td>
-                            <td style={{ padding: '10px 8px' }}>
+                            <td style={{ padding: '10px', fontWeight: 700, fontFamily: 'monospace' }}>{cases.toLocaleString()} cases</td>
+                            <td style={{ padding: '10px' }}>
                               <span style={{ color: Number(rslPct) <= 15 ? 'hsl(var(--warning))' : 'hsl(var(--success))', fontWeight: 700 }}>
                                 {rslPct}% RSL
                               </span>
                             </td>
-                            <td style={{ padding: '10px 8px', color: 'hsl(var(--text-muted))' }}>{location}</td>
+                            <td style={{ padding: '10px', color: 'hsl(var(--text-muted))' }}>{location}</td>
                           </tr>
                         );
                       })}
@@ -1207,6 +1803,47 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                   </table>
                 )}
               </div>
+
+              {/* Ergonomic Modal Footer */}
+              <div style={{
+                padding: '12px 20px',
+                borderTop: '1px solid hsl(var(--border-color))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'hsl(var(--bg-card))'
+              }}>
+                <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>
+                  Showing {filteredScopeLots.length} of {scopeData.lotCount} matched surplus lots
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setInspectingMatchedCampaign(null);
+                      setMatchedScopeSearch('');
+                    }}
+                    style={{ padding: '7px 16px', fontSize: '0.8rem', fontWeight: 600, borderRadius: '8px' }}
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      const targetId = inspectingMatchedCampaign._id;
+                      setInspectingMatchedCampaign(null);
+                      setMatchedScopeSearch('');
+                      handleEditCampaign(targetId);
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 16px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px' }}
+                  >
+                    <Sliders size={14} /> Adjust Filter Rules in Builder
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
         );
@@ -1236,7 +1873,18 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               {/* Modal Header */}
               <div style={{ padding: '18px 24px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Layers size={22} color="hsl(var(--primary))" />
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '10px',
+                    background: 'hsl(var(--primary) / 12%)',
+                    color: 'hsl(var(--primary))',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Layers size={20} />
+                  </div>
                   <div>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 800, margin: 0, color: 'hsl(var(--text-primary))' }}>
                       Strategy Action Breakdown & Stage Pipeline
@@ -1252,7 +1900,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
               </div>
 
               {/* Schedule & Timing Parameters Bar */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', padding: '14px 24px', background: 'hsl(var(--bg-card))', borderBottom: '1px solid hsl(var(--border-color) / 50%)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', padding: '14px 24px', background: 'hsl(var(--bg-card-hover) / 30%)', borderBottom: '1px solid hsl(var(--border-color) / 50%)' }}>
                 <div>
                   <div style={{ fontSize: '0.68rem', color: 'hsl(var(--text-muted))', textTransform: 'uppercase', fontWeight: 700 }}>Dispatch Schedule</div>
                   <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'hsl(var(--primary))', marginTop: '2px', textTransform: 'capitalize' }}>{sched.type || 'Immediate'}</div>
@@ -1271,10 +1919,10 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                 </div>
               </div>
 
-              {/* Modal Body: Interactive 3-Stage Pipeline */}
+              {/* Modal Body: Interactive Multi-Stage Pipeline */}
               <div style={{ padding: '24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 
-                {/* Visual Pipeline Timeline Cards */}
+                {/* Visual Pipeline Timeline Cards with Sequential Flow Connectors */}
                 {(() => {
                   const primaryList = buyerLists.find((l: any) => l.type === 'primary');
                   const secondaryList = buyerLists.find((l: any) => l.type === 'secondary');
@@ -1302,7 +1950,13 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                   ];
 
                   return (
-                    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${dynamicStages.length + 1}, 1fr)`, gap: '16px' }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'stretch',
+                      gap: '12px',
+                      overflowX: 'auto',
+                      paddingBottom: '6px'
+                    }}>
                       {dynamicStages.map((stg: any, sIdx: number) => {
                         const buyerDesc = (() => {
                           if (stg.buyerMode === 'custom') {
@@ -1325,41 +1979,68 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                           : `$${stg.discountValue || 0}/case Floor`;
 
                         return (
-                          <div key={stg.stageIndex || sIdx} style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--primary) / 35%)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '10px', background: 'hsl(var(--primary) / 20%)', color: 'hsl(var(--primary))', fontWeight: 800 }}>
-                                STAGE {stg.stageIndex || sIdx + 1}
-                              </span>
-                              <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', fontWeight: 600 }}>
-                                Duration: {formatDurationHours(stg.waitHours || 24)}
-                              </span>
-                            </div>
-                            <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'hsl(var(--text-primary))', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <Zap size={16} style={{ color: 'hsl(var(--warning))' }} /> {stg.name || `Stage ${sIdx + 1}`}
-                            </div>
-                            <div style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', lineHeight: 1.4 }}>
-                              Targeted buyer segment evaluation window with customized pricing rule & discount escalation.
-                            </div>
-                            <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid hsl(var(--border-color) / 40%)', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: 'hsl(var(--text-muted))' }}>Target Roster:</span>
-                                <strong style={{ color: 'hsl(var(--primary))', textTransform: 'capitalize' }}>{buyerDesc}</strong>
+                          <React.Fragment key={stg.stageIndex || sIdx}>
+                            <div style={{
+                              flex: '1 1 240px',
+                              minWidth: '220px',
+                              background: 'hsl(var(--bg-card))',
+                              border: '1px solid hsl(var(--primary) / 35%)',
+                              borderRadius: '12px',
+                              padding: '16px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '10px'
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '10px', background: 'hsl(var(--primary) / 20%)', color: 'hsl(var(--primary))', fontWeight: 800 }}>
+                                  STAGE {stg.stageIndex || sIdx + 1}
+                                </span>
+                                <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', fontWeight: 600 }}>
+                                  Duration: {formatDurationHours(stg.waitHours || 24)}
+                                </span>
                               </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: 'hsl(var(--text-muted))' }}>Discount / Strategy:</span>
-                                <strong style={{ color: 'hsl(var(--warning))' }}>{discountDesc}</strong>
+                              <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'hsl(var(--text-primary))', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Zap size={16} style={{ color: 'hsl(var(--warning))' }} /> {stg.name || `Stage ${sIdx + 1}`}
                               </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ color: 'hsl(var(--text-muted))' }}>Evaluation Window:</span>
-                                <strong style={{ color: 'hsl(var(--text-primary))' }}>{formatDurationHours(stg.waitHours || 24)}</strong>
+                              <div style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', lineHeight: 1.4 }}>
+                                Targeted buyer segment evaluation window with customized pricing rule & discount escalation.
+                              </div>
+                              <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid hsl(var(--border-color) / 40%)', fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                  <span style={{ color: 'hsl(var(--text-muted))' }}>Target Roster:</span>
+                                  <strong style={{ color: 'hsl(var(--primary))', textTransform: 'capitalize' }}>{buyerDesc}</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                  <span style={{ color: 'hsl(var(--text-muted))' }}>Discount / Strategy:</span>
+                                  <strong style={{ color: 'hsl(var(--warning))' }}>{discountDesc}</strong>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                  <span style={{ color: 'hsl(var(--text-muted))' }}>Evaluation Window:</span>
+                                  <strong style={{ color: 'hsl(var(--text-primary))' }}>{formatDurationHours(stg.waitHours || 24)}</strong>
+                                </div>
                               </div>
                             </div>
-                          </div>
+
+                            {/* Sequential Waterfall Flow Connector */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'hsl(var(--primary))', opacity: 0.6, flexShrink: 0 }}>
+                              <ChevronRight size={22} />
+                            </div>
+                          </React.Fragment>
                         );
                       })}
 
                       {/* FALLBACK GATE CARD */}
-                      <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--error) / 35%)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{
+                        flex: '1 1 240px',
+                        minWidth: '220px',
+                        background: 'hsl(var(--bg-card))',
+                        border: '1px solid hsl(var(--error) / 35%)',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '10px'
+                      }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.7rem', padding: '3px 8px', borderRadius: '10px', background: 'hsl(var(--error) / 20%)', color: 'hsl(var(--error))', fontWeight: 800 }}>
                             FALLBACK GATE
@@ -1391,7 +2072,7 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                   );
                 })()}
 
-                {/* Email Template Preview Box */}
+                {/* Email Template Preview Box with dynamic tokens */}
                 <div style={{ background: 'hsl(var(--bg-card))', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color))' }}>
                   <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Mail size={14} /> Stage 1 Email Template & Message Payload
@@ -1402,12 +2083,13 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
                   <div style={{
                     fontSize: '0.78rem',
                     color: 'hsl(var(--text-muted))',
-                    backgroundColor: 'hsl(var(--bg-card))',
+                    backgroundColor: 'hsl(var(--bg-card-hover) / 40%)',
                     padding: '12px',
                     borderRadius: '8px',
                     fontFamily: 'monospace',
                     whiteSpace: 'pre-wrap',
-                    border: '1px solid hsl(var(--border-color) / 40%)'
+                    border: '1px solid hsl(var(--border-color) / 40%)',
+                    lineHeight: '1.6'
                   }}>
                     {email.body || 'Dear Partner,\n\nWe have surplus inventory available for bidding:\n\n{{inventory_table}}\n\nPlease submit your bids prior to window expiration.'}
                   </div>
@@ -1415,26 +2097,64 @@ export const WorkflowsView: React.FC<WorkflowsViewProps> = ({
 
                 {/* Strategy Inventory Filters Box */}
                 <div style={{ background: 'hsl(var(--bg-card))', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color))' }}>
-                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-primary))', fontWeight: 600, marginBottom: '6px' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-primary))', fontWeight: 600, marginBottom: '8px' }}>
                     Strategy Filter Parameters:
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.78rem' }}>
-                    <div>
-                      <span style={{ color: 'hsl(var(--text-muted))' }}>Category: </span>
-                      <strong style={{ color: 'hsl(var(--text-primary))', textTransform: 'capitalize' }}>{c.inventoryFilters?.category || 'All Categories'}</strong>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px', fontSize: '0.78rem' }}>
+                    <div style={{ padding: '8px 12px', background: 'hsl(var(--bg-card-hover) / 30%)', borderRadius: '6px', border: '1px solid hsl(var(--border-color) / 30%)' }}>
+                      <span style={{ color: 'hsl(var(--text-muted))', display: 'block', fontSize: '0.7rem' }}>Category</span>
+                      <strong style={{ color: 'hsl(var(--text-primary))', textTransform: 'capitalize', fontSize: '0.85rem' }}>{c.inventoryFilters?.category || 'All Categories'}</strong>
                     </div>
-                    <div>
-                      <span style={{ color: 'hsl(var(--text-muted))' }}>Expiration Cutoff: </span>
-                      <strong style={{ color: 'hsl(var(--text-primary))' }}>{c.inventoryFilters?.maxDaysUntilExpiration ? `${c.inventoryFilters.maxDaysUntilExpiration} Days` : 'Any RSL'}</strong>
+                    <div style={{ padding: '8px 12px', background: 'hsl(var(--bg-card-hover) / 30%)', borderRadius: '6px', border: '1px solid hsl(var(--border-color) / 30%)' }}>
+                      <span style={{ color: 'hsl(var(--text-muted))', display: 'block', fontSize: '0.7rem' }}>Expiration Cutoff</span>
+                      <strong style={{ color: 'hsl(var(--text-primary))', fontSize: '0.85rem' }}>{c.inventoryFilters?.maxDaysUntilExpiration ? `${c.inventoryFilters.maxDaysUntilExpiration} Days` : 'Any RSL'}</strong>
                     </div>
-                    <div>
-                      <span style={{ color: 'hsl(var(--text-muted))' }}>Minimum Yield Target: </span>
-                      <strong style={{ color: 'hsl(var(--success))' }}>{yieldPercent}%</strong>
+                    <div style={{ padding: '8px 12px', background: 'hsl(var(--bg-card-hover) / 30%)', borderRadius: '6px', border: '1px solid hsl(var(--border-color) / 30%)' }}>
+                      <span style={{ color: 'hsl(var(--text-muted))', display: 'block', fontSize: '0.7rem' }}>Minimum Yield Target</span>
+                      <strong style={{ color: 'hsl(var(--success))', fontSize: '0.85rem' }}>{yieldPercent}%</strong>
                     </div>
                   </div>
                 </div>
 
               </div>
+
+              {/* Ergonomic Modal Footer */}
+              <div style={{
+                padding: '14px 24px',
+                borderTop: '1px solid hsl(var(--border-color))',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'hsl(var(--bg-card))'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>Status:</span>
+                  {renderStatusBadge(c.status)}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setInspectingCampaignStages(null)}
+                    style={{ padding: '8px 16px', fontSize: '0.8rem', fontWeight: 600, borderRadius: '8px' }}
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => {
+                      const targetId = c._id;
+                      setInspectingCampaignStages(null);
+                      handleEditCampaign(targetId);
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.8rem', fontWeight: 700, borderRadius: '8px' }}
+                  >
+                    <Edit3 size={14} /> Edit in Campaign Builder
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
         );

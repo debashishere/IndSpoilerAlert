@@ -227,5 +227,206 @@ describe('Issue #40 Integration: WorkflowsView & Campaign Studio', () => {
     expect(screen.getByText('Q3 Dairy Clearance')).toBeInTheDocument();
     expect(screen.getByText('1 Run')).toBeInTheDocument();
   });
+
+  it('should render Saved Campaigns executive KPI metric strip and allow searching campaigns by query', async () => {
+    const store = createTestStore();
+    store.dispatch({
+      type: 'workflow/setLiquidationAutomations',
+      payload: [
+        {
+          _id: 'camp-10',
+          name: 'Summer Dairy Clearance',
+          templateName: 'category_liquidation',
+          status: 'active',
+          inventoryFilters: { category: 'dairy' }
+        },
+        {
+          _id: 'camp-20',
+          name: 'Winter Bakery Rescue',
+          templateName: 'short_dated_clearance',
+          status: 'draft',
+          inventoryFilters: { category: 'bakery' }
+        }
+      ]
+    });
+
+    render(
+      <Provider store={store}>
+        <WorkflowsView supplierId="sup-101" />
+      </Provider>
+    );
+
+    // Switch to Saved Campaigns
+    fireEvent.click(screen.getByText('Saved Campaigns'));
+
+    // Verify executive KPI metrics
+    expect(screen.getByText('Total Strategies')).toBeInTheDocument();
+    expect(screen.getByText('Active Dispatchers')).toBeInTheDocument();
+    expect(screen.getByText('Inventory In Scope')).toBeInTheDocument();
+
+    // Verify both campaigns are displayed initially
+    expect(screen.getByText('Summer Dairy Clearance')).toBeInTheDocument();
+    expect(screen.getByText('Winter Bakery Rescue')).toBeInTheDocument();
+
+    // Type 'Bakery' into the search input
+    const searchInput = screen.getByPlaceholderText('Search campaigns by name, template...');
+    fireEvent.change(searchInput, { target: { value: 'Bakery' } });
+
+    // Only Bakery campaign should be visible
+    expect(screen.getByText('Winter Bakery Rescue')).toBeInTheDocument();
+    expect(screen.queryByText('Summer Dairy Clearance')).not.toBeInTheDocument();
+
+    // Clear search
+    const clearButton = screen.getByLabelText('Clear Search');
+    fireEvent.click(clearButton);
+
+    // Both should be visible again
+    expect(screen.getByText('Summer Dairy Clearance')).toBeInTheDocument();
+    expect(screen.getByText('Winter Bakery Rescue')).toBeInTheDocument();
+  });
+
+  it('should filter Saved Campaigns by status and show filter empty state with reset option', async () => {
+    const store = createTestStore();
+    store.dispatch({
+      type: 'workflow/setLiquidationAutomations',
+      payload: [
+        {
+          _id: 'camp-10',
+          name: 'Summer Dairy Clearance',
+          templateName: 'category_liquidation',
+          status: 'active',
+          inventoryFilters: {}
+        },
+        {
+          _id: 'camp-20',
+          name: 'Winter Bakery Rescue',
+          templateName: 'short_dated_clearance',
+          status: 'draft',
+          inventoryFilters: {}
+        }
+      ]
+    });
+
+    render(
+      <Provider store={store}>
+        <WorkflowsView supplierId="sup-101" />
+      </Provider>
+    );
+
+    fireEvent.click(screen.getByText('Saved Campaigns'));
+
+    // Click Active Pipelines filter
+    fireEvent.click(screen.getByText('Active Pipelines'));
+    expect(screen.getByText('Summer Dairy Clearance')).toBeInTheDocument();
+    expect(screen.queryByText('Winter Bakery Rescue')).not.toBeInTheDocument();
+
+    // Click Stopped Pipelines filter (0 stopped campaigns)
+    fireEvent.click(screen.getByText('Stopped Pipelines'));
+    expect(screen.getByText('No matching campaign strategies')).toBeInTheDocument();
+    expect(screen.getByText('Reset Filters')).toBeInTheDocument();
+
+    // Click Reset Filters
+    fireEvent.click(screen.getByText('Reset Filters'));
+    expect(screen.getByText('Summer Dairy Clearance')).toBeInTheDocument();
+    expect(screen.getByText('Winter Bakery Rescue')).toBeInTheDocument();
+  });
+
+  it('should open Strategy Stage Pipeline modal with stage waterfall and edit via footer', async () => {
+    const store = createTestStore();
+    store.dispatch({
+      type: 'workflow/setLiquidationAutomations',
+      payload: [
+        {
+          _id: 'camp-30',
+          name: 'Tiered Liquidation Cascade',
+          templateName: 'waterfall_liquidation',
+          status: 'active',
+          stages: [
+            { stageIndex: 1, name: 'Tier 1 Buyers', discountType: 'fixed', discountValue: 10, waitHours: 24 },
+            { stageIndex: 2, name: 'Liquidator Network', discountType: 'fixed', discountValue: 30, waitHours: 48 }
+          ]
+        }
+      ]
+    });
+
+    render(
+      <Provider store={store}>
+        <WorkflowsView supplierId="sup-101" />
+      </Provider>
+    );
+
+    fireEvent.click(screen.getByText('Saved Campaigns'));
+
+    // Click Stages badge
+    fireEvent.click(screen.getByText('Stages →'));
+
+    // Modal should be open
+    expect(screen.getByText('Strategy Action Breakdown & Stage Pipeline')).toBeInTheDocument();
+    expect(screen.getByText('STAGE 1')).toBeInTheDocument();
+    expect(screen.getByText('STAGE 2')).toBeInTheDocument();
+    expect(screen.getByText('FALLBACK GATE')).toBeInTheDocument();
+
+    // Click Edit in Campaign Builder from the ergonomic footer
+    fireEvent.click(screen.getByText('Edit in Campaign Builder'));
+
+    // Should switch to builder subtab with editingCampaignId set
+    expect(store.getState().workflow.workflowSubTab).toBe('builder');
+    expect(store.getState().workflow.editingCampaignId).toBe('camp-30');
+  });
+
+  it('should open Matched Inventory Scope modal with in-modal search and close via footer', async () => {
+    const store = createTestStore();
+    store.dispatch({
+      type: 'workflow/setLiquidationAutomations',
+      payload: [
+        {
+          _id: 'camp-40',
+          name: 'Produce Batch Strategy',
+          templateName: 'category_liquidation',
+          status: 'active',
+          inventoryFilters: {}
+        }
+      ]
+    });
+    store.dispatch({
+      type: 'inventory/setInventoryList',
+      payload: [
+        { _id: 'lot-1', lotNumber: 'LOT-101', description: 'Fresh Apples', availableQty: 200 },
+        { _id: 'lot-2', lotNumber: 'LOT-102', description: 'Fresh Oranges', availableQty: 300 }
+      ]
+    });
+
+    render(
+      <Provider store={store}>
+        <WorkflowsView
+          supplierId="sup-101"
+          inventoryLots={[
+            { _id: 'lot-1', lotNumber: 'LOT-101', description: 'Fresh Apples', availableQty: 200 },
+            { _id: 'lot-2', lotNumber: 'LOT-102', description: 'Fresh Oranges', availableQty: 300 }
+          ]}
+        />
+      </Provider>
+    );
+
+    fireEvent.click(screen.getByText('Saved Campaigns'));
+
+    // Click View button in Matched Inventory column
+    fireEvent.click(screen.getByText('View'));
+
+    // Modal should open
+    expect(screen.getByText('Matched Inventory Scope & Bidding Audit')).toBeInTheDocument();
+    expect(screen.getByText('LOT-101')).toBeInTheDocument();
+    expect(screen.getByText('LOT-102')).toBeInTheDocument();
+
+    // Test in-modal search
+    const filterInput = screen.getByPlaceholderText('Filter matched lots by SKU, title, lot number, or DC...');
+    fireEvent.change(filterInput, { target: { value: 'Oranges' } });
+    expect(screen.getByText('LOT-102')).toBeInTheDocument();
+    expect(screen.queryByText('LOT-101')).not.toBeInTheDocument();
+
+    // Click Close from the ergonomic modal footer
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByText('Matched Inventory Scope & Bidding Audit')).not.toBeInTheDocument();
+  });
 });
 

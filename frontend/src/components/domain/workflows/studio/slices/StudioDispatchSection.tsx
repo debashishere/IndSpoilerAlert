@@ -73,32 +73,38 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
     reduxBuyerLists
   } = studio;
 
+  // Shared institutional card and input tokens adhering to ux-v1
   const card: React.CSSProperties = {
     background: 'hsl(var(--bg-card))',
-    padding: '20px 24px',
+    padding: '22px 24px',
     borderRadius: '14px',
-    border: '1px solid hsl(var(--border-color))',
-    boxShadow: '0 4px 20px -2px rgba(13, 71, 161, 0.06)'
+    border: '1px solid hsl(var(--border-color) / 0.7)',
+    boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
   };
+
   const h3st: React.CSSProperties = {
     fontSize: '15px',
     fontWeight: 700,
+    letterSpacing: '-0.01em',
+    color: 'hsl(var(--text-primary))',
     margin: '0 0 16px 0',
     display: 'flex',
     alignItems: 'center',
-    gap: '8px'
+    gap: '8px',
   };
+
   const inpSt: React.CSSProperties = {
     background: 'hsl(var(--bg-card))',
-    border: '1.5px solid hsl(var(--border-color))',
+    border: '1px solid hsl(var(--border-color))',
     borderRadius: '8px',
-    padding: '9px 12px',
+    minHeight: '40px',
+    padding: '9px 14px',
     color: 'hsl(var(--text-primary))',
     fontSize: '13px',
     width: '100%',
     boxSizing: 'border-box',
-    boxShadow: 'inset 0 2px 4px rgba(13, 71, 161, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
-    transition: 'all 0.2s ease'
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   };
 
   return (
@@ -265,27 +271,27 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
           </div>
         </div>
 
-        {/* Impact Metrics Row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
-          <div style={{ background: 'hsl(var(--bg-card))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
-            <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Matched Lots</span>
-            <div style={{ fontSize: '24px', fontWeight: 800, color: 'hsl(var(--primary))' }}>{impactMetrics.totalLots}</div>
+        {/* Impact Metrics Row - 4-Card Commercial Stat Grid standard adhering to ux-v1 */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+          <div style={{ background: 'hsl(var(--bg-card))', padding: '14px 16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color) / 0.7)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Matched Lots</span>
+            <div style={{ fontSize: '24px', fontWeight: 800, fontFamily: 'monospace', lineHeight: 1, color: 'hsl(var(--primary))', marginTop: '8px' }}>{impactMetrics.totalLots}</div>
           </div>
-          <div style={{ background: 'hsl(var(--bg-card))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
-            <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Total Cases</span>
-            <div style={{ fontSize: '24px', fontWeight: 800 }}>{impactMetrics.totalCases.toLocaleString()}</div>
+          <div style={{ background: 'hsl(var(--bg-card))', padding: '14px 16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color) / 0.7)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total Cases</span>
+            <div style={{ fontSize: '24px', fontWeight: 800, fontFamily: 'monospace', lineHeight: 1, color: 'hsl(var(--text-primary))', marginTop: '8px' }}>{impactMetrics.totalCases.toLocaleString()}</div>
           </div>
-          <div style={{ background: 'hsl(var(--bg-card))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
-            <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))' }}>Est. COGS Recovery</span>
-            <div style={{ fontSize: '24px', fontWeight: 800, color: 'hsl(var(--success))' }}>${impactMetrics.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <div style={{ background: 'hsl(var(--bg-card))', padding: '14px 16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color) / 0.7)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Est. COGS Recovery</span>
+            <div style={{ fontSize: '24px', fontWeight: 800, fontFamily: 'monospace', lineHeight: 1, color: 'hsl(var(--success))', marginTop: '8px' }}>${impactMetrics.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </div>
-          <div style={{ background: 'hsl(var(--bg-card))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border-color))' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
-              <span style={{ color: 'hsl(var(--text-muted))' }}>RSL Risk</span>
-              <span style={{ color: 'hsl(var(--warning))', fontWeight: 600 }}>{impactMetrics.urgentLots} urgent</span>
+          <div style={{ background: 'hsl(var(--bg-card))', padding: '14px 16px', borderRadius: '12px', border: '1px solid hsl(var(--border-color) / 0.7)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+              <span style={{ fontWeight: 600, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>RSL Risk</span>
+              <span style={{ color: 'hsl(var(--warning))', fontWeight: 700, fontFamily: 'monospace' }}>{impactMetrics.urgentLots} urgent</span>
             </div>
-            <div style={{ height: '8px', background: 'hsl(var(--bg-card))', borderRadius: '4px', overflow: 'hidden', display: 'flex', marginTop: '6px' }}>
-              <div style={{ width: `${impactMetrics.totalLots > 0 ? (impactMetrics.urgentLots / impactMetrics.totalLots) * 100 : 0}%`, background: 'hsl(var(--error))' }} />
+            <div style={{ height: '8px', background: 'hsl(var(--border-color) / 0.4)', borderRadius: '4px', overflow: 'hidden', display: 'flex', marginTop: '12px' }}>
+              <div style={{ width: `${impactMetrics.totalLots > 0 ? (impactMetrics.urgentLots / impactMetrics.totalLots) * 100 : 0}%`, background: 'hsl(var(--error))', transition: 'width 0.3s ease' }} />
               <div style={{ flex: 1, background: 'hsl(var(--success))' }} />
             </div>
           </div>
@@ -318,10 +324,11 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
             style={{
               flex: 1,
               background: 'hsl(var(--bg-card))',
-              color: 'white',
-              border: '1px solid hsl(var(--primary))',
+              color: 'hsl(var(--text-primary))',
+              border: '1px solid hsl(var(--border-color))',
               borderRadius: '10px',
-              padding: '13px',
+              minHeight: '44px',
+              padding: '12px 20px',
               fontWeight: 700,
               fontSize: '13px',
               cursor: isSubmitting ? 'not-allowed' : 'pointer',
@@ -329,13 +336,13 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '7px',
-              transition: 'all 0.2s ease',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.3)'
+              gap: '8px',
+              transition: 'all 0.15s ease',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
             }}
           >
-            <Save size={15} color="hsl(var(--primary))" />
-            <span>{isSubmitting ? 'Saving...' : 'Save'}</span>
+            <Save size={16} color="hsl(var(--primary))" />
+            <span>{isSubmitting ? 'Saving...' : 'Save Strategy'}</span>
           </button>
 
           <button
@@ -348,7 +355,8 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
               color: 'white',
               border: 'none',
               borderRadius: '10px',
-              padding: '13px',
+              minHeight: '44px',
+              padding: '12px 20px',
               fontWeight: 700,
               fontSize: '13px',
               cursor: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? 'pointer' : 'not-allowed',
@@ -356,11 +364,12 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '7px',
-              boxShadow: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? '0 6px 20px hsl(var(--primary)/0.3)' : 'none'
+              gap: '8px',
+              boxShadow: (impactMetrics.totalLots > 0 && !hasZeroBuyerStage) ? '0 4px 16px hsl(var(--primary)/0.3)' : 'none',
+              transition: 'all 0.15s ease',
             }}
           >
-            <Play size={15} /> Run
+            <Play size={16} /> Run Pre-Flight & Dispatch
           </button>
         </div>
       </div>
@@ -402,15 +411,9 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
             position: 'fixed',
             inset: 0,
             zIndex: 9999,
-            background: `
-              radial-gradient(ellipse at 12% 18%, rgba(227, 242, 253, 0.75) 0%, transparent 50%),
-              radial-gradient(ellipse at 88% 22%, rgba(144, 202, 249, 0.65) 0%, transparent 52%),
-              radial-gradient(ellipse at 50% 50%, rgba(33, 150, 243, 0.22) 0%, transparent 70%),
-              radial-gradient(ellipse at 20% 82%, rgba(13, 71, 161, 0.08) 0%, transparent 50%),
-              rgba(255, 255, 255, 0.75)
-            `,
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -421,39 +424,38 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
         >
           <div
             style={{
-              backgroundColor: '#F4F8FC',
-              border: '2px solid #2196F3',
+              backgroundColor: 'hsl(var(--bg-card))',
+              border: '1px solid hsl(var(--border-color))',
               borderRadius: '16px',
               width: '680px',
               maxWidth: '92vw',
               maxHeight: '85vh',
               display: 'flex',
               flexDirection: 'column',
-              boxShadow: '0 24px 60px rgba(13, 71, 161, 0.25), 0 0 35px rgba(33, 150, 243, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.3)',
               overflow: 'hidden',
               position: 'relative',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Radiant Blue Top Accent Bar */}
+            {/* Top Accent Bar */}
             <div
               style={{
-                height: '5px',
+                height: '4px',
                 width: '100%',
-                background: 'linear-gradient(90deg, #E3F2FD 0%, #90CAF9 25%, #2196F3 65%, #0D47A1 100%)',
+                background: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--secondary)))',
               }}
             />
 
-            {/* ── Blue Theme Header ── */}
+            {/* ── Modal Header ── */}
             <div
               style={{
                 padding: '16px 24px',
-                background: 'linear-gradient(135deg, #0D47A1 0%, #1565C0 50%, #1E88E5 100%)',
-                borderBottom: '1px solid rgba(33, 150, 243, 0.3)',
+                background: 'hsl(var(--bg-card))',
+                borderBottom: '1px solid hsl(var(--border-color))',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                color: '#FFFFFF',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -462,20 +464,20 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    width: '34px',
-                    height: '34px',
+                    width: '36px',
+                    height: '36px',
                     borderRadius: '8px',
-                    background: 'rgba(255, 255, 255, 0.2)',
-                    border: '1px solid rgba(255, 255, 255, 0.35)',
+                    background: 'hsl(var(--primary) / 0.12)',
+                    color: 'hsl(var(--primary))',
                   }}
                 >
-                  <Eye size={18} color="#FFFFFF" />
+                  <Eye size={18} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#FFFFFF', letterSpacing: '-0.01em' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: 'hsl(var(--text-primary))', letterSpacing: '-0.01em' }}>
                     Buyer Segment Data: {reduxBuyerLists.find(s => s._id === inspectingSegment || s.type === inspectingSegment || s.name?.toLowerCase().includes(inspectingSegment.toLowerCase()))?.name || (inspectingSegment === 'primary' ? 'Primary Buyers' : inspectingSegment === 'secondary' ? 'Secondary Liquidators' : inspectingSegment)}
                   </h3>
-                  <span style={{ fontSize: '11px', color: '#E3F2FD', fontWeight: 500 }}>
+                  <span style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', fontWeight: 500 }}>
                     Target Buyer List Roster Inspection
                   </span>
                 </div>
@@ -485,12 +487,12 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
                 aria-label="Close modal"
                 onClick={() => setInspectingSegment(null)}
                 style={{
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  border: '1px solid rgba(255, 255, 255, 0.35)',
+                  background: 'transparent',
+                  border: '1px solid hsl(var(--border-color))',
                   borderRadius: '8px',
                   padding: '6px 8px',
                   cursor: 'pointer',
-                  color: '#FFFFFF',
+                  color: 'hsl(var(--text-muted))',
                   display: 'flex',
                   alignItems: 'center',
                 }}
@@ -506,16 +508,7 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
                 placeholder="Search buyers by name or email..."
                 value={inspectSearch}
                 onChange={e => setInspectSearch(e.target.value)}
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(33, 150, 243, 0.35)',
-                  backgroundColor: '#FFFFFF',
-                  color: '#0F172A',
-                  fontSize: '0.85rem',
-                  outline: 'none',
-                  boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.03)',
-                }}
+                style={inpSt}
               />
 
               <div
@@ -524,17 +517,17 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
                   overflowY: 'auto',
                   overflowX: 'auto',
                   borderRadius: '10px',
-                  border: '1px solid rgba(33, 150, 243, 0.25)',
-                  boxShadow: '0 2px 8px rgba(13, 71, 161, 0.05)',
-                  background: '#FFFFFF',
+                  border: '1px solid hsl(var(--border-color))',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                  background: 'hsl(var(--bg-card))',
                 }}
               >
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem', background: '#FFFFFF' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem', background: 'hsl(var(--bg-card))' }}>
                   <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
-                    <tr style={{ background: '#F0F7FF', borderBottom: '2px solid rgba(33, 150, 243, 0.3)', color: '#0D47A1', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                      <th style={{ padding: '10px 12px', fontWeight: 700, position: 'sticky', top: 0, background: '#F0F7FF', zIndex: 10 }}>Name / Company</th>
-                      <th style={{ padding: '10px 12px', fontWeight: 700, position: 'sticky', top: 0, background: '#F0F7FF', zIndex: 10 }}>Email Address</th>
-                      <th style={{ padding: '10px 12px', fontWeight: 700, position: 'sticky', top: 0, background: '#F0F7FF', zIndex: 10 }}>Registration Date</th>
+                    <tr style={{ background: 'hsl(var(--bg-card-hover) / 0.5)', borderBottom: '1px solid hsl(var(--border-color))', color: 'hsl(var(--text-muted))', textAlign: 'left', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <th style={{ padding: '10px 12px', fontWeight: 700, position: 'sticky', top: 0, background: 'hsl(var(--bg-card-hover) / 0.5)', zIndex: 10 }}>Name / Company</th>
+                      <th style={{ padding: '10px 12px', fontWeight: 700, position: 'sticky', top: 0, background: 'hsl(var(--bg-card-hover) / 0.5)', zIndex: 10 }}>Email Address</th>
+                      <th style={{ padding: '10px 12px', fontWeight: 700, position: 'sticky', top: 0, background: 'hsl(var(--bg-card-hover) / 0.5)', zIndex: 10 }}>Registration Date</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -585,7 +578,7 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
                       if (filtered.length === 0) {
                         return (
                           <tr>
-                            <td colSpan={3} style={{ padding: '24px', textAlign: 'center', color: '#64748B', fontSize: '0.85rem' }}>
+                            <td colSpan={3} style={{ padding: '24px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '0.85rem' }}>
                               {matchedList ? `No buyers assigned to ${matchedList.name} (0 members configured).` : 'No buyer list selected or configured.'}
                             </td>
                           </tr>
@@ -593,10 +586,10 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
                       }
 
                       return filtered.map((b: any, idx: number) => (
-                        <tr key={b._id || idx} style={{ borderBottom: '1px solid rgba(33, 150, 243, 0.15)', background: idx % 2 === 0 ? '#FFFFFF' : '#FAFCFF' }}>
-                          <td style={{ padding: '10px 12px', fontWeight: 600, color: '#0F172A' }}>{b.companyName || b.name || 'Retail Partner'}</td>
-                          <td style={{ padding: '10px 12px', color: '#1E88E5', fontWeight: 500 }}>{b.email || 'n/a'}</td>
-                          <td style={{ padding: '10px 12px', color: '#64748B' }}>
+                        <tr key={b._id || idx} style={{ borderBottom: '1px solid hsl(var(--border-color) / 0.4)', background: idx % 2 === 0 ? 'transparent' : 'hsl(var(--bg-card-hover) / 0.2)' }}>
+                          <td style={{ padding: '10px 12px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>{b.companyName || b.name || 'Retail Partner'}</td>
+                          <td style={{ padding: '10px 12px', color: 'hsl(var(--primary))', fontWeight: 500 }}>{b.email || 'n/a'}</td>
+                          <td style={{ padding: '10px 12px', color: 'hsl(var(--text-muted))' }}>
                             {b.createdAt ? new Date(b.createdAt).toLocaleDateString() : 'Jul 15, 2026'}
                           </td>
                         </tr>
@@ -608,20 +601,20 @@ export const StudioDispatchSection: React.FC<StudioDispatchSectionProps> = ({
             </div>
 
             {/* ── Footer ── */}
-            <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(33, 150, 243, 0.2)', background: '#F0F7FF', display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ padding: '12px 24px', borderTop: '1px solid hsl(var(--border-color))', background: 'hsl(var(--bg-card))', display: 'flex', justifyContent: 'flex-end' }}>
               <button
                 type="button"
                 onClick={() => setInspectingSegment(null)}
                 style={{
-                  background: 'linear-gradient(135deg, #2196F3 0%, #0D47A1 100%)',
+                  background: 'hsl(var(--primary))',
                   color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '8px',
-                  padding: '7px 18px',
+                  padding: '8px 20px',
                   fontSize: '12px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(33, 150, 243, 0.4)',
+                  boxShadow: '0 2px 8px hsl(var(--primary) / 0.3)',
                 }}
               >
                 Close

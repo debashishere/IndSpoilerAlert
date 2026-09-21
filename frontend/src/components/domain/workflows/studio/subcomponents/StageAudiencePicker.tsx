@@ -93,18 +93,21 @@ export const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({
   const inputSt: React.CSSProperties = {
     background: 'hsl(var(--bg-card))',
     border: '1px solid hsl(var(--border-color))',
-    borderRadius: '6px',
-    padding: '7px 9px',
+    borderRadius: '8px',
+    minHeight: '40px',
+    padding: '9px 14px',
     color: 'hsl(var(--text-primary))',
-    fontSize: '12px',
+    fontSize: '13px',
     width: '100%',
     boxSizing: 'border-box',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {/* Mode toggle */}
-      <div style={{ display: 'flex', gap: '0', background: 'hsl(var(--bg-card))', borderRadius: '8px', padding: '3px', border: '1px solid hsl(var(--border-color))' }}>
+      <div style={{ display: 'flex', gap: '4px', background: 'hsl(var(--bg-card-hover) / 0.5)', borderRadius: '10px', padding: '4px', border: '1px solid hsl(var(--border-color))' }}>
         {(['list', 'custom'] as const).map(mode => {
           const isActive = mode === 'list' ? isListMode : stage.buyerMode === 'custom';
           return (
@@ -115,13 +118,14 @@ export const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({
               onClick={() => onChange({ buyerMode: mode })}
               style={{
                 flex: 1,
-                padding: '6px 12px',
-                borderRadius: '5px',
+                minHeight: '36px',
+                padding: '6px 14px',
+                borderRadius: '7px',
                 border: 'none',
                 fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 0.15s',
+                transition: 'all 0.15s ease',
                 background: isActive
                   ? 'hsl(var(--primary))'
                   : 'transparent',
@@ -129,12 +133,13 @@ export const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '5px',
+                gap: '6px',
+                boxShadow: isActive ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none',
               }}
             >
               {mode === 'list'
-                ? <><Users size={12} /> Buyer List</>
-                : <><UserPlus size={12} /> Custom List</>
+                ? <><Users size={14} /> Buyer List</>
+                : <><UserPlus size={14} /> Custom List</>
               }
             </button>
           );
@@ -231,20 +236,23 @@ export const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({
                       : 'Inspect Buyer Data (Name, Email, Reg Date)'
                 }
                 style={{
-                  padding: '7px 10px',
+                  padding: '8px 12px',
                   display: 'inline-flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: '4px',
-                  height: '34px',
+                  height: '40px',
+                  minWidth: '40px',
                   background: 'hsl(var(--bg-card))',
                   border: '1px solid hsl(var(--border-color))',
-                  borderRadius: '6px',
+                  borderRadius: '8px',
                   color: 'hsl(var(--primary))',
                   cursor: isListConfigured ? 'pointer' : 'not-allowed',
                   opacity: isListConfigured ? 1 : 0.45,
+                  transition: 'all 0.15s ease',
                 }}
               >
-                <Eye size={15} />
+                <Eye size={16} />
               </button>
             </div>
 
@@ -318,7 +326,7 @@ export const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({
                     <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: TIER_COLOR[b.tier] || 'hsl(var(--primary))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 800, color: 'hsl(var(--text-primary))', flexShrink: 0 }}>
                       {b.name.charAt(0)}
                     </span>
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--border-color))' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-primary))' }}>
                       {b.name}
                       {b.isNew && <span style={{ marginLeft: '3px', fontSize: '9px', color: 'hsl(var(--success))' }}>NEW</span>}
                     </span>

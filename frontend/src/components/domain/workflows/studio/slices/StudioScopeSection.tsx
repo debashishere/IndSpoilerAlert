@@ -63,17 +63,20 @@ export const StudioScopeSection: React.FC<StudioScopeSectionProps> = ({ studio }
     stageSyncMessage,
   } = studio;
 
+  // Shared institutional card and input tokens adhering to ux-v1
   const card: React.CSSProperties = {
     background: 'hsl(var(--bg-card))',
-    padding: '20px 24px',
+    padding: '22px 24px',
     borderRadius: '14px',
-    border: '1px solid hsl(var(--border-color))',
-    boxShadow: '0 4px 20px -2px rgba(13, 71, 161, 0.06)',
+    border: '1px solid hsl(var(--border-color) / 0.7)',
+    boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
   };
 
   const h3st: React.CSSProperties = {
     fontSize: '15px',
     fontWeight: 700,
+    letterSpacing: '-0.01em',
+    color: 'hsl(var(--text-primary))',
     margin: '0 0 16px 0',
     display: 'flex',
     alignItems: 'center',
@@ -82,30 +85,32 @@ export const StudioScopeSection: React.FC<StudioScopeSectionProps> = ({ studio }
 
   const inpSt: React.CSSProperties = {
     background: 'hsl(var(--bg-card))',
-    border: '1.5px solid hsl(var(--border-color))',
+    border: '1px solid hsl(var(--border-color))',
     borderRadius: '8px',
-    padding: '9px 12px',
+    minHeight: '40px',
+    padding: '9px 14px',
     color: 'hsl(var(--text-primary))',
     fontSize: '13px',
     width: '100%',
     boxSizing: 'border-box',
-    boxShadow: 'inset 0 2px 4px rgba(13, 71, 161, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
-    transition: 'all 0.2s ease',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   };
 
   const dropSt: React.CSSProperties = {
-    background: 'linear-gradient(180deg, hsl(var(--bg-card)) 0%, hsl(var(--bg-card-hover)) 100%)',
-    border: '1.5px solid rgba(33, 150, 243, 0.4)',
+    background: 'hsl(var(--bg-card))',
+    border: '1px solid hsl(var(--border-color))',
     borderRadius: '8px',
-    padding: '9px 12px',
+    minHeight: '40px',
+    padding: '9px 14px',
     color: 'hsl(var(--text-primary))',
     fontSize: '13px',
     fontWeight: 600,
     width: '100%',
     boxSizing: 'border-box',
-    boxShadow: '0 4px 12px rgba(13, 71, 161, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06)',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   };
 
   return (
@@ -505,10 +510,10 @@ export const StudioScopeSection: React.FC<StudioScopeSectionProps> = ({ studio }
         </div>
 
         {/* Filter row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '12px' }}>
-          <div style={{ width: '160px' }}>
-            <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Category</label>
-            <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ ...dropSt, padding: '6px 10px', fontSize: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', alignItems: 'flex-end', marginBottom: '16px' }}>
+          <div>
+            <label style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Category</label>
+            <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ ...dropSt, fontSize: '13px' }}>
               <option value="">All Categories</option>
               <option value="Dairy">Dairy</option>
               <option value="Produce">Produce</option>
@@ -517,29 +522,34 @@ export const StudioScopeSection: React.FC<StudioScopeSectionProps> = ({ studio }
               <option value="Frozen Foods">Frozen Foods</option>
             </select>
           </div>
-          <div style={{ width: '170px' }}>
-            <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>
-              Max RSL: <strong style={{ color: 'hsl(var(--warning))' }}>{maxRslFilter >= 1 ? '100% (All RSL)' : `${Math.round(maxRslFilter * 100)}%`}</strong>
-            </label>
-            <input
-              type="range"
-              min="0.05"
-              max="1.00"
-              step="0.05"
-              value={maxRslFilter}
-              onChange={e => setMaxRslFilter(parseFloat(e.target.value))}
-              style={{ width: '100%', accentColor: 'hsl(var(--primary))' }}
-            />
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-muted))' }}>Max Remaining Shelf Life (RSL)</label>
+              <span style={{ fontSize: '11px', fontFamily: 'monospace', fontWeight: 700, color: 'hsl(var(--warning))' }}>
+                {maxRslFilter >= 1 ? '100% (All RSL)' : `${Math.round(maxRslFilter * 100)}%`}
+              </span>
+            </div>
+            <div style={{ minHeight: '40px', display: 'flex', alignItems: 'center', padding: '0 4px' }}>
+              <input
+                type="range"
+                min="0.05"
+                max="1.00"
+                step="0.05"
+                value={maxRslFilter}
+                onChange={e => setMaxRslFilter(parseFloat(e.target.value))}
+                style={{ width: '100%', accentColor: 'hsl(var(--primary))', cursor: 'pointer' }}
+              />
+            </div>
           </div>
-          <div style={{ width: '100px' }}>
-            <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Min Cases</label>
+          <div>
+            <label style={{ fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Minimum Cases</label>
             <input
               type="number"
               step="any"
               placeholder="0"
               value={minCasesFilter === 0 ? '' : minCasesFilter}
               onChange={e => setMinCasesFilter(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)}
-              style={{ ...inpSt, padding: '6px 10px', fontSize: '12px', width: '100%' }}
+              style={{ ...inpSt, fontSize: '13px' }}
             />
           </div>
         </div>
@@ -630,8 +640,8 @@ export const StudioScopeSection: React.FC<StudioScopeSectionProps> = ({ studio }
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       padding: '8px 15px',
-                      borderBottom: '1px solid hsl(223 27% 14%)',
-                      background: isIn ? 'transparent' : 'hsl(346 84% 50%/0.04)',
+                      borderBottom: '1px solid hsl(var(--border-color) / 0.5)',
+                      background: isIn ? 'transparent' : 'hsl(var(--error) / 0.04)',
                       fontSize: '12px',
                     }}
                   >

@@ -47,17 +47,20 @@ export const StudioStageTimelineSection: React.FC<StudioStageTimelineSectionProp
     setInspectingSegment,
   } = studio;
 
+  // Shared institutional card and input tokens adhering to ux-v1
   const card: React.CSSProperties = {
     background: 'hsl(var(--bg-card))',
-    padding: '20px 24px',
+    padding: '22px 24px',
     borderRadius: '14px',
-    border: '1px solid hsl(var(--border-color))',
-    boxShadow: '0 4px 20px -2px rgba(13, 71, 161, 0.06)',
+    border: '1px solid hsl(var(--border-color) / 0.7)',
+    boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
   };
 
   const h3st: React.CSSProperties = {
     fontSize: '15px',
     fontWeight: 700,
+    letterSpacing: '-0.01em',
+    color: 'hsl(var(--text-primary))',
     margin: '0 0 16px 0',
     display: 'flex',
     alignItems: 'center',
@@ -66,30 +69,32 @@ export const StudioStageTimelineSection: React.FC<StudioStageTimelineSectionProp
 
   const inpSt: React.CSSProperties = {
     background: 'hsl(var(--bg-card))',
-    border: '1.5px solid hsl(var(--border-color))',
+    border: '1px solid hsl(var(--border-color))',
     borderRadius: '8px',
-    padding: '9px 12px',
+    minHeight: '40px',
+    padding: '9px 14px',
     color: 'hsl(var(--text-primary))',
     fontSize: '13px',
     width: '100%',
     boxSizing: 'border-box',
-    boxShadow: 'inset 0 2px 4px rgba(13, 71, 161, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
-    transition: 'all 0.2s ease',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   };
 
   const dropSt: React.CSSProperties = {
-    background: 'linear-gradient(180deg, hsl(var(--bg-card)) 0%, hsl(var(--bg-card-hover)) 100%)',
-    border: '1.5px solid rgba(33, 150, 243, 0.4)',
+    background: 'hsl(var(--bg-card))',
+    border: '1px solid hsl(var(--border-color))',
     borderRadius: '8px',
-    padding: '9px 12px',
+    minHeight: '40px',
+    padding: '9px 14px',
     color: 'hsl(var(--text-primary))',
     fontSize: '13px',
     fontWeight: 600,
     width: '100%',
     boxSizing: 'border-box',
-    boxShadow: '0 4px 12px rgba(13, 71, 161, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06)',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   };
 
   return (
@@ -179,7 +184,7 @@ export const StudioStageTimelineSection: React.FC<StudioStageTimelineSectionProp
                       gap: '8px',
                     }}
                     onMouseEnter={e => {
-                      if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card))';
+                      if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card-hover) / 0.4)';
                     }}
                     onMouseLeave={e => {
                       if (!isExpanded) (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card))';
@@ -191,7 +196,7 @@ export const StudioStageTimelineSection: React.FC<StudioStageTimelineSectionProp
                         style={{
                           fontSize: '13px',
                           fontWeight: 700,
-                          color: isExpanded ? 'hsl(var(--primary))' : 'hsl(var(--border-color))',
+                          color: isExpanded ? 'hsl(var(--primary))' : 'hsl(var(--text-primary))',
                         }}
                       >
                         {stage.name}

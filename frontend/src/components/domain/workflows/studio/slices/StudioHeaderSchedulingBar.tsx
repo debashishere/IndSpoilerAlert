@@ -59,18 +59,20 @@ export const StudioHeaderSchedulingBar: React.FC<StudioHeaderSchedulingBarProps>
     handleSaveCampaign,
   } = studio;
 
-  // Shared institutional card and input tokens
+  // Shared institutional card and input tokens adhering to ux-v1
   const card: React.CSSProperties = {
     background: 'hsl(var(--bg-card))',
-    padding: '20px 24px',
+    padding: '22px 24px',
     borderRadius: '14px',
-    border: '1px solid hsl(var(--border-color))',
-    boxShadow: '0 4px 20px -2px rgba(13, 71, 161, 0.06)',
+    border: '1px solid hsl(var(--border-color) / 0.7)',
+    boxShadow: '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
   };
 
   const h3st: React.CSSProperties = {
     fontSize: '15px',
     fontWeight: 700,
+    letterSpacing: '-0.01em',
+    color: 'hsl(var(--text-primary))',
     margin: '0 0 16px 0',
     display: 'flex',
     alignItems: 'center',
@@ -79,30 +81,32 @@ export const StudioHeaderSchedulingBar: React.FC<StudioHeaderSchedulingBarProps>
 
   const inpSt: React.CSSProperties = {
     background: 'hsl(var(--bg-card))',
-    border: '1.5px solid hsl(var(--border-color))',
+    border: '1px solid hsl(var(--border-color))',
     borderRadius: '8px',
-    padding: '9px 12px',
+    minHeight: '40px',
+    padding: '9px 14px',
     color: 'hsl(var(--text-primary))',
     fontSize: '13px',
     width: '100%',
     boxSizing: 'border-box',
-    boxShadow: 'inset 0 2px 4px rgba(13, 71, 161, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04)',
-    transition: 'all 0.2s ease',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   };
 
   const dropSt: React.CSSProperties = {
-    background: 'linear-gradient(180deg, hsl(var(--bg-card)) 0%, hsl(var(--bg-card-hover)) 100%)',
-    border: '1.5px solid rgba(33, 150, 243, 0.4)',
+    background: 'hsl(var(--bg-card))',
+    border: '1px solid hsl(var(--border-color))',
     borderRadius: '8px',
-    padding: '9px 12px',
+    minHeight: '40px',
+    padding: '9px 14px',
     color: 'hsl(var(--text-primary))',
     fontSize: '13px',
     fontWeight: 600,
     width: '100%',
     boxSizing: 'border-box',
-    boxShadow: '0 4px 12px rgba(13, 71, 161, 0.12), 0 1px 3px rgba(0, 0, 0, 0.06)',
+    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
+    transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
   };
 
   return (
@@ -213,12 +217,9 @@ export const StudioHeaderSchedulingBar: React.FC<StudioHeaderSchedulingBarProps>
               <Zap size={24} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>
-                  {/* Title heading */}
-                </h2>
-                <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '16px', lineHeight: 1 }} title="Required">*</span>
-              </div>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '4px', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Workflow Campaign Name <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '14px', lineHeight: 1 }} title="Required">*</span>
+              </label>
               <input
                 type="text"
                 data-testid="workflow-name-input"
@@ -226,10 +227,9 @@ export const StudioHeaderSchedulingBar: React.FC<StudioHeaderSchedulingBarProps>
                 onChange={e => setWorkflowName(e.target.value)}
                 placeholder="Enter workflow name…"
                 style={{
-                  marginTop: '6px',
                   ...inpSt,
-                  maxWidth: '200px',
-                  fontWeight: 500,
+                  maxWidth: '340px',
+                  fontWeight: 600,
                   fontSize: '13px',
                   color: 'hsl(var(--text-primary))',
                 }}
@@ -493,7 +493,7 @@ export const StudioHeaderSchedulingBar: React.FC<StudioHeaderSchedulingBarProps>
               value={workflowName}
               onChange={e => setWorkflowName(e.target.value)}
               placeholder="e.g. Q3 Surplus Liquidation Campaign"
-              style={{ ...inpSt, maxWidth: '220px', color: 'hsl(var(--text-primary))' }}
+              style={{ ...inpSt, color: 'hsl(var(--text-primary))' }}
             />
           </div>
           <div>
@@ -520,7 +520,7 @@ export const StudioHeaderSchedulingBar: React.FC<StudioHeaderSchedulingBarProps>
           </div>
         </div>
 
-        <label style={{ fontSize: '12px', fontWeight: 800, color: '#0d47a1', display: 'block', marginBottom: '6px', letterSpacing: '0.01em' }}>
+        <label style={{ fontSize: '12px', fontWeight: 700, color: 'hsl(var(--text-primary))', display: 'block', marginBottom: '6px', letterSpacing: '0.01em' }}>
           Sales Strategy Template
         </label>
         <div ref={templateRef} style={{ position: 'relative', maxWidth: '480px', marginBottom: '16px' }}>
@@ -535,20 +535,19 @@ export const StudioHeaderSchedulingBar: React.FC<StudioHeaderSchedulingBarProps>
               justifyContent: 'space-between',
               padding: '12px 16px',
               borderRadius: '10px',
-              border: `1.5px solid ${showTemplateDrop ? 'hsl(var(--primary))' : 'rgba(33, 150, 243, 0.4)'}`,
+              border: `1px solid ${showTemplateDrop ? 'hsl(var(--primary))' : 'hsl(var(--border-color))'}`,
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span
                 style={{
-                  background: 'rgba(13, 71, 161, 0.12)',
-                  color: '#0d47a1',
+                  background: 'hsl(var(--primary) / 0.12)',
+                  color: 'hsl(var(--primary))',
                   fontSize: '11px',
                   fontWeight: 800,
                   padding: '3px 9px',
-                  borderRadius: '8px',
-                  border: '1.5px solid rgba(13, 71, 161, 0.3)',
-                  boxShadow: '0 1px 3px rgba(13, 71, 161, 0.12)',
+                  borderRadius: '6px',
+                  border: '1px solid hsl(var(--primary) / 0.25)',
                 }}
               >
                 {selectedDef.badge}
@@ -568,10 +567,10 @@ export const StudioHeaderSchedulingBar: React.FC<StudioHeaderSchedulingBarProps>
                 right: 0,
                 zIndex: 50,
                 background: 'hsl(var(--bg-card))',
-                border: '1.5px solid rgba(144, 202, 249, 0.5)',
+                border: '1px solid hsl(var(--border-color))',
                 borderRadius: '12px',
                 overflow: 'hidden',
-                boxShadow: '0 14px 40px -4px rgba(13, 71, 161, 0.28), 0 6px 18px rgba(0,0,0,0.12)',
+                boxShadow: '0 14px 40px -4px rgba(0, 0, 0, 0.25), 0 6px 18px rgba(0, 0, 0, 0.1)',
               }}
             >
               {TEMPLATE_DEFINITIONS.map(t => {
@@ -583,7 +582,7 @@ export const StudioHeaderSchedulingBar: React.FC<StudioHeaderSchedulingBarProps>
                     style={{
                       padding: '13px 16px',
                       cursor: 'pointer',
-                      background: sel ? 'rgba(33, 150, 243, 0.08)' : 'transparent',
+                      background: sel ? 'hsl(var(--primary) / 0.1)' : 'transparent',
                       borderBottom: '1px solid hsl(var(--border-color))',
                       display: 'flex',
                       alignItems: 'center',
@@ -601,13 +600,13 @@ export const StudioHeaderSchedulingBar: React.FC<StudioHeaderSchedulingBarProps>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
                         <span
                           style={{
-                            background: 'rgba(13, 71, 161, 0.12)',
-                            color: '#0d47a1',
+                            background: 'hsl(var(--primary) / 0.12)',
+                            color: 'hsl(var(--primary))',
                             fontSize: '10px',
                             fontWeight: 800,
                             padding: '2px 8px',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(13, 71, 161, 0.25)',
+                            borderRadius: '6px',
+                            border: '1px solid hsl(var(--primary) / 0.25)',
                           }}
                         >
                           {t.badge}
