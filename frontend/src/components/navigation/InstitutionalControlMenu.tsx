@@ -158,7 +158,27 @@ export const InstitutionalControlMenu: React.FC<InstitutionalControlMenuProps> =
           </button>
         </div>
 
-        {/* 4. Real-time Node & Service Telemetry */}
+        {/* 4. Standalone Public Marketplace Portal Launcher */}
+        <a
+          href="/marketplace"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={onClose}
+          className="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200/70 dark:border-blue-800/60 text-blue-700 dark:text-blue-300 hover:bg-blue-100/70 dark:hover:bg-blue-900/50 transition-colors group cursor-pointer"
+          aria-label="Launch Public Marketplace Portal"
+        >
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-lg text-blue-600 dark:text-blue-400" aria-hidden="true">
+              storefront
+            </span>
+            <span className="text-xs font-medium">Public Marketplace Portal</span>
+          </div>
+          <span className="material-symbols-outlined text-sm text-blue-500 group-hover:translate-x-0.5 transition-transform" aria-hidden="true">
+            open_in_new
+          </span>
+        </a>
+
+        {/* 5. Real-time Node & Service Telemetry */}
         <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
           <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400 font-bold px-0.5">
             System Telemetry

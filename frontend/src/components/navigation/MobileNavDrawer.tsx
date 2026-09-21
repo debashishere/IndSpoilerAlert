@@ -204,11 +204,6 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
                       Active
                     </span>
                   )}
-                  {tab.id === 'marketplace' && !isActive && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                      Live 94.8%
-                    </span>
-                  )}
                   {tab.id === 'inbox' && (
                     <div className="flex items-center gap-1.5">
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200">
@@ -216,7 +211,7 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
                       </span>
                     </div>
                   )}
-                  {tab.id !== 'ingestion' && tab.id !== 'marketplace' && tab.id !== 'inbox' && (
+                  {tab.id !== 'ingestion' && tab.id !== 'inbox' && (
                     <span className="material-symbols-outlined text-slate-400 text-sm" aria-hidden="true">
                       chevron_right
                     </span>
@@ -224,6 +219,26 @@ export const MobileNavDrawer: React.FC<MobileNavDrawerProps> = ({
                 </button>
               );
             })}
+
+            {/* Standalone Public Marketplace Portal Launcher */}
+            <a
+              href="/marketplace"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onClose}
+              className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl font-medium text-sm text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-950/30 hover:bg-blue-100/70 dark:hover:bg-blue-900/40 border border-blue-200/60 dark:border-blue-800/50 transition-colors mt-2"
+              aria-label="Launch Public Marketplace Portal"
+            >
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-[20px]" aria-hidden="true">
+                  storefront
+                </span>
+                <span>Public Marketplace</span>
+              </div>
+              <span className="material-symbols-outlined text-sm text-blue-500" aria-hidden="true">
+                open_in_new
+              </span>
+            </a>
           </nav>
 
           {/* 5. Terminal Node Card */}

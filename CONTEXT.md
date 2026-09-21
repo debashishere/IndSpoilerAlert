@@ -2,8 +2,10 @@
 
 ## Global Navigation Shell
 
-- **Global Navigation Bar**: The top-level horizontal navigation shell replacing the legacy vertical sidebar, housing the brand emblem, rounded pill routing tabs (`Ingestion`, `Insight`, `Workflow`, `Marketplace`, `Inbox`, `Settings`), notifications trigger, and verified user profile pill.
+- **Global Navigation Bar**: The top-level horizontal navigation shell replacing the legacy vertical sidebar, housing the brand emblem, rounded pill routing tabs (`Ingestion`, `Insight`, `Workflow`, `Inbox`, `Settings`), notifications trigger, Public Marketplace Launcher link, and verified user profile pill.
   _Avoid_: `Sidebar Navigation`, `Left Navigation Menu`, `Sidebar Shell`.
+- **Public Marketplace Launcher**: The external navigation link ("Public Marketplace ↗") in the Supplier Global Navigation Bar and Institutional Control Menu opening the standalone buyer portal (`/marketplace`) in a clean browser context.
+  _Avoid_: `Internal Marketplace Tab`, `Embedded Marketplace View`.
 - **Institutional Control Menu**: The centralized popover dropdown anchored to the User Profile Pill in the Global Navigation Bar. It consolidates authenticated identity details, active supplier/facility selection, dark/light theme switching, service telemetry (Backend & Sidecar health), and console session termination (`logout`).
   _Avoid_: `Simple User Menu`, `Floating Theme Button`.
 - **Quick Notifications Popover**: The lightweight floating notification flyout triggered by the notification bell in the Global Navigation Bar and Mobile Nav Bar, rendering time-stamped alerts for inbound bids, workflow runs, and compliance actions with a direct jump to the Emails Hub.
@@ -15,6 +17,12 @@
 - **Mobile Navigation Drawer**: The responsive slide-over drawer overlay triggered by the mobile header hamburger toggle, displaying user credentials, live operational metrics (Active Lots, Pending Bids, Unread Alerts), primary routing items with contextual badges, terminal node status, and session termination controls.
   _Avoid_: `Bottom Navigation Bar`, `Mobile Tab Strip`.
 - **Terminal Node Status**: The institutional telemetry indicator in the drawer and navigation shell reflecting the connected distribution clearinghouse node (`Node: NA-SOUTH-TX-HUB`) and network compliance status (`FSMA 204 Audited`, `TLS 1.3 End-to-End`).
+
+## Public Buyer Marketplace Portal
+
+- **Standalone Public Buyer Marketplace Portal**: The dedicated, unauthenticated web application entrypoint (`/marketplace/*` or `marketplace.inventoryflowing.com`) serving secondary market retail buyers with open catalog search, sanitized product listings, and OTP-verified bid submission, decoupled from supplier navigation and admin chrome.
+- **Frictionless Buyer Verification**: The identity mechanism where unauthenticated buyers can openly inspect listings, but submitting a bid triggers email OTP/magic-link verification via `/api/v1/marketplace/auth/send-verification`, creating or linking a buyer profile without requiring a prior password.
+
 
 
 ## Email Builder Engine

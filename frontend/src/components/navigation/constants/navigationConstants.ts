@@ -21,13 +21,6 @@ export const PRIMARY_NAVIGATION_TABS: NavigationTabConfig[] = [
     targetRole: 'supplier',
   },
   {
-    id: 'marketplace',
-    label: 'Marketplace',
-    iconName: 'storefront',
-    badge: { type: 'pill', label: 'Live 94.8%', className: 'bg-blue-50 text-blue-700' },
-    targetRole: 'all',
-  },
-  {
     id: 'inbox',
     label: 'Inbox',
     iconName: 'notifications',

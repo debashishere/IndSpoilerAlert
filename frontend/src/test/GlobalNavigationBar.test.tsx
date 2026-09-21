@@ -22,7 +22,7 @@ describe('Slice 1: GlobalNavigationBar Web Foundation & Primary Tab Routing', ()
     expect(screen.getByText('Enterprise Liquidation OS')).toBeInTheDocument();
   });
 
-  it('renders all primary desktop module tabs with correct labels', () => {
+  it('renders all primary desktop module tabs with correct labels and Public Marketplace launcher', () => {
     render(
       <Provider store={store}>
         <GlobalNavigationBar />
@@ -32,9 +32,14 @@ describe('Slice 1: GlobalNavigationBar Web Foundation & Primary Tab Routing', ()
     expect(screen.getByRole('button', { name: /^Ingestion/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Insight/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Workflow/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Marketplace/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Marketplace/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Inbox/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Settings/i })).toBeInTheDocument();
+
+    const marketplaceLauncher = screen.getByRole('link', { name: /Public Marketplace Portal/i });
+    expect(marketplaceLauncher).toBeInTheDocument();
+    expect(marketplaceLauncher).toHaveAttribute('href', '/marketplace');
+    expect(marketplaceLauncher).toHaveAttribute('target', '_blank');
   });
 
   it('applies active styling to the currently active Redux tab', () => {

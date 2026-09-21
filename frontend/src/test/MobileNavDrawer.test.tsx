@@ -83,8 +83,11 @@ describe('Slice 4: MobileNavDrawer & Responsive Slide-Over Drawer', () => {
     );
 
     expect(screen.getByText('Primary Navigation')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Marketplace/i })).toBeInTheDocument();
-    expect(screen.getByText('Live 94.8%')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Marketplace/i })).not.toBeInTheDocument();
+    const marketplaceLink = screen.getByRole('link', { name: /Launch Public Marketplace Portal/i });
+    expect(marketplaceLink).toBeInTheDocument();
+    expect(marketplaceLink).toHaveAttribute('href', '/marketplace');
+    expect(marketplaceLink).toHaveAttribute('target', '_blank');
 
     const insightLink = screen.getByRole('button', { name: /Insight/i });
     fireEvent.click(insightLink);

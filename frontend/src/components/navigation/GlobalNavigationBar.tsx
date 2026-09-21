@@ -86,11 +86,25 @@ export const GlobalNavigationBar: React.FC<GlobalNavigationBarProps> = ({
       {/* Left: Brand Logo & Title */}
       <BrandEmblem onClick={handleBrandClick} />
 
-      {/* Center: Rounded Pill Nav Navigation Bar (Desktop lg+) */}
-      <NavigationPillTabs 
-        activeTab={activeTab} 
-        onTabSelect={handleTabSelect} 
-      />
+      {/* Center: Rounded Pill Nav Navigation Bar & Public Marketplace Launcher (Desktop lg+) */}
+      <div className="hidden lg:flex items-center gap-3">
+        <NavigationPillTabs 
+          activeTab={activeTab} 
+          onTabSelect={handleTabSelect} 
+        />
+        <a
+          href="/marketplace"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200/80 dark:border-blue-800/80 rounded-full transition-all duration-150 shadow-2xs hover:scale-[1.02] cursor-pointer"
+          title="Open Standalone Public Buyer Marketplace in a new tab"
+          aria-label="Public Marketplace Portal"
+        >
+          <span className="material-symbols-outlined text-[15px]" aria-hidden="true">storefront</span>
+          <span>Public Marketplace</span>
+          <span className="material-symbols-outlined text-[13px]" aria-hidden="true">open_in_new</span>
+        </a>
+      </div>
 
       {/* Right: Notification Bell, User Avatar Pill & Mobile Hamburger */}
       <div className="flex items-center gap-3">
