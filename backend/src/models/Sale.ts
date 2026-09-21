@@ -20,6 +20,8 @@ export interface ISale extends Document {
   revenue?: number;
   reconciliationWarning?: string;
   metadata?: Record<string, string>;
+  attributes?: Map<string, any>;
+  rawAttributes?: Map<string, any>;
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -43,7 +45,9 @@ const SaleSchema: Schema = new Schema({
   warehouse: { type: String },
   revenue: { type: Number },
   reconciliationWarning: { type: String },
-  metadata: { type: Schema.Types.Map, of: String }
+  metadata: { type: Schema.Types.Map, of: String },
+  attributes: { type: Map, of: Schema.Types.Mixed, default: {} },
+  rawAttributes: { type: Map, of: Schema.Types.Mixed, default: {} }
 }, {
   timestamps: true
 });

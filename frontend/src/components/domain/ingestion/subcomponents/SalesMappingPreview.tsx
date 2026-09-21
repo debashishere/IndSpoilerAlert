@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle2, Check, X, Maximize2, Minimize2 } from 'lucide-react';
+import { SemanticRulesEditor } from '../SemanticRulesEditor';
 import { INGESTION_CONSTANTS } from '../constants/ingestionConstants';
 import type { IngestionParsedResult } from '../../../../store/slices/ingestionSlice';
 
@@ -40,15 +41,22 @@ export const SalesMappingPreview: React.FC<SalesMappingPreviewProps> = ({
       }`}
     >
       <div className="flex flex-col gap-4 h-full">
+        {/* Dynamic Semantic Attribute Translation Rules - Top Section */}
+        <SemanticRulesEditor
+          rawHeaders={salesParsedResult.rawGrid?.[0] || []}
+          rawGrid={salesParsedResult.rawGrid}
+          pipelineType="sales"
+        />
+
         {/* Header Bar */}
         <div className="flex justify-between items-center flex-wrap gap-4 pb-3 border-b border-slate-200/80">
           <div>
             <div className="flex items-center gap-2.5 mb-1">
               <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-              <h3 className="text-base font-bold text-slate-900 m-0">
-                Confirm Sales CSV Mapping
+              <h3 className="text-lg font-bold text-slate-900 m-0">
+                Confirm Sales Data Mapping
               </h3>
-              <span className="text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+              <span className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">
                 {salesParsedResult.fileName}
               </span>
             </div>

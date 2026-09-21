@@ -193,10 +193,17 @@ export const GridMapperTable = ({ pipelineType }: GridMapperTableProps) => {
         </div>
       ) : parsedResult ? (
         <div className="preview-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
+          {/* Dynamic Semantic Attribute Translation Rules - Top Section */}
+          <SemanticRulesEditor
+            rawHeaders={parsedResult.rawGrid[0] || []}
+            rawGrid={parsedResult.rawGrid}
+            pipelineType={isInventory ? 'inventory' : 'sales'}
+          />
+
           <div className="preview-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
             <div>
-              <h3 style={{ fontSize: '1.2rem', marginBottom: '4px' }}>
-                {isInventory ? `Extract Preview: ${parsedResult.fileName}` : `Sales Extract Preview: ${parsedResult.fileName}`}
+              <h3 style={{ fontSize: '1.125rem', marginBottom: '4px' }}>
+                {isInventory ? 'Confirm Inventory Data Mapping' : 'Confirm Sales Data Mapping'}
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'hsl(var(--text-muted))', margin: 0 }}>
                 {isInventory
@@ -322,8 +329,6 @@ export const GridMapperTable = ({ pipelineType }: GridMapperTableProps) => {
               </tbody>
             </table>
           </div>
-
-          {isInventory && <SemanticRulesEditor rawHeaders={parsedResult.rawGrid[0] || []} />}
         </div>
       ) : (
         <div className="empty-state empty-state-compact">

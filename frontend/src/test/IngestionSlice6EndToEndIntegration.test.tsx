@@ -218,7 +218,8 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
 
       // In-situ Mapping preview header appears in the Inventory Registry
       await waitFor(() => {
-        expect(screen.getByText(/Extract Preview: surplus_e2e_manifest.csv/i)).toBeDefined();
+        expect(screen.getByText('Confirm Inventory Data Mapping')).toBeDefined();
+        expect(screen.getByText('surplus_e2e_manifest.csv')).toBeDefined();
       });
       expect(screen.getByText('Dynamic Semantic Attribute Translation Rules')).toBeDefined();
       expect(screen.getByRole('button', { name: /Confirm & Import Lots/i })).toBeDefined();

@@ -118,7 +118,7 @@ describe('BuyerRegistryPanel — Live CSV Ingestion & Unified Buyer Registry (Is
     });
 
     // Column mapping confirmation / Data preview should be rendered
-    expect(screen.getByText('Confirm Buyer CSV Mapping')).toBeDefined();
+    expect(screen.getByText('Confirm Buyer Data Mapping')).toBeDefined();
     expect(screen.getByText('buyers_100_seed.csv')).toBeDefined();
   });
 
@@ -152,7 +152,7 @@ describe('BuyerRegistryPanel — Live CSV Ingestion & Unified Buyer Registry (Is
       </Provider>
     );
 
-    expect(screen.getByText('Confirm Buyer CSV Mapping')).toBeDefined();
+    expect(screen.getByText('Confirm Buyer Data Mapping')).toBeDefined();
 
     const confirmBtn = screen.getByRole('button', { name: /Confirm & Ingest Buyers/i });
     expect(confirmBtn).toBeDefined();

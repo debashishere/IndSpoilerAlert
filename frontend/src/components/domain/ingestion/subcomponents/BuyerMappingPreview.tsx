@@ -67,7 +67,7 @@ export const BuyerMappingPreview: React.FC<BuyerMappingPreviewProps> = ({
             <div className="flex items-center gap-2.5 mb-1">
               <CheckCircle2 className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-bold text-slate-900 m-0">
-                Confirm Buyer CSV Mapping
+                Confirm Buyer Data Mapping
               </h3>
               <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full font-medium">
                 {buyerParsedResult.fileName}

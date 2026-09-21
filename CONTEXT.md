@@ -150,3 +150,21 @@
   _Avoid_: `Stale Cross-Tab Toggle State`, `Unsynchronized Master Button`.
 - **Multi-Theme Ingestion Tokens**: The institutional Tailwind CSS color and typography taxonomy harmonizing `IngestionView`, `IngestionTelemetryBar`, and connector workbenches across light and dark modes (`dark:bg-slate-950`, `dark:bg-slate-900`, `dark:border-slate-800`, `dark:text-slate-100`) while honoring the 4px/8pt optical density standard.
   _Avoid_: `Hardcoded White Backgrounds`, `Inconsistent Dark Mode Surfaces`.
+
+## Liquidation Automation Studio Architecture
+
+- **Workflow Studio Orchestrator**: The top-level composition container within `WorkflowsView.tsx` (`workflowSubTab === 'builder'`) responsible for mounting the workflow authoring pipeline and binding headless campaign state to presentation slices.
+  _Avoid_: `Monolithic Studio File`, `Inline Heavy Workflow Component`.
+- **Progressive Section Accordion**: The layout paradigm structuring the Workflow Builder into numbered, collapsible cards (Strategy & Scope, Stage-Gate Timeline, Review & Dispatch) that condense into single-line visual summary chip strips when collapsed to preserve viewport headroom.
+  _Avoid_: `Permanently Expanded Canvas Dump`, `Rigid Multi-Page Wizard Pagination`.
+- **Headless Workflow Studio Hook (`useWorkflowStudio`)**: The state and calculation engine encapsulating all reactive campaign draft values, lot filtering algorithms, polymorphic stage array mutations, validation guardrails, and execution submission handlers away from the visual view layers.
+  _Avoid_: `Transient Redux Form State`, `Component-Coupled Business Logic`.
+- **Workflow Header & Scheduling Bar**: The ergonomic top-rail control strip consolidating campaign identity, strategy presets, scheduling trigger popover, and OAuth mailbox security posture within a compact, non-congesting (<25% viewport height) frame.
+  _Avoid_: `Multi-tier Sticky Header`, `Floating Uncontained Schedule Card`.
+- **Inventory Matching Scope Panel**: The faceted inventory filtering and lot selection surface evaluating available warehouse surplus by Category, Maximum Remaining Shelf Life (RSL %), and Minimum Cases with live lot diff inspection.
+  _Avoid_: `Unpaginated Lot Table Dump`, `Rigid Fixed Filter Grid`.
+- **Stage-Gate Escalation Canvas**: The dynamic, polymorphic stage sequence manager rendering Liquidation, Donation, and Landfill escalation cards with granular buyer targeting, discount curve sliders, and wait-time duration units.
+  _Avoid_: `Static Non-Polymorphic Stage List`, `Hardcoded Buyer Radio Buttons`.
+- **Pre-Flight Dispatch & Audit Engine**: The multi-point validation and execution gate confirming mailbox readiness, buyer reachability, and inventory allocation before triggering an immediate workflow run or persisting a saved strategy.
+  _Avoid_: `Unchecked Workflow Submission`, `Silent Dispatch Failures`.
+

@@ -1,4 +1,4 @@
-import { translateAttributes, SemanticRule } from '../services/translatorService';
+import { translateAttributes, SemanticRule, computeGridAggregates } from '../services/translatorService';
 
 describe('translatorService - Dynamic Data Translator Engine', () => {
   it('should translate unmapped CPG supplier attributes into normalized semantic attributes and preserve rawAttributes', () => {
@@ -42,5 +42,42 @@ describe('translatorService - Dynamic Data Translator Engine', () => {
     expect(result.attributes.allergens).toEqual(['dairy', 'soy', 'wheat']);
     expect(result.rawAttributes).toEqual(rawInput);
   });
+
+  it('should compute grid statistical aggregations and apply mean, median, mode, and percentage transforms', () => {
+    const rawGrid = [
+      ['Item', 'GrossRevenue', 'Cases'],
+      ['Apples', '$100.00', '10'],
+      ['Bananas', '$200.00', '20'],
+      ['Cherries', '$100.00', '30'],
+      ['Dates', '$400.00', '40']
+    ];
+
+    const rules: SemanticRule[] = [
+      { sourceKey: 'GrossRevenue', targetKey: 'revenueMean', transform: 'mean' },
+      { sourceKey: 'GrossRevenue', targetKey: 'revenueMedian', transform: 'median' },
+      { sourceKey: 'GrossRevenue', targetKey: 'revenueMode', transform: 'mode' },
+      { sourceKey: 'GrossRevenue', targetKey: 'revenueSharePct', transform: 'percentage' }
+    ];
+
+    const aggregates = computeGridAggregates(rawGrid, rules);
+
+    // Verify raw aggregate stats: sum=800, mean=200, median=150, mode=100
+    expect(aggregates['GrossRevenue']).toBeDefined();
+    expect(aggregates['GrossRevenue'].sum).toBe(800);
+    expect(aggregates['GrossRevenue'].mean).toBe(200);
+    expect(aggregates['GrossRevenue'].median).toBe(150);
+    expect(aggregates['GrossRevenue'].mode).toBe(100);
+
+    // Apply for row 1: $100.00 -> 12.5% of total
+    const row1Input = { Item: 'Apples', GrossRevenue: '$100.00', Cases: '10' };
+    const row1Result = translateAttributes(row1Input, rules, aggregates);
+
+    expect(row1Result.attributes.revenueMean).toBe(200);
+    expect(row1Result.attributes.revenueMedian).toBe(150);
+    expect(row1Result.attributes.revenueMode).toBe(100);
+    expect(row1Result.attributes.revenueSharePct).toBe(12.5);
+    expect(row1Result.rawAttributes).toEqual(row1Input);
+  });
 });
+
 

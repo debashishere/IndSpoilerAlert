@@ -762,8 +762,8 @@ const StageAudiencePicker: React.FC<StageAudiencePickerProps> = ({ stage, allBuy
                   !(stage.buyerListId || stage.buyerSegment)
                     ? 'No buyer list selected'
                     : listBuyerCount === 0
-                    ? 'Selected buyer list has 0 buyers configured'
-                    : 'Inspect Buyer Data (Name, Email, Reg Date)'
+                      ? 'Selected buyer list has 0 buyers configured'
+                      : 'Inspect Buyer Data (Name, Email, Reg Date)'
                 }
                 style={{
                   padding: '7px 10px',
@@ -990,7 +990,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   try {
     dispatch = useDispatch();
   } catch {
-    dispatch = () => {};
+    dispatch = () => { };
   }
 
   useEffect(() => {
@@ -1022,15 +1022,15 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
   // Template & Campaign Cycle Metadata
   const [selectedTemplateKey, setSelectedTemplateKey] = useState('default');
-  const [centralTemplates, setCentralTemplates]       = useState<any[]>([]);
-  const [workflowName, setWorkflowName]               = useState('Untitled Workflow');
-  const [startDate, setStartDate]                     = useState(() => new Date().toISOString().split('T')[0]);
-  const [endDate, setEndDate]                         = useState(() => {
+  const [centralTemplates, setCentralTemplates] = useState<any[]>([]);
+  const [workflowName, setWorkflowName] = useState('Untitled Workflow');
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(() => {
     const d = new Date();
     d.setDate(d.getDate() + 14);
     return d.toISOString().split('T')[0];
   });
-  const [showTemplateDrop, setShowTemplateDrop]         = useState(false);
+  const [showTemplateDrop, setShowTemplateDrop] = useState(false);
   const templateRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1048,17 +1048,17 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
   // Inventory filters
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [maxRslFilter, setMaxRslFilter]     = useState(0.20);
+  const [maxRslFilter, setMaxRslFilter] = useState(0.20);
   const [minCasesFilter, setMinCasesFilter] = useState(10);
   const [explicitLotIds, setExplicitLotIds] = useState<string[]>([]);
   const [excludedLotIds, setExcludedLotIds] = useState<string[]>([]);
-  const [selectorMode, setSelectorMode]     = useState<'automatic' | 'explicit' | 'hybrid'>('automatic');
-  const [showLotGrid, setShowLotGrid]       = useState(true);
-  const [fetchedLots, setFetchedLots]       = useState<any[] | null>(null);
+  const [selectorMode, setSelectorMode] = useState<'automatic' | 'explicit' | 'hybrid'>('automatic');
+  const [showLotGrid, setShowLotGrid] = useState(true);
+  const [fetchedLots, setFetchedLots] = useState<any[] | null>(null);
   const [isFetchingInventory, setIsFetchingInventory] = useState(false);
-  const [lotSearch, setLotSearch]         = useState('');
-  const [lotDcFilter, setLotDcFilter]     = useState('');
-  const [lotCoaFilter, setLotCoaFilter]   = useState('all');
+  const [lotSearch, setLotSearch] = useState('');
+  const [lotDcFilter, setLotDcFilter] = useState('');
+  const [lotCoaFilter, setLotCoaFilter] = useState('all');
 
   // Stages — now own their own audience
   const [stages, setStages] = useState<Stage[]>(TEMPLATE_DEFINITIONS[0].defaultStages);
@@ -1066,11 +1066,11 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   const [expandedStageIdx, setExpandedStageIdx] = useState<number | null>(0);
 
   // Execution
-  const [executionType, setExecutionType]     = useState<'immediate' | 'cron'>('immediate');
-  const [scheduleTime, setScheduleTime]       = useState('09:00');
+  const [executionType, setExecutionType] = useState<'immediate' | 'cron'>('immediate');
+  const [scheduleTime, setScheduleTime] = useState('09:00');
   const [workflowTimezone, setWorkflowTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York');
-  const [cronDays, setCronDays]               = useState<number[]>([1]);
-  const [cronExpression, setCronExpression]   = useState<string>('');
+  const [cronDays, setCronDays] = useState<number[]>([1]);
+  const [cronExpression, setCronExpression] = useState<string>('');
   const [isSchedulePopoverOpen, setIsSchedulePopoverOpen] = useState<boolean>(false);
   const scheduleRef = useRef<HTMLDivElement>(null);
 
@@ -1112,7 +1112,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
   // Target Buyer Segment Inspection state
   const [inspectingSegment, setInspectingSegment] = useState<string | null>(null);
-  const [inspectSearch, setInspectSearch]           = useState<string>('');
+  const [inspectSearch, setInspectSearch] = useState<string>('');
 
   // Lock document body scroll when Target Buyer Segment Inspection modal is open
   useEffect(() => {
@@ -1129,23 +1129,23 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
   const SHOW_DYNAMIC_DONATION_SECTION = false;
 
   // Dynamic Donation & Multi-Entity Diversion Configuration
-  const [donationEnabled, setDonationEnabled]                   = useState<boolean>(true);
-  const [donationMaxCases, setDonationMaxCases]                 = useState<number>(500);
+  const [donationEnabled, setDonationEnabled] = useState<boolean>(true);
+  const [donationMaxCases, setDonationMaxCases] = useState<number>(500);
   const [donationDiversionStrategy, setDonationDiversionStrategy] = useState<'percentage_split' | 'priority_cascade'>('percentage_split');
-  const [donatingEntities, setDonatingEntities]                 = useState<Array<{ id: string; name: string; email: string; maxCases: number; allocationPercent: number }>>([
+  const [donatingEntities, setDonatingEntities] = useState<Array<{ id: string; name: string; email: string; maxCases: number; allocationPercent: number }>>([
     { id: '1', name: 'Feeding America - Greater Boston', email: 'donations@feedingamerica.org', maxCases: 300, allocationPercent: 60 },
     { id: '2', name: 'City Harvest NYC Rescue', email: 'rescue@cityharvest.org', maxCases: 200, allocationPercent: 40 }
   ]);
-  const [newEntityName, setNewEntityName]         = useState('');
-  const [newEntityEmail, setNewEntityEmail]       = useState('');
+  const [newEntityName, setNewEntityName] = useState('');
+  const [newEntityEmail, setNewEntityEmail] = useState('');
   const [newEntityMaxCases, setNewEntityMaxCases] = useState(150);
   const [newEntityAllocPercent, setNewEntityAllocPercent] = useState(30);
 
   // Donation Email Alert Settings
   const [donationEmailAlertEnabled, setDonationEmailAlertEnabled] = useState<boolean>(true);
-  const [donationEmailSubject, setDonationEmailSubject]           = useState<string>('[Action Required] Food Rescue Donation Transfer Advice - {{lot_number}} ({{cases}} Cases)');
-  const [donationEmailCustomNotes, setDonationEmailCustomNotes]   = useState<string>('Please arrange logistics pickup within 48 hours of scheduled pickup date. Reply to confirm dock door appointment and receive 501(c)(3) tax attestation documentation.');
-  const [showDonationEmailPreview, setShowDonationEmailPreview]   = useState<boolean>(false);
+  const [donationEmailSubject, setDonationEmailSubject] = useState<string>('[Action Required] Food Rescue Donation Transfer Advice - {{lot_number}} ({{cases}} Cases)');
+  const [donationEmailCustomNotes, setDonationEmailCustomNotes] = useState<string>('Please arrange logistics pickup within 48 hours of scheduled pickup date. Reply to confirm dock door appointment and receive 501(c)(3) tax attestation documentation.');
+  const [showDonationEmailPreview, setShowDonationEmailPreview] = useState<boolean>(false);
 
   // Drift Detection & Breakdown Modal
   const [dismissedDriftBanner, setDismissedDriftBanner] = useState(false);
@@ -1153,7 +1153,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
   // Pre-flight
   const [showPreFlightModal, setShowPreFlightModal] = useState(false);
-  const [isSubmitting, setIsSubmitting]             = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Hydration effect when editing an existing campaign
   useEffect(() => {
@@ -1363,19 +1363,19 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
     const q = lotSearch.toLowerCase();
     const desc = (lot.productId?.description || lot.lotNumber || '').toLowerCase();
-    const sku  = (lot.productId?.sku || '').toLowerCase();
+    const sku = (lot.productId?.sku || '').toLowerCase();
     const matchSearch = !q || desc.includes(q) || sku.includes(q);
     const dc = typeof lot.distributionCenterId === 'object'
       ? (lot.distributionCenterId?.name || lot.distributionCenterId?.code || '')
       : (lot.distributionCenterId || '');
-    const matchDC  = !lotDcFilter || dc.toLowerCase().includes(lotDcFilter.toLowerCase());
-    const hasCoa   = lot.complianceStatus === 'verified' || lot.coaS3Uri;
+    const matchDC = !lotDcFilter || dc.toLowerCase().includes(lotDcFilter.toLowerCase());
+    const hasCoa = lot.complianceStatus === 'verified' || lot.coaS3Uri;
     const matchCoa = lotCoaFilter === 'all' || (lotCoaFilter === 'verified' && hasCoa) || (lotCoaFilter === 'pending' && !hasCoa);
     return matchSearch && matchDC && matchCoa;
   }), [activeLots, categoryFilter, maxRslFilter, minCasesFilter, explicitLotIds, lotSearch, lotDcFilter, lotCoaFilter]);
 
   const impactMetrics = useMemo(() => {
-    const totalLots  = matchedLots.length;
+    const totalLots = matchedLots.length;
     const totalCases = matchedLots.reduce((a, l) => a + (l?.availableQty ?? l?.quantityCases ?? 0), 0);
     const totalValue = matchedLots.reduce((a, l) => {
       const cases = l?.availableQty ?? l?.quantityCases ?? 0;
@@ -1839,7 +1839,9 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h2 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>New Workflow</h2>
+                <h2 style={{ fontSize: '17px', fontWeight: 700, margin: 0 }}>
+
+                </h2>
                 <span style={{ color: '#ef4444', fontWeight: 700, fontSize: '16px', lineHeight: 1 }} title="Required">*</span>
               </div>
               <input type="text" data-testid="workflow-name-input" value={workflowName} onChange={e => setWorkflowName(e.target.value)} placeholder="Enter workflow name…"
@@ -1929,7 +1931,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                 </div>
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <div style={{ display: 'flex', gap: '3px' }}>
-                    {['Su','Mo','Tu','We','Th','Fr','Sa'].map((d, i) => {
+                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d, i) => {
                       const sel = cronDays.includes(i);
                       return (
                         <button key={d} type="button" onClick={() => {
@@ -2257,367 +2259,367 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
 
         {/* SECTION 2: Inventory Selector */}
         <div style={card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-              <h3 style={{ ...h3st, margin: 0 }}><Filter size={17} color="hsl(var(--primary))" /> 2. Matching Inventory Lots</h3>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button type="button" onClick={handleLoadInventory} disabled={isFetchingInventory}
-                  style={{ background: 'hsl(var(--primary)/0.15)', color: 'hsl(var(--primary))', border: '1px solid hsl(var(--primary)/0.3)', borderRadius: '6px', padding: '4px 11px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                  {isFetchingInventory ? 'Loading…' : '🔄 Load Live'}
-                </button>
-                <button type="button" onClick={() => setShowLotGrid(p => !p)}
-                  style={{ background: 'transparent', color: 'hsl(var(--primary))', border: 'none', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
-                  {showLotGrid ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                  {showLotGrid ? 'Hide Grid' : `View (${matchedLots.length})`}
-                </button>
-              </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+            <h3 style={{ ...h3st, margin: 0 }}><Filter size={17} color="hsl(var(--primary))" /> 2. Matching Inventory Lots</h3>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button type="button" onClick={handleLoadInventory} disabled={isFetchingInventory}
+                style={{ background: 'hsl(var(--primary)/0.15)', color: 'hsl(var(--primary))', border: '1px solid hsl(var(--primary)/0.3)', borderRadius: '6px', padding: '4px 11px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                {isFetchingInventory ? 'Loading…' : '🔄 Load Live'}
+              </button>
+              <button type="button" onClick={() => setShowLotGrid(p => !p)}
+                style={{ background: 'transparent', color: 'hsl(var(--primary))', border: 'none', cursor: 'pointer', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}>
+                {showLotGrid ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                {showLotGrid ? 'Hide Grid' : `View (${matchedLots.length})`}
+              </button>
+            </div>
+          </div>
+
+          {/* Scope Mode Selector */}
+          <div
+            ref={scopeInfoRef}
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '14px',
+              padding: '6px 10px',
+              background: 'hsl(var(--bg-app, var(--bg-card)))',
+              borderRadius: '8px',
+              border: '1px solid hsl(var(--border-color))',
+              width: 'fit-content'
+            }}
+          >
+            <span style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '4px' }}>
+              Scope Mode:
+            </span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', position: 'relative' }}>
+              <button
+                type="button"
+                data-testid="scope-mode-dynamic-btn"
+                data-active={selectorMode === 'automatic' ? 'true' : 'false'}
+                onClick={() => {
+                  setSelectorMode('automatic');
+                  setExplicitLotIds([]);
+                  setExcludedLotIds([]);
+                }}
+                style={{
+                  background: selectorMode === 'automatic' ? 'hsl(var(--primary))' : 'transparent',
+                  color: selectorMode === 'automatic' ? 'white' : 'hsl(var(--text-primary))',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '11px',
+                  fontWeight: selectorMode === 'automatic' ? 700 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                Dynamic Rule (Sweep Mode)
+              </button>
+              <button
+                type="button"
+                data-testid="info-dynamic-scope-btn"
+                onClick={() => setActiveScopeInfoPopover(p => p === 'dynamic' ? null : 'dynamic')}
+                title="Click to view description for Dynamic Rule (Sweep Mode)"
+                aria-label="Explain Dynamic Rule (Sweep Mode)"
+                style={{
+                  background: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary) / 20%)' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+                  padding: '3px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Info size={13} />
+              </button>
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', position: 'relative' }}>
+              <button
+                type="button"
+                data-testid="scope-mode-pinned-btn"
+                data-active={selectorMode === 'explicit' ? 'true' : 'false'}
+                onClick={() => {
+                  setSelectorMode('explicit');
+                  setExplicitLotIds(matchedLots.map((l: any) => l._id?.toString() || l.id).filter(Boolean));
+                }}
+                style={{
+                  background: selectorMode === 'explicit' ? 'hsl(var(--primary))' : 'transparent',
+                  color: selectorMode === 'explicit' ? 'white' : 'hsl(var(--text-primary))',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '11px',
+                  fontWeight: selectorMode === 'explicit' ? 700 : 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                Pinned Lot Scope (Snapshot Mode)
+              </button>
+              <button
+                type="button"
+                data-testid="info-pinned-scope-btn"
+                onClick={() => setActiveScopeInfoPopover(p => p === 'pinned' ? null : 'pinned')}
+                title="Click to view description for Pinned Lot Scope (Snapshot Mode)"
+                aria-label="Explain Pinned Lot Scope (Snapshot Mode)"
+                style={{
+                  background: activeScopeInfoPopover === 'pinned' ? 'hsl(var(--primary) / 20%)' : 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: activeScopeInfoPopover === 'pinned' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
+                  padding: '3px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Info size={13} />
+              </button>
             </div>
 
-            {/* Scope Mode Selector */}
-            <div
-              ref={scopeInfoRef}
-              style={{
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                marginBottom: '14px',
-                padding: '6px 10px',
-                background: 'hsl(var(--bg-app, var(--bg-card)))',
-                borderRadius: '8px',
-                border: '1px solid hsl(var(--border-color))',
-                width: 'fit-content'
-              }}
-            >
-              <span style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))', textTransform: 'uppercase', letterSpacing: '0.05em', marginRight: '4px' }}>
-                Scope Mode:
-              </span>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', position: 'relative' }}>
-                <button
-                  type="button"
-                  data-testid="scope-mode-dynamic-btn"
-                  data-active={selectorMode === 'automatic' ? 'true' : 'false'}
-                  onClick={() => {
-                    setSelectorMode('automatic');
-                    setExplicitLotIds([]);
-                    setExcludedLotIds([]);
-                  }}
-                  style={{
-                    background: selectorMode === 'automatic' ? 'hsl(var(--primary))' : 'transparent',
-                    color: selectorMode === 'automatic' ? 'white' : 'hsl(var(--text-primary))',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    fontWeight: selectorMode === 'automatic' ? 700 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  Dynamic Rule (Sweep Mode)
-                </button>
-                <button
-                  type="button"
-                  data-testid="info-dynamic-scope-btn"
-                  onClick={() => setActiveScopeInfoPopover(p => p === 'dynamic' ? null : 'dynamic')}
-                  title="Click to view description for Dynamic Rule (Sweep Mode)"
-                  aria-label="Explain Dynamic Rule (Sweep Mode)"
-                  style={{
-                    background: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary) / 20%)' : 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
-                    padding: '3px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '50%',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <Info size={13} />
-                </button>
-              </div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', position: 'relative' }}>
-                <button
-                  type="button"
-                  data-testid="scope-mode-pinned-btn"
-                  data-active={selectorMode === 'explicit' ? 'true' : 'false'}
-                  onClick={() => {
-                    setSelectorMode('explicit');
-                    setExplicitLotIds(matchedLots.map((l: any) => l._id?.toString() || l.id).filter(Boolean));
-                  }}
-                  style={{
-                    background: selectorMode === 'explicit' ? 'hsl(var(--primary))' : 'transparent',
-                    color: selectorMode === 'explicit' ? 'white' : 'hsl(var(--text-primary))',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '4px 10px',
-                    fontSize: '11px',
-                    fontWeight: selectorMode === 'explicit' ? 700 : 500,
-                    cursor: 'pointer',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  Pinned Lot Scope (Snapshot Mode)
-                </button>
-                <button
-                  type="button"
-                  data-testid="info-pinned-scope-btn"
-                  onClick={() => setActiveScopeInfoPopover(p => p === 'pinned' ? null : 'pinned')}
-                  title="Click to view description for Pinned Lot Scope (Snapshot Mode)"
-                  aria-label="Explain Pinned Lot Scope (Snapshot Mode)"
-                  style={{
-                    background: activeScopeInfoPopover === 'pinned' ? 'hsl(var(--primary) / 20%)' : 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: activeScopeInfoPopover === 'pinned' ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))',
-                    padding: '3px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: '50%',
-                    transition: 'all 0.15s ease'
-                  }}
-                >
-                  <Info size={13} />
-                </button>
-              </div>
-
-              {/* Floating Scope Mode Description Popover Window */}
-              {activeScopeInfoPopover && (
-                <div
-                  data-testid="scope-mode-info-popover"
-                  style={{
-                    position: 'absolute',
-                    top: 'calc(100% + 8px)',
-                    left: 0,
-                    zIndex: 60,
-                    width: '380px',
-                    maxWidth: '90vw',
-                    background: 'hsl(var(--bg-card))',
-                    border: '1px solid hsl(var(--border-color))',
-                    borderRadius: '10px',
-                    padding: '14px 16px',
-                    boxShadow: '0 12px 32px -4px rgba(0, 0, 0, 0.25)',
-                    backdropFilter: 'blur(8px)',
-                    animation: 'fadeIn 0.15s ease-out'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div
-                        style={{
-                          width: '24px',
-                          height: '24px',
-                          borderRadius: '6px',
-                          background: 'hsl(var(--primary) / 15%)',
-                          color: 'hsl(var(--primary))',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <Info size={14} />
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
-                          {activeScopeInfoPopover === 'dynamic'
-                            ? 'Dynamic Rule (Sweep Mode)'
-                            : 'Pinned Lot Scope (Snapshot Mode)'}
-                        </div>
-                        <span
-                          style={{
-                            display: 'inline-block',
-                            fontSize: '0.68rem',
-                            fontWeight: 700,
-                            padding: '1px 6px',
-                            borderRadius: '4px',
-                            background: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary) / 15%)' : 'hsl(var(--warning) / 15%)',
-                            color: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary))' : 'hsl(var(--warning))',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.04em',
-                            marginTop: '2px'
-                          }}
-                        >
-                          {activeScopeInfoPopover === 'dynamic' ? 'Live Dynamic Evaluation' : 'Locked Lot Snapshot'}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      data-testid="close-scope-info-popover-btn"
-                      onClick={() => setActiveScopeInfoPopover(null)}
+            {/* Floating Scope Mode Description Popover Window */}
+            {activeScopeInfoPopover && (
+              <div
+                data-testid="scope-mode-info-popover"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: 0,
+                  zIndex: 60,
+                  width: '380px',
+                  maxWidth: '90vw',
+                  background: 'hsl(var(--bg-card))',
+                  border: '1px solid hsl(var(--border-color))',
+                  borderRadius: '10px',
+                  padding: '14px 16px',
+                  boxShadow: '0 12px 32px -4px rgba(0, 0, 0, 0.25)',
+                  backdropFilter: 'blur(8px)',
+                  animation: 'fadeIn 0.15s ease-out'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div
                       style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'hsl(var(--text-muted))',
-                        cursor: 'pointer',
-                        padding: '2px',
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '6px',
+                        background: 'hsl(var(--primary) / 15%)',
+                        color: 'hsl(var(--primary))',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '4px'
+                        justifyContent: 'center'
                       }}
                     >
-                      <X size={15} />
-                    </button>
-                  </div>
-
-                  <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary, var(--text-primary)))', lineHeight: 1.5, marginTop: '8px' }}>
-                    {activeScopeInfoPopover === 'dynamic' ? (
-                      <>
-                        <p style={{ margin: '0 0 6px 0' }}>
-                          <strong>How it works:</strong> Evaluates filter criteria (RSL %, Category, Storage, Min Cases) dynamically against active warehouse stock at execution time.
-                        </p>
-                        <p style={{ margin: 0, color: 'hsl(var(--text-muted))' }}>
-                          <strong>Execution Behavior:</strong> Qualifying lots are continuously swept into the workflow as they degrade or new inventory arrives. In Edit view, lots are re-evaluated against today’s date.
-                        </p>
-                      </>
-                    ) : (
-                      <>
-                        <p style={{ margin: '0 0 6px 0' }}>
-                          <strong>How it works:</strong> Freezes and pins a specific list of inventory lots at save time.
-                        </p>
-                        <p style={{ margin: 0, color: 'hsl(var(--text-muted))' }}>
-                          <strong>Execution Behavior:</strong> Future workflow executions target strictly these pinned lots, ignoring newly arriving inventory or shelf-life drift.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Filter row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '12px' }}>
-              <div style={{ width: '160px' }}>
-                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Category</label>
-                <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ ...dropSt, padding: '6px 10px', fontSize: '12px' }}>
-                  <option value="">All Categories</option>
-                  <option value="Dairy">Dairy</option>
-                  <option value="Produce">Produce</option>
-                  <option value="Meat & Poultry">Meat & Poultry</option>
-                  <option value="Dry Goods">Dry Goods</option>
-                  <option value="Frozen Foods">Frozen Foods</option>
-                </select>
-              </div>
-              <div style={{ width: '170px' }}>
-                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Max RSL: <strong style={{ color: 'hsl(var(--warning))' }}>{maxRslFilter >= 1 ? '100% (All RSL)' : `${Math.round(maxRslFilter * 100)}%`}</strong></label>
-                <input type="range" min="0.05" max="1.00" step="0.05" value={maxRslFilter} onChange={e => setMaxRslFilter(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'hsl(var(--primary))' }} />
-              </div>
-              <div style={{ width: '100px' }}>
-                <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Min Cases</label>
-                <input type="number" step="any" placeholder="0" value={minCasesFilter === 0 ? '' : minCasesFilter} onChange={e => setMinCasesFilter(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)} style={{ ...inpSt, padding: '6px 10px', fontSize: '12px', width: '100%' }} />
-              </div>
-            </div>
-
-            {showLotGrid && (
-              <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '10px', overflow: 'hidden' }}>
-                {/* Search row */}
-                <div style={{ padding: '9px 13px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', gap: '7px', flexWrap: 'wrap', alignItems: 'center', background: 'hsl(var(--bg-card))' }}>
-                  <div style={{ position: 'relative', flex: 1, minWidth: '140px' }}>
-                    <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--text-muted))' }} />
-                    <input type="text" placeholder="Search lots…" value={lotSearch} onChange={e => setLotSearch(e.target.value)}
-                      style={{ ...inpSt, paddingLeft: '26px', padding: '6px 6px 6px 26px', fontSize: '12px', borderRadius: '6px' }} />
-                  </div>
-                  <select value={lotDcFilter} onChange={e => setLotDcFilter(e.target.value)} style={{ ...dropSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px' }}>
-                    <option value="">All DCs</option>
-                    {[...new Set(activeLots.map((l: any) => typeof l.distributionCenterId === 'object' ? (l.distributionCenterId?.name || '') : (l.distributionCenterId || '')).filter(Boolean))].map(dc => <option key={dc} value={dc}>{dc}</option>)}
-                  </select>
-                  <select value={lotCoaFilter} onChange={e => setLotCoaFilter(e.target.value)} style={{ ...dropSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px' }}>
-                    <option value="all">All Compliance</option>
-                    <option value="verified">COA Verified</option>
-                    <option value="pending">COA Pending</option>
-                  </select>
-                </div>
-                {/* Header row */}
-                <div style={{ background: 'hsl(var(--bg-card))', padding: '7px 15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button type="button" onClick={allDisplaySelected ? deselectAll : selectAll}
-                      style={{ display: 'flex', alignItems: 'center', gap: '5px', background: allDisplaySelected ? 'hsl(var(--primary)/0.15)' : 'transparent', border: `1px solid ${allDisplaySelected ? 'hsl(var(--primary)/0.4)' : 'hsl(var(--border-color))'}`, color: allDisplaySelected ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))', borderRadius: '5px', padding: '3px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
-                      {allDisplaySelected ? <CheckSquare size={11} /> : <Square size={11} />}
-                      {allDisplaySelected ? 'Deselect All' : 'Select All'}
-                    </button>
-                    <span>Lots ({displayLots.length})</span>
-                  </div>
-                  <span style={{ color: 'hsl(var(--primary))' }}>{matchedLots.length} in workflow</span>
-                </div>
-                <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
-                  {activeLots.length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '12px' }}>No lots loaded — click Load Live above.</div>
-                  ) : displayLots.length === 0 ? (
-                    <div style={{ padding: '20px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '12px' }}>No lots match your filters.</div>
-                  ) : displayLots.map((lot: any) => {
-                    const lotId   = lot._id?.toString() || lot.id;
-                    const isIn    = matchedLots.some((m: any) => (m._id?.toString() || m.id) === lotId);
-                    const isExpl  = explicitLotIds.includes(lotId);
-                    const isExcl  = excludedLotIds.includes(lotId);
-                    const desc    = lot.productId?.description || 'Surplus Item';
-                    const sku     = lot.productId?.sku || lot.lotNumber || 'SKU';
-                    const cases   = lot.availableQty ?? lot.quantityCases ?? 0;
-                    const rsl     = Math.round(calculateLotRsl(lot) * 100);
-                    const hasCoa  = lot.complianceStatus === 'verified' || lot.coaS3Uri;
-                    const dc      = typeof lot.distributionCenterId === 'object' ? (lot.distributionCenterId?.name || lot.distributionCenterId?.code || 'Main DC') : (lot.distributionCenterId || 'Main DC');
-                    return (
-                      <div key={lotId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 15px', borderBottom: '1px solid hsl(223 27% 14%)', background: isIn ? 'transparent' : 'hsl(346 84% 50%/0.04)', fontSize: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-                          <input type="checkbox" checked={isIn} onChange={() => toggleLot(lotId, isIn)} style={{ width: '14px', height: '14px', accentColor: 'hsl(var(--primary))', cursor: 'pointer' }} />
-                          <div>
-                            <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
-                              <span>{desc}</span>
-                              <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>({sku})</span>
-                              {isExpl && <span style={{ background: 'hsl(var(--success)/0.15)', color: 'hsl(var(--success))', fontSize: '9px', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>EXPLICIT</span>}
-                              {isExcl && <span style={{ background: 'hsl(var(--error)/0.15)', color: 'hsl(var(--error))', fontSize: '9px', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>EXCLUDED</span>}
-                            </div>
-                            <div style={{ fontSize: '10px', color: 'hsl(var(--text-muted))', display: 'flex', gap: '10px', marginTop: '1px' }}>
-                              <span>DC: {dc}</span>
-                              <span>Exp: {lot.expirationDate ? new Date(lot.expirationDate).toLocaleDateString() : 'N/A'}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 700, color: rsl <= 15 ? 'hsl(var(--error))' : 'hsl(var(--warning))' }}>{rsl}% RSL</span>
-                          <span style={{ fontSize: '11px', fontWeight: 600 }}>{cases} cases</span>
-                          {hasCoa
-                            ? <span style={{ color: 'hsl(var(--success))', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px' }}><CheckCircle size={11} /> COA</span>
-                            : <span style={{ color: 'hsl(var(--warning))', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px' }}><AlertTriangle size={11} /> Pending</span>
-                          }
-                        </div>
+                      <Info size={14} />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'hsl(var(--text-primary))' }}>
+                        {activeScopeInfoPopover === 'dynamic'
+                          ? 'Dynamic Rule (Sweep Mode)'
+                          : 'Pinned Lot Scope (Snapshot Mode)'}
                       </div>
-                    );
-                  })}
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          padding: '1px 6px',
+                          borderRadius: '4px',
+                          background: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary) / 15%)' : 'hsl(var(--warning) / 15%)',
+                          color: activeScopeInfoPopover === 'dynamic' ? 'hsl(var(--primary))' : 'hsl(var(--warning))',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          marginTop: '2px'
+                        }}
+                      >
+                        {activeScopeInfoPopover === 'dynamic' ? 'Live Dynamic Evaluation' : 'Locked Lot Snapshot'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    data-testid="close-scope-info-popover-btn"
+                    onClick={() => setActiveScopeInfoPopover(null)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'hsl(var(--text-muted))',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '4px'
+                    }}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+
+                <div style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary, var(--text-primary)))', lineHeight: 1.5, marginTop: '8px' }}>
+                  {activeScopeInfoPopover === 'dynamic' ? (
+                    <>
+                      <p style={{ margin: '0 0 6px 0' }}>
+                        <strong>How it works:</strong> Evaluates filter criteria (RSL %, Category, Storage, Min Cases) dynamically against active warehouse stock at execution time.
+                      </p>
+                      <p style={{ margin: 0, color: 'hsl(var(--text-muted))' }}>
+                        <strong>Execution Behavior:</strong> Qualifying lots are continuously swept into the workflow as they degrade or new inventory arrives. In Edit view, lots are re-evaluated against today’s date.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ margin: '0 0 6px 0' }}>
+                        <strong>How it works:</strong> Freezes and pins a specific list of inventory lots at save time.
+                      </p>
+                      <p style={{ margin: 0, color: 'hsl(var(--text-muted))' }}>
+                        <strong>Execution Behavior:</strong> Future workflow executions target strictly these pinned lots, ignoring newly arriving inventory or shelf-life drift.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             )}
           </div>
 
-          {/* ══════════════════════════════════════════════════════
+          {/* Filter row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', marginBottom: '12px' }}>
+            <div style={{ width: '160px' }}>
+              <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Category</label>
+              <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)} style={{ ...dropSt, padding: '6px 10px', fontSize: '12px' }}>
+                <option value="">All Categories</option>
+                <option value="Dairy">Dairy</option>
+                <option value="Produce">Produce</option>
+                <option value="Meat & Poultry">Meat & Poultry</option>
+                <option value="Dry Goods">Dry Goods</option>
+                <option value="Frozen Foods">Frozen Foods</option>
+              </select>
+            </div>
+            <div style={{ width: '170px' }}>
+              <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Max RSL: <strong style={{ color: 'hsl(var(--warning))' }}>{maxRslFilter >= 1 ? '100% (All RSL)' : `${Math.round(maxRslFilter * 100)}%`}</strong></label>
+              <input type="range" min="0.05" max="1.00" step="0.05" value={maxRslFilter} onChange={e => setMaxRslFilter(parseFloat(e.target.value))} style={{ width: '100%', accentColor: 'hsl(var(--primary))' }} />
+            </div>
+            <div style={{ width: '100px' }}>
+              <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Min Cases</label>
+              <input type="number" step="any" placeholder="0" value={minCasesFilter === 0 ? '' : minCasesFilter} onChange={e => setMinCasesFilter(e.target.value === '' ? 0 : parseFloat(e.target.value) || 0)} style={{ ...inpSt, padding: '6px 10px', fontSize: '12px', width: '100%' }} />
+            </div>
+          </div>
+
+          {showLotGrid && (
+            <div style={{ background: 'hsl(var(--bg-card))', border: '1px solid hsl(var(--border-color))', borderRadius: '10px', overflow: 'hidden' }}>
+              {/* Search row */}
+              <div style={{ padding: '9px 13px', borderBottom: '1px solid hsl(var(--border-color))', display: 'flex', gap: '7px', flexWrap: 'wrap', alignItems: 'center', background: 'hsl(var(--bg-card))' }}>
+                <div style={{ position: 'relative', flex: 1, minWidth: '140px' }}>
+                  <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'hsl(var(--text-muted))' }} />
+                  <input type="text" placeholder="Search lots…" value={lotSearch} onChange={e => setLotSearch(e.target.value)}
+                    style={{ ...inpSt, paddingLeft: '26px', padding: '6px 6px 6px 26px', fontSize: '12px', borderRadius: '6px' }} />
+                </div>
+                <select value={lotDcFilter} onChange={e => setLotDcFilter(e.target.value)} style={{ ...dropSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px' }}>
+                  <option value="">All DCs</option>
+                  {[...new Set(activeLots.map((l: any) => typeof l.distributionCenterId === 'object' ? (l.distributionCenterId?.name || '') : (l.distributionCenterId || '')).filter(Boolean))].map(dc => <option key={dc} value={dc}>{dc}</option>)}
+                </select>
+                <select value={lotCoaFilter} onChange={e => setLotCoaFilter(e.target.value)} style={{ ...dropSt, width: 'auto', padding: '6px 8px', fontSize: '12px', borderRadius: '6px' }}>
+                  <option value="all">All Compliance</option>
+                  <option value="verified">COA Verified</option>
+                  <option value="pending">COA Pending</option>
+                </select>
+              </div>
+              {/* Header row */}
+              <div style={{ background: 'hsl(var(--bg-card))', padding: '7px 15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', fontWeight: 600, color: 'hsl(var(--text-secondary))' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button type="button" onClick={allDisplaySelected ? deselectAll : selectAll}
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px', background: allDisplaySelected ? 'hsl(var(--primary)/0.15)' : 'transparent', border: `1px solid ${allDisplaySelected ? 'hsl(var(--primary)/0.4)' : 'hsl(var(--border-color))'}`, color: allDisplaySelected ? 'hsl(var(--primary))' : 'hsl(var(--text-muted))', borderRadius: '5px', padding: '3px 8px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                    {allDisplaySelected ? <CheckSquare size={11} /> : <Square size={11} />}
+                    {allDisplaySelected ? 'Deselect All' : 'Select All'}
+                  </button>
+                  <span>Lots ({displayLots.length})</span>
+                </div>
+                <span style={{ color: 'hsl(var(--primary))' }}>{matchedLots.length} in workflow</span>
+              </div>
+              <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                {activeLots.length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '12px' }}>No lots loaded — click Load Live above.</div>
+                ) : displayLots.length === 0 ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'hsl(var(--text-muted))', fontSize: '12px' }}>No lots match your filters.</div>
+                ) : displayLots.map((lot: any) => {
+                  const lotId = lot._id?.toString() || lot.id;
+                  const isIn = matchedLots.some((m: any) => (m._id?.toString() || m.id) === lotId);
+                  const isExpl = explicitLotIds.includes(lotId);
+                  const isExcl = excludedLotIds.includes(lotId);
+                  const desc = lot.productId?.description || 'Surplus Item';
+                  const sku = lot.productId?.sku || lot.lotNumber || 'SKU';
+                  const cases = lot.availableQty ?? lot.quantityCases ?? 0;
+                  const rsl = Math.round(calculateLotRsl(lot) * 100);
+                  const hasCoa = lot.complianceStatus === 'verified' || lot.coaS3Uri;
+                  const dc = typeof lot.distributionCenterId === 'object' ? (lot.distributionCenterId?.name || lot.distributionCenterId?.code || 'Main DC') : (lot.distributionCenterId || 'Main DC');
+                  return (
+                    <div key={lotId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 15px', borderBottom: '1px solid hsl(223 27% 14%)', background: isIn ? 'transparent' : 'hsl(346 84% 50%/0.04)', fontSize: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                        <input type="checkbox" checked={isIn} onChange={() => toggleLot(lotId, isIn)} style={{ width: '14px', height: '14px', accentColor: 'hsl(var(--primary))', cursor: 'pointer' }} />
+                        <div>
+                          <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                            <span>{desc}</span>
+                            <span style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>({sku})</span>
+                            {isExpl && <span style={{ background: 'hsl(var(--success)/0.15)', color: 'hsl(var(--success))', fontSize: '9px', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>EXPLICIT</span>}
+                            {isExcl && <span style={{ background: 'hsl(var(--error)/0.15)', color: 'hsl(var(--error))', fontSize: '9px', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>EXCLUDED</span>}
+                          </div>
+                          <div style={{ fontSize: '10px', color: 'hsl(var(--text-muted))', display: 'flex', gap: '10px', marginTop: '1px' }}>
+                            <span>DC: {dc}</span>
+                            <span>Exp: {lot.expirationDate ? new Date(lot.expirationDate).toLocaleDateString() : 'N/A'}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: rsl <= 15 ? 'hsl(var(--error))' : 'hsl(var(--warning))' }}>{rsl}% RSL</span>
+                        <span style={{ fontSize: '11px', fontWeight: 600 }}>{cases} cases</span>
+                        {hasCoa
+                          ? <span style={{ color: 'hsl(var(--success))', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px' }}><CheckCircle size={11} /> COA</span>
+                          : <span style={{ color: 'hsl(var(--warning))', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px' }}><AlertTriangle size={11} /> Pending</span>
+                        }
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ══════════════════════════════════════════════════════
               SECTION 3: Stage-Gate Timeline
               Each stage card now contains its own Audience Picker.
               No separate Section 4 — audience lives with its stage.
              ══════════════════════════════════════════════════════ */}
-          <div style={card}>
-            <h3 style={h3st}><Clock size={17} color="hsl(var(--primary))" /> 3. Stage-Gate Escalation Timeline</h3>
-            <p style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', margin: '-8px 0 16px', lineHeight: 1.5 }}>
-              Each stage escalates to a different audience at a different price. Click any stage to configure its audience and pricing.
-            </p>
+        <div style={card}>
+          <h3 style={h3st}><Clock size={17} color="hsl(var(--primary))" /> 3. Stage-Gate Escalation Timeline</h3>
+          <p style={{ fontSize: '12px', color: 'hsl(var(--text-muted))', margin: '-8px 0 16px', lineHeight: 1.5 }}>
+            Each stage escalates to a different audience at a different price. Click any stage to configure its audience and pricing.
+          </p>
 
-            {/* Visual timeline spine */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
-              {stages.map((stage, idx) => {
-                const stageNumber = stage.stageNumber || idx + 1;
-                const isExpanded = expandedStageIdx === idx;
-                const isListMode = stage.buyerMode === 'list' || stage.buyerMode === 'segment';
-                const listLabel = stage.buyerListName || stage.buyerListId || stage.buyerSegment || 'Target List';
-                const audienceSummary = isListMode ? listLabel : `${stage.customBuyers.length} custom buyer${stage.customBuyers.length !== 1 ? 's' : ''}`;
-                const pricingSummary = stage.discountType === 'yield' ? 'AI Yield' : stage.discountType === 'fixed' ? `${stage.discountValue}% Off` : `$${stage.discountValue} Floor`;
-                const stageBuyerCount = getStageBuyerCount(stage, reduxBuyerLists, buyers);
-                const stageValidationErrors = getStageValidationErrors(stage, idx, reduxBuyerLists, buyers);
-                const isZeroBuyer = (!stage.stageType || stage.stageType === 'liquidation') && stageBuyerCount === 0;
+          {/* Visual timeline spine */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            {stages.map((stage, idx) => {
+              const stageNumber = stage.stageNumber || idx + 1;
+              const isExpanded = expandedStageIdx === idx;
+              const isListMode = stage.buyerMode === 'list' || stage.buyerMode === 'segment';
+              const listLabel = stage.buyerListName || stage.buyerListId || stage.buyerSegment || 'Target List';
+              const audienceSummary = isListMode ? listLabel : `${stage.customBuyers.length} custom buyer${stage.customBuyers.length !== 1 ? 's' : ''}`;
+              const pricingSummary = stage.discountType === 'yield' ? 'AI Yield' : stage.discountType === 'fixed' ? `${stage.discountValue}% Off` : `$${stage.discountValue} Floor`;
+              const stageBuyerCount = getStageBuyerCount(stage, reduxBuyerLists, buyers);
+              const stageValidationErrors = getStageValidationErrors(stage, idx, reduxBuyerLists, buyers);
+              const isZeroBuyer = (!stage.stageType || stage.stageType === 'liquidation') && stageBuyerCount === 0;
 
-                return (
-                  <div key={idx} style={{ display: 'flex', flexDirection: 'column', marginBottom: idx < stages.length - 1 ? '8px' : '0' }}>
-                    <div style={{ display: 'flex', gap: '0', alignItems: 'stretch' }}>
+              return (
+                <div key={idx} style={{ display: 'flex', flexDirection: 'column', marginBottom: idx < stages.length - 1 ? '8px' : '0' }}>
+                  <div style={{ display: 'flex', gap: '0', alignItems: 'stretch' }}>
 
                     {/* Left spine: number + connector line */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '16px', flexShrink: 0 }}>
@@ -2830,7 +2832,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                             <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                               <Table size={13} /> Inventory Allocation
                             </div>
-                            
+
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                               <button
                                 type="button"
@@ -2975,8 +2977,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                   const rawVal = currentUnit === 'd'
                                     ? Number((stage.waitHours / 24).toFixed(4))
                                     : currentUnit === 'm'
-                                    ? Math.round(stage.waitHours * 60)
-                                    : Number(stage.waitHours.toFixed(4));
+                                      ? Math.round(stage.waitHours * 60)
+                                      : Number(stage.waitHours.toFixed(4));
                                   return (
                                     <div style={{ display: 'flex', gap: '4px' }}>
                                       <input
@@ -3079,8 +3081,8 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                                     const rawVal = currentUnit === 'd'
                                       ? Number((stage.waitHours / 24).toFixed(4))
                                       : currentUnit === 'm'
-                                      ? Math.round(stage.waitHours * 60)
-                                      : Number(stage.waitHours.toFixed(4));
+                                        ? Math.round(stage.waitHours * 60)
+                                        : Number(stage.waitHours.toFixed(4));
                                     return (
                                       <div style={{ display: 'flex', gap: '4px' }}>
                                         <input
@@ -3193,224 +3195,224 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                         </div>
                       )}
                     </div>
-                    </div>
-                    {stageValidationErrors.length > 0 && (
-                      <div
-                        data-testid={`stage-${stageNumber}-validation-error`}
-                        style={{
-                          marginTop: '6px',
-                          marginLeft: '52px',
-                          padding: '10px 14px',
-                          background: 'hsl(var(--error) / 0.15)',
-                          border: '1px solid hsl(var(--error) / 0.4)',
-                          borderRadius: '8px',
-                          color: 'hsl(var(--error))',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '4px'
-                        }}
-                      >
-                        {stageValidationErrors.map((errMsg, errIdx) => (
-                          <div key={errIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <AlertTriangle size={15} color="hsl(var(--error))" />
-                            <span>⚠️ Validation Error: {errMsg}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {isZeroBuyer && (
-                      <div data-testid="zero-buyer-error-banner" style={{ marginTop: '6px', marginLeft: '52px', padding: '10px 14px', background: 'hsl(var(--error) / 0.15)', border: '1px solid hsl(var(--error) / 0.4)', borderRadius: '8px', color: 'hsl(var(--error))', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <AlertTriangle size={15} color="hsl(var(--error))" />
-                        <span>⚠️ Zero-Buyer Selection Error: Stage {stageNumber} has 0 targeted buyers. At least 1 valid buyer must be selected for this stage.</span>
-                      </div>
-                    )}
                   </div>
-                );
-              })}
-            </div>
-
-            {/* Add stage */}
-            <button type="button"
-              onClick={() => {
-                const newIdx = stages.length;
-                const secList = reduxBuyerLists.find((l: any) => l.type === 'secondary') || reduxBuyerLists[1] || reduxBuyerLists[0];
-                setStages(p => [...p, {
-                  stageIndex: p.length,
-                  stageNumber: p.length + 1,
-                  name: `Stage ${p.length + 1}: Escalation`,
-                  buyerMode: 'list',
-                  buyerListId: secList ? secList._id : 'secondary',
-                  buyerListName: secList ? secList.name : 'Secondary Liquidators',
-                  customBuyers: [],
-                  discountType: 'fixed',
-                  discountValue: 15,
-                  waitHours: 24
-                }]);
-                setExpandedStageIdx(newIdx);
-              }}
-              style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '7px', background: 'hsl(var(--bg-card))', border: '1px dashed hsl(var(--primary)/0.4)', color: 'hsl(var(--primary))', borderRadius: '10px', padding: '11px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', width: '100%', justifyContent: 'center', transition: 'all 0.15s' }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(var(--primary)/0.08)'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card))'}
-            >
-              <Plus size={14} /> Add Escalation Stage
-            </button>
+                  {stageValidationErrors.length > 0 && (
+                    <div
+                      data-testid={`stage-${stageNumber}-validation-error`}
+                      style={{
+                        marginTop: '6px',
+                        marginLeft: '52px',
+                        padding: '10px 14px',
+                        background: 'hsl(var(--error) / 0.15)',
+                        border: '1px solid hsl(var(--error) / 0.4)',
+                        borderRadius: '8px',
+                        color: 'hsl(var(--error))',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px'
+                      }}
+                    >
+                      {stageValidationErrors.map((errMsg, errIdx) => (
+                        <div key={errIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <AlertTriangle size={15} color="hsl(var(--error))" />
+                          <span>⚠️ Validation Error: {errMsg}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {isZeroBuyer && (
+                    <div data-testid="zero-buyer-error-banner" style={{ marginTop: '6px', marginLeft: '52px', padding: '10px 14px', background: 'hsl(var(--error) / 0.15)', border: '1px solid hsl(var(--error) / 0.4)', borderRadius: '8px', color: 'hsl(var(--error))', fontSize: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <AlertTriangle size={15} color="hsl(var(--error))" />
+                      <span>⚠️ Zero-Buyer Selection Error: Stage {stageNumber} has 0 targeted buyers. At least 1 valid buyer must be selected for this stage.</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
+          {/* Add stage */}
+          <button type="button"
+            onClick={() => {
+              const newIdx = stages.length;
+              const secList = reduxBuyerLists.find((l: any) => l.type === 'secondary') || reduxBuyerLists[1] || reduxBuyerLists[0];
+              setStages(p => [...p, {
+                stageIndex: p.length,
+                stageNumber: p.length + 1,
+                name: `Stage ${p.length + 1}: Escalation`,
+                buyerMode: 'list',
+                buyerListId: secList ? secList._id : 'secondary',
+                buyerListName: secList ? secList.name : 'Secondary Liquidators',
+                customBuyers: [],
+                discountType: 'fixed',
+                discountValue: 15,
+                waitHours: 24
+              }]);
+              setExpandedStageIdx(newIdx);
+            }}
+            style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '7px', background: 'hsl(var(--bg-card))', border: '1px dashed hsl(var(--primary)/0.4)', color: 'hsl(var(--primary))', borderRadius: '10px', padding: '11px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', width: '100%', justifyContent: 'center', transition: 'all 0.15s' }}
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = 'hsl(var(--primary)/0.08)'}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = 'hsl(var(--bg-card))'}
+          >
+            <Plus size={14} /> Add Escalation Stage
+          </button>
+        </div>
 
 
 
-          {/* SECTION 5: Dynamic Donation & Multi-Entity Diversion (Hidden for base release; enable via SHOW_DYNAMIC_DONATION_SECTION flag) */}
-          {SHOW_DYNAMIC_DONATION_SECTION && (
-            <div style={card}>
-              <h3 style={h3st}><HeartHandshake size={17} color="hsl(var(--primary))" /> 5. Dynamic Donation & Multi-Entity Diversion</h3>
-              <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '-4px', marginBottom: '14px' }}>
-                Configure fallback donation rules, total case diversion caps, and split allocations across multiple food bank and rescue entities.
-              </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))', padding: '10px 14px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600 }}>Enable Auto-Donation Backstop</span>
-                  <input
-                    type="checkbox"
-                    checked={donationEnabled}
-                    onChange={e => setDonationEnabled(e.target.checked)}
-                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                  />
-                </div>
+        {/* SECTION 5: Dynamic Donation & Multi-Entity Diversion (Hidden for base release; enable via SHOW_DYNAMIC_DONATION_SECTION flag) */}
+        {SHOW_DYNAMIC_DONATION_SECTION && (
+          <div style={card}>
+            <h3 style={h3st}><HeartHandshake size={17} color="hsl(var(--primary))" /> 5. Dynamic Donation & Multi-Entity Diversion</h3>
+            <p style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', marginTop: '-4px', marginBottom: '14px' }}>
+              Configure fallback donation rules, total case diversion caps, and split allocations across multiple food bank and rescue entities.
+            </p>
 
-                {donationEnabled && (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                      <div>
-                        <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Max Total Donation Cases</label>
-                        <input
-                          type="number"
-                          value={donationMaxCases}
-                          onChange={e => setDonationMaxCases(parseInt(e.target.value, 10) || 0)}
-                          style={inpSt}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Multi-Entity Diversion Strategy</label>
-                        <select
-                          value={donationDiversionStrategy}
-                          onChange={e => setDonationDiversionStrategy(e.target.value as any)}
-                          style={inpSt}
-                        >
-                          <option value="percentage_split">Pro-Rata Percentage Split (%)</option>
-                          <option value="priority_cascade">Priority Cascade (Fill to Cap)</option>
-                        </select>
-                      </div>
-                    </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))', padding: '10px 14px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600 }}>Enable Auto-Donation Backstop</span>
+                <input
+                  type="checkbox"
+                  checked={donationEnabled}
+                  onChange={e => setDonationEnabled(e.target.checked)}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+              </div>
 
+              {donationEnabled && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                        Donating-To Receiver Entities ({donatingEntities.length})
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
-                        {donatingEntities.map((ent, idx) => (
-                          <div key={ent.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))', padding: '10px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
-                            <div>
-                              <div style={{ fontWeight: 700, fontSize: '12px' }}>{ent.name}</div>
-                              <div style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>{ent.email} • Max {ent.maxCases} Cases • {ent.allocationPercent}% Allocation</div>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setDonatingEntities(prev => prev.filter((_, i) => i !== idx))}
-                              style={{ background: 'none', border: 'none', color: 'hsl(var(--error))', cursor: 'pointer', padding: '4px' }}
-                              title="Remove entity"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                      <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Max Total Donation Cases</label>
+                      <input
+                        type="number"
+                        value={donationMaxCases}
+                        onChange={e => setDonationMaxCases(parseInt(e.target.value, 10) || 0)}
+                        style={inpSt}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Multi-Entity Diversion Strategy</label>
+                      <select
+                        value={donationDiversionStrategy}
+                        onChange={e => setDonationDiversionStrategy(e.target.value as any)}
+                        style={inpSt}
+                      >
+                        <option value="percentage_split">Pro-Rata Percentage Split (%)</option>
+                        <option value="priority_cascade">Priority Cascade (Fill to Cap)</option>
+                      </select>
+                    </div>
+                  </div>
 
-                      {/* Add Entity Form */}
-                      <div style={{ background: 'hsl(var(--bg-card))', padding: '12px', borderRadius: '8px', border: '1px dashed hsl(var(--border-color))', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>+ Add Donating-To Entity</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                          <input type="text" placeholder="Entity Name (e.g. Food Bank)" value={newEntityName} onChange={e => setNewEntityName(e.target.value)} style={{ ...inpSt, fontSize: '11px' }} />
-                          <input type="email" placeholder="Contact Email" value={newEntityEmail} onChange={e => setNewEntityEmail(e.target.value)} style={{ ...inpSt, fontSize: '11px' }} />
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px', gap: '8px', alignItems: 'center' }}>
-                          <input type="number" placeholder="Max Cases" value={newEntityMaxCases} onChange={e => setNewEntityMaxCases(parseInt(e.target.value, 10) || 0)} style={{ ...inpSt, fontSize: '11px' }} />
-                          <input type="number" placeholder="Alloc %" value={newEntityAllocPercent} onChange={e => setNewEntityAllocPercent(parseInt(e.target.value, 10) || 0)} style={{ ...inpSt, fontSize: '11px' }} />
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Donating-To Receiver Entities ({donatingEntities.length})
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                      {donatingEntities.map((ent, idx) => (
+                        <div key={ent.id || idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-card))', padding: '10px 12px', borderRadius: '8px', border: '1px solid hsl(var(--border-color))' }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '12px' }}>{ent.name}</div>
+                            <div style={{ fontSize: '10px', color: 'hsl(var(--text-muted))' }}>{ent.email} • Max {ent.maxCases} Cases • {ent.allocationPercent}% Allocation</div>
+                          </div>
                           <button
                             type="button"
-                            className="btn btn-primary"
-                            onClick={() => {
-                              if (!newEntityName) return;
-                              setDonatingEntities(prev => [...prev, { id: Date.now().toString(), name: newEntityName, email: newEntityEmail, maxCases: newEntityMaxCases, allocationPercent: newEntityAllocPercent }]);
-                              setNewEntityName(''); setNewEntityEmail('');
-                            }}
-                            style={{ padding: '6px 10px', fontSize: '11px', height: '30px' }}
+                            onClick={() => setDonatingEntities(prev => prev.filter((_, i) => i !== idx))}
+                            style={{ background: 'none', border: 'none', color: 'hsl(var(--error))', cursor: 'pointer', padding: '4px' }}
+                            title="Remove entity"
                           >
-                            Add
+                            <Trash2 size={14} />
                           </button>
                         </div>
+                      ))}
+                    </div>
+
+                    {/* Add Entity Form */}
+                    <div style={{ background: 'hsl(var(--bg-card))', padding: '12px', borderRadius: '8px', border: '1px dashed hsl(var(--border-color))', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--text-muted))' }}>+ Add Donating-To Entity</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <input type="text" placeholder="Entity Name (e.g. Food Bank)" value={newEntityName} onChange={e => setNewEntityName(e.target.value)} style={{ ...inpSt, fontSize: '11px' }} />
+                        <input type="email" placeholder="Contact Email" value={newEntityEmail} onChange={e => setNewEntityEmail(e.target.value)} style={{ ...inpSt, fontSize: '11px' }} />
                       </div>
-
-                      {/* Donating Entity Email Alert Settings */}
-                      <div style={{ background: 'hsl(var(--bg-card))', padding: '14px', borderRadius: '8px', border: '1px solid hsl(var(--primary)/0.3)', marginTop: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-                          <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                            <Mail size={13} /> Donating Entity Email Alert Settings
-                          </div>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'hsl(var(--text-secondary))', cursor: 'pointer' }}>
-                            <input
-                              type="checkbox"
-                              checked={donationEmailAlertEnabled}
-                              onChange={e => setDonationEmailAlertEnabled(e.target.checked)}
-                              style={{ cursor: 'pointer' }}
-                            />
-                            Send Instant Email Alert
-                          </label>
-                        </div>
-
-                        {donationEmailAlertEnabled && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <div>
-                              <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Donation Alert Subject</label>
-                              <input
-                                type="text"
-                                value={donationEmailSubject}
-                                onChange={e => setDonationEmailSubject(e.target.value)}
-                                style={inpSt}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Logistics & 501(c)(3) Dock Instructions</label>
-                              <textarea
-                                rows={2}
-                                value={donationEmailCustomNotes}
-                                onChange={e => setDonationEmailCustomNotes(e.target.value)}
-                                style={{ ...inpSt, height: 'auto', resize: 'vertical', fontSize: '11px' }}
-                              />
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
-                              <button
-                                type="button"
-                                className="btn btn-secondary"
-                                onClick={() => setShowDonationEmailPreview(true)}
-                                style={{ padding: '6px 12px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'hsl(var(--primary)/0.15)', color: 'hsl(var(--primary))', border: '1px solid hsl(var(--primary)/0.3)' }}
-                              >
-                                <Eye size={13} /> Preview Entity Email Alert
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px', gap: '8px', alignItems: 'center' }}>
+                        <input type="number" placeholder="Max Cases" value={newEntityMaxCases} onChange={e => setNewEntityMaxCases(parseInt(e.target.value, 10) || 0)} style={{ ...inpSt, fontSize: '11px' }} />
+                        <input type="number" placeholder="Alloc %" value={newEntityAllocPercent} onChange={e => setNewEntityAllocPercent(parseInt(e.target.value, 10) || 0)} style={{ ...inpSt, fontSize: '11px' }} />
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          onClick={() => {
+                            if (!newEntityName) return;
+                            setDonatingEntities(prev => [...prev, { id: Date.now().toString(), name: newEntityName, email: newEntityEmail, maxCases: newEntityMaxCases, allocationPercent: newEntityAllocPercent }]);
+                            setNewEntityName(''); setNewEntityEmail('');
+                          }}
+                          style={{ padding: '6px 10px', fontSize: '11px', height: '30px' }}
+                        >
+                          Add
+                        </button>
                       </div>
                     </div>
-                  </>
-                )}
-              </div>
+
+                    {/* Donating Entity Email Alert Settings */}
+                    <div style={{ background: 'hsl(var(--bg-card))', padding: '14px', borderRadius: '8px', border: '1px solid hsl(var(--primary)/0.3)', marginTop: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: 'hsl(var(--primary))', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                          <Mail size={13} /> Donating Entity Email Alert Settings
+                        </div>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'hsl(var(--text-secondary))', cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={donationEmailAlertEnabled}
+                            onChange={e => setDonationEmailAlertEnabled(e.target.checked)}
+                            style={{ cursor: 'pointer' }}
+                          />
+                          Send Instant Email Alert
+                        </label>
+                      </div>
+
+                      {donationEmailAlertEnabled && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div>
+                            <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Donation Alert Subject</label>
+                            <input
+                              type="text"
+                              value={donationEmailSubject}
+                              onChange={e => setDonationEmailSubject(e.target.value)}
+                              style={inpSt}
+                            />
+                          </div>
+
+                          <div>
+                            <label style={{ fontSize: '11px', color: 'hsl(var(--text-muted))', display: 'block', marginBottom: '4px' }}>Logistics & 501(c)(3) Dock Instructions</label>
+                            <textarea
+                              rows={2}
+                              value={donationEmailCustomNotes}
+                              onChange={e => setDonationEmailCustomNotes(e.target.value)}
+                              style={{ ...inpSt, height: 'auto', resize: 'vertical', fontSize: '11px' }}
+                            />
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              onClick={() => setShowDonationEmailPreview(true)}
+                              style={{ padding: '6px 12px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'hsl(var(--primary)/0.15)', color: 'hsl(var(--primary))', border: '1px solid hsl(var(--primary)/0.3)' }}
+                            >
+                              <Eye size={13} /> Preview Entity Email Alert
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          )}
+          </div>
+        )}
 
         {/* ── Bottom: Live Impact Summary Banner & Action Buttons ── */}
         <div style={{ ...card, padding: '18px', display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '10px' }}>
@@ -3679,7 +3681,7 @@ export const LiquidationAutomationStudio: React.FC<LiquidationAutomationStudioPr
                   <tbody>
                     {(() => {
                       const matchedList = reduxBuyerLists.find(s => s._id === inspectingSegment || s.type === inspectingSegment || s.name?.toLowerCase().includes(inspectingSegment.toLowerCase()));
-                      
+
                       let targetList: any[] = [];
                       if (matchedList) {
                         if (Array.isArray(matchedList.buyerIds) && matchedList.buyerIds.length > 0) {

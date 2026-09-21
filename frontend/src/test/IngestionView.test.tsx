@@ -63,8 +63,9 @@ describe('Issue #37 Tracer Bullet 3: IngestionView & Domain Sub-Components', () 
       </Provider>
     );
 
-    // GridMapperTable header check
-    expect(screen.getByText('Extract Preview: ui_test.csv')).toBeDefined();
+    // Inventory mapping header check
+    expect(screen.getByText('Confirm Inventory Data Mapping')).toBeDefined();
+    expect(screen.getByText('ui_test.csv')).toBeDefined();
     expect(screen.getAllByText('SKU Header').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Case Qty').length).toBeGreaterThan(0);
 

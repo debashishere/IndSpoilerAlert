@@ -13,7 +13,7 @@ import BuyerList from '../models/BuyerList';
 import Sale from '../models/Sale';
 import { suggestMappings } from '../utils/mapper';
 import { uploadToS3, sendSQSMessage } from '../utils/aws';
-import { translateAttributes } from './translatorService';
+import { translateAttributes, computeGridAggregates } from './translatorService';
 
 const SIDECAR_URL = process.env.SIDECAR_URL || 'http://localhost:8000';
 
@@ -448,6 +448,7 @@ export async function confirmIngestion(
 
   const existingTemplate = await SupplierTemplate.findOne({ supplierId });
   const semanticRules = Array.isArray(semanticRulesInput) ? semanticRulesInput : (existingTemplate?.semanticRules || []);
+  const aggregates = computeGridAggregates(docImport.rawGrid, semanticRules as any);
 
 
   for (let i = 0; i < rows.length; i++) {
@@ -677,7 +678,7 @@ export async function confirmIngestion(
     for (const col of unmappedColumnIndices) {
       rawUnmappedObject[col.header] = row[col.idx]?.trim() || '';
     }
-    const translated = translateAttributes(rawUnmappedObject, semanticRules as any);
+    const translated = translateAttributes(rawUnmappedObject, semanticRules as any, aggregates);
 
     const attributes = new Map<string, any>(Object.entries(translated.attributes));
     const rawAttributes = new Map<string, any>(Object.entries(translated.rawAttributes));
@@ -726,7 +727,8 @@ export async function confirmSalesIngestion(
   supplierId: string,
   mappings: any,
   saveTemplate: boolean,
-  templateName?: string
+  templateName?: string,
+  semanticRulesInput?: any[]
 ) {
   supplierId = await ensureValidSupplierId(supplierId);
   const docImport = await findDocumentImport(documentId);
@@ -778,16 +780,24 @@ export async function confirmSalesIngestion(
   // Save column layout template if requested
   if (saveTemplate) {
     const nameOfTemplate = templateName || `SalesTemplate_${Date.now()}`;
+    const updatePayload: Record<string, any> = {
+      supplierId,
+      templateName: nameOfTemplate,
+      columnMappings: mappings
+    };
+    if (Array.isArray(semanticRulesInput)) {
+      updatePayload.semanticRules = semanticRulesInput;
+    }
     await SupplierTemplate.findOneAndUpdate(
       { supplierId },
-      {
-        supplierId,
-        templateName: nameOfTemplate,
-        columnMappings: mappings
-      },
+      updatePayload,
       { upsert: true, new: true }
     );
   }
+
+  const existingTemplate = await SupplierTemplate.findOne({ supplierId });
+  const semanticRules = Array.isArray(semanticRulesInput) ? semanticRulesInput : (existingTemplate?.semanticRules || []);
+  const aggregates = computeGridAggregates(docImport.rawGrid, semanticRules as any);
 
   const salesIds: string[] = [];
   const warnings: string[] = [];
@@ -1021,17 +1031,24 @@ export async function confirmSalesIngestion(
       }
     }
 
-    // 3. Gather unmapped columns dynamically as metadata
+    // 3. Gather unmapped columns dynamically as metadata & evaluate semantic rules
     const mappedValues = Object.values(mappings).filter(Boolean) as string[];
     const metadata: Record<string, string> = {};
+    const rawRowObject: Record<string, any> = {};
+
     headers.forEach((header, colIdx) => {
-      if (header && !mappedValues.includes(header) && colIdx < row.length && row[colIdx] !== undefined) {
+      if (header && colIdx < row.length && row[colIdx] !== undefined) {
         const val = row[colIdx]?.trim();
-        if (val) {
+        rawRowObject[header] = val || '';
+        if (!mappedValues.includes(header) && val) {
           metadata[header] = val;
         }
       }
     });
+
+    const translated = translateAttributes(rawRowObject, semanticRules as any, aggregates);
+    const attributes = new Map<string, any>(Object.entries(translated.attributes));
+    const rawAttributes = new Map<string, any>(Object.entries(translated.rawAttributes));
 
     // 4. Create Sale record
     let description = rawDescription || rawProductName || 'Ingested Closeout Lot';
@@ -1066,7 +1083,9 @@ export async function confirmSalesIngestion(
       warehouse: rawWarehouse,
       revenue: parsedRevenue > 0 ? parsedRevenue : totalValue,
       reconciliationWarning: reconciliationWarning || undefined,
-      metadata
+      metadata,
+      attributes,
+      rawAttributes
     });
 
     await sale.save();

@@ -89,7 +89,7 @@ describe('SalesRegistryPanel Component', () => {
       </Provider>
     );
 
-    expect(screen.getByText('Confirm Sales CSV Mapping')).toBeDefined();
+    expect(screen.getByText('Confirm Sales Data Mapping')).toBeDefined();
     expect(screen.getByText('distributor_closeout.csv')).toBeDefined();
     expect(screen.getByRole('button', { name: /Confirm & Reconcile Sales/i })).toBeDefined();
   });

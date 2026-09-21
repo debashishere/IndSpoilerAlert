@@ -128,7 +128,8 @@ describe('InventoryRegistryPanel Component', () => {
       </Provider>
     );
 
-    expect(screen.getByText('Extract Preview: supplier_manifest.csv')).toBeDefined();
+    expect(screen.getByText('Confirm Inventory Data Mapping')).toBeDefined();
+    expect(screen.getByText('supplier_manifest.csv')).toBeDefined();
     expect(screen.getByRole('button', { name: /Confirm & Import Lots/i })).toBeDefined();
     expect(screen.getByText('Dynamic Semantic Attribute Translation Rules')).toBeDefined();
   });

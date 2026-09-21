@@ -1,12 +1,109 @@
 export interface SemanticRule {
   sourceKey: string;
   targetKey: string;
-  transform?: 'celsiusToFahrenheit' | 'toBoolean' | 'toNumber' | 'toStringList';
+  transform?:
+    | 'celsiusToFahrenheit'
+    | 'toBoolean'
+    | 'toNumber'
+    | 'toStringList'
+    | 'percentage'
+    | 'mean'
+    | 'median'
+    | 'mode';
 }
 
 export interface TranslatedAttributes {
   attributes: Record<string, any>;
   rawAttributes: Record<string, any>;
+}
+
+export interface ColumnStats {
+  sum: number;
+  mean: number;
+  median: number;
+  mode: number;
+  count: number;
+}
+
+export function parseNumericValue(val: any): number | undefined {
+  if (typeof val === 'number') return isNaN(val) ? undefined : val;
+  if (val === null || val === undefined) return undefined;
+  const match = String(val).replace(/,/g, '').match(/-?\d+(?:\.\d+)?/);
+  if (!match) return undefined;
+  const num = parseFloat(match[0]);
+  return isNaN(num) ? undefined : num;
+}
+
+export function computeGridAggregates(
+  rawGrid: string[][] = [],
+  rules: SemanticRule[] = []
+): Record<string, ColumnStats> {
+  const result: Record<string, ColumnStats> = {};
+  if (!Array.isArray(rawGrid) || rawGrid.length < 2) return result;
+
+  const headers = (rawGrid[0] || []).map(h => String(h || '').trim());
+  const statRules = (rules || []).filter(r =>
+    ['percentage', 'mean', 'median', 'mode'].includes(r.transform || '')
+  );
+
+  if (statRules.length === 0) return result;
+
+  const neededColumns = new Set(statRules.map(r => r.sourceKey));
+
+  for (const colName of neededColumns) {
+    const colIdx = headers.indexOf(colName);
+    if (colIdx === -1) continue;
+
+    const values: number[] = [];
+    for (let r = 1; r < rawGrid.length; r++) {
+      const row = rawGrid[r];
+      if (!row) continue;
+      const cellVal = row[colIdx];
+      const parsed = parseNumericValue(cellVal);
+      if (parsed !== undefined) {
+        values.push(parsed);
+      }
+    }
+
+    if (values.length === 0) {
+      result[colName] = { sum: 0, mean: 0, median: 0, mode: 0, count: 0 };
+      continue;
+    }
+
+    const count = values.length;
+    const sum = Number(values.reduce((acc, v) => acc + v, 0).toFixed(4));
+    const mean = Number((sum / count).toFixed(4));
+
+    // Median
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const median = sorted.length % 2 !== 0
+      ? sorted[mid]
+      : Number(((sorted[mid - 1] + sorted[mid]) / 2).toFixed(4));
+
+    // Mode (most frequent)
+    const freqMap = new Map<number, number>();
+    let maxFreq = 0;
+    let modeVal = sorted[0];
+    for (const v of sorted) {
+      const f = (freqMap.get(v) || 0) + 1;
+      freqMap.set(v, f);
+      if (f > maxFreq) {
+        maxFreq = f;
+        modeVal = v;
+      }
+    }
+
+    result[colName] = {
+      sum,
+      mean,
+      median,
+      mode: modeVal,
+      count
+    };
+  }
+
+  return result;
 }
 
 function normalizeHeaderKey(header: string): string {
@@ -32,7 +129,8 @@ function parseBooleanValue(val: any): boolean {
  */
 export function translateAttributes(
   rawInput: Record<string, any> = {},
-  rules: SemanticRule[] = []
+  rules: SemanticRule[] = [],
+  aggregates?: Record<string, ColumnStats>
 ): TranslatedAttributes {
   const safeInput = rawInput || {};
   const safeRules = Array.isArray(rules) ? rules : [];
@@ -54,13 +152,27 @@ export function translateAttributes(
       } else if (rule.transform === 'toBoolean') {
         attributes[rule.targetKey] = parseBooleanValue(rawVal);
       } else if (rule.transform === 'toNumber') {
-        const num = parseFloat(String(rawVal).replace(/[^0-9.-]+/g, ''));
-        attributes[rule.targetKey] = isNaN(num) ? rawVal : num;
+        const num = parseNumericValue(rawVal);
+        attributes[rule.targetKey] = num !== undefined ? num : rawVal;
       } else if (rule.transform === 'toStringList') {
         attributes[rule.targetKey] = String(rawVal)
           .split(/[,;]/)
           .map(s => s.trim())
           .filter(Boolean);
+      } else if (rule.transform === 'mean') {
+        attributes[rule.targetKey] = aggregates?.[rule.sourceKey]?.mean ?? 0;
+      } else if (rule.transform === 'median') {
+        attributes[rule.targetKey] = aggregates?.[rule.sourceKey]?.median ?? 0;
+      } else if (rule.transform === 'mode') {
+        attributes[rule.targetKey] = aggregates?.[rule.sourceKey]?.mode ?? 0;
+      } else if (rule.transform === 'percentage') {
+        const totalSum = aggregates?.[rule.sourceKey]?.sum;
+        const num = parseNumericValue(rawVal);
+        if (totalSum && totalSum > 0 && num !== undefined) {
+          attributes[rule.targetKey] = Number(((num / totalSum) * 100).toFixed(4).replace(/\.?0+$/, ''));
+        } else {
+          attributes[rule.targetKey] = 0;
+        }
       } else {
         attributes[rule.targetKey] = rawVal;
       }

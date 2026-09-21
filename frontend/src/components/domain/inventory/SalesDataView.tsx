@@ -16,6 +16,7 @@ import {
   CheckCircle2,
   Award,
   ShieldCheck,
+  ChevronDown,
 } from 'lucide-react';
 import type { RootState } from '../../../store';
 import { fetchSalesRecordsThunk } from '../../../store/slices/ingestionSlice';
@@ -167,184 +168,145 @@ export const SalesDataView: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Top Feature Summary Banner */}
-      <div
-        style={{
-          background: 'linear-gradient(135deg, hsl(142, 76%, 36% / 15%), hsl(var(--primary) / 10%))',
-          border: '1px solid hsl(142, 76%, 46% / 35%)',
-          borderRadius: '16px',
-          padding: '24px 28px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '20px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25)',
-          position: 'relative',
-          overflow: 'hidden',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: '1 1 400px' }}>
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '14px',
-              background: 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--primary)))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              boxShadow: '0 4px 16px hsl(142, 76%, 46% / 40%)',
-              flexShrink: 0,
-            }}
-          >
-            <TrendingUp size={28} />
+    <div className="flex flex-col gap-5" id="insight-sales-panel">
+      {/* 1. Feature Summary Banner (Matching IngestionHubConnectors Style) */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200/80 dark:border-slate-800 overflow-hidden">
+        <div className="p-4 bg-slate-50/70 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 leading-tight">
+                  Sales Data Analytics &amp; Revenue Intelligence
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" /> Live Sales Charts
+                </span>
+              </div>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Interactive revenue trajectory, COGS yield recovery, channel sales distribution, and closeout price realization charts. Raw sales tables are centralized under <strong className="text-slate-700 dark:text-slate-300">Ingestion Pipeline → Sales Ingestion</strong>.
+              </p>
+            </div>
           </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 shadow-2xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Ingestion Sync Active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Real-Time Telemetry Cards Grid (Matching Ingestion Standard) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5" id="sales-telemetry-bar">
+        {/* Card 1: Total Realized Revenue */}
+        <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'hsl(var(--text-primary))', margin: 0 }}>
-                Sales Data Analytics & Revenue Intelligence
-              </h3>
-              <span
-                style={{
-                  background: 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--primary)))',
-                  color: 'white',
-                  fontSize: '0.72rem',
-                  fontWeight: 800,
-                  padding: '4px 12px',
-                  borderRadius: '20px',
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  boxShadow: '0 2px 8px hsl(142, 76%, 46% / 40%)',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                <Sparkles size={12} /> Live Sales Charts
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Total Realized Revenue
+            </p>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-[20px] font-bold font-mono text-emerald-600 dark:text-emerald-400 leading-none">
+                ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </span>
+              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                <ArrowUpRight className="w-3 h-3" /> +14.2%
               </span>
             </div>
-            <p style={{ fontSize: '0.88rem', color: 'hsl(var(--text-secondary))', margin: 0, lineHeight: 1.4 }}>
-              Interactive revenue trajectory, COGS yield recovery, channel sales distribution, and closeout price realization charts.
-              Raw sales tables are centralized under <strong>Ingestion Pipeline → Sales Ingestion</strong>.
-            </p>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <div
-            style={{
-              background: 'hsl(var(--bg-card) / 80%)',
-              border: '1px solid hsl(var(--border))',
-              borderRadius: '10px',
-              padding: '10px 16px',
-              fontSize: '0.8rem',
-              color: 'hsl(var(--text-muted))',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <ShieldCheck size={14} style={{ color: 'hsl(var(--success))' }} />
-            <span>Ingestion Sync Active</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Real-Time KPI Cards Grid */}
-      <div className="kpi-cards-grid">
-        <div className="kpi-card">
-          <div className="kpi-card-header">
-            <span>Total Realized Revenue</span>
-            <DollarSign size={16} style={{ color: 'hsl(var(--success))' }} />
-          </div>
-          <div className="kpi-card-value" style={{ color: 'hsl(var(--success))' }}>
-            ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-          <div className="kpi-card-footer">
-            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'hsl(var(--success))' }}>
-              <ArrowUpRight size={12} /> +14.2% vs previous period
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+            <span className="material-symbols-outlined text-[20px] flex items-center justify-center">
+              monetization_on
             </span>
+            <DollarSign className="w-5 h-5 hidden" aria-hidden="true" />
           </div>
         </div>
 
-        <div className="kpi-card">
-          <div className="kpi-card-header">
-            <span>Volume Sold</span>
-            <ShoppingBag size={16} style={{ color: 'hsl(var(--primary))' }} />
+        {/* Card 2: Volume Sold */}
+        <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Volume Sold
+            </p>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-[20px] font-bold font-mono text-slate-900 dark:text-slate-100 leading-none">
+                {totalVolume.toLocaleString()}
+              </span>
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">cases</span>
+            </div>
           </div>
-          <div className="kpi-card-value">
-            {totalVolume.toLocaleString()} <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>cases</span>
-          </div>
-          <div className="kpi-card-footer">
-            <span>Across cleared surplus batches</span>
-          </div>
-        </div>
-
-        <div className="kpi-card">
-          <div className="kpi-card-header">
-            <span>Average Realized Price</span>
-            <TrendingUp size={16} style={{ color: 'hsl(var(--secondary))' }} />
-          </div>
-          <div className="kpi-card-value" style={{ color: 'hsl(var(--secondary))' }}>
-            ${avgPrice.toFixed(2)} <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>/ cs</span>
-          </div>
-          <div className="kpi-card-footer">
-            <span>Weighted closeout price yield</span>
+          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+            <span className="material-symbols-outlined text-[20px] flex items-center justify-center">shopping_bag</span>
+            <ShoppingBag className="w-5 h-5 hidden" aria-hidden="true" />
           </div>
         </div>
 
-        <div className="kpi-card">
-          <div className="kpi-card-header">
-            <span>Reconciled Transactions</span>
-            <CheckCircle2 size={16} style={{ color: 'hsl(var(--warning))' }} />
+        {/* Card 3: Average Realized Price */}
+        <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Average Realized Price
+            </p>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-[20px] font-bold font-mono text-slate-900 dark:text-slate-100 leading-none">
+                ${avgPrice.toFixed(2)}
+              </span>
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">/ cs</span>
+            </div>
           </div>
-          <div className="kpi-card-value">
-            {reconciledCount} <span style={{ fontSize: '0.85rem', color: 'hsl(var(--text-muted))' }}>/ {totalRecordsCount}</span>
+          <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shrink-0">
+            <span className="material-symbols-outlined text-[20px] flex items-center justify-center">trending_up</span>
+            <TrendingUp className="w-5 h-5 hidden" aria-hidden="true" />
           </div>
-          <div className="kpi-card-footer">
-            <span>Matched to catalog inventory lots</span>
+        </div>
+
+        {/* Card 4: Reconciled Transactions */}
+        <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              Reconciled Transactions
+            </p>
+            <div className="flex items-baseline gap-1 mt-1">
+              <span className="text-[20px] font-bold font-mono text-slate-900 dark:text-slate-100 leading-none">
+                {reconciledCount}
+              </span>
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-mono">
+                / {totalRecordsCount}
+              </span>
+            </div>
+          </div>
+          <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+            <span className="material-symbols-outlined text-[20px] flex items-center justify-center">
+              check_circle
+            </span>
+            <CheckCircle2 className="w-5 h-5 hidden" aria-hidden="true" />
           </div>
         </div>
       </div>
 
-      {/* Global Interactive Filter Bar */}
+      {/* 3. Global Interactive Filter Bar (Matching Ingestion Filter Bar) */}
       <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
-          background: 'hsl(var(--bg-card))',
-          padding: '14px 20px',
-          borderRadius: '12px',
-          border: '1px solid hsl(var(--border))',
-        }}
+        className="bg-slate-50/80 dark:bg-slate-900/80 rounded-xl shadow-xs p-3.5 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        id="sales-filter-bar"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'hsl(var(--text-muted))', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Filter size={14} /> Timeframe:
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+            <Filter className="w-3.5 h-3.5" /> Timeframe:
           </span>
-          <div style={{ display: 'flex', gap: '4px', background: 'hsl(var(--bg-app))', padding: '3px', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
             {(['7d', '30d', '90d', 'ytd'] as const).map((t) => (
               <button
                 key={t}
+                type="button"
                 onClick={() => setTimeframe(t)}
-                style={{
-                  padding: '6px 14px',
-                  fontSize: '0.78rem',
-                  fontWeight: timeframe === t ? 700 : 500,
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: timeframe === t ? 'hsl(var(--success))' : 'transparent',
-                  color: timeframe === t ? 'white' : 'hsl(var(--text-muted))',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  textTransform: 'uppercase',
-                }}
+                className={`px-2.5 py-1 text-[11px] font-semibold rounded-md uppercase transition-all cursor-pointer ${
+                  timeframe === t
+                    ? 'bg-emerald-600 text-white shadow-2xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
+                }`}
               >
                 {t}
               </button>
@@ -352,87 +314,62 @@ export const SalesDataView: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            style={{
-              padding: '7px 12px',
-              borderRadius: '8px',
-              background: 'hsl(var(--bg-app))',
-              color: 'hsl(var(--text-primary))',
-              border: '1px solid hsl(var(--border))',
-              fontSize: '0.8rem',
-              outline: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <option value="all">All Categories</option>
-            <option value="Dry Goods">Dry Goods</option>
-            <option value="Dairy">Dairy</option>
-            <option value="Frozen">Frozen Food</option>
-            <option value="Beverages">Beverages</option>
-            <option value="Bakery">Bakery & Snacks</option>
-          </select>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="relative flex items-center">
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="appearance-none pl-3 pr-8 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-[12.5px] border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-600 shadow-2xs cursor-pointer transition-colors"
+            >
+              <option value="all">All Categories</option>
+              <option value="Dry Goods">Dry Goods</option>
+              <option value="Dairy">Dairy</option>
+              <option value="Frozen">Frozen Food</option>
+              <option value="Beverages">Beverages</option>
+              <option value="Bakery">Bakery &amp; Snacks</option>
+            </select>
+            <ChevronDown className="w-4 h-4 absolute right-2.5 text-slate-400 pointer-events-none" />
+          </div>
 
-          <select
-            value={dcFilter}
-            onChange={(e) => setDcFilter(e.target.value)}
-            style={{
-              padding: '7px 12px',
-              borderRadius: '8px',
-              background: 'hsl(var(--bg-app))',
-              color: 'hsl(var(--text-primary))',
-              border: '1px solid hsl(var(--border))',
-              fontSize: '0.8rem',
-              outline: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <option value="all">All Warehouses</option>
-            {uniqueDCs.map((dc) => (
-              <option key={dc} value={dc}>
-                {dc}
-              </option>
-            ))}
-          </select>
+          <div className="relative flex items-center">
+            <select
+              value={dcFilter}
+              onChange={(e) => setDcFilter(e.target.value)}
+              className="appearance-none pl-3 pr-8 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-[12.5px] border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-600 shadow-2xs cursor-pointer transition-colors"
+            >
+              <option value="all">All Warehouses</option>
+              {uniqueDCs.map((dc) => (
+                <option key={dc} value={dc}>
+                  {dc}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="w-4 h-4 absolute right-2.5 text-slate-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 
-      {/* Interactive Charts Dashboard Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))', gap: '24px' }}>
-
+      {/* 4. Interactive Charts Dashboard Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Chart 1: Sales Revenue & Volume Trajectory */}
-        <div
-          style={{
-            background: 'hsl(var(--bg-card))',
-            borderRadius: '16px',
-            border: '1px solid hsl(var(--border))',
-            padding: '24px',
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs flex flex-col gap-4">
+          <div className="flex justify-between items-start">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <BarChart3 size={18} style={{ color: 'hsl(var(--success))' }} />
-                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--text-primary))', margin: 0 }}>
-                  Realized Closeout Revenue & Volume Trajectory
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0">
+                  Realized Closeout Revenue &amp; Volume Trajectory
                 </h4>
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', margin: '4px 0 0 0' }}>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 m-0">
                 Total Revenue ($) vs. Volume (Cases Sold) over {timeframe.toUpperCase()}
               </p>
             </div>
           </div>
 
           {/* SVG Visual Area Chart */}
-          <div style={{ height: '220px', width: '100%', position: 'relative', background: 'hsl(var(--bg-app))', borderRadius: '12px', border: '1px solid hsl(var(--border) / 50%)', padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <svg viewBox="0 0 500 150" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+          <div className="h-[220px] w-full relative bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-200/60 dark:border-slate-800/60 p-4 flex flex-col justify-between">
+            <svg viewBox="0 0 500 150" className="w-full h-full overflow-visible">
               <defs>
                 <linearGradient id="gradSalesRev" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="hsl(var(--success))" stopOpacity="0.45" />
@@ -445,9 +382,9 @@ export const SalesDataView: React.FC = () => {
               </defs>
 
               {/* Grid Lines */}
-              <line x1="0" y1="25" x2="500" y2="25" stroke="hsl(var(--border))" strokeDasharray="4 4" opacity="0.4" />
-              <line x1="0" y1="65" x2="500" y2="65" stroke="hsl(var(--border))" strokeDasharray="4 4" opacity="0.4" />
-              <line x1="0" y1="105" x2="500" y2="105" stroke="hsl(var(--border))" strokeDasharray="4 4" opacity="0.4" />
+              <line x1="0" y1="25" x2="500" y2="25" stroke="currentColor" className="text-slate-200 dark:text-slate-800" strokeDasharray="4 4" />
+              <line x1="0" y1="65" x2="500" y2="65" stroke="currentColor" className="text-slate-200 dark:text-slate-800" strokeDasharray="4 4" />
+              <line x1="0" y1="105" x2="500" y2="105" stroke="currentColor" className="text-slate-200 dark:text-slate-800" strokeDasharray="4 4" />
 
               {/* Area 1: Revenue ($) */}
               <path d="M 0,110 Q 100,50 200,75 T 400,30 L 500,50 L 500,140 L 0,140 Z" fill="url(#gradSalesRev)" />
@@ -462,113 +399,89 @@ export const SalesDataView: React.FC = () => {
                 const x = (i / (trajectoryData.length - 1)) * 500;
                 return (
                   <g key={i}>
-                    <circle cx={x} cy={50 + Math.sin(i) * 20} r="5" fill="hsl(var(--success))" stroke='white' strokeWidth="2" />
+                    <circle cx={x} cy={50 + Math.sin(i) * 20} r="5" fill="hsl(var(--success))" stroke="white" strokeWidth="2" />
                   </g>
                 );
               })}
             </svg>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'hsl(var(--text-muted))', borderTop: '1px solid hsl(var(--border))', paddingTop: '8px' }}>
+            <div className="flex justify-between text-[11px] font-mono text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2">
               {trajectoryData.map((d, i) => (
                 <span key={i}>{d.period}</span>
               ))}
             </div>
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'hsl(var(--text-secondary))' }}>
-            <div style={{ display: 'flex', gap: '16px' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'hsl(var(--success))' }} /> Realized Revenue ($)
+          <div className="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400">
+            <div className="flex gap-4">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" /> Realized Revenue ($)
               </span>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: 'hsl(var(--primary))' }} /> Case Volume Sold
+              <span className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-blue-600" /> Case Volume Sold
               </span>
             </div>
           </div>
         </div>
 
         {/* Chart 2: Revenue Recovery vs Original COGS by Category */}
-        <div
-          style={{
-            background: 'hsl(var(--bg-card))',
-            borderRadius: '16px',
-            border: '1px solid hsl(var(--border))',
-            padding: '24px',
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs flex flex-col gap-4">
+          <div className="flex justify-between items-start">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Layers size={18} style={{ color: 'hsl(var(--primary))' }} />
-                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--text-primary))', margin: 0 }}>
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0">
                   COGS Recovery % by Product Category
                 </h4>
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', margin: '4px 0 0 0' }}>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 m-0">
                 Comparison of Original Ingested COGS vs. Realized Closeout Sales
               </p>
             </div>
           </div>
 
-          <div style={{ height: '220px', background: 'hsl(var(--bg-app))', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border) / 50%)', display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: '10px' }}>
+          <div className="h-[220px] bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200/60 dark:border-slate-800/60 flex flex-col justify-around gap-2.5">
             {categoryRecoveryData.map((cat, idx) => (
-              <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-                  <span style={{ fontWeight: 700, color: 'hsl(var(--text-primary))' }}>{cat.category}</span>
-                  <span style={{ color: 'hsl(var(--text-muted))' }}>
-                    ${cat.revenue.toLocaleString()} / ${cat.cogs.toLocaleString()} COGS •{' '}
-                    <strong style={{ color: cat.color }}>{cat.recoveryPct}% Recovery</strong>
+              <div key={idx} className="flex flex-col gap-1">
+                <div className="flex justify-between text-xs">
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">{cat.category}</span>
+                  <span className="text-slate-500 dark:text-slate-400">
+                    ${cat.revenue.toLocaleString()} / ${cat.cogs.toLocaleString()} COGS <span className="text-slate-300 dark:text-slate-600">·</span>{' '}
+                    <strong className="text-slate-800 dark:text-slate-200 font-mono">{cat.recoveryPct}% Recovery</strong>
                   </span>
                 </div>
-                <div style={{ height: '8px', width: '100%', background: 'hsl(var(--border))', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${cat.recoveryPct}%`, background: cat.color, borderRadius: '4px' }} />
+                <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div style={{ width: `${cat.recoveryPct}%` }} className="h-full bg-emerald-500 rounded-full" />
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', textAlign: 'right' }}>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 text-right">
             <span>Target COGS recovery benchmark: <strong>65.0%</strong></span>
           </div>
         </div>
 
         {/* Chart 3: Buyer Channel Revenue Share */}
-        <div
-          style={{
-            background: 'hsl(var(--bg-card))',
-            borderRadius: '16px',
-            border: '1px solid hsl(var(--border))',
-            padding: '24px',
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs flex flex-col gap-4">
+          <div className="flex justify-between items-start">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <PieChart size={18} style={{ color: 'hsl(var(--secondary))' }} />
-                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--text-primary))', margin: 0 }}>
+              <div className="flex items-center gap-2">
+                <PieChart className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0">
                   Sales Channel Revenue Share
                 </h4>
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', margin: '4px 0 0 0' }}>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 m-0">
                 Distribution of closeout revenue across secondary buyer segments
               </p>
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '20px', alignItems: 'center', background: 'hsl(var(--bg-app))', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border) / 50%)', minHeight: '220px' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-5 items-center bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200/60 dark:border-slate-800/60 min-h-[220px]">
             {/* SVG Donut Chart */}
-            <div style={{ width: '140px', height: '140px', position: 'relative', margin: '0 auto' }}>
-              <svg viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+            <div className="w-[130px] h-[130px] relative mx-auto">
+              <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                 {/* Off-Price Wholesalers (42%) */}
                 <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeDasharray="42 58" strokeDashoffset="0" />
                 {/* Regional Liquidators (28%) */}
@@ -578,24 +491,24 @@ export const SalesDataView: React.FC = () => {
                 {/* Export (12%) */}
                 <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(45, 93%, 47%)" strokeWidth="4" strokeDasharray="12 88" strokeDashoffset="-88" />
               </svg>
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'hsl(var(--text-primary))', display: 'block' }}>100%</span>
-                <span style={{ fontSize: '0.65rem', color: 'hsl(var(--text-muted))' }}>Revenue Share</span>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                <span className="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 block leading-none">100%</span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400">Revenue Share</span>
               </div>
             </div>
 
             {/* Legend Progress List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="flex flex-col gap-2.5">
               {channelBreakdown.map((ch, idx) => (
                 <div key={idx}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '3px' }}>
-                    <span style={{ color: ch.color, fontWeight: 600 }}>{ch.channel}</span>
-                    <span style={{ color: 'hsl(var(--text-primary))', fontWeight: 700 }}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="font-semibold text-slate-900 dark:text-slate-100">{ch.channel}</span>
+                    <span className="text-slate-600 dark:text-slate-400 font-mono">
                       {ch.pct}% (${ch.rev.toLocaleString()})
                     </span>
                   </div>
-                  <div style={{ height: '6px', width: '100%', background: 'hsl(var(--border))', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${ch.pct}%`, background: ch.color }} />
+                  <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div style={{ width: `${ch.pct}%` }} className="h-full bg-emerald-500" />
                   </div>
                 </div>
               ))}
@@ -604,35 +517,23 @@ export const SalesDataView: React.FC = () => {
         </div>
 
         {/* Chart 4: Price Realization Velocity vs Remaining Shelf Life (RSL Decay Scatter Matrix) */}
-        <div
-          style={{
-            background: 'hsl(var(--bg-card))',
-            borderRadius: '16px',
-            border: '1px solid hsl(var(--border))',
-            padding: '24px',
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs flex flex-col gap-4">
+          <div className="flex justify-between items-start">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Tag size={18} style={{ color: 'hsl(45, 93%, 47%)' }} />
-                <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'hsl(var(--text-primary))', margin: 0 }}>
+              <div className="flex items-center gap-2">
+                <Tag className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0">
                   Price Realization vs. Days to Expiry (RSL Decay)
                 </h4>
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', margin: '4px 0 0 0' }}>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-1 m-0">
                 Closeout unit price ($/cs) realization curve mapped against shelf life at sale
               </p>
             </div>
           </div>
 
-          <div style={{ height: '220px', background: 'hsl(var(--bg-app))', padding: '16px', borderRadius: '12px', border: '1px solid hsl(var(--border) / 50%)', position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <svg viewBox="0 0 500 150" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+          <div className="h-[220px] bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200/60 dark:border-slate-800/60 relative flex flex-col justify-between">
+            <svg viewBox="0 0 500 150" className="w-full h-full overflow-visible">
               {/* Trendline */}
               <path d="M 50,130 C 150,110 300,50 450,20" fill="none" stroke="hsl(45, 93%, 47%)" strokeWidth="2" strokeDasharray="6 4" opacity="0.8" />
 
@@ -643,7 +544,7 @@ export const SalesDataView: React.FC = () => {
                 const isSelected = activeScatterPoint?.id === pt.id;
 
                 return (
-                  <g key={pt.id} onClick={() => setActiveScatterPoint(pt)} style={{ cursor: 'pointer' }}>
+                  <g key={pt.id} onClick={() => setActiveScatterPoint(pt)} className="cursor-pointer">
                     <circle
                       cx={cx}
                       cy={cy}
@@ -652,7 +553,7 @@ export const SalesDataView: React.FC = () => {
                       stroke="hsl(45, 93%, 47%)"
                       strokeWidth="2"
                     />
-                    <text x={cx + 8} y={cy + 3} fill="hsl(var(--text-muted))" fontSize="10" fontWeight="600">
+                    <text x={cx + 8} y={cy + 3} className="fill-slate-500 dark:fill-slate-400 text-[10px] font-mono font-semibold">
                       ${pt.price.toFixed(1)}
                     </text>
                   </g>
@@ -660,7 +561,7 @@ export const SalesDataView: React.FC = () => {
               })}
             </svg>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'hsl(var(--text-muted))', borderTop: '1px solid hsl(var(--border))', paddingTop: '6px' }}>
+            <div className="flex justify-between text-[11px] font-mono text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2">
               <span>0 Days (Expiring)</span>
               <span>30 Days RSL</span>
               <span>60 Days RSL</span>
@@ -669,96 +570,88 @@ export const SalesDataView: React.FC = () => {
           </div>
 
           {activeScatterPoint ? (
-            <div style={{ background: 'hsl(var(--bg-app))', padding: '10px 14px', borderRadius: '8px', border: '1px solid hsl(45, 93%, 47% / 40%)', fontSize: '0.78rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="bg-amber-50/70 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800/60 text-xs flex justify-between items-center text-slate-800 dark:text-slate-200">
               <div>
-                <strong>{activeScatterPoint.product}</strong> ({activeScatterPoint.sku}) • <span style={{ color: 'hsl(45, 93%, 47%)' }}>{activeScatterPoint.rslDays} Days RSL</span>
+                <strong>{activeScatterPoint.product}</strong> ({activeScatterPoint.sku}) <span className="text-slate-400">·</span>{' '}
+                <span className="text-amber-600 dark:text-amber-400 font-semibold">{activeScatterPoint.rslDays} Days RSL</span>
               </div>
-              <div style={{ fontWeight: 700 }}>
-                Sold at ${activeScatterPoint.price.toFixed(2)}/cs ({activeScatterPoint.recovery} COGS) to {activeScatterPoint.buyer}
+              <div className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                ${activeScatterPoint.price.toFixed(2)}/cs ({activeScatterPoint.recovery} COGS)
               </div>
             </div>
           ) : (
-            <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))', textAlign: 'center' }}>
+            <div className="text-[11px] text-slate-400 dark:text-slate-500 text-center">
               Click any point on the scatter matrix to inspect transaction details.
             </div>
           )}
         </div>
-
       </div>
 
-      {/* Leaderboards Section: Top Buyers & Warehouses */}
-      <div
-        style={{
-          background: 'hsl(var(--bg-card))',
-          borderRadius: '16px',
-          border: '1px solid hsl(var(--border))',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+      {/* 5. Leaderboards Section: Top Buyers & Warehouses (Matching Ingestion Table Card) */}
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200/80 dark:border-slate-800 overflow-hidden mb-6">
+        <div className="p-4 bg-slate-50/70 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'hsl(var(--text-primary))', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Award size={18} style={{ color: 'hsl(var(--warning))' }} /> Sales Channel & Fulfillment Leaderboard
+            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0 flex items-center gap-2">
+              <Award className="w-4 h-4 text-amber-500" /> Sales Channel &amp; Fulfillment Leaderboard
             </h4>
-            <p style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))', margin: '4px 0 0 0' }}>
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 m-0">
               Top closeout buying partners and top performing distribution fulfillment nodes
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '4px', background: 'hsl(var(--bg-app))', padding: '3px', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}>
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
             <button
+              type="button"
               onClick={() => setActiveLeaderboardTab('buyers')}
-              style={{
-                padding: '6px 14px',
-                fontSize: '0.78rem',
-                fontWeight: activeLeaderboardTab === 'buyers' ? 700 : 500,
-                borderRadius: '6px',
-                border: 'none',
-                background: activeLeaderboardTab === 'buyers' ? 'hsl(var(--primary))' : 'transparent',
-                color: activeLeaderboardTab === 'buyers' ? 'white' : 'hsl(var(--text-muted))',
-                cursor: 'pointer',
-              }}
+              className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeLeaderboardTab === 'buyers'
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
             >
-              <Users size={12} style={{ display: 'inline', marginRight: '4px' }} /> Top Buyers
+              <Users className="w-3.5 h-3.5" />
+              <span>Top Buyers</span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveLeaderboardTab('dcs')}
-              style={{
-                padding: '6px 14px',
-                fontSize: '0.78rem',
-                fontWeight: activeLeaderboardTab === 'dcs' ? 700 : 500,
-                borderRadius: '6px',
-                border: 'none',
-                background: activeLeaderboardTab === 'dcs' ? 'hsl(var(--primary))' : 'transparent',
-                color: activeLeaderboardTab === 'dcs' ? 'white' : 'hsl(var(--text-muted))',
-                cursor: 'pointer',
-              }}
+              className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeLeaderboardTab === 'dcs'
+                  ? 'bg-blue-600 text-white shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
+              }`}
             >
-              <Building2 size={12} style={{ display: 'inline', marginRight: '4px' }} /> Top Warehouses / DCs
+              <Building2 className="w-3.5 h-3.5" />
+              <span>Top Warehouses / DCs</span>
             </button>
           </div>
         </div>
 
         {activeLeaderboardTab === 'buyers' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
             {topBuyers.map((b, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-app))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border) / 50%)', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 240px' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'hsl(var(--text-muted))', width: '24px' }}>#{idx + 1}</span>
+              <div
+                key={idx}
+                className="px-4 py-3 flex items-center justify-between hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors flex-wrap gap-2"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono font-bold text-xs flex items-center justify-center">
+                    #{idx + 1}
+                  </span>
                   <div>
-                    <strong style={{ fontSize: '0.88rem', color: 'hsl(var(--text-primary))' }}>{b.name}</strong>
-                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>{b.casesPurchased.toLocaleString()} cases purchased</div>
+                    <div className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {b.name}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                      {b.casesPurchased.toLocaleString()} cases purchased
+                    </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'hsl(var(--success))' }}>
+                <div className="flex items-center gap-4">
+                  <span className="font-mono font-bold text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">
                     ${b.totalSpent.toLocaleString()}
                   </span>
-                  <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px', background: 'hsl(var(--primary) / 15%)', color: 'hsl(var(--primary))', fontWeight: 700 }}>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono bg-blue-50 text-blue-700 border border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60">
                     {b.sharePct}% Share
                   </span>
                 </div>
@@ -766,21 +659,30 @@ export const SalesDataView: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
             {topWarehouses.map((wh, idx) => (
-              <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'hsl(var(--bg-app))', padding: '12px 16px', borderRadius: '10px', border: '1px solid hsl(var(--border) / 50%)', flexWrap: 'wrap', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 240px' }}>
-                  <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'hsl(var(--text-muted))', width: '24px' }}>#{idx + 1}</span>
+              <div
+                key={idx}
+                className="px-4 py-3 flex items-center justify-between hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors flex-wrap gap-2"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono font-bold text-xs flex items-center justify-center">
+                    #{idx + 1}
+                  </span>
                   <div>
-                    <strong style={{ fontSize: '0.88rem', color: 'hsl(var(--text-primary))' }}>{wh.name}</strong>
-                    <div style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>{wh.casesCleared.toLocaleString()} cases cleared</div>
+                    <div className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {wh.name}
+                    </div>
+                    <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
+                      {wh.casesCleared.toLocaleString()} cases cleared
+                    </div>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <span style={{ fontSize: '0.95rem', fontWeight: 800, color: 'hsl(var(--success))' }}>
+                <div className="flex items-center gap-4">
+                  <span className="font-mono font-bold text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">
                     ${wh.clearedRevenue.toLocaleString()}
                   </span>
-                  <span style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px', background: 'hsl(142, 76%, 46% / 15%)', color: 'hsl(var(--success))', fontWeight: 700 }}>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60">
                     {wh.recoveryPct}% Recovery
                   </span>
                 </div>
@@ -792,3 +694,5 @@ export const SalesDataView: React.FC = () => {
     </div>
   );
 };
+
+export default SalesDataView;

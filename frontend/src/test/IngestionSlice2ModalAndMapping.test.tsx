@@ -276,7 +276,7 @@ describe('Issue #0120: Slice 2 - Unified Ingestion Modal & In-Situ Mapping Hando
 
       // The Ingestion Mapping Window should be mounted in-situ in the buyers panel
       await waitFor(() => {
-        expect(screen.getByText('Confirm Buyer CSV Mapping')).toBeDefined();
+        expect(screen.getByText('Confirm Buyer Data Mapping')).toBeDefined();
         expect(screen.getByText('buyers_network.csv')).toBeDefined();
         expect(screen.getByRole('button', { name: /Confirm & Ingest Buyers/i })).toBeDefined();
       });
@@ -299,7 +299,8 @@ describe('Issue #0120: Slice 2 - Unified Ingestion Modal & In-Situ Mapping Hando
         </Provider>
       );
 
-      expect(screen.getByText('Extract Preview: cancel_me.csv')).toBeDefined();
+      expect(screen.getByText('Confirm Inventory Data Mapping')).toBeDefined();
+      expect(screen.getByText('cancel_me.csv')).toBeDefined();
 
       // Click cancel button on mapping header
       const cancelBtn = screen.getByTitle('Cancel');
@@ -307,7 +308,7 @@ describe('Issue #0120: Slice 2 - Unified Ingestion Modal & In-Situ Mapping Hando
 
       // Result should be cleared from store and mapping window unmounted
       expect(testStore.getState().ingestion.inventoryParsedResult).toBe(null);
-      expect(screen.queryByText('Extract Preview: cancel_me.csv')).toBeNull();
+      expect(screen.queryByText('Confirm Inventory Data Mapping')).toBeNull();
     });
 
     it('confirming the in-situ mapping window commits records and clears mapping window', async () => {

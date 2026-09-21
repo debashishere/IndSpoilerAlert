@@ -49,19 +49,26 @@ export const InventoryMappingPreview: React.FC<InventoryMappingPreviewProps> = (
       }`}
     >
       <div className="preview-container flex flex-col gap-4 h-full">
+        {/* Dynamic Semantic Attribute Translation Rules - Top Section */}
+        <SemanticRulesEditor
+          rawHeaders={rawHeaders}
+          rawGrid={inventoryParsedResult.rawGrid}
+          pipelineType="inventory"
+        />
+
         {/* Header Bar */}
         <div className="preview-header-bar flex justify-between items-center flex-wrap gap-4 pb-3 border-b border-slate-200">
           <div>
             <div className="flex items-center gap-2.5 mb-1">
               <CheckCircle2 className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-bold text-slate-900">
-                Extract Preview: {inventoryParsedResult.fileName}
+              <h3 className="text-lg font-bold text-slate-900 m-0">
+                Confirm Inventory Data Mapping
               </h3>
               <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full font-medium">
                 {inventoryParsedResult.fileName}
               </span>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 m-0">
               Verify suggested column templates and adjust manual overrides. Scroll horizontally to inspect grid.
             </p>
           </div>
@@ -155,9 +162,6 @@ export const InventoryMappingPreview: React.FC<InventoryMappingPreviewProps> = (
             </tbody>
           </table>
         </div>
-
-        {/* Semantic Translation Rules */}
-        <SemanticRulesEditor rawHeaders={rawHeaders} />
       </div>
     </div>
   );

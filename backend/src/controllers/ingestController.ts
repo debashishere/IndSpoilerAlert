@@ -84,7 +84,7 @@ export async function confirmIngest(req: Request, res: Response) {
 
 export async function confirmSalesIngest(req: Request, res: Response) {
   const documentId = req.body.documentId || req.body._id || req.body.ingestionJobId || req.body.jobId;
-  const { supplierId, mappings, saveTemplate, templateName } = req.body;
+  const { supplierId, mappings, saveTemplate, templateName, semanticRules } = req.body;
   if (!documentId) {
     return res.status(400).json({ error: 'documentId is required.' });
   }
@@ -101,7 +101,8 @@ export async function confirmSalesIngest(req: Request, res: Response) {
       supplierId,
       mappings,
       saveTemplate,
-      templateName
+      templateName,
+      semanticRules
     );
 
     return res.status(200).json(result);

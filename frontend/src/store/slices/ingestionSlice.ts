@@ -40,6 +40,7 @@ export interface IngestionState {
   salesError: string | null;
   salesParsedResult: IngestionParsedResult | null;
   salesMappings: Record<string, string>;
+  salesSemanticRules: SemanticRule[];
   salesIsImported: boolean;
   salesImportCount: number;
   salesImportWarnings: string[];
@@ -87,6 +88,7 @@ const initialState: IngestionState = {
   salesError: null,
   salesParsedResult: null,
   salesMappings: {},
+  salesSemanticRules: [],
   salesIsImported: false,
   salesImportCount: 0,
   salesImportWarnings: [],
@@ -209,6 +211,12 @@ export const ingestionSlice = createSlice({
       }
       state.salesMappings = updated;
     },
+    addSalesSemanticRule: (state, action: PayloadAction<SemanticRule>) => {
+      state.salesSemanticRules.push(action.payload);
+    },
+    removeSalesSemanticRule: (state, action: PayloadAction<number>) => {
+      state.salesSemanticRules.splice(action.payload, 1);
+    },
     setSalesImportSuccess: (state, action: PayloadAction<{ count: number; warnings?: string[] }>) => {
       state.salesIsImported = true;
       state.salesImportCount = action.payload.count;
@@ -307,6 +315,8 @@ export const {
   setSalesError,
   setSalesParsedResult,
   updateSalesMapping,
+  addSalesSemanticRule,
+  removeSalesSemanticRule,
   setSalesImportSuccess,
   setSalesRecords,
   setSalesRecordsLoading,
