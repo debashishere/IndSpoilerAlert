@@ -20,14 +20,25 @@ export interface AuthState {
   error: string | null;
 }
 
+export const BUYER_TOKEN_STORAGE_KEY = 'marketplace_buyer_token';
+
+const getInitialToken = (): string | null => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    return localStorage.getItem(BUYER_TOKEN_STORAGE_KEY);
+  }
+  return null;
+};
+
+const initialToken = getInitialToken();
+
 const initialState: AuthState = {
   buyer: null,
-  token: null,
+  token: initialToken,
   isAuthenticated: false,
   isAuthModalOpen: false,
   authModalMode: 'login',
   pendingEmail: null,
-  loading: false,
+  loading: Boolean(initialToken),
   error: null,
 };
 
@@ -73,10 +84,10 @@ export const verifyBuyerTokenThunk = createAsyncThunk(
 
 export const checkBuyerSessionThunk = createAsyncThunk(
   'auth/checkBuyerSession',
-  async (_, { getState, rejectWithValue }) => {
+  async (argToken: string | undefined, { getState, rejectWithValue }) => {
     try {
       const state = getState() as RootState;
-      const token = state.auth?.token;
+      const token = argToken || state.auth?.token || (typeof window !== 'undefined' ? localStorage.getItem(BUYER_TOKEN_STORAGE_KEY) : null);
       if (!token) return { authenticated: false };
 
       const response = await fetch('/api/v1/marketplace/auth/session', {
@@ -84,7 +95,7 @@ export const checkBuyerSessionThunk = createAsyncThunk(
       });
       const data = await response.json();
       if (data.authenticated) {
-        return { authenticated: true, buyer: data.buyer };
+        return { authenticated: true, buyer: data.buyer, token };
       }
       return { authenticated: false };
     } catch (err: any) {
@@ -123,6 +134,9 @@ export const authSlice = createSlice({
       state.isAuthModalOpen = false;
       state.pendingEmail = null;
       state.error = null;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem(BUYER_TOKEN_STORAGE_KEY);
+      }
     },
   },
   extraReducers: (builder) => {
@@ -150,18 +164,39 @@ export const authSlice = createSlice({
         state.token = action.payload.token;
         state.isAuthenticated = true;
         state.isAuthModalOpen = false;
+        if (typeof window !== 'undefined' && window.localStorage && action.payload.token) {
+          localStorage.setItem(BUYER_TOKEN_STORAGE_KEY, action.payload.token);
+        }
       })
       .addCase(verifyBuyerTokenThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
       })
+      .addCase(checkBuyerSessionThunk.pending, (state) => {
+        state.loading = true;
+      })
       .addCase(checkBuyerSessionThunk.fulfilled, (state, action) => {
+        state.loading = false;
         if (action.payload.authenticated && action.payload.buyer) {
           state.buyer = action.payload.buyer;
+          state.token = action.payload.token || state.token;
           state.isAuthenticated = true;
         } else {
           state.buyer = null;
+          state.token = null;
           state.isAuthenticated = false;
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.removeItem(BUYER_TOKEN_STORAGE_KEY);
+          }
+        }
+      })
+      .addCase(checkBuyerSessionThunk.rejected, (state) => {
+        state.loading = false;
+        state.buyer = null;
+        state.token = null;
+        state.isAuthenticated = false;
+        if (typeof window !== 'undefined' && window.localStorage) {
+          localStorage.removeItem(BUYER_TOKEN_STORAGE_KEY);
         }
       });
   },
@@ -170,6 +205,7 @@ export const authSlice = createSlice({
 export const { openAuthModal, closeAuthModal, setBuyerAuth, logoutBuyer } = authSlice.actions;
 
 export const selectBuyer = (state: RootState) => state.auth?.buyer;
+export const selectToken = (state: RootState) => state.auth?.token;
 export const selectIsAuthenticated = (state: RootState) => state.auth?.isAuthenticated;
 export const selectIsAuthModalOpen = (state: RootState) => state.auth?.isAuthModalOpen;
 export const selectAuthModalMode = (state: RootState) => state.auth?.authModalMode;

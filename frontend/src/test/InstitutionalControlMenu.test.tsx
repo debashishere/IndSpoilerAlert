@@ -129,4 +129,28 @@ describe('Slice 2: InstitutionalControlMenu & Profile Pill Popover', () => {
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('renders Public Marketplace Portal launcher link with external attributes and triggers onClose when clicked', () => {
+    const onClose = vi.fn();
+    render(
+      <Provider store={store}>
+        <ThemeProvider>
+          <InstitutionalControlMenu
+            isOpen={true}
+            onClose={onClose}
+          />
+        </ThemeProvider>
+      </Provider>
+    );
+
+    const launcher = screen.getByRole('link', { name: /Launch Public Marketplace Portal/i });
+    expect(launcher).toBeInTheDocument();
+    expect(launcher).toHaveAttribute('href', '/marketplace');
+    expect(launcher).toHaveAttribute('target', '_blank');
+    expect(launcher).toHaveAttribute('rel', 'noopener noreferrer');
+
+    fireEvent.click(launcher);
+    expect(onClose).toHaveBeenCalled();
+  });
 });
+

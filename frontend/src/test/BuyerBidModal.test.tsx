@@ -113,6 +113,10 @@ describe('0087 — BuyerBidModal Component & Bidding Verification Workflow', () 
         expect.stringContaining('/marketplace/bids'),
         expect.objectContaining({
           method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer token_xyz',
+          }),
           body: expect.stringContaining('"buyerEmail":"logged.in@verified.com"'),
         })
       );

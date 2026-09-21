@@ -40,6 +40,7 @@ describe('Slice 1: GlobalNavigationBar Web Foundation & Primary Tab Routing', ()
     expect(marketplaceLauncher).toBeInTheDocument();
     expect(marketplaceLauncher).toHaveAttribute('href', '/marketplace');
     expect(marketplaceLauncher).toHaveAttribute('target', '_blank');
+    expect(marketplaceLauncher).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
   it('applies active styling to the currently active Redux tab', () => {

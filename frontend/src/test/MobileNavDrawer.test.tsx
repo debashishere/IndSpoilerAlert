@@ -97,6 +97,28 @@ describe('Slice 4: MobileNavDrawer & Responsive Slide-Over Drawer', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('renders Public Marketplace launcher with rel="noopener noreferrer" and dismisses drawer on click', () => {
+    const onClose = vi.fn();
+    render(
+      <Provider store={store}>
+        <MobileNavDrawer
+          isOpen={true}
+          onClose={onClose}
+        />
+      </Provider>
+    );
+
+    const marketplaceLink = screen.getByRole('link', { name: /Launch Public Marketplace Portal/i });
+    expect(marketplaceLink).toBeInTheDocument();
+    expect(marketplaceLink).toHaveAttribute('href', '/marketplace');
+    expect(marketplaceLink).toHaveAttribute('target', '_blank');
+    expect(marketplaceLink).toHaveAttribute('rel', 'noopener noreferrer');
+
+    fireEvent.click(marketplaceLink);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+
   it('renders Terminal Node card and compliance tags in footer', () => {
     render(
       <Provider store={store}>
@@ -132,7 +154,7 @@ describe('Slice 4: MobileNavDrawer & Responsive Slide-Over Drawer', () => {
 
   it('closes drawer when clicking close button, backdrop, or pressing Escape', () => {
     const onClose = vi.fn();
-    const { rerender } = render(
+    render(
       <Provider store={store}>
         <MobileNavDrawer isOpen={true} onClose={onClose} />
       </Provider>

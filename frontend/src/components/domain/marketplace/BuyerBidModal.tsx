@@ -15,6 +15,7 @@ import {
 import {
   selectIsAuthenticated,
   selectBuyer,
+  selectToken,
   selectAuthLoading,
   sendBuyerVerificationThunk,
   verifyBuyerTokenThunk,
@@ -40,6 +41,7 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const currentBuyer = useSelector(selectBuyer);
+  const token = useSelector(selectToken);
   const authLoading = useSelector(selectAuthLoading);
 
   const [quantity, setQuantity] = useState<number>(10);
@@ -133,11 +135,16 @@ export const BuyerBidModal: React.FC<BuyerBidModalProps> = ({
         ? `${cleanBase}/bids`
         : `${cleanBase}/marketplace/bids`;
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           listingId: listing._id,
           buyerEmail: buyerEmailStr,
