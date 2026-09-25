@@ -116,4 +116,17 @@ describe('SendGrid Mail Integration', () => {
     expect(res.success).toBe(true);
     expect(res.messageId).toBe('sg-campaign-msg');
   });
+
+  it('should support AWS SES SMTP configuration when AWS_SES_SMTP_USER and AWS_SES_SMTP_PASS are present', async () => {
+    delete process.env.SENDGRID_API_KEY;
+    process.env.AWS_SES_SMTP_USER = 'ses-user-123';
+    process.env.AWS_SES_SMTP_PASS = 'ses-pass-456';
+    process.env.AWS_SES_REGION = 'us-east-1';
+
+    const { getDefaultMailTransporter } = require('../services/emailService');
+    const transporter = await getDefaultMailTransporter();
+    expect(transporter).toBeDefined();
+    expect(transporter.options.host).toBe('email-smtp.us-east-1.amazonaws.com');
+  });
 });
+
