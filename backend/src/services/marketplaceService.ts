@@ -12,7 +12,9 @@ import DistributionCenter from '../models/DistributionCenter';
 import ComplianceDocument from '../models/ComplianceDocument';
 import AutomationRun from '../models/AutomationRun';
 
-const SIDECAR_URL = process.env.SIDECAR_URL || 'http://localhost:8000';
+export function getSidecarUrl(): string {
+  return process.env.SIDE_CAR_URL || process.env.SIDECAR_URL || 'http://localhost:8000';
+}
 
 function calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 3958.8; // Radius of the Earth in miles
@@ -54,7 +56,7 @@ export async function suggestPricing(
   const inputQty = quantity !== undefined ? quantity : lot.quantityCases;
 
   // Call Python sidecar pricing engine
-  const sidecarRes = await axios.post(`${SIDECAR_URL}/suggest-pricing`, {
+  const sidecarRes = await axios.post(`${getSidecarUrl()}/suggest-pricing`, {
     days_remaining: inputDays,
     quantity: inputQty,
     original_price: lot.costPerCase,
@@ -131,7 +133,7 @@ export async function recommendBuyers(listingId: string) {
   });
 
   // Call Python sidecar matching engine
-  const sidecarRes = await axios.post(`${SIDECAR_URL}/recommend-buyers`, {
+  const sidecarRes = await axios.post(`${getSidecarUrl()}/recommend-buyers`, {
     product_name: product.description,
     category: product.category,
     supplier_id: lot.supplierId.toString(),

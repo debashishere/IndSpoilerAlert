@@ -7,7 +7,12 @@ describe('0086 — Buyer Authentication & Email Verification API (/api/v1/market
   let devToken: string;
   let sessionAuthToken: string;
 
-  it('POST /api/v1/marketplace/auth/send-verification sends verification OTP/token', async () => {
+  beforeAll(() => {
+    delete process.env.REAL_SMTP;
+  });
+
+  it('POST /api/v1/marketplace/auth/send-verification sends verification OTP/token and dispatches email', async () => {
+
     const res = await request(app)
       .post('/api/v1/marketplace/auth/send-verification')
       .send({ email: testEmail, companyName });
@@ -16,8 +21,10 @@ describe('0086 — Buyer Authentication & Email Verification API (/api/v1/market
     expect(res.body.success).toBe(true);
     expect(res.body.email).toBe(testEmail);
     expect(res.body.devOtp).toBeDefined();
+    expect(res.body.emailDispatched).toBe(true);
     devToken = res.body.devOtp;
   });
+
 
   it('POST /api/v1/marketplace/auth/verify-token fails with invalid token', async () => {
     const res = await request(app)

@@ -857,19 +857,35 @@ export async function createActivity(lotId: string, activityData: any) {
   return activity;
 }
 
-export async function uploadComplianceDoc(lotId: string, docType: string, filePath: string, originalName: string) {
+export async function uploadComplianceDoc(
+  lotId: string,
+  docType: string,
+  filePathOrFile: string | any,
+  originalName?: string
+) {
   const lot = await InventoryLot.findById(lotId);
   if (!lot) {
     throw new Error('Inventory Lot not found.');
   }
 
-  const s3Bucket = 'ind-spoiler-alert-surplus';
-  const s3Key = `compliance/${lotId}-${docType}-${Date.now()}-${originalName}`;
+  const defaultBucket = process.env.AWS_S3_BUCKET || 'ind-spoiler-alert-surplus';
+  let s3Url: string;
 
-  // 1. Upload to S3
-  await uploadToS3(filePath, s3Bucket, s3Key);
-
-  const s3Url = `https://${s3Bucket}.s3.amazonaws.com/${s3Key}`;
+  if (typeof filePathOrFile === 'object' && filePathOrFile !== null) {
+    const file = filePathOrFile;
+    const bucket = file.s3Bucket || file.bucket || defaultBucket;
+    const key = file.s3Key || file.key;
+    s3Url = file.location || `https://${bucket}.s3.amazonaws.com/${key}`;
+  } else {
+    const filePath = filePathOrFile;
+    const fileName = originalName || 'compliance.pdf';
+    const s3Key = `compliance/${lotId}-${docType}-${Date.now()}-${fileName}`;
+    await uploadToS3(filePath, defaultBucket, s3Key);
+    s3Url = `https://${defaultBucket}.s3.amazonaws.com/${s3Key}`;
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
 
   // 2. Create ComplianceDocument
   const doc = new ComplianceDocument({
@@ -886,11 +902,6 @@ export async function uploadComplianceDoc(lotId: string, docType: string, filePa
   }
   lot.complianceDocs.push(doc._id as any);
   await lot.save();
-
-  // Clean up local temp file
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
-  }
 
   return doc;
 }
