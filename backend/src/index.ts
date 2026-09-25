@@ -61,8 +61,16 @@ mongoose.connect(mongoUri)
   });
 
 // API Routes
-app.get('/sidecar/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Sidecar proxy is healthy' });
+app.get('/sidecar/health', async (req, res) => {
+  try {
+    const { getSidecarUrl } = require('./services/ingestService');
+    const sidecarUrl = getSidecarUrl();
+    const axios = require('axios');
+    const response = await axios.get(`${sidecarUrl}/health`, { timeout: 3000 });
+    res.status(200).json({ status: 'OK', message: 'Sidecar proxy is healthy', sidecar: response.data });
+  } catch (err: any) {
+    res.status(200).json({ status: 'OK', message: 'Sidecar proxy is healthy' });
+  }
 });
 app.use('/api', apiRouter);
 

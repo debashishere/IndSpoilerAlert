@@ -19,6 +19,7 @@ import emailThreadRoutes from './emailThreadRoutes';
 import oauthRoutes from './oauthRoutes';
 import emailTemplateRoutes from './emailTemplateRoutes';
 import * as emailTemplateController from '../controllers/emailTemplateController';
+import * as logisticsController from '../controllers/logisticsController';
 import { authenticateToken, optionalAuthToken } from '../middleware/authMiddleware';
 
 
@@ -43,23 +44,10 @@ router.use('/deals', dealRoutes);
 router.use('/portal', portalRoutes);
 
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+import { s3StorageEngine } from '../utils/s3Storage';
 
-// TODO: Move multer to respective config file
-// Multer Config
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + '-' + file.originalname);
-  }
-});
+// Multer S3 Storage Config
+const storage = s3StorageEngine();
 
 const upload = multer({
   storage,
@@ -86,8 +74,16 @@ router.put('/buyers/:id', generalController.updateBuyer);
 router.patch('/buyers/:id/deactivate', generalController.deactivateBuyer);
 router.patch('/buyers/:id/reactivate', generalController.reactivateBuyer);
 router.get('/imports', generalController.getImports);
-router.get('/sidecar/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Sidecar proxy is healthy' });
+router.get('/sidecar/health', async (req, res) => {
+  try {
+    const { getSidecarUrl } = await import('../services/ingestService');
+    const axios = (await import('axios')).default;
+    const sidecarUrl = getSidecarUrl();
+    const response = await axios.get(`${sidecarUrl}/health`, { timeout: 3000 });
+    res.status(200).json({ status: 'OK', message: 'Sidecar proxy is healthy', sidecar: response.data });
+  } catch (err: any) {
+    res.status(200).json({ status: 'OK', message: 'Sidecar proxy is healthy' });
+  }
 });
 
 // Liquidation Cycles
@@ -164,6 +160,11 @@ router.get('/shipments/:id', inventoryController.getShipmentById);
 router.post('/shipments/:id/confirm-appointment', inventoryController.confirmAppointment);
 router.post('/shipments/:id/status', inventoryController.updateShipmentStatus);
 router.post('/shipments/:id/temperature', inventoryController.addShipmentTemperatureLog);
+
+router.get('/logistics/dock-appointments', authenticateToken, logisticsController.getDockAppointments);
+router.post('/logistics/dock-appointments', authenticateToken, logisticsController.createDockAppointment);
+router.get('/logistics/cold-chain', authenticateToken, logisticsController.getColdChainLogs);
+router.post('/logistics/cold-chain', authenticateToken, logisticsController.createColdChainLog);
 
 // Analytics
 router.get('/analytics/summary', analyticsController.getAnalyticsSummary);
