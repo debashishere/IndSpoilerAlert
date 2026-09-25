@@ -1052,3 +1052,13 @@ export async function startAgenda(): Promise<void> {
     console.warn('Agenda start error:', err.message || err);
   }
 }
+
+// Standalone entry point for persistent worker process supervisor / Docker worker
+if (require.main === module) {
+  startAgenda().then(() => {
+    console.log('[AgendaWorker] Persistent Agenda scheduler & campaign execution daemon running continuously.');
+  }).catch((err) => {
+    console.error('[AgendaWorker] Fatal daemon error:', err);
+    process.exit(1);
+  });
+}

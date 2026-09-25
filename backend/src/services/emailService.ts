@@ -5,11 +5,26 @@ import SupplierOAuthMailbox from '../models/SupplierOAuthMailbox';
 import EmailThread from '../models/EmailThread';
 import { decryptText } from '../utils/crypto';
 import { compileTemplate, compileSubject } from './emailTemplateService';
+import { ensureValidSupplierOAuth } from './oauthMailbox';
 
 let defaultCachedTransporter: any = null;
 
-const getDefaultMailTransporter = async () => {
+export const getDefaultMailTransporter = async () => {
   if (process.env.NODE_ENV !== 'test' && defaultCachedTransporter) {
+    return defaultCachedTransporter;
+  }
+
+  if (process.env.AWS_SES_SMTP_USER && process.env.AWS_SES_SMTP_PASS) {
+    const region = process.env.AWS_SES_REGION || process.env.AWS_REGION || 'us-east-1';
+    defaultCachedTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || `email-smtp.${region}.amazonaws.com`,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.AWS_SES_SMTP_USER,
+        pass: process.env.AWS_SES_SMTP_PASS,
+      },
+    });
     return defaultCachedTransporter;
   }
 
@@ -28,6 +43,7 @@ const getDefaultMailTransporter = async () => {
 
   return null;
 };
+
 
 export interface SendEmailResult {
   success: boolean;
@@ -91,6 +107,9 @@ export async function sendSendGridEmail(params: {
  */
 export const getSupplierTransporter = async (supplierId: string = 'default') => {
   try {
+    // Automatically refresh expiring Google OAuth tokens prior to email dispatch
+    await ensureValidSupplierOAuth(supplierId);
+
     const mailbox = await SupplierOAuthMailbox.findOne({ supplierId, status: 'connected' });
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -324,10 +343,13 @@ export async function sendCampaignEmail(
     }
   }
 
-  if (process.env.NODE_ENV === 'test' && !process.env.REAL_SMTP) {
+  if (process.env.NODE_ENV === 'test' && !process.env.REAL_SMTP && !process.env.REAL_OAUTH) {
+    // Perform pre-dispatch refresh check even in test mode if mailbox exists
+    await ensureValidSupplierOAuth(supplierId);
     return { success: true, messageId: `mock-msg-${Date.now()}`, compiledSubject: finalSubject, compiledHtml: finalHtml };
   }
 
+  await ensureValidSupplierOAuth(supplierId);
   const mailbox = await SupplierOAuthMailbox.findOne({ supplierId, status: 'connected' });
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -357,7 +379,7 @@ export async function sendCampaignEmail(
       return { success: true, messageId: info.messageId, compiledSubject: finalSubject, compiledHtml: finalHtml };
     } catch (err: any) {
       console.error('Failed to send campaign email via OAuth2, falling back to SMTP:', err);
-      if (err.code === 'EAUTH' || err.message?.includes('invalid_grant') || err.message?.includes('token')) {
+      if (err.code === 'EAUTH' || err.message?.includes('invalid_grant') || err.message?.includes('token') || err.message?.includes('invalid_client')) {
         mailbox.status = 'expired';
         await mailbox.save();
       }

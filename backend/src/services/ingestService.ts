@@ -15,7 +15,9 @@ import { suggestMappings } from '../utils/mapper';
 import { uploadToS3, sendSQSMessage } from '../utils/aws';
 import { translateAttributes, computeGridAggregates } from './translatorService';
 
-const SIDECAR_URL = process.env.SIDECAR_URL || 'http://localhost:8000';
+export function getSidecarUrl(): string {
+  return process.env.SIDE_CAR_URL || process.env.SIDECAR_URL || 'http://localhost:8000';
+}
 
 export async function ensureValidSupplierId(supplierId?: string): Promise<string> {
   if (supplierId && mongoose.Types.ObjectId.isValid(supplierId)) {
@@ -68,26 +70,48 @@ export async function findDocumentImport(id?: string) {
 
 
 export async function queueUploadAndParseFile(
-  filePath: string,
-  originalName: string,
-  mimetype: string,
+  filePathOrFile: string | any,
+  originalName?: string,
+  mimetype?: string,
   supplierId?: string
 ) {
   let checksum = '';
-  try {
-    const fileBuffer = fs.readFileSync(filePath);
-    const hash = crypto.createHash('sha256');
-    hash.update(fileBuffer);
-    checksum = hash.digest('hex');
-  } catch (err) {
-    console.error('Error calculating checksum:', err);
+  let s3Bucket = process.env.AWS_S3_BUCKET || 'ind-spoiler-alert-surplus';
+  let s3Key = '';
+  let fileName = originalName || '';
+  let mime = mimetype || '';
+  let isFilePath = typeof filePathOrFile === 'string';
+
+  if (!isFilePath && filePathOrFile) {
+    const fileObj = filePathOrFile;
+    fileName = fileObj.originalname || originalName || '';
+    mime = fileObj.mimetype || mimetype || '';
+    s3Bucket = fileObj.s3Bucket || fileObj.bucket || s3Bucket;
+    s3Key = fileObj.s3Key || fileObj.key || `uploads/${Date.now()}-${fileName}`;
+
+    if (fileObj.buffer) {
+      try {
+        const hash = crypto.createHash('sha256');
+        hash.update(fileObj.buffer);
+        checksum = hash.digest('hex');
+      } catch (err) {
+        console.error('Error calculating checksum from buffer:', err);
+      }
+    }
+  } else if (isFilePath) {
+    s3Key = `uploads/${Date.now()}-${fileName}`;
+    try {
+      const fileBuffer = fs.readFileSync(filePathOrFile);
+      const hash = crypto.createHash('sha256');
+      hash.update(fileBuffer);
+      checksum = hash.digest('hex');
+    } catch (err) {
+      console.error('Error calculating checksum:', err);
+    }
   }
 
-  const s3Bucket = 'ind-spoiler-alert-surplus';
-  const s3Key = `uploads/${Date.now()}-${originalName}`;
-
   const docImport = new DocumentImport({
-    fileName: originalName,
+    fileName,
     checksum,
     status: 'queued',
     supplierId: supplierId || undefined,
@@ -99,20 +123,22 @@ export async function queueUploadAndParseFile(
   await docImport.save();
 
   try {
-    await uploadToS3(filePath, s3Bucket, s3Key);
+    if (isFilePath) {
+      await uploadToS3(filePathOrFile, s3Bucket, s3Key);
+    }
 
     const payload = {
       ingestionJobId: docImport._id.toString(),
       s3Bucket,
       s3Key,
-      fileName: originalName,
-      mimetype,
+      fileName,
+      mimetype: mime,
       supplierId: supplierId || undefined
     };
     await sendSQSMessage('ind-spoiler-alert-ingestion-jobs', payload);
 
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    if (isFilePath && fs.existsSync(filePathOrFile)) {
+      fs.unlinkSync(filePathOrFile);
     }
 
     return {
@@ -124,8 +150,8 @@ export async function queueUploadAndParseFile(
     docImport.importErrors = [err.message || 'Failed during upload queuing'];
     await docImport.save();
 
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    if (isFilePath && fs.existsSync(filePathOrFile)) {
+      fs.unlinkSync(filePathOrFile);
     }
     throw err;
   }
@@ -214,25 +240,43 @@ export function parseCsvToGrid(fileContent: string): string[][] {
 }
 
 export async function uploadAndParseFile(
-  filePath: string,
-  originalName: string,
-  mimetype: string,
+  filePathOrFile: string | any,
+  originalName?: string,
+  mimetype?: string,
   supplierId?: string
 ) {
+  let fileName = originalName || '';
+  let mime = mimetype || '';
+  let isFilePath = typeof filePathOrFile === 'string';
+  let fileBuffer: Buffer | null = null;
+
+  if (!isFilePath && filePathOrFile) {
+    fileName = filePathOrFile.originalname || originalName || '';
+    mime = filePathOrFile.mimetype || mimetype || '';
+    fileBuffer = filePathOrFile.buffer || null;
+  } else if (isFilePath) {
+    try {
+      fileBuffer = fs.readFileSync(filePathOrFile);
+    } catch (err) {
+      console.error('Error reading file path:', err);
+    }
+  }
+
   // Calculate file checksum
   let checksum = '';
-  try {
-    const fileBuffer = fs.readFileSync(filePath);
-    const hash = crypto.createHash('sha256');
-    hash.update(fileBuffer);
-    checksum = hash.digest('hex');
-  } catch (err) {
-    console.error('Error calculating checksum:', err);
+  if (fileBuffer) {
+    try {
+      const hash = crypto.createHash('sha256');
+      hash.update(fileBuffer);
+      checksum = hash.digest('hex');
+    } catch (err) {
+      console.error('Error calculating checksum:', err);
+    }
   }
 
   // Create DocumentImport record
   const docImport = new DocumentImport({
-    fileName: originalName,
+    fileName,
     checksum,
     status: 'uploaded',
     supplierId: supplierId || undefined,
@@ -243,27 +287,27 @@ export async function uploadAndParseFile(
 
   try {
     let rawGrid: string[][] = [];
-    const isCsv = originalName.toLowerCase().endsWith('.csv') || (mimetype && mimetype.includes('csv'));
+    const isCsv = fileName.toLowerCase().endsWith('.csv') || (mime && mime.includes('csv'));
 
-    if (isCsv) {
+    if (isCsv && fileBuffer) {
       try {
-        const fileText = fs.readFileSync(filePath, 'utf-8');
+        const fileText = fileBuffer.toString('utf-8');
         rawGrid = parseCsvToGrid(fileText);
       } catch (csvErr: any) {
         console.warn('Native CSV parse error, falling back to sidecar:', csvErr.message);
       }
     }
 
-    if (rawGrid.length === 0) {
+    if (rawGrid.length === 0 && fileBuffer) {
       // Send file to Python sidecar
-      console.log(`Forwarding file to Python sidecar at: ${SIDECAR_URL}/parse-document`);
-      const fileBuffer = fs.readFileSync(filePath);
-      const fileBlob = new Blob([fileBuffer], { type: mimetype });
+      const sidecarUrl = getSidecarUrl();
+      console.log(`Forwarding file to Python sidecar at: ${sidecarUrl}/parse-document`);
+      const fileBlob = new Blob([fileBuffer], { type: mime });
       
       const formData = new FormData();
-      formData.append('file', fileBlob, originalName);
+      formData.append('file', fileBlob, fileName);
 
-      const sidecarRes = await axios.post(`${SIDECAR_URL}/parse-document`, formData, {
+      const sidecarRes = await axios.post(`${sidecarUrl}/parse-document`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -312,9 +356,9 @@ export async function uploadAndParseFile(
     }
     await docImport.save();
 
-    // Clean up uploaded file
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Clean up uploaded file if local
+    if (isFilePath && fs.existsSync(filePathOrFile)) {
+      fs.unlinkSync(filePathOrFile);
     }
 
     return {
@@ -331,9 +375,9 @@ export async function uploadAndParseFile(
     docImport.importErrors = [error.message || 'Unknown error occurred during parsing'];
     await docImport.save();
 
-    // Clean up uploaded file
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+    // Clean up uploaded file if local
+    if (isFilePath && fs.existsSync(filePathOrFile)) {
+      fs.unlinkSync(filePathOrFile);
     }
 
     throw error;
@@ -376,6 +420,7 @@ export async function confirmIngestion(
   const standardSellPriceHeader = mappings.standardSellPrice;
   const warehouseHeader = mappings.warehouse;
   const commentHeader = mappings.comment;
+  const fdaRegulatedHeader = mappings.fdaRegulated;
 
   const skuIdx = skuHeader ? headers.indexOf(skuHeader) : -1;
   const descIdx = descHeader ? headers.indexOf(descHeader) : -1;
@@ -393,6 +438,7 @@ export async function confirmIngestion(
   const tempMaxIdx = tempMaxHeader ? headers.indexOf(tempMaxHeader) : -1;
   const standardSellPriceIdx = standardSellPriceHeader ? headers.indexOf(standardSellPriceHeader) : -1;
   const warehouseIdx = warehouseHeader ? headers.indexOf(warehouseHeader) : -1;
+  const fdaRegulatedIdx = fdaRegulatedHeader ? headers.indexOf(fdaRegulatedHeader) : -1;
   const commentIdx = commentHeader ? headers.indexOf(commentHeader) : -1;
 
   // Determine unmapped headers list
@@ -559,9 +605,10 @@ export async function confirmIngestion(
     // Call sidecar to normalize name and category
     let clean_name = rawDesc;
     let category = rawCategory || 'Dry Goods';
+    const sidecarUrl = getSidecarUrl();
     if (!rawCategory) {
       try {
-        const sidecarRes = await axios.post(`${SIDECAR_URL}/normalize-product-name`, {
+        const sidecarRes = await axios.post(`${sidecarUrl}/normalize-product-name`, {
           name: rawDesc
         });
         if (sidecarRes.data) {
@@ -573,7 +620,7 @@ export async function confirmIngestion(
       }
     } else {
       try {
-        const sidecarRes = await axios.post(`${SIDECAR_URL}/normalize-product-name`, {
+        const sidecarRes = await axios.post(`${sidecarUrl}/normalize-product-name`, {
           name: rawDesc
         });
         if (sidecarRes.data) {
@@ -643,6 +690,7 @@ export async function confirmIngestion(
     const rawTempMinStr = tempMinIdx !== -1 ? row[tempMinIdx]?.trim() : '';
     const rawTempMaxStr = tempMaxIdx !== -1 ? row[tempMaxIdx]?.trim() : '';
     const rawAvailableQtyStr = availableQtyIdx !== -1 ? row[availableQtyIdx]?.trim() : '';
+    const rawFdaRegulated = fdaRegulatedIdx !== -1 ? row[fdaRegulatedIdx]?.trim() : '';
 
     let parsedTempMin: number | undefined = undefined;
     if (rawTempMinStr) {
@@ -675,6 +723,12 @@ export async function confirmIngestion(
       lotAvailableQty = 0;
     }
 
+    let isFdaRegulated = false;
+    if (rawFdaRegulated) {
+      const lower = rawFdaRegulated.toLowerCase();
+      isFdaRegulated = lower === 'true' || lower === 'yes' || lower === '1' || lower === 'y';
+    }
+
     for (const col of unmappedColumnIndices) {
       rawUnmappedObject[col.header] = row[col.idx]?.trim() || '';
     }
@@ -697,6 +751,7 @@ export async function confirmIngestion(
       costPerCase,
       standardSellPrice: listPrice,
       status: lotStatus,
+      fdaRegulated: isFdaRegulated,
       temperatureMin: parsedTempMin,
       temperatureMax: parsedTempMax,
       comment: rawComment || '',
