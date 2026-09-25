@@ -176,3 +176,14 @@
 - **Pre-Flight Dispatch & Audit Engine**: The multi-point validation and execution gate confirming mailbox readiness, buyer reachability, and inventory allocation before triggering an immediate workflow run or persisting a saved strategy.
   _Avoid_: `Unchecked Workflow Submission`, `Silent Dispatch Failures`.
 
+
+## Inventory Valuation Metrics
+
+- **Active Portfolio Value**: The total potential sales value of the currently available inventory, calculated by multiplying available quantity by standard sell price for all items. Represents the maximum expected revenue.
+  _Avoid_: `Potential Revenue`, `Sales Value`, `Total Sales Potential`.
+- **Total Inventory Value**: The total sunk cost or financial investment of the currently available inventory, calculated by multiplying available quantity by cost per case (COGS).
+  _Avoid_: `Total COGS`, `Sunk Cost`, `Inventory Investment`.
+- **Critical RSL**: The count of inventory lots with a Remaining Shelf Life (RSL) of less than 14 days, or marked explicitly as critical/expired.
+- **Liquidation Velocity**: The percentage of all processed inventory units that have been successfully sold, calculated as sold units divided by total units (sold + available).
+- **Matched Buyer Network**: The total count of active, verified institutional buyers registered in the platform's network.
+- **Critical Expirations**: _Avoid_: Use **Critical RSL** (14 days) instead to maintain a unified platform threshold.
