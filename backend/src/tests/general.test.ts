@@ -110,4 +110,15 @@ describe('General API Endpoints', () => {
     expect(res.body.status).toBe('OK');
     expect(res.body.message).toContain('healthy');
   });
+
+  it('should resolve SIDE_CAR_URL from process.env if provided', () => {
+    const prevSideCar = process.env.SIDE_CAR_URL;
+    process.env.SIDE_CAR_URL = 'http://custom-sidecar:8000';
+    delete process.env.SIDECAR_URL;
+
+    const { getSidecarUrl } = require('../services/ingestService');
+    expect(getSidecarUrl()).toBe('http://custom-sidecar:8000');
+
+    process.env.SIDE_CAR_URL = prevSideCar;
+  });
 });
