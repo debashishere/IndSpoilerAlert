@@ -32,7 +32,7 @@ export function resolveAppRoute(
   }
 
   const cleanHost = (hostname || '').split(':')[0].toLowerCase();
-  const isMarketplaceSubdomain = cleanHost.startsWith('marketplace.');
+  const isMarketplaceSubdomain = cleanHost.startsWith('marketplace.') || cleanHost.includes('.marketplace.');
   const isMarketplacePath = pathname.startsWith('/marketplace') || pathname.startsWith('/bid');
 
   if (isMarketplaceSubdomain || isMarketplacePath) {

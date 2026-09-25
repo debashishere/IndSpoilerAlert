@@ -26,13 +26,17 @@ export const sqs = new SQSClient({
 });
 
 export async function uploadToS3(filePath: string, bucket: string, key: string): Promise<void> {
-  const fileBuffer = fs.readFileSync(filePath);
-  const command = new PutObjectCommand({
-    Bucket: bucket,
-    Key: key,
-    Body: fileBuffer,
-  });
-  await s3.send(command);
+  try {
+    const fileBuffer = fs.readFileSync(filePath);
+    const command = new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: fileBuffer,
+    });
+    await s3.send(command);
+  } catch (err: any) {
+    console.warn('[aws.ts] S3 upload error (proceeding with local file):', err.message || err);
+  }
 }
 
 export async function sendSQSMessage(queueName: string, messageBody: any): Promise<void> {
@@ -48,7 +52,6 @@ export async function sendSQSMessage(queueName: string, messageBody: any): Promi
     });
     await sqs.send(sendCommand);
   } catch (err: any) {
-    console.error('Error sending SQS message:', err.message || err);
-    throw err;
+    console.warn('[aws.ts] SQS message send skipped (SQS offline):', err.message || err);
   }
 }

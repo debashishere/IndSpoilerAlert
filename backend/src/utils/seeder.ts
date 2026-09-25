@@ -26,6 +26,7 @@ import Activity from '../models/Activity';
 import EmailThread from '../models/EmailThread';
 import EmailDispatchLog from '../models/EmailDispatchLog';
 import EmailTemplate from '../models/EmailTemplate';
+import { seedTemplates } from '../scripts/seedTemplates';
 
 // Specified real emails for all mock email generation
 export const REAL_USER_EMAILS = [
@@ -642,6 +643,8 @@ export async function seedDatabase(forceClean: boolean = false) {
     });
 
     // 10. Create Email Templates & Liquidation Automation Workflows
+    await seedTemplates();
+
     const emailTmpl1 = await EmailTemplate.create({
       supplierId: unilever._id,
       name: 'Surplus Dairy Liquidation Offer Sheet',
