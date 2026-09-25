@@ -128,7 +128,7 @@ export async function createActivity(req: Request, res: Response) {
 export async function uploadComplianceDoc(req: Request, res: Response) {
   const { id } = req.params;
   const { docType } = req.body;
-  const file = req.file;
+  const file = req.file as any;
 
   if (!file) {
     return res.status(400).json({ error: 'No file uploaded.' });
@@ -141,7 +141,7 @@ export async function uploadComplianceDoc(req: Request, res: Response) {
     const result = await inventoryService.uploadComplianceDoc(
       id,
       docType,
-      file.path,
+      file,
       file.originalname
     );
     return res.status(201).json(result);

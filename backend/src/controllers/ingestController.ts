@@ -3,26 +3,26 @@ import * as ingestService from '../services/ingestService';
 import Supplier from '../models/Supplier';
 
 export async function uploadIngestFile(req: Request, res: Response) {
-  const file = req.file;
+  const file = req.file as any;
   if (!file) {
     return res.status(400).json({ error: 'No file uploaded.' });
   }
 
   try {
     const result = await ingestService.queueUploadAndParseFile(
-      file.path,
+      file,
       file.originalname,
       file.mimetype,
-      req.body.supplierId
+      req.body?.supplierId
     );
     return res.status(202).json(result);
   } catch (error: any) {
     try {
       const result = await ingestService.uploadAndParseFile(
-        file.path,
+        file,
         file.originalname,
         file.mimetype,
-        req.body.supplierId
+        req.body?.supplierId
       );
       return res.status(200).json(result);
     } catch (fallbackError: any) {
