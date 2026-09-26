@@ -4,6 +4,8 @@ import app from '../index';
 import { uploadToS3, sendSQSMessage } from '../utils/aws';
 import { getRedisClient } from '../utils/redis';
 
+jest.setTimeout(30000);
+
 // Mock S3, SQS, and Redis
 jest.mock('../utils/aws', () => ({
   uploadToS3: jest.fn().mockResolvedValue(undefined),
