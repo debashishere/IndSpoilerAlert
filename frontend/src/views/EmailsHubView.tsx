@@ -96,12 +96,12 @@ export const EmailsHubView: React.FC<EmailsHubViewProps> = ({
         t.messages[t.messages.length - 1].senderType === 'buyer'
     ).length || (activeThreadsCount > 0 ? activeThreadsCount : (totalThreadsCount > 0 ? 1 : 3));
 
-  const displayTotalThreads = totalThreadsCount > 0 ? totalThreadsCount : 12;
-  const displayActiveThreads = totalThreadsCount > 0 ? activeThreadsCount : 8;
-  const displayEngagementRate = totalThreadsCount > 0 ? engagementRate : 85;
-  const displayMessagesCount = totalMessagesCount > 0 ? totalMessagesCount : 36;
+  const displayTotalThreads = totalThreadsCount;
+  const displayActiveThreads = activeThreadsCount;
+  const displayEngagementRate = totalThreadsCount > 0 ? engagementRate : 0;
+  const displayMessagesCount = totalMessagesCount;
   const displayActionRequired = actionRequiredCount;
-  const displayTemplatesCount = templates.length > 0 ? templates.length : 4;
+  const displayTemplatesCount = templates.length;
 
   return (
     <div

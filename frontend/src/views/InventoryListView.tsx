@@ -1,17 +1,34 @@
-import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { DollarSign, Award, Leaf, ShieldAlert, Tag, BarChart3, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { DollarSign, Award, Leaf, ShieldAlert, Tag, TrendingUp, Recycle, Activity } from 'lucide-react';
 import type { RootState } from '../store';
+import { fetchAnalyticsSummaryThunk, selectAnalyticsSummary, selectAnalyticsLoading } from '../store/slices/coreSlice';
 import { RiskAssessmentModal } from '../components/domain/inventory/RiskAssessmentModal';
 import { ComplianceModal } from '../components/domain/inventory/ComplianceModal';
 import { SalesDataView } from '../components/domain/inventory/SalesDataView';
 import { BiddingDataView } from '../components/domain/inventory/BiddingDataView';
-import { InventoryChartsDashboard } from '../components/domain/inventory/InventoryChartsDashboard';
+import SummaryMetrics from '../components/analytics/SummaryMetrics';
+import COGSRecoveryDashboard from '../components/analytics/COGSRecoveryDashboard';
+import RSLDistributionChart from '../components/analytics/RSLDistributionChart';
+import { InsightCard } from '../components/InsightCard';
+import { useIngestionTelemetry } from '../components/domain/ingestion/hooks/useIngestionTelemetry';
+import { Wallet } from 'lucide-react';
+import { CrossPlatformOperationsPanel } from '../components/domain/insights/CrossPlatformOperationsPanel';
 
 export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> = ({ onOpenLotHub }) => {
+  const dispatch = useDispatch();
   const { inventoryList, analyticsData, allBids } = useSelector((state: RootState) => state.inventory);
   const salesRecords = useSelector((state: RootState) => state.ingestion?.salesRecords || []);
-  const [inventorySubTab, setInventorySubTab] = useState<'bidding' | 'charts' | 'sales'>('bidding');
+  const analyticsSummary = useSelector(selectAnalyticsSummary);
+  const analyticsLoading = useSelector(selectAnalyticsLoading);
+  const { metrics } = useIngestionTelemetry();
+  const [inventorySubTab, setInventorySubTab] = useState<'recovery' | 'bidding' | 'sales' | 'operations'>('recovery');
+
+  useEffect(() => {
+    if (!analyticsSummary && !analyticsLoading) {
+      dispatch(fetchAnalyticsSummaryThunk() as any);
+    }
+  }, [dispatch, analyticsSummary, analyticsLoading]);
 
   const calculateDaysRemaining = (dateStr: string) => {
     const diff = new Date(dateStr).getTime() - Date.now();
@@ -42,7 +59,6 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
       : 0;
 
   const bidsCount = (allBids || []).length;
-  const chartsCount = inventoryList.length;
   const salesCount = (salesRecords || []).length || 48;
 
   return (
@@ -60,117 +76,93 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
         </p>
       </header>
 
-      {/* 2. Operational Telemetry Bar (4 KPI Cards matching Ingestion standard) */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5 mb-6" id="insight-telemetry-bar">
-        {/* Card 1: Total Inventory Value */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Total Inventory Value
-            </p>
-            <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-[20px] font-bold font-mono text-slate-900 dark:text-slate-100 leading-none">
-                ${totalInventoryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </span>
-              <span className="text-[11px] font-semibold text-blue-600 dark:text-blue-400">
-                Distressed COGS ingested
-              </span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
-            <span className="material-symbols-outlined text-[20px] flex items-center justify-center">
-              account_balance_wallet
-            </span>
-            <DollarSign className="w-5 h-5 hidden" aria-hidden="true" />
-          </div>
-        </div>
+      {/* 2. Operational Telemetry Bar (5 KPI Cards matching Ingestion standard) */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3.5 mb-6" id="insight-telemetry-bar">
+        {/* Card 1: Active Portfolio Value */}
+        <InsightCard
+          title="Active Portfolio Value"
+          value={metrics.portfolioValue}
+          subtext={metrics.portfolioSubtext}
+          icon={
+            <>
+              <span className="material-symbols-outlined text-[20px] flex items-center justify-center">account_balance_wallet</span>
+              <Wallet className="w-5 h-5 hidden" aria-hidden="true" />
+            </>
+          }
+          iconBgClass="bg-blue-50 dark:bg-blue-900/30"
+          iconTextClass="text-blue-600 dark:text-blue-400"
+          subtextClass="text-blue-600 dark:text-blue-400"
+          tooltipText="The total potential sales value of the inventory currently available to sell. Calculated by multiplying availableQty by standardSellPrice."
+        />
 
-        {/* Card 2: Revenue Secured */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Revenue Secured
-            </p>
-            <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-[20px] font-bold font-mono text-emerald-600 dark:text-emerald-400 leading-none">
-                ${revenueSecured.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </span>
-              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                From closed closeout sales
-              </span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-            <span className="material-symbols-outlined text-[20px] flex items-center justify-center">
-              military_tech
-            </span>
-            <Award className="w-5 h-5 hidden" aria-hidden="true" />
-          </div>
-        </div>
+        {/* Card 2: Total Inventory Value */}
+        <InsightCard
+          title="Total Inventory Value"
+          value={`$${totalInventoryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+          subtext="Distressed COGS ingested"
+          icon={
+            <>
+              <span className="material-symbols-outlined text-[20px] flex items-center justify-center">account_balance_wallet</span>
+              <DollarSign className="w-5 h-5 hidden" aria-hidden="true" />
+            </>
+          }
+          iconBgClass="bg-blue-50 dark:bg-blue-900/30"
+          iconTextClass="text-blue-600 dark:text-blue-400"
+          subtextClass="text-blue-600 dark:text-blue-400"
+          tooltipText="The total original cost of goods sold (COGS) for all items in the inventory."
+        />
 
-        {/* Card 3: Landfill Diversion Rate */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Landfill Diversion Rate
-            </p>
-            <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-[20px] font-bold font-mono text-slate-900 dark:text-slate-100 leading-none">
-                {landfillDiversionRate}%
-              </span>
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                Sold, Donated, or Recycled
-              </span>
-            </div>
-          </div>
-          <div className="w-10 h-10 rounded-lg bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400 shrink-0">
-            <span className="material-symbols-outlined text-[20px] flex items-center justify-center">
-              eco
-            </span>
-            <Leaf className="w-5 h-5 hidden" aria-hidden="true" />
-          </div>
-        </div>
+        {/* Card 3: Revenue Secured */}
+        <InsightCard
+          title="Revenue Secured"
+          value={`$${revenueSecured.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+          subtext="From closed closeout sales"
+          valueClass="text-emerald-600 dark:text-emerald-400"
+          icon={
+            <>
+              <span className="material-symbols-outlined text-[20px] flex items-center justify-center">military_tech</span>
+              <Award className="w-5 h-5 hidden" aria-hidden="true" />
+            </>
+          }
+          iconBgClass="bg-emerald-50 dark:bg-emerald-900/30"
+          iconTextClass="text-emerald-600 dark:text-emerald-400"
+          subtextClass="text-emerald-600 dark:text-emerald-400"
+          tooltipText="Total revenue secured from closed closeout sales and successful bids."
+        />
 
-        {/* Card 4: Critical Expirations */}
-        <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-              Critical Expirations
-            </p>
-            <div className="flex items-baseline gap-1 mt-1">
-              <span
-                className={`text-[20px] font-bold font-mono leading-none ${
-                  criticalExpirations > 0
-                    ? 'text-rose-600 dark:text-rose-400'
-                    : 'text-slate-900 dark:text-slate-100'
-                }`}
-              >
-                {criticalExpirations}
-              </span>
-              <span
-                className={`text-[11px] font-semibold ${
-                  criticalExpirations > 0
-                    ? 'text-rose-600 dark:text-rose-400'
-                    : 'text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                Lots expiring in &lt; 10 days
-              </span>
-            </div>
-          </div>
-          <div
-            className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-              criticalExpirations > 0
-                ? 'bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400'
-                : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[20px] flex items-center justify-center">
-              warning
-            </span>
-            <ShieldAlert className="w-5 h-5 hidden" aria-hidden="true" />
-          </div>
-        </div>
+        {/* Card 4: Landfill Diversion Rate */}
+        <InsightCard
+          title="Landfill Diversion Rate"
+          value={`${landfillDiversionRate}%`}
+          subtext="Sold, Donated, or Recycled"
+          icon={
+            <>
+              <span className="material-symbols-outlined text-[20px] flex items-center justify-center">eco</span>
+              <Leaf className="w-5 h-5 hidden" aria-hidden="true" />
+            </>
+          }
+          iconBgClass="bg-teal-50 dark:bg-teal-900/30"
+          iconTextClass="text-teal-600 dark:text-teal-400"
+          tooltipText="Percentage of inventory successfully diverted from landfills via sales, donations, or recycling."
+        />
+
+        {/* Card 5: Critical Expirations */}
+        <InsightCard
+          title="Critical Expirations"
+          value={criticalExpirations}
+          subtext="Lots expiring in < 10 days"
+          valueClass={criticalExpirations > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'}
+          subtextClass={criticalExpirations > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}
+          icon={
+            <>
+              <span className="material-symbols-outlined text-[20px] flex items-center justify-center">warning</span>
+              <ShieldAlert className="w-5 h-5 hidden" aria-hidden="true" />
+            </>
+          }
+          iconBgClass={criticalExpirations > 0 ? 'bg-rose-50 dark:bg-rose-900/30' : 'bg-slate-100 dark:bg-slate-800'}
+          iconTextClass={criticalExpirations > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}
+          tooltipText="Number of inventory lots that are within 10 days of expiration or have critically low remaining shelf life (RSL)."
+        />
       </div>
 
       {/* 3. Master Subtab Switcher Bar (Matching Ingestion PipelineSwitcherBar) */}
@@ -180,7 +172,25 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-lg border border-slate-200/60 dark:border-slate-700/60 overflow-x-auto">
-            {/* 1. Bidding Data */}
+            {/* 1. Recovery & Sustainability */}
+            <button
+              type="button"
+              id="tab-insight-recovery"
+              onClick={() => setInventorySubTab('recovery')}
+              className={`px-3.5 py-1.5 rounded-md text-[12px] flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                inventorySubTab === 'recovery'
+                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm font-semibold'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/60 font-medium'
+              }`}
+              aria-selected={inventorySubTab === 'recovery'}
+              role="tab"
+            >
+              <span className="material-symbols-outlined text-[18px]">eco</span>
+              <Recycle className="w-4 h-4 hidden" aria-hidden="true" />
+              <span>Recovery &amp; Sustainability</span>
+            </button>
+
+            {/* 2. Current Bidding Data */}
             <button
               type="button"
               id="tab-insight-bidding"
@@ -207,34 +217,7 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
               </span>
             </button>
 
-            {/* 2. Inventory Insights & Analytics */}
-            <button
-              type="button"
-              id="tab-insight-charts"
-              onClick={() => setInventorySubTab('charts')}
-              className={`px-3.5 py-1.5 rounded-md text-[12px] flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                inventorySubTab === 'charts'
-                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm font-semibold'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/60 font-medium'
-              }`}
-              aria-selected={inventorySubTab === 'charts'}
-              role="tab"
-            >
-              <span className="material-symbols-outlined text-[18px]">bar_chart</span>
-              <BarChart3 className="w-4 h-4 hidden" aria-hidden="true" />
-              <span>Inventory Insights &amp; Analytics</span>
-              <span
-                className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold transition-colors ${
-                  inventorySubTab === 'charts'
-                    ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-                    : 'bg-slate-200/80 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                }`}
-              >
-                {chartsCount}
-              </span>
-            </button>
-
-            {/* 3. Sales Insights & Revenue Charts */}
+            {/* 3. Sales & Clearing */}
             <button
               type="button"
               id="tab-insight-sales"
@@ -249,7 +232,7 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
             >
               <span className="material-symbols-outlined text-[18px]">query_stats</span>
               <TrendingUp className="w-4 h-4 hidden" aria-hidden="true" />
-              <span>Sales Insights &amp; Revenue Charts</span>
+              <span>Sales &amp; Clearing</span>
               <span
                 className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold transition-colors ${
                   inventorySubTab === 'sales'
@@ -260,21 +243,48 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
                 {salesCount}
               </span>
             </button>
+
+            {/* 4. Cross-Platform Operations */}
+            <button
+              type="button"
+              id="tab-insight-operations"
+              onClick={() => setInventorySubTab('operations')}
+              className={`px-3.5 py-1.5 rounded-md text-[12px] flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap ${
+                inventorySubTab === 'operations'
+                  ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm font-semibold'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-white/60 dark:hover:bg-slate-700/60 font-medium'
+              }`}
+              aria-selected={inventorySubTab === 'operations'}
+              role="tab"
+            >
+              <span className="material-symbols-outlined text-[18px]">hub</span>
+              <Activity className="w-4 h-4 hidden" aria-hidden="true" />
+              <span>Cross-Platform Operations</span>
+            </button>
           </div>
         </div>
       </div>
 
       {/* 4. Active Workbench Views */}
       <div className="w-full transition-opacity duration-150">
-        {inventorySubTab === 'bidding' && (
-          <div id="panel-insight-bidding">
-            <BiddingDataView onOpenLotHub={onOpenLotHub} />
+        {inventorySubTab === 'recovery' && (
+          <div id="panel-insight-recovery">
+            <div className="flex flex-col gap-6">
+              {/* Recovery & Sustainability Metric Cards */}
+              <SummaryMetrics />
+
+              {/* Charts Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-5 items-stretch">
+                <COGSRecoveryDashboard />
+                <RSLDistributionChart />
+              </div>
+            </div>
           </div>
         )}
 
-        {inventorySubTab === 'charts' && (
-          <div id="panel-insight-charts">
-            <InventoryChartsDashboard />
+        {inventorySubTab === 'bidding' && (
+          <div id="panel-insight-bidding">
+            <BiddingDataView onOpenLotHub={onOpenLotHub} />
           </div>
         )}
 
@@ -282,6 +292,10 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
           <div id="panel-insight-sales">
             <SalesDataView />
           </div>
+        )}
+
+        {inventorySubTab === 'operations' && (
+          <CrossPlatformOperationsPanel />
         )}
       </div>
 
