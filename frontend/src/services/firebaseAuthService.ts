@@ -43,10 +43,23 @@ export function createMockJwtToken(user: AuthUser): string {
   return `${header}.${payload}.${signature}`;
 }
 
+export const isStagingEnvironment = (): boolean => {
+  return (
+    import.meta.env.MODE === 'staging' ||
+    import.meta.env.VITE_APP_ENV === 'staging'
+  );
+};
+
+export const isDevMockAuthDisabled = (): boolean => {
+  const useMock = import.meta.env.VITE_USE_DEV_MOCK_AUTH;
+  return useMock === 'false' || isStagingEnvironment();
+};
+
 const isFirebaseConfigured = (): boolean => {
   const apiKey = import.meta.env.VITE_FIREBASE_API_KEY;
   const forceMock = import.meta.env.VITE_USE_DEV_MOCK_AUTH === 'true';
-  return Boolean(apiKey && !forceMock);
+  if (forceMock) return false;
+  return Boolean(apiKey);
 };
 
 const getFirebaseAuth = () => {
@@ -63,6 +76,14 @@ const getFirebaseAuth = () => {
 type AuthStateCallback = (user: AuthUser | null) => void;
 
 class FirebaseAuthService {
+  public isStagingEnvironment(): boolean {
+    return isStagingEnvironment();
+  }
+
+  public isDevMockAuthDisabled(): boolean {
+    return isDevMockAuthDisabled();
+  }
+
   private authStateListeners: Set<AuthStateCallback> = new Set();
   private mockUser: AuthUser | null = null;
   private mockToken: string | null = null;

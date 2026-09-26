@@ -69,15 +69,14 @@ export const SalesDataView: React.FC = () => {
       }
     });
 
-    // Provide baseline realistic analytics if store hasn't loaded custom records yet
     if (records.length === 0) {
-      rev = 439850;
-      vol = 14850;
-      reconciled = 42;
+      rev = 0;
+      vol = 0;
+      reconciled = 0;
     }
 
     const avg = vol > 0 ? rev / vol : 0;
-    const totalCount = records.length > 0 ? records.length : 48;
+    const totalCount = records.length;
 
     return {
       totalRevenue: rev,

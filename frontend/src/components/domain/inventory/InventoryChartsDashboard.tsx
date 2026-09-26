@@ -1,10 +1,106 @@
-import React, { useState } from 'react';
-import { BarChart3, TrendingUp, PieChart, Sparkles, Clock, Layers, Filter, ShieldAlert, ChevronDown } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { BarChart3, TrendingUp, PieChart, Sparkles, Clock, Layers, Filter, ShieldAlert, ChevronDown, CheckCircle2 } from 'lucide-react';
+import type { RootState } from '../../../store';
 
 export const InventoryChartsDashboard: React.FC = () => {
   const [timeframe, setTimeframe] = useState<'7d' | '30d' | '90d' | 'ytd'>('30d');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [selectedDc, setSelectedDc] = useState<string>('all');
+
+  const { inventoryList, allBids } = useSelector((state: RootState) => state.inventory);
+  const isTelemetryEnabled = import.meta.env.VITE_ENABLE_ANALYTICS_PREVIEW === 'true';
+
+  const calculateDaysRemaining = (expirationDateStr?: string) => {
+    if (!expirationDateStr) return 999;
+    const timestamp = new Date(expirationDateStr).getTime();
+    if (isNaN(timestamp)) return 999;
+    const diff = timestamp - Date.now();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const filteredInventory = useMemo(() => {
+    return (inventoryList || []).filter((lot: any) => {
+      const categoryName = lot.productId?.category || lot.category || '';
+      const matchesCategory = categoryFilter === 'all' || categoryName === categoryFilter;
+
+      const dcId = lot.distributionCenterId?._id || lot.distributionCenterId || lot.warehouse || '';
+      const dcName = lot.distributionCenterId?.name || lot.warehouse || '';
+      const matchesDc =
+        selectedDc === 'all' ||
+        dcId === selectedDc ||
+        dcName.toLowerCase().includes(selectedDc.replace('dc-', '').toLowerCase());
+
+      return matchesCategory && matchesDc;
+    });
+  }, [inventoryList, categoryFilter, selectedDc]);
+
+  const telemetryData = useMemo(() => {
+    let totalCOGS = 0;
+    let atRiskCOGS = 0;
+
+    const rsl = {
+      critical: { count: 0, cogs: 0 },
+      atRisk: { count: 0, cogs: 0 },
+      moderate: { count: 0, cogs: 0 },
+      optimal: { count: 0, cogs: 0 },
+      totalActiveLots: 0,
+    };
+
+    const caseStats = {
+      total: 0,
+      sold: 0,
+      donated: 0,
+      recycled: 0,
+      pending: 0,
+    };
+
+    filteredInventory.forEach((lot: any) => {
+      const cogs = (lot.quantityCases || 0) * (lot.costPerCase || 0);
+      totalCOGS += cogs;
+
+      const status = (lot.status || 'active').toLowerCase();
+      caseStats.total += lot.quantityCases || 0;
+      if (status === 'sold') caseStats.sold += lot.quantityCases || 0;
+      else if (status === 'donated') caseStats.donated += lot.quantityCases || 0;
+      else if (status === 'recycled') caseStats.recycled += lot.quantityCases || 0;
+      else caseStats.pending += lot.quantityCases || 0;
+
+      if (status === 'active' || status === 'active listing' || status === 'active list') {
+        rsl.totalActiveLots += 1;
+        const days = calculateDaysRemaining(lot.expirationDate);
+
+        if (days < 10) {
+          rsl.critical.count += 1;
+          rsl.critical.cogs += cogs;
+          atRiskCOGS += cogs;
+        } else if (days <= 30) {
+          rsl.atRisk.count += 1;
+          rsl.atRisk.cogs += cogs;
+        } else if (days <= 60) {
+          rsl.moderate.count += 1;
+          rsl.moderate.cogs += cogs;
+        } else {
+          rsl.optimal.count += 1;
+          rsl.optimal.cogs += cogs;
+        }
+      }
+    });
+
+    const activeTotal = rsl.totalActiveLots || 1;
+    const criticalPct = Math.round((rsl.critical.count / activeTotal) * 100);
+    const atRiskPct = Math.round((rsl.atRisk.count / activeTotal) * 100);
+    const moderatePct = Math.round((rsl.moderate.count / activeTotal) * 100);
+    const optimalPct = Math.round((rsl.optimal.count / activeTotal) * 100);
+
+    return {
+      totalCOGS: isTelemetryEnabled && filteredInventory.length > 0 ? totalCOGS : 248500,
+      atRiskCOGS: isTelemetryEnabled && filteredInventory.length > 0 ? atRiskCOGS : 42100,
+      rsl,
+      rslPcts: { criticalPct, atRiskPct, moderatePct, optimalPct },
+      caseStats,
+    };
+  }, [filteredInventory, isTelemetryEnabled]);
 
   return (
     <div className="flex flex-col gap-5" id="insight-charts-dashboard">
@@ -20,9 +116,15 @@ export const InventoryChartsDashboard: React.FC = () => {
                 <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 leading-tight">
                   Inventory Performance &amp; Analytics Suite
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> Coming Soon
-                </span>
+                {isTelemetryEnabled ? (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Live Telemetry Enabled
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800 flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" /> Coming Soon
+                  </span>
+                )}
               </div>
               <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
                 Interactive visual analytics, real-time AI yield forecasting, and dynamic COGS expiration trendlines replacing legacy static tables. Raw lot records are now managed under the <strong className="text-slate-700 dark:text-slate-300">Ingestion Pipeline</strong>.
@@ -115,7 +217,7 @@ export const InventoryChartsDashboard: React.FC = () => {
               </p>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 uppercase tracking-wider">
-              Coming Soon
+              {isTelemetryEnabled ? 'Live Telemetry' : 'Coming Soon'}
             </span>
           </div>
 
@@ -163,10 +265,10 @@ export const InventoryChartsDashboard: React.FC = () => {
           <div className="flex justify-between items-center text-xs text-slate-600 dark:text-slate-400">
             <div className="flex gap-4">
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-blue-600" /> Total COGS ($248,500)
+                <span className="w-2.5 h-2.5 rounded-sm bg-blue-600" /> Total COGS (${telemetryData.totalCOGS.toLocaleString()})
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-sm bg-rose-500" /> At-Risk COGS ($42,100)
+                <span className="w-2.5 h-2.5 rounded-sm bg-rose-500" /> At-Risk COGS (${telemetryData.atRiskCOGS.toLocaleString()})
               </span>
             </div>
           </div>
@@ -187,7 +289,7 @@ export const InventoryChartsDashboard: React.FC = () => {
               </p>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 uppercase tracking-wider">
-              Coming Soon
+              {isTelemetryEnabled ? 'Live Telemetry' : 'Coming Soon'}
             </span>
           </div>
 
@@ -211,40 +313,48 @@ export const InventoryChartsDashboard: React.FC = () => {
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-rose-600 dark:text-rose-400 font-semibold">&lt; 10 Days (Critical)</span>
-                  <span className="text-slate-900 dark:text-slate-100 font-mono font-bold">15% (12 lots)</span>
+                  <span className="text-slate-900 dark:text-slate-100 font-mono font-bold">
+                    {telemetryData.rslPcts.criticalPct}% ({telemetryData.rsl.critical.count} lots)
+                  </span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full w-[15%] bg-rose-500" />
+                  <div className="h-full bg-rose-500" style={{ width: `${telemetryData.rslPcts.criticalPct}%` }} />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-amber-600 dark:text-amber-400 font-semibold">10 – 30 Days (At Risk)</span>
-                  <span className="text-slate-900 dark:text-slate-100 font-mono font-bold">25% (20 lots)</span>
+                  <span className="text-slate-900 dark:text-slate-100 font-mono font-bold">
+                    {telemetryData.rslPcts.atRiskPct}% ({telemetryData.rsl.atRisk.count} lots)
+                  </span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full w-[25%] bg-amber-500" />
+                  <div className="h-full bg-amber-500" style={{ width: `${telemetryData.rslPcts.atRiskPct}%` }} />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-blue-600 dark:text-blue-400 font-semibold">30 – 60 Days (Moderate)</span>
-                  <span className="text-slate-900 dark:text-slate-100 font-mono font-bold">35% (28 lots)</span>
+                  <span className="text-slate-900 dark:text-slate-100 font-mono font-bold">
+                    {telemetryData.rslPcts.moderatePct}% ({telemetryData.rsl.moderate.count} lots)
+                  </span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full w-[35%] bg-blue-500" />
+                  <div className="h-full bg-blue-500" style={{ width: `${telemetryData.rslPcts.moderatePct}%` }} />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-xs mb-1">
                   <span className="text-emerald-600 dark:text-emerald-400 font-semibold">60+ Days (Optimal)</span>
-                  <span className="text-slate-900 dark:text-slate-100 font-mono font-bold">25% (20 lots)</span>
+                  <span className="text-slate-900 dark:text-slate-100 font-mono font-bold">
+                    {telemetryData.rslPcts.optimalPct}% ({telemetryData.rsl.optimal.count} lots)
+                  </span>
                 </div>
                 <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full w-[25%] bg-emerald-500" />
+                  <div className="h-full bg-emerald-500" style={{ width: `${telemetryData.rslPcts.optimalPct}%` }} />
                 </div>
               </div>
             </div>
@@ -266,7 +376,7 @@ export const InventoryChartsDashboard: React.FC = () => {
               </p>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 uppercase tracking-wider">
-              Coming Soon
+              {isTelemetryEnabled ? 'Live Telemetry' : 'Coming Soon'}
             </span>
           </div>
 
@@ -313,7 +423,7 @@ export const InventoryChartsDashboard: React.FC = () => {
               </p>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 uppercase tracking-wider">
-              Coming Soon
+              {isTelemetryEnabled ? 'Live Telemetry' : 'Coming Soon'}
             </span>
           </div>
 
