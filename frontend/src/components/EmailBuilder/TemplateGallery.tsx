@@ -29,8 +29,10 @@ const CATEGORY_COLORS: Record<string, { bg: string; text: string }> = {
   General:   { bg: 'hsl(var(--surface-alt, 240 5% 90%))', text: 'hsl(var(--text-muted))' },
 };
 
-function categoryStyle(category: string) {
-  return CATEGORY_COLORS[category] ?? CATEGORY_COLORS.General;
+function categoryStyle(category?: string) {
+  if (!category) return CATEGORY_COLORS.General;
+  const capitalized = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+  return CATEGORY_COLORS[capitalized] ?? CATEGORY_COLORS[category] ?? CATEGORY_COLORS.General;
 }
 
 function formatDate(iso?: string) {
@@ -286,17 +288,21 @@ export const TemplateGallery: React.FC<TemplateGalleryProps> = ({
   const [loading, setLoading] = useState(!initialTemplates);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch on mount / supplierId change — skip if a pre-seeded list was given
   useEffect(() => {
-    if (initialTemplates) return; // already have data from the editor save
+    if (initialTemplates) {
+      setTemplates(initialTemplates);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setError(null);
 
     getEmailTemplates(supplierId)
-      .then((data) => {
+      .then((data: any) => {
         if (!cancelled) {
-          setTemplates(data);
+          const list = Array.isArray(data) ? data : (data?.templates || []);
+          setTemplates(list);
           setLoading(false);
         }
       })
