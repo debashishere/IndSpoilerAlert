@@ -230,7 +230,10 @@ export interface EmailTemplate {
  * Fetch all email templates for a given supplier.
  */
 export async function getEmailTemplates(supplierId: string): Promise<EmailTemplate[]> {
-  return apiFetch<EmailTemplate[]>(`/email-templates?supplierId=${encodeURIComponent(supplierId)}`, { method: 'GET' });
+  const res = await apiFetch<any>(`/email-templates?supplierId=${encodeURIComponent(supplierId)}`, { method: 'GET' });
+  if (Array.isArray(res)) return res;
+  if (res && Array.isArray(res.templates)) return res.templates;
+  return [];
 }
 
 /**

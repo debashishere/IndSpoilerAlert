@@ -583,4 +583,87 @@ export const selectActiveMarketplaceListings = createSelector(
   }
 );
 
+const selectAllBids = (state: RootState) => state.inventory.allBids || [];
+
+export const selectInventoryAnalyticsTelemetry = createSelector(
+  [selectRawInventoryList, selectAllBids],
+  (inventoryList, allBids) => {
+    let totalCOGS = 0;
+    let atRiskCOGS = 0;
+
+    const rslTiers = {
+      critical: { count: 0, cogs: 0 },
+      atRisk: { count: 0, cogs: 0 },
+      moderate: { count: 0, cogs: 0 },
+      optimal: { count: 0, cogs: 0 },
+      totalActiveLots: 0,
+    };
+
+    const caseStats = {
+      total: 0,
+      sold: 0,
+      donated: 0,
+      recycled: 0,
+      pending: 0,
+    };
+
+    const categoryMap: Record<string, { category: string; lotCount: number; totalCOGS: number; bidCount: number; recoveryRate: number }> = {};
+
+    inventoryList.forEach((lot) => {
+      const cogs = (lot.quantityCases || 0) * (lot.costPerCase || 0);
+      totalCOGS += cogs;
+
+      const category = lot.productId?.category || lot.category || 'Other';
+      if (!categoryMap[category]) {
+        categoryMap[category] = { category, lotCount: 0, totalCOGS: 0, bidCount: 0, recoveryRate: 70 };
+      }
+      categoryMap[category].lotCount += 1;
+      categoryMap[category].totalCOGS += cogs;
+
+      const status = (lot.status || 'active').toLowerCase();
+      caseStats.total += lot.quantityCases || 0;
+      if (status === 'sold') caseStats.sold += lot.quantityCases || 0;
+      else if (status === 'donated') caseStats.donated += lot.quantityCases || 0;
+      else if (status === 'recycled') caseStats.recycled += lot.quantityCases || 0;
+      else caseStats.pending += lot.quantityCases || 0;
+
+      if (status === 'active' || status === 'active listing' || status === 'active list') {
+        rslTiers.totalActiveLots += 1;
+        const diff = lot.expirationDate ? new Date(lot.expirationDate).getTime() - Date.now() : 999999999;
+        const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+
+        if (days < 10) {
+          rslTiers.critical.count += 1;
+          rslTiers.critical.cogs += cogs;
+          atRiskCOGS += cogs;
+        } else if (days <= 30) {
+          rslTiers.atRisk.count += 1;
+          rslTiers.atRisk.cogs += cogs;
+        } else if (days <= 60) {
+          rslTiers.moderate.count += 1;
+          rslTiers.moderate.cogs += cogs;
+        } else {
+          rslTiers.optimal.count += 1;
+          rslTiers.optimal.cogs += cogs;
+        }
+      }
+    });
+
+    allBids.forEach((bid) => {
+      const cat = bid.category || 'Other';
+      if (categoryMap[cat]) {
+        categoryMap[cat].bidCount += 1;
+      }
+    });
+
+    return {
+      totalCOGS,
+      atRiskCOGS,
+      rslTiers,
+      caseStats,
+      categoryBreakdown: Object.values(categoryMap),
+    };
+  }
+);
+
 export default inventorySlice.reducer;

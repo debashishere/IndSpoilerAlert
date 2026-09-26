@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { 
   Package, 
   MapPin, 
-  DollarSign, 
+  
   CheckCircle2, 
   AlertCircle, 
-  ArrowRight, 
+  
   Send, 
   X, 
-  ShieldCheck, 
+  
   Tag,
   Clock,
   MessageSquare
