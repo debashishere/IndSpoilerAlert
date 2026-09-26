@@ -78,7 +78,7 @@ export function useBuyerPipeline({
         };
       });
     }
-    return INGESTION_CONSTANTS.DEFAULT_BUYER_RECORDS as unknown as BuyerRecord[];
+    return [];
   }, [rawBuyers]);
 
   // Local filter states

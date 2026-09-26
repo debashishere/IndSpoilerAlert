@@ -28,6 +28,7 @@ const INVENTORY_OPTIONS = [
   { value: 'productionDate', label: 'Production Date' },
   { value: 'standardSellPrice', label: 'List Price' },
   { value: 'status', label: 'Status (Active/Sold)' },
+  { value: 'fdaRegulated', label: 'FDA Regulated' },
   { value: 'temperatureMin', label: 'Min Temp (°F)' },
   { value: 'temperatureMax', label: 'Max Temp (°F)' },
   { value: 'warehouse', label: 'Warehouse / DC' },

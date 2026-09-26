@@ -17,7 +17,7 @@ export const useIngestionTelemetry = (): {
 
   const metrics = useMemo<TelemetryMetrics>(() => {
     // 1. Portfolio Value
-    let portfolioValue = INGESTION_CONSTANTS.FALLBACK_TELEMETRY.PORTFOLIO_VALUE;
+    let portfolioValue = '$0';
     const portfolioSubtext = INGESTION_CONSTANTS.FALLBACK_TELEMETRY.PORTFOLIO_SUBTEXT;
 
     if (inventoryList && inventoryList.length > 0) {
@@ -27,13 +27,11 @@ export const useIngestionTelemetry = (): {
         return sum + (qty * unitPrice);
       }, 0);
 
-      if (totalVal > 0) {
-        portfolioValue = `$${Math.round(totalVal).toLocaleString()}`;
-      }
+      portfolioValue = `$${Math.round(totalVal).toLocaleString()}`;
     }
 
     // 2. Critical RSL (<14 Days)
-    let criticalRsl = INGESTION_CONSTANTS.FALLBACK_TELEMETRY.CRITICAL_RSL;
+    let criticalRsl = '0 Lots';
     const criticalRslSubtext = INGESTION_CONSTANTS.FALLBACK_TELEMETRY.CRITICAL_RSL_SUBTEXT;
 
     if (inventoryList && inventoryList.length > 0) {
@@ -54,7 +52,7 @@ export const useIngestionTelemetry = (): {
     }
 
     // 3. Liquidation Velocity
-    let liquidationVelocity = INGESTION_CONSTANTS.FALLBACK_TELEMETRY.LIQUIDATION_VELOCITY;
+    let liquidationVelocity = '0%';
     const liquidationVelocitySubtext = INGESTION_CONSTANTS.FALLBACK_TELEMETRY.LIQUIDATION_VELOCITY_SUBTEXT;
 
     if (salesRecords && salesRecords.length > 0 && inventoryList && inventoryList.length > 0) {
@@ -67,12 +65,12 @@ export const useIngestionTelemetry = (): {
     }
 
     // 4. Matched Buyer Network
-    let matchedBuyers = INGESTION_CONSTANTS.FALLBACK_TELEMETRY.BUYER_NETWORK;
+    let matchedBuyers = '0 Verified';
     const matchedBuyersSubtext = INGESTION_CONSTANTS.FALLBACK_TELEMETRY.BUYER_NETWORK_SUBTEXT;
 
     if (buyers && buyers.length > 0) {
       const activeCount = buyers.filter((b) => b.isActive !== false).length;
-      matchedBuyers = `${activeCount > 0 ? activeCount : buyers.length} Verified`;
+      matchedBuyers = `${activeCount} Verified`;
     }
 
     return {
@@ -89,9 +87,9 @@ export const useIngestionTelemetry = (): {
 
   const counts = useMemo(() => {
     return {
-      inventory: (inventoryList && inventoryList.length > 0) ? inventoryList.length : INGESTION_CONSTANTS.DEFAULT_COUNTS.INVENTORY,
-      sales: (salesRecords && salesRecords.length > 0) ? salesRecords.length : INGESTION_CONSTANTS.DEFAULT_COUNTS.SALES,
-      buyers: (buyers && buyers.length > 0) ? buyers.length : INGESTION_CONSTANTS.DEFAULT_COUNTS.BUYERS,
+      inventory: (inventoryList && Array.isArray(inventoryList)) ? inventoryList.length : 0,
+      sales: (salesRecords && Array.isArray(salesRecords)) ? salesRecords.length : 0,
+      buyers: (buyers && Array.isArray(buyers)) ? buyers.length : 0,
     };
   }, [inventoryList, salesRecords, buyers]);
 
