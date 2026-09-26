@@ -20,12 +20,9 @@ export function useSalesPipeline({
   const rawSalesRecords = useAppSelector((state) => state.ingestion?.salesRecords || []);
   const salesRecordsLoading = useAppSelector((state) => state.ingestion?.salesRecordsLoading || false);
 
-  // Fallback to default high-fidelity Stitch records when no records exist yet
+  // Live sales records
   const salesRecords: SalesRecord[] = useMemo(() => {
-    if (rawSalesRecords.length > 0) {
-      return rawSalesRecords;
-    }
-    return INGESTION_CONSTANTS.DEFAULT_SALES_RECORDS as unknown as SalesRecord[];
+    return rawSalesRecords || [];
   }, [rawSalesRecords]);
 
   // Local filter states
@@ -299,12 +296,9 @@ export function useSalesPipeline({
     }
   }, [onLiveFleetTelemetry]);
 
-  // Live ERP Clearing Count: 92 records from Stitch design or dynamic count
+  // Live ERP Clearing Count
   const clearingRecordCount = useMemo(() => {
-    if (rawSalesRecords.length > 0) {
-      return rawSalesRecords.length;
-    }
-    return 92;
+    return rawSalesRecords?.length || 0;
   }, [rawSalesRecords]);
 
   return {

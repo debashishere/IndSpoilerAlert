@@ -14,7 +14,7 @@ export const BiddingDataView: React.FC<{ onOpenLotHub?: (lot: any) => void }> = 
     dispatch(fetchAllBidsThunk() as any);
   }, [dispatch]);
 
-  const filteredBids = (allBids || []).filter((bid: any) => {
+  const filteredBids = (Array.isArray(allBids) ? allBids : []).filter((bid: any) => {
     const lot = bid.listingId?.opportunityId?.lotId || bid.inventoryLotId;
     const prod = lot?.productId;
     const buyer = bid.buyerId;
@@ -36,17 +36,18 @@ export const BiddingDataView: React.FC<{ onOpenLotHub?: (lot: any) => void }> = 
     return matchesSearch && matchesStatus;
   });
 
-  const totalBidsCount = (allBids || []).length;
-  const totalBidsValue = (allBids || []).reduce((sum: number, b: any) => {
+  const bidsArray = Array.isArray(allBids) ? allBids : [];
+  const totalBidsCount = bidsArray.length;
+  const totalBidsValue = bidsArray.reduce((sum: number, b: any) => {
     const qty = b.quantity || b.quantityCases || 0;
     const price = b.price || b.proposedPrice || 0;
     return sum + qty * price;
   }, 0);
 
-  const pendingBidsCount = (allBids || []).filter(
+  const pendingBidsCount = bidsArray.filter(
     (b: any) => b.status === 'pending' || b.status === 'submitted' || b.status === 'countered'
   ).length;
-  const awardedValue = (allBids || [])
+  const awardedValue = bidsArray
     .filter((b: any) => b.status === 'awarded' || b.status === 'fully_accepted')
     .reduce((sum: number, b: any) => sum + (b.quantity || 0) * (b.price || 0), 0);
 
