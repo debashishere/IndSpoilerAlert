@@ -6,6 +6,7 @@ import Sale from '../models/Sale';
 import { getRedisClient } from '../utils/redis';
 
 export async function getAnalyticsSummary() {
+  // Issue with dynamic multiple Supplier Data
   const cacheKey = 'analytics:summary';
 
   // 1. Try to read from Redis

@@ -13,6 +13,7 @@ export interface InsightCardProps {
   subtextClass?: string;
   isExpanded?: boolean;
   onToggle?: () => void;
+  popoverAlign?: 'left' | 'right';
 }
 
 export const InsightCard: React.FC<InsightCardProps> = ({
@@ -23,7 +24,8 @@ export const InsightCard: React.FC<InsightCardProps> = ({
   subtextClass = "text-slate-500 dark:text-slate-400",
   tooltipText,
   isExpanded,
-  onToggle
+  onToggle,
+  popoverAlign = 'left'
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -56,9 +58,17 @@ export const InsightCard: React.FC<InsightCardProps> = ({
       }
     };
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+
     document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, [isOpen, isControlled, onToggle]);
 
@@ -75,13 +85,14 @@ export const InsightCard: React.FC<InsightCardProps> = ({
           <button
             type="button"
             aria-label={`More information about ${title}`}
+            aria-expanded={isOpen}
             onClick={handleToggle}
             className="text-slate-400 hover:text-slate-600 focus:outline-none"
           >
             <Info className="w-3.5 h-3.5" />
           </button>
         </div>
-        <div className="flex items-baseline gap-1 mt-1">
+        <div className="flex flex-wrap items-baseline gap-1 mt-1">
           <span className={`text-[20px] font-bold font-mono leading-none ${valueClass}`}>
             {value}
           </span>
@@ -94,7 +105,9 @@ export const InsightCard: React.FC<InsightCardProps> = ({
       {isOpen && (
         <div 
           data-testid="info-overlay"
-          className="absolute z-10 top-full left-0 mt-2 w-64 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg text-xs text-slate-600 dark:text-slate-300"
+          role="dialog"
+          aria-label={`${title} Info`}
+          className={`absolute z-10 top-full ${popoverAlign === 'right' ? 'right-0' : 'left-0'} mt-2 w-64 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg text-xs text-slate-600 dark:text-slate-300`}
         >
           <div className="flex justify-between items-start mb-1">
             <span className="font-bold text-slate-900 dark:text-slate-100">{title} Info</span>

@@ -1,0 +1,3 @@
+# 53. Recovery Charts Layout and UX Modernization
+
+In the Recovery & Sustainability panel, `COGSRecoveryDashboard` (trendline analysis) and `RSLDistributionChart` (product stock disposition and CPG category volume distribution) are modernized with `/ux-v1` Tailwind design tokens, replacing legacy inline styles and uncontained CSS `.card` elements. `RSLDistributionChart` consolidates its stock disposition and category volume breakdown into a cohesive vertical flex column within the right-hand (1fr) rail of the `grid-cols-[1.5fr_1fr]` layout, preventing fragmented orphan grid rows and eliminating layout drift.

@@ -158,7 +158,11 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
         id="insight-switcher-bar"
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-lg border border-slate-200/60 dark:border-slate-700/60 overflow-x-auto">
+          <div
+            className="flex items-center gap-1.5 bg-slate-100/80 dark:bg-slate-800/80 p-1 rounded-lg border border-slate-200/60 dark:border-slate-700/60 overflow-x-auto"
+            role="tablist"
+            aria-label="Insight Hub Subtabs"
+          >
             {/* 1. Recovery & Sustainability */}
             <button
               type="button"

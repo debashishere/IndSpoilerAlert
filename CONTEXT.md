@@ -193,4 +193,14 @@
   _Avoid_: `Multi-Popover Stacking`, `Uncontrolled Tooltip Clutter`.
 - **Minimalist Telemetry Card**: The streamlined metric card aesthetic that strips decorative category/status icons, reserving graphical iconography exclusively for the interactive "i" information disclosure trigger.
   _Avoid_: `Icon-Heavy Metric Tiles`, `Cluttered KPI Cards`.
+- **Recovery Panel Metric Cards**: The 4 standardized metric cards in the Insight Recovery & Sustainability subtab (COGS Recovery Rate, Landfill Waste Diverted, Fees & Tax Benefit Saved, CO2 Emissions Saved) built with the canonical `InsightCard` pattern, featuring tabular typography, optical "i" button positioning, and single-active disclosure.
+  - **COGS Recovery Rate**: Percentage of original cost of goods recovered via secondary closeouts: `(Total Recovered Value ÷ Total Sold COGS) × 100`.
+  - **Landfill Waste Diverted**: Total weight (tons) diverted away from municipal landfills via verified food donation transfers and organic feed/biofuel recycling tonnage.
+  - **Fees & Tax Benefit Saved**: Net financial value preserved by avoiding municipal landfill tipping fees ($100/ton) plus Section 170(e)(3) tax deductions for charitable donations.
+  - **CO2 Emissions Saved**: Total greenhouse gas emissions (tons) prevented by diverting perishable goods from anaerobic decomposition in landfills (EPA WARM conversion factors).
+- **Recovery Analytics Visual Workbench**: The balanced two-column reporting layout within the Insight Recovery & Sustainability subtab pairing the 6-month historical recovery/diversion trendline (`COGSRecoveryDashboard`, 1.5fr) with the consolidated stock disposition and CPG category volume distribution rail (`RSLDistributionChart`, 1fr), formatted with institutional Tailwind tokens and responsive SVG geometries.
+  _Avoid_: `Fragmented Chart Cards`, `Orphan Grid Cells`.
+
+
+
 

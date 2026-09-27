@@ -155,4 +155,112 @@ describe('InsightCard Component Seam (0126 - Slice 1)', () => {
       expect(handleToggle).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Accessibility & Keyboard Navigation (Escape Key & ARIA)', () => {
+    it('exposes aria-expanded attribute on the info button reflecting open state', () => {
+      render(
+        <InsightCard
+          title="Carbon Offset"
+          value="45 Tons"
+          subtext="Net avoided"
+          tooltipText="Estimated carbon offset."
+        />
+      );
+
+      const infoBtn = screen.getByRole('button', { name: /more information about carbon offset/i });
+      expect(infoBtn).toHaveAttribute('aria-expanded', 'false');
+
+      fireEvent.click(infoBtn);
+      expect(infoBtn).toHaveAttribute('aria-expanded', 'true');
+
+      const overlay = screen.getByTestId('info-overlay');
+      expect(overlay).toHaveAttribute('role', 'dialog');
+    });
+
+    it('dismisses popover when Escape key is pressed in uncontrolled mode', () => {
+      render(
+        <InsightCard
+          title="Carbon Offset"
+          value="45 Tons"
+          subtext="Net avoided"
+          tooltipText="Estimated carbon offset."
+        />
+      );
+
+      const infoBtn = screen.getByRole('button', { name: /more information about carbon offset/i });
+      fireEvent.click(infoBtn);
+      expect(screen.getByTestId('info-overlay')).toBeInTheDocument();
+
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(screen.queryByTestId('info-overlay')).not.toBeInTheDocument();
+    });
+
+    it('invokes onToggle when Escape key is pressed in controlled mode', () => {
+      const handleToggle = vi.fn();
+      render(
+        <InsightCard
+          title="Carbon Offset"
+          value="45 Tons"
+          subtext="Net avoided"
+          tooltipText="Estimated carbon offset."
+          isExpanded={true}
+          onToggle={handleToggle}
+        />
+      );
+
+      expect(screen.getByTestId('info-overlay')).toBeInTheDocument();
+      fireEvent.keyDown(document, { key: 'Escape' });
+      expect(handleToggle).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Layout & Responsive Geometry', () => {
+    it('applies flex-wrap to value and subtext container to prevent overflow', () => {
+      const { container } = render(
+        <InsightCard
+          title="COGS Recovery Rate"
+          value="72%"
+          subtext="Recovered: $45,000 of $62,500 sold COGS"
+          tooltipText="Formula explanation."
+        />
+      );
+
+      const valueRow = container.querySelector('.flex.flex-wrap');
+      expect(valueRow).toBeInTheDocument();
+    });
+
+    it('positions popover with right-0 when popoverAlign="right" to avoid right-edge clipping', () => {
+      render(
+        <InsightCard
+          title="CO2 Emissions Saved"
+          value="51.2 Tons"
+          subtext="Reduced greenhouse gas impact"
+          tooltipText="Formula explanation."
+          isExpanded={true}
+          popoverAlign="right"
+        />
+      );
+
+      const overlay = screen.getByTestId('info-overlay');
+      expect(overlay).toHaveClass('right-0');
+      expect(overlay).not.toHaveClass('left-0');
+    });
+
+    it('defaults popover alignment to left-0 when popoverAlign is not specified', () => {
+      render(
+        <InsightCard
+          title="COGS Recovery Rate"
+          value="72%"
+          subtext="Recovered"
+          tooltipText="Formula explanation."
+          isExpanded={true}
+        />
+      );
+
+      const overlay = screen.getByTestId('info-overlay');
+      expect(overlay).toHaveClass('left-0');
+    });
+  });
 });
+
+
