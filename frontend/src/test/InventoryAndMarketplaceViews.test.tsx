@@ -6,7 +6,7 @@ import { setInventoryList } from '../store/slices/inventorySlice';
 import { setBuyers } from '../store/slices/coreSlice';
 
 describe('Issue #38 Tracer Bullet 3: InventoryListView & MarketplaceView', () => {
-  it('should render InventoryListView with charts dashboard, Coming Soon badges, and subtabs', async () => {
+  it('should render InventoryListView with Recovery & Sustainability panel as default and functional subtab switching', async () => {
     const { InventoryListView } = await import('../views/InventoryListView');
 
     const mockLots = [
@@ -47,17 +47,27 @@ describe('Issue #38 Tracer Bullet 3: InventoryListView & MarketplaceView', () =>
     );
 
     expect(screen.getByText(/Surplus Inventory/i)).toBeInTheDocument();
-    expect(screen.getByText('Total Bids Received')).toBeInTheDocument();
 
-    // Test switching to Inventory Insights subtab
-    const inventoryChartsTabBtn = screen.getByText(/Inventory Insights/i);
-    fireEvent.click(inventoryChartsTabBtn);
-    expect(screen.getByText(/Inventory Performance & Analytics Suite/i)).toBeInTheDocument();
-    expect(screen.getByText(/COGS & Expiration Risk Trajectory/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Coming Soon/i).length).toBeGreaterThanOrEqual(1);
+    // Verify Telemetry Bar new layout & tooltips
+    expect(screen.getByText('Active Portfolio Value')).toBeInTheDocument();
+    expect(screen.getByText('Total Inventory Value')).toBeInTheDocument();
+    // Test clicking info button for overlay
+    const infoButton = screen.getByRole('button', { name: /More information about Active Portfolio Value/i });
+    fireEvent.click(infoButton);
+    expect(screen.getByTestId('info-overlay')).toBeInTheDocument();
+    expect(screen.getByText('The total potential sales value of the inventory currently available to sell. Calculated by multiplying availableQty by standardSellPrice.')).toBeInTheDocument();
+    
+    // Close overlay
+    const closeBtn = screen.getByRole('button', { name: /Close modal/i });
+    fireEvent.click(closeBtn);
+    expect(screen.queryByTestId('info-overlay')).not.toBeInTheDocument();
 
-    // Test switching to Sales Insights subtab
-    const salesTabBtn = screen.getByText(/Sales Insights/i);
+    // Recovery & Sustainability is now the default subtab with live analytics content
+    expect(screen.getByRole('tab', { name: /recovery/i })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('COGS Recovery Rate')).toBeInTheDocument();
+
+    // Test switching to Sales & Clearing subtab
+    const salesTabBtn = screen.getByRole('tab', { name: /sales/i });
     fireEvent.click(salesTabBtn);
     expect(screen.getByText('Total Realized Revenue')).toBeInTheDocument();
   });

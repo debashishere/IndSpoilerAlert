@@ -12,6 +12,24 @@ describe('SalesRegistryPanel Component', () => {
   });
 
   it('should render sales pipeline filters, table, and pagination controls', () => {
+    store.dispatch(
+      setSalesRecords([
+        {
+          _id: 's-101',
+          productName: 'Organic Almond Milk 32oz',
+          sku: 'SKU-ALM-01',
+          lotNumber: 'LOT-ALM-2026-001',
+          buyerEmail: 'buyer@costco.com',
+          warehouse: 'Dallas DC',
+          quantitySold: 120,
+          pricePerCase: 24.5,
+          totalValue: 2940,
+          invoiceNumber: 'INV-9001',
+          createdAt: new Date().toISOString(),
+        },
+      ])
+    );
+
     render(
       <Provider store={store}>
         <SalesRegistryPanel />
@@ -26,6 +44,24 @@ describe('SalesRegistryPanel Component', () => {
   });
 
   it('should support page size changing and pagination interactions', () => {
+    store.dispatch(
+      setSalesRecords([
+        {
+          _id: 's-101',
+          productName: 'Organic Almond Milk 32oz',
+          sku: 'SKU-ALM-01',
+          lotNumber: 'LOT-ALM-2026-001',
+          buyerEmail: 'buyer@costco.com',
+          warehouse: 'Dallas DC',
+          quantitySold: 120,
+          pricePerCase: 24.5,
+          totalValue: 2940,
+          invoiceNumber: 'INV-9001',
+          createdAt: new Date().toISOString(),
+        },
+      ])
+    );
+
     render(
       <Provider store={store}>
         <SalesRegistryPanel />
