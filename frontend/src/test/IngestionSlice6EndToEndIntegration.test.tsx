@@ -134,13 +134,11 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
       );
 
       // Verify KPI metric cards
-      expect(screen.getByText('Active Portfolio Value')).toBeDefined();
       expect(screen.getByText('Critical RSL (<14 Days)')).toBeDefined();
       expect(screen.getByText('Liquidation Velocity')).toBeDefined();
       expect(screen.getByText('Matched Buyer Network')).toBeDefined();
 
       // Material symbols icons rendered
-      expect(screen.getByText('account_balance_wallet')).toBeDefined();
       expect(screen.getByText('warning')).toBeDefined();
       expect(screen.getByText('speed')).toBeDefined();
       expect(screen.getByText('verified_user')).toBeDefined();

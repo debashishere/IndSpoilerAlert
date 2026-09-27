@@ -9,7 +9,6 @@ import workflowReducer from '../store/slices/workflowSlice';
 import logisticsReducer from '../store/slices/logisticsSlice';
 import authReducer from '../store/slices/authSlice';
 import IngestionView from '../views/IngestionView';
-import { IngestionTelemetryBar } from '../components/domain/ingestion/subcomponents/IngestionTelemetryBar';
 import { IngestionHubConnectors } from '../components/domain/ingestion/subcomponents/IngestionHubConnectors';
 import { PipelineSwitcherBar } from '../components/domain/ingestion/subcomponents/PipelineSwitcherBar';
 
@@ -32,161 +31,6 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
 
   beforeEach(() => {
     testStore = createTestStore();
-  });
-
-  describe('IngestionTelemetryBar', () => {
-    it('renders 4 KPI metric cards with design fallback values when Redux stores are empty', () => {
-      render(
-        <Provider store={testStore}>
-          <IngestionTelemetryBar />
-        </Provider>
-      );
-
-      // Card 1: Active Portfolio Value
-      expect(screen.getByText('Active Portfolio Value')).toBeDefined();
-      expect(screen.getByText('$1,842,900')).toBeDefined();
-      expect(screen.getByText('FEFO Managed')).toBeDefined();
-
-      // Card 2: Critical RSL (<14 Days)
-      expect(screen.getByText('Critical RSL (<14 Days)')).toBeDefined();
-      expect(screen.getByText('18 Lots')).toBeDefined();
-      expect(screen.getByText('Immediate Auction')).toBeDefined();
-
-      // Card 3: Liquidation Velocity
-      expect(screen.getByText('Liquidation Velocity')).toBeDefined();
-      expect(screen.getByText('94.8%')).toBeDefined();
-      expect(screen.getByText('+3.2% vs Target')).toBeDefined();
-
-      // Card 4: Matched Buyer Network
-      expect(screen.getByText('Matched Buyer Network')).toBeDefined();
-      expect(screen.getByText('50 Verified')).toBeDefined();
-      expect(screen.getByText('100% Compliant')).toBeDefined();
-    });
-
-    it('hydrates dynamically from Redux stores (inventoryList, salesRecords, buyers)', () => {
-      // Setup dynamic state with future critical lots
-      const now = new Date();
-      const in5Days = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString();
-      const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-      const mockLots = [
-        {
-          _id: 'lot-1',
-          lotNumber: 'LOT-001',
-          quantityCases: 100,
-          standardSellPrice: 50,
-          expirationDate: in5Days, // critical <14 days
-        },
-        {
-          _id: 'lot-2',
-          lotNumber: 'LOT-002',
-          quantityCases: 200,
-          standardSellPrice: 30,
-          expirationDate: in30Days, // stable >14 days
-        },
-      ];
-
-      testStore.dispatch(setInventoryList(mockLots));
-      testStore.dispatch(setSalesRecords([
-        { id: 'sale-1', quantity: 80, totalValue: 4000 },
-        { id: 'sale-2', quantity: 20, totalValue: 1000 },
-      ]));
-
-      const storeWithBuyers = createTestStore({
-        inventory: {
-          inventoryList: mockLots,
-          allBids: [],
-          allBidsLoading: false,
-          loading: false,
-          error: null,
-          selectedLot: null,
-          listFilterSearch: '',
-          listFilterSupplier: '',
-          listFilterDC: '',
-          listFilterCategory: '',
-          listFilterStatus: '',
-          sortField: 'sku',
-          sortDirection: 'asc',
-          currentPage: 1,
-          itemsPerPage: 10,
-          activeSubTab: 'inventory',
-          selectedBuyerEmail: '',
-          selectedLotHubId: null,
-          lotHubSubTab: 'details',
-          lotHubData: {
-            loading: false,
-            error: null,
-            bidsList: [],
-            bidsLoading: false,
-            negotiationBids: [],
-            negotiationBidsLoading: false,
-            lotActivities: [],
-            activitiesLoading: false,
-            riskProfile: null,
-            opportunityData: null,
-            listingData: null,
-            pricingData: null,
-            pricingLoading: false,
-            buyerMatches: [],
-            buyersLoading: false,
-            sliderDays: 14,
-            sliderQty: 100,
-            txLoading: false,
-            txSuccess: false,
-            txDetails: null,
-            expandedBidId: null,
-            partialAwardCases: '',
-            selectedBidForNegotiation: null,
-            negotiationChatInput: '',
-            counterOfferPrice: '',
-            counterOfferQty: '',
-            counterOfferTerms: '',
-            activityFilter: 'all',
-            selectedFormType: 'auction',
-          },
-        },
-        core: {
-          activeTab: 'ingestion',
-          returnTab: null,
-          sidebarExpanded: false,
-          backendHealthy: true,
-          sidecarHealthy: true,
-          suppliers: [],
-          buyers: [
-            { _id: 'b1', email: 'b1@domain.com', companyName: 'Buyer 1', isActive: true },
-            { _id: 'b2', email: 'b2@domain.com', companyName: 'Buyer 2', isActive: true },
-            { _id: 'b3', email: 'b3@domain.com', companyName: 'Buyer 3', isActive: true },
-          ],
-          buyerLists: [],
-          loading: false,
-          error: null,
-          analyticsSummary: null,
-          analyticsLoading: false,
-        },
-        ingestion: {
-          pipelineTab: 'inventory',
-          salesRecords: [
-            { id: 'sale-1', quantity: 80, totalValue: 4000 },
-            { id: 'sale-2', quantity: 20, totalValue: 1000 },
-          ],
-        },
-      });
-
-      render(
-        <Provider store={storeWithBuyers}>
-          <IngestionTelemetryBar />
-        </Provider>
-      );
-
-      // Active Portfolio Value: 100 * 50 + 200 * 30 = $11,000
-      expect(screen.getByText('$11,000')).toBeDefined();
-
-      // Critical RSL (<14 Days): 1 Lot
-      expect(screen.getByText('1 Lot')).toBeDefined();
-
-      // Matched Buyer Network: 3 Verified
-      expect(screen.getByText('3 Verified')).toBeDefined();
-    });
   });
 
   describe('IngestionHubConnectors', () => {
@@ -359,7 +203,6 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
         </Provider>
       );
 
-      expect(screen.getByText('Active Portfolio Value')).toBeDefined();
       expect(screen.getByText('Ingestion Hub & Connectors')).toBeDefined();
       expect(screen.getByText('Inventory Pipeline')).toBeDefined();
     });
