@@ -5,7 +5,6 @@ import {
   BuyerRegistryPanel,
   SalesRegistryPanel,
   InventoryRegistryPanel,
-  IngestionTelemetryBar,
   IngestionHubConnectors,
   PipelineSwitcherBar,
   UnifiedIngestionModal,
@@ -76,13 +75,10 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
         </p>
       </header>
 
-      {/* 2. Operational Telemetry Bar (4 KPI Cards) */}
-      <IngestionTelemetryBar />
-
-      {/* 3. Collapsible Dedicated Ingestion Hub & Connectors */}
+      {/* 2. Collapsible Dedicated Ingestion Hub & Connectors */}
       <IngestionHubConnectors onOpenUploadModal={() => handleOpenUploadModal(pipelineTab as IngestionTarget)} />
 
-      {/* 4. Master Pipeline Switcher Bar */}
+      {/* 3. Master Pipeline Switcher Bar */}
       <PipelineSwitcherBar
         activeTab={pipelineTab}
         onTabChange={handleTabChange}
@@ -91,7 +87,7 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
         onToggleAll={handleToggleAll}
       />
 
-      {/* 5. Active Pipeline Workbenches */}
+      {/* 4. Active Pipeline Workbenches */}
       <div className="w-full transition-opacity duration-150">
         {pipelineTab === 'inventory' && (
           <div id="panel-inventory">
@@ -112,7 +108,7 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
         )}
       </div>
 
-      {/* 6. Unified Surplus Data Ingestion Modal (Root Overlay) */}
+      {/* 5. Unified Surplus Data Ingestion Modal (Root Overlay) */}
       <UnifiedIngestionModal
         isOpen={isUploadModalOpen}
         initialTarget={modalTarget}

@@ -187,3 +187,10 @@
 - **Liquidation Velocity**: The percentage of all processed inventory units that have been successfully sold, calculated as sold units divided by total units (sold + available).
 - **Matched Buyer Network**: The total count of active, verified institutional buyers registered in the platform's network.
 - **Critical Expirations**: _Avoid_: Use **Critical RSL** (14 days) instead to maintain a unified platform threshold.
+- **Insight Operational Telemetry**: The consolidated two-tier telemetry card arrangement in the Insight hub displaying 7 key commercial, recovery, and operational flow metrics (Row 1: Valuation & Recovery; Row 2: Flow Velocity & Buyer Liquidity).
+  _Avoid_: `Scattered KPI Bar`, `Fragmented Ingestion Metrics`.
+- **Exclusive Card Info Disclosure**: The single-active tooltip/popover pattern on telemetry cards where clicking the "i" information button opens the target description card while automatically collapsing any previously open description card.
+  _Avoid_: `Multi-Popover Stacking`, `Uncontrolled Tooltip Clutter`.
+- **Minimalist Telemetry Card**: The streamlined metric card aesthetic that strips decorative category/status icons, reserving graphical iconography exclusively for the interactive "i" information disclosure trigger.
+  _Avoid_: `Icon-Heavy Metric Tiles`, `Cluttered KPI Cards`.
+

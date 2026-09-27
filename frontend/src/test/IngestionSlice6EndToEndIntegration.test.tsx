@@ -126,22 +126,20 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
       expect(headerTitle.className).toContain('tracking-tight');
     });
 
-    it('renders Telemetry bar with semantic color classes and Material Symbols icons', () => {
+    it('renders streamlined Ingestion layout with Connectors workbench and no telemetry cards', () => {
       render(
         <Provider store={store}>
           <IngestionView />
         </Provider>
       );
 
-      // Verify KPI metric cards
-      expect(screen.getByText('Critical RSL (<14 Days)')).toBeDefined();
-      expect(screen.getByText('Liquidation Velocity')).toBeDefined();
-      expect(screen.getByText('Matched Buyer Network')).toBeDefined();
+      // Verify Connectors workbench is immediately available
+      expect(screen.getByText('Ingestion Hub & Connectors')).toBeDefined();
 
-      // Material symbols icons rendered
-      expect(screen.getByText('warning')).toBeDefined();
-      expect(screen.getByText('speed')).toBeDefined();
-      expect(screen.getByText('verified_user')).toBeDefined();
+      // Verify Telemetry KPI cards are retired from IngestionView
+      expect(screen.queryByText('Critical RSL (<14 Days)')).toBeNull();
+      expect(screen.queryByText('Liquidation Velocity')).toBeNull();
+      expect(screen.queryByText('Matched Buyer Network')).toBeNull();
     });
   });
 

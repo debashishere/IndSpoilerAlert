@@ -30,30 +30,27 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
     }
   }, [dispatch, analyticsSummary, analyticsLoading]);
 
-  const calculateDaysRemaining = (dateStr: string) => {
-    const diff = new Date(dateStr).getTime() - Date.now();
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  const [activeInfoCardId, setActiveInfoCardId] = useState<string | null>(null);
+
+  const handleToggleCard = (cardId: string) => {
+    setActiveInfoCardId((prev) => (prev === cardId ? null : cardId));
   };
 
-  const criticalExpirations = inventoryList.filter((lot: any) => {
-    if (lot.status === 'sold' || lot.status === 'donated' || lot.status === 'recycled') return false;
-    const days = calculateDaysRemaining(lot.expirationDate);
-    return days < 10;
-  }).length;
+  const summary = analyticsSummary?.summary || analyticsSummary || analyticsData?.summary || analyticsData;
 
   const totalInventoryValue =
-    analyticsData?.summary?.totalCOGS ||
+    summary?.totalCOGS ||
     inventoryList.reduce((sum: number, lot: any) => sum + lot.quantityCases * (lot.costPerCase ?? 0), 0);
 
-  const revenueSecured = analyticsData?.summary?.totalRecoveredValue || 0;
+  const revenueSecured = summary?.totalRecoveredValue || 0;
 
   const landfillDiversionRate =
-    analyticsData?.summary?.caseStats?.total > 0
+    summary?.caseStats?.total > 0
       ? Math.round(
-          (((analyticsData?.summary?.caseStats?.sold || 0) +
-            (analyticsData?.summary?.caseStats?.donated || 0) +
-            (analyticsData?.summary?.caseStats?.recycled || 0)) /
-            analyticsData.summary.caseStats.total) *
+          (((summary?.caseStats?.sold || 0) +
+            (summary?.caseStats?.donated || 0) +
+            (summary?.caseStats?.recycled || 0)) /
+            summary.caseStats.total) *
             100
         )
       : 0;
@@ -76,93 +73,83 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
         </p>
       </header>
 
-      {/* 2. Operational Telemetry Bar (5 KPI Cards matching Ingestion standard) */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-3.5 mb-6" id="insight-telemetry-bar">
-        {/* Card 1: Active Portfolio Value */}
-        <InsightCard
-          title="Active Portfolio Value"
-          value={metrics.portfolioValue}
-          subtext={metrics.portfolioSubtext}
-          icon={
-            <>
-              <span className="material-symbols-outlined text-[20px] flex items-center justify-center">account_balance_wallet</span>
-              <Wallet className="w-5 h-5 hidden" aria-hidden="true" />
-            </>
-          }
-          iconBgClass="bg-blue-50 dark:bg-blue-900/30"
-          iconTextClass="text-blue-600 dark:text-blue-400"
-          subtextClass="text-blue-600 dark:text-blue-400"
-          tooltipText="The total potential sales value of the inventory currently available to sell. Calculated by multiplying availableQty by standardSellPrice."
-        />
+      {/* 2. Operational Telemetry Grid (Two-Tier Layout: 4 Valuation Cards + 3 Operational Flow Cards) */}
+      <div className="space-y-3.5 mb-6" id="insight-telemetry-grid">
+        {/* Row 1: Valuation & Financial Performance (4 Cards) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5" data-testid="telemetry-tier-1">
+          <InsightCard
+            title="Active Portfolio Value"
+            value={metrics.portfolioValue}
+            subtext={metrics.portfolioSubtext}
+            subtextClass="text-blue-600 dark:text-blue-400"
+            tooltipText="The total potential sales value of the inventory currently available to sell. Calculated by multiplying availableQty by standardSellPrice."
+            isExpanded={activeInfoCardId === 'portfolioValue'}
+            onToggle={() => handleToggleCard('portfolioValue')}
+          />
 
-        {/* Card 2: Total Inventory Value */}
-        <InsightCard
-          title="Total Inventory Value"
-          value={`$${totalInventoryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-          subtext="Distressed COGS ingested"
-          icon={
-            <>
-              <span className="material-symbols-outlined text-[20px] flex items-center justify-center">account_balance_wallet</span>
-              <DollarSign className="w-5 h-5 hidden" aria-hidden="true" />
-            </>
-          }
-          iconBgClass="bg-blue-50 dark:bg-blue-900/30"
-          iconTextClass="text-blue-600 dark:text-blue-400"
-          subtextClass="text-blue-600 dark:text-blue-400"
-          tooltipText="The total original cost of goods sold (COGS) for all items in the inventory."
-        />
+          <InsightCard
+            title="Total Inventory Value"
+            value={`$${totalInventoryValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            subtext="Distressed COGS ingested"
+            subtextClass="text-blue-600 dark:text-blue-400"
+            tooltipText="The total original cost of goods sold (COGS) for all items in the inventory."
+            isExpanded={activeInfoCardId === 'inventoryValue'}
+            onToggle={() => handleToggleCard('inventoryValue')}
+          />
 
-        {/* Card 3: Revenue Secured */}
-        <InsightCard
-          title="Revenue Secured"
-          value={`$${revenueSecured.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
-          subtext="From closed closeout sales"
-          valueClass="text-emerald-600 dark:text-emerald-400"
-          icon={
-            <>
-              <span className="material-symbols-outlined text-[20px] flex items-center justify-center">military_tech</span>
-              <Award className="w-5 h-5 hidden" aria-hidden="true" />
-            </>
-          }
-          iconBgClass="bg-emerald-50 dark:bg-emerald-900/30"
-          iconTextClass="text-emerald-600 dark:text-emerald-400"
-          subtextClass="text-emerald-600 dark:text-emerald-400"
-          tooltipText="Total revenue secured from closed closeout sales and successful bids."
-        />
+          <InsightCard
+            title="Revenue Secured"
+            value={`$${revenueSecured.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
+            subtext="From closed closeout sales"
+            valueClass="text-emerald-600 dark:text-emerald-400"
+            subtextClass="text-emerald-600 dark:text-emerald-400"
+            tooltipText="Total revenue secured from closed closeout sales and successful bids."
+            isExpanded={activeInfoCardId === 'revenueSecured'}
+            onToggle={() => handleToggleCard('revenueSecured')}
+          />
 
-        {/* Card 4: Landfill Diversion Rate */}
-        <InsightCard
-          title="Landfill Diversion Rate"
-          value={`${landfillDiversionRate}%`}
-          subtext="Sold, Donated, or Recycled"
-          icon={
-            <>
-              <span className="material-symbols-outlined text-[20px] flex items-center justify-center">eco</span>
-              <Leaf className="w-5 h-5 hidden" aria-hidden="true" />
-            </>
-          }
-          iconBgClass="bg-teal-50 dark:bg-teal-900/30"
-          iconTextClass="text-teal-600 dark:text-teal-400"
-          tooltipText="Percentage of inventory successfully diverted from landfills via sales, donations, or recycling."
-        />
+          <InsightCard
+            title="Landfill Diversion Rate"
+            value={`${landfillDiversionRate}%`}
+            subtext="Sold, Donated, or Recycled"
+            tooltipText="Percentage of inventory successfully diverted from landfills via sales, donations, or recycling."
+            isExpanded={activeInfoCardId === 'diversionRate'}
+            onToggle={() => handleToggleCard('diversionRate')}
+          />
+        </div>
 
-        {/* Card 5: Critical Expirations */}
-        <InsightCard
-          title="Critical Expirations"
-          value={criticalExpirations}
-          subtext="Lots expiring in < 10 days"
-          valueClass={criticalExpirations > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-100'}
-          subtextClass={criticalExpirations > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}
-          icon={
-            <>
-              <span className="material-symbols-outlined text-[20px] flex items-center justify-center">warning</span>
-              <ShieldAlert className="w-5 h-5 hidden" aria-hidden="true" />
-            </>
-          }
-          iconBgClass={criticalExpirations > 0 ? 'bg-rose-50 dark:bg-rose-900/30' : 'bg-slate-100 dark:bg-slate-800'}
-          iconTextClass={criticalExpirations > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}
-          tooltipText="Number of inventory lots that are within 10 days of expiration or have critically low remaining shelf life (RSL)."
-        />
+        {/* Row 2: Operational Flow & Buyer Liquidity (3 Cards) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5" data-testid="telemetry-tier-2">
+          <InsightCard
+            title="Critical RSL (<14 Days)"
+            value={metrics.criticalRsl}
+            subtext={metrics.criticalRslSubtext}
+            valueClass="text-rose-600 dark:text-rose-400"
+            subtextClass="text-rose-600 dark:text-rose-400"
+            tooltipText="Number of inventory lots with less than 14 days of remaining shelf life requiring immediate action."
+            isExpanded={activeInfoCardId === 'criticalRsl'}
+            onToggle={() => handleToggleCard('criticalRsl')}
+          />
+
+          <InsightCard
+            title="Liquidation Velocity"
+            value={metrics.liquidationVelocity}
+            subtext={metrics.liquidationVelocitySubtext}
+            subtextClass="text-sky-600 dark:text-sky-400"
+            tooltipText="The rate at which inventory is being liquidated, calculated as sold units divided by total units."
+            isExpanded={activeInfoCardId === 'liquidationVelocity'}
+            onToggle={() => handleToggleCard('liquidationVelocity')}
+          />
+
+          <InsightCard
+            title="Matched Buyer Network"
+            value={metrics.matchedBuyers}
+            subtext={metrics.matchedBuyersSubtext}
+            tooltipText="Number of verified buyers currently active in the network matching your inventory profile."
+            isExpanded={activeInfoCardId === 'matchedBuyers'}
+            onToggle={() => handleToggleCard('matchedBuyers')}
+          />
+        </div>
       </div>
 
       {/* 3. Master Subtab Switcher Bar (Matching Ingestion PipelineSwitcherBar) */}

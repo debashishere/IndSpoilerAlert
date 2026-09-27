@@ -1,0 +1,3 @@
+# 51. Insight Telemetry Migration and Exclusive Info Disclosure
+
+Operational telemetry cards from the Ingestion tab (`Critical RSL (<14 Days)`, `Liquidation Velocity`, `Matched Buyer Network`) are migrated into the Insight hub and combined with valuation metrics into a unified 7-element, two-tier layout (Row 1: Valuation & Recovery; Row 2: Flow Velocity & Buyer Liquidity), replacing the redundant `<10 Days` expiration card. Decorative category icons are removed from metric cards to reduce visual noise, and the interactive "i" information description popup enforces strict single-active exclusivity with outside-click dismissal to prevent visual popover collision.
