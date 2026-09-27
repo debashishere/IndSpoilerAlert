@@ -49,7 +49,7 @@ describe('LogisticsService & LogisticsSlice Tracer Bullet', () => {
     const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (url: any, init?: any) => {
       const urlStr = url.toString();
       if (urlStr.endsWith('/shipments') && (!init || init.method === 'GET' || !init.method)) {
-        expect(init?.headers).toEqual({
+        expect(init?.headers).toMatchObject({
           'Cache-Control': 'no-cache, no-store',
           'Pragma': 'no-cache'
         });

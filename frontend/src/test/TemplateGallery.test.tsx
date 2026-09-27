@@ -105,6 +105,46 @@ describe('Issue 02 — Template Gallery', () => {
       expect(calledUrl).toMatch(/\/api\/email-templates/);
       expect(calledUrl).toMatch(/supplierId=sup-abc/);
     });
+
+    it('renders DB-seeded templates returned as { success: true, templates: [...] } with lowercase categories', async () => {
+      const seededResponse = {
+        success: true,
+        templates: [
+          {
+            _id: 'tpl-seeded-1',
+            name: 'Standard Liquidation Offer Sheet',
+            category: 'clearance',
+            subject: 'Distressed Stock Clearance',
+            updatedAt: '2026-09-25T10:00:00Z',
+            supplierId: 'sup-123',
+          },
+          {
+            _id: 'tpl-seeded-2',
+            name: 'Urgent Short-Dated Surplus Auction Alert',
+            category: 'auction',
+            subject: 'Urgent Auction Notice',
+            updatedAt: '2026-09-25T10:00:00Z',
+            supplierId: 'sup-123',
+          },
+        ],
+      };
+
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => seededResponse,
+      }) as any;
+
+      await renderGallery('sup-123');
+
+      await waitFor(() => {
+        expect(screen.getByText('Standard Liquidation Offer Sheet')).toBeInTheDocument();
+      });
+
+      expect(screen.getByText('Urgent Short-Dated Surplus Auction Alert')).toBeInTheDocument();
+      expect(screen.getByText('clearance')).toBeInTheDocument();
+      expect(screen.getByText('auction')).toBeInTheDocument();
+    });
   });
 
   // -------------------------------------------------------------------------

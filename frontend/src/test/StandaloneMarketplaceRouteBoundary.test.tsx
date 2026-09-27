@@ -104,6 +104,45 @@ describe('01 — Route Boundary and Subdomain Handling for Standalone Marketplac
     });
   });
 
+  it('renders StandaloneMarketplacePortal on staging domain (staging.marketplace.inventoryflowing.com) on path /', async () => {
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: {
+        ...window.location,
+        pathname: '/',
+        hostname: 'staging.marketplace.inventoryflowing.com',
+        search: '',
+      },
+    });
+
+    const mockUnauthenticated = {
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      isLoading: false,
+      login: async () => ({} as any),
+      signup: async () => ({} as any),
+      logout: async () => {},
+      updateProfiles: async () => ({} as any),
+    };
+
+    render(
+      <Provider store={store}>
+        <AuthContext.Provider value={mockUnauthenticated}>
+          <App />
+        </AuthContext.Provider>
+      </Provider>
+    );
+
+    expect(screen.getByTestId('marketplace-header')).toBeInTheDocument();
+    expect(screen.queryByTestId('public-landing-page')).not.toBeInTheDocument();
+
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: originalLocation,
+    });
+  });
+
   it('delegates to SupplierWorkspace on default / route, showing supplier auth gate when unauthenticated', async () => {
     window.history.pushState({}, '', '/');
 

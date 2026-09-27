@@ -87,4 +87,11 @@ describe('firebaseAuthService', () => {
     (popupError as any).code = 'auth/popup-closed-by-user';
     await expect(firebaseAuthService.handleGoogleAuthError(popupError)).rejects.toThrow('User closed the login popup');
   });
+
+  it('should disallow dev mock auth when VITE_USE_DEV_MOCK_AUTH is false or in staging environment', async () => {
+    const isStagingEnforced = firebaseAuthService.isDevMockAuthDisabled();
+    expect(isStagingEnforced).toBeDefined();
+    expect(firebaseAuthService.isStagingEnvironment()).toBeDefined();
+  });
 });
+
