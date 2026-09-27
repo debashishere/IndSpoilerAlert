@@ -1,0 +1,6 @@
+lotNumber,sku,brand,category,subCategory,description,productionDate,expirationDate,quantityCases,availableQty,costPerCase,standardSellPrice,status,fdaRegulated,temperatureMin,temperatureMax,warehouse
+"LOT-EMERG-001","ULVR-EMG-01","Breyers","Dairy","Gourmet Gelato","Short-Dated Organic Vanilla Bean Gelato (Urgent Clearance Required)","2026-08-12","2026-09-30",1800,1800,14.50,24.00,"active",true,0,10,"Northeast Logistics Hub, Newark, NJ"
+"LOT-EMERG-002","DANN-EMG-02","Silk","Beverages","Almond Milk","Short-Dated Organic Unsweetened Almond Milk (RSL 8%)","2026-08-17","2026-10-01",2200,2200,11.00,18.50,"active",true,34,38,"Midwest Distribution Center, Chicago, IL"
+"LOT-EMERG-003","CAG-EMG-03","Healthy Choice","Frozen","Meals","Ultra-Short Frozen Power Bowls (Donation Cascade Target)","2026-07-28","2026-09-29",1500,1500,16.00,28.00,"active",true,-5,5,"Southern Gateway DC, Atlanta, GA"
+"LOT-EMERG-004","KHC-EMG-04","Oscar Mayer","Meat","Bacon","Hardwood Smoked Bacon (FSMA 204 Audited Cold Chain)","2026-08-27","2026-10-02",3000,3000,18.00,32.00,"active",true,32,36,"Texas Central Facility, Dallas, TX"
+"LOT-EMERG-005","MDLZ-EMG-05","Oreo","Dry Goods","Cookies","Limited Edition Birthday Cake Oreos (Short BBD Window)","2026-06-28","2026-10-03",4500,4500,8.50,15.00,"active",false,50,72,"Pacific Northwest Hub, Seattle, WA"

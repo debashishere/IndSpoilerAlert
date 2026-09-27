@@ -1,0 +1,6 @@
+companyName,email,tier,isVerified,acceptsShortDated,minShelfLife,categories,transportRadius,latitude,longitude,excludedAllergens,phone,address
+"Peanut-Free Kids School District Network","debashishere007+peanutfree@gmail.com","custom",true,true,3,"Dairy;Produce;Bakery",50,41.8818,-87.6231,"peanuts;tree_nuts","+1 (312) 555-8801","500 Education Way, Chicago, IL"
+"Gluten-Free Specialty Outlet","edebashise+glutenfree@gmail.com","tier2",true,true,5,"Dry Goods;Snacks;Bakery",150,40.7128,-74.006,"gluten","+1 (212) 555-8802","120 Health Blvd, New York, NY"
+"Dairy-Free Vegan Co-op Alliance","debashisroe1996+dairyfree@gmail.com","tier2",true,true,4,"Produce;Beverages;Dry Goods",100,34.0522,-118.2437,"dairy","+1 (213) 555-8803","350 Eco Lane, Los Angeles, CA"
+"Strict Tier 1 Supercenter Network","debashishere007+tier1strict@gmail.com","tier1",true,false,14,"Dairy;Produce;Meat;Dry Goods;Beverages;Frozen",500,32.7767,-96.797,"","+1 (214) 555-8804","1000 Retail Expressway, Dallas, TX"
+"Metro Emergency Surplus Liquidators","edebashise+emergencyliquidators@gmail.com","liquidator",true,true,1,"Dairy;Produce;Meat;Dry Goods;Beverages;Frozen",1000,33.749,-84.388,"","+1 (404) 555-8805","800 Clearance Highway, Atlanta, GA"

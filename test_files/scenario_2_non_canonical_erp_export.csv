@@ -1,0 +1,4 @@
+Material_SKU,Batch_Number,Brand_Name,Product_Category,Item_Description,Mfg_Timestamp,Best_Before_Date,Stock_Cases,Unit_Cost_USD,Market_Price_USD,Dist_Center,FDA_Flag,Temp_Min_F,Temp_Max_F
+"SAP-9981-YOG","BATCH-2026-X1","Breyers","Dairy","SAP Export - Greek Yogurt Honey Crunch 12x150g","2026-09-06","2026-10-21",1600,12.50,21.00,"Northeast Logistics Hub, Newark, NJ","Y",34,38
+"ORC-4412-TEA","BATCH-2026-X2","Pure Leaf","Beverages","Oracle Fusion - Sweetened Black Tea 12x500ml","2026-09-11","2026-11-05",3200,9.80,16.50,"Texas Central Facility, Dallas, TX","Y",50,70
+"SAP-7731-KET","BATCH-2026-X3","Heinz","Dry Goods","SAP ERP - Tomato Ketchup Squeeze Bottle 16oz","2026-08-07","2026-12-25",5000,11.20,19.00,"Midwest Distribution Center, Chicago, IL","N",50,75
