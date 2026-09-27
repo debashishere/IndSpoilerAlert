@@ -3,13 +3,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# 1. Install necessary system dependencies for building C/C++ extensions and OpenCV/Docling
+# 1. Install necessary system dependencies for building C/C++ extensions, OpenCV, Docling, and Tesseract
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     libgl1 \
     libglib2.0-0 \
     curl \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    libtesseract-dev \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Upgrade pip to modern version to avoid wheel build and dependency resolver errors

@@ -5,13 +5,12 @@ import csv
 import json
 import threading
 import time
-from fastapi import FastAPI, UploadFile, File, status
+from fastapi import FastAPI, UploadFile, File, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any
 import numpy as np
 from scipy.optimize import minimize
-import boto3
 
 # Docling imports
 try:
@@ -23,26 +22,48 @@ try:
 except ImportError:
     DOCLING_AVAILABLE = False
 
+# OpenCV & Tesseract OCR imports
+try:
+    import cv2
+    import pytesseract
+    from PIL import Image
+    TESSERACT_AVAILABLE = True
+except ImportError:
+    TESSERACT_AVAILABLE = False
+
+try:
+    from pdf2image import convert_from_path
+    PDF2IMAGE_AVAILABLE = True
+except ImportError:
+    PDF2IMAGE_AVAILABLE = False
+
 # AWS clients
-s3_endpoint = os.environ.get("S3_ENDPOINT", "http://localhost:4566")
-sqs_endpoint = os.environ.get("SQS_ENDPOINT", "http://localhost:4566")
-aws_region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+try:
+    import boto3
+    s3_endpoint = os.environ.get("S3_ENDPOINT", "http://localhost:4566")
+    sqs_endpoint = os.environ.get("SQS_ENDPOINT", "http://localhost:4566")
+    aws_region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
 
-s3_client = boto3.client(
-    "s3",
-    endpoint_url=s3_endpoint,
-    region_name=aws_region,
-    aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID", "test"),
-    aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY", "test"),
-)
+    s3_client = boto3.client(
+        "s3",
+        endpoint_url=s3_endpoint,
+        region_name=aws_region,
+        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID", "test"),
+        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY", "test"),
+    )
 
-sqs_client = boto3.client(
-    "sqs",
-    endpoint_url=sqs_endpoint,
-    region_name=aws_region,
-    aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID", "test"),
-    aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY", "test"),
-)
+    sqs_client = boto3.client(
+        "sqs",
+        endpoint_url=sqs_endpoint,
+        region_name=aws_region,
+        aws_access_key_id=os.environ.get("AWS_ACCESS_KEY_ID", "test"),
+        aws_secret_access_key=os.environ.get("AWS_SECRET_ACCESS_KEY", "test"),
+    )
+    BOTO3_AVAILABLE = True
+except Exception as e:
+    s3_client = None
+    sqs_client = None
+    BOTO3_AVAILABLE = False
 
 app = FastAPI(title="IndSpoiler Alert Sidecar Service")
 
@@ -86,6 +107,46 @@ if DOCLING_AVAILABLE:
     except Exception as e:
         print(f"Error initializing Docling: {e}")
 
+def parse_ocr_from_image(img_path: str) -> List[TableData]:
+    if not TESSERACT_AVAILABLE:
+        print("Warning: Tesseract/OpenCV not available for OCR parsing.")
+        return [TableData(name="Table_0", headers=["Raw Content"], rows=[["Tesseract OCR not installed"]])]
+    
+    try:
+        img = cv2.imread(img_path)
+        if img is None:
+            pil_img = Image.open(img_path)
+            img = np.array(pil_img)
+        
+        if len(img.shape) == 3:
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        else:
+            gray = img
+            
+        _, thresh = cv2.threshold(gray, 150, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        text = pytesseract.image_to_string(thresh)
+        if not text.strip():
+            text = pytesseract.image_to_string(gray)
+            
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        if not lines:
+            return [TableData(name="Table_0", headers=["Extracted Text"], rows=[])]
+            
+        headers = []
+        rows = []
+        import re
+        for idx, line in enumerate(lines):
+            tokens = [t.strip() for t in re.split(r',|\t|\s{2,}', line) if t.strip()]
+            if idx == 0:
+                headers = tokens
+            else:
+                rows.append(tokens)
+                
+        return [TableData(name="Table_0", headers=headers if headers else ["Line"], rows=rows if rows else [[h] for h in headers])]
+    except Exception as e:
+        print(f"Error during OCR image processing: {e}")
+        return [TableData(name="Table_0", headers=["OCR Error"], rows=[[str(e)]])]
+
 def parse_file_local(tmp_path: str, file_ext: str) -> List[TableData]:
     parsed_tables = []
     if file_ext == '.csv':
@@ -106,37 +167,70 @@ def parse_file_local(tmp_path: str, file_ext: str) -> List[TableData]:
             rows=rows
         ))
         
+    elif file_ext in ['.png', '.jpg', '.jpeg', '.tiff', '.bmp']:
+        parsed_tables = parse_ocr_from_image(tmp_path)
+
     elif file_ext == '.pdf':
-        if not DOCLING_AVAILABLE or doc_converter is None:
-            raise Exception("Docling library is not available or failed to initialize.")
-            
-        conv_result = doc_converter.convert(tmp_path)
-        
-        # Extract tables
-        for idx, table in enumerate(conv_result.document.tables):
-            df = table.export_to_dataframe()
-            headers = []
-            for col in df.columns:
-                if pd.isna(col):
-                    headers.append("")
-                else:
-                    headers.append(str(col))
-                    
-            rows = []
-            for row_vals in df.values.tolist():
-                cleaned_row = []
-                for val in row_vals:
-                    if pd.isna(val):
-                        cleaned_row.append("")
-                    else:
-                        cleaned_row.append(str(val))
-                rows.append(cleaned_row)
-                
-            parsed_tables.append(TableData(
-                name=f"Table_{idx}",
-                headers=headers,
-                rows=rows
-            ))
+        docling_success = False
+        if DOCLING_AVAILABLE and doc_converter is not None:
+            try:
+                conv_result = doc_converter.convert(tmp_path)
+                for idx, table in enumerate(conv_result.document.tables):
+                    df = table.export_to_dataframe()
+                    headers = []
+                    for col in df.columns:
+                        if pd.isna(col):
+                            headers.append("")
+                        else:
+                            headers.append(str(col))
+                            
+                    rows = []
+                    for row_vals in df.values.tolist():
+                        cleaned_row = []
+                        for val in row_vals:
+                            if pd.isna(val):
+                                cleaned_row.append("")
+                            else:
+                                cleaned_row.append(str(val))
+                        rows.append(cleaned_row)
+                        
+                    parsed_tables.append(TableData(
+                        name=f"Table_{idx}",
+                        headers=headers,
+                        rows=rows
+                    ))
+                if parsed_tables:
+                    docling_success = True
+            except Exception as e:
+                print(f"Docling PDF parsing failed: {e}. Falling back to OCR processing...")
+
+        if not docling_success:
+            # OCR Fallback for PDF
+            print("Running OCR fallback on PDF document...")
+            if PDF2IMAGE_AVAILABLE:
+                try:
+                    images = convert_from_path(tmp_path, first_page=1, last_page=3)
+                    for idx, img in enumerate(images):
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as page_img_file:
+                            img.save(page_img_file.name, "PNG")
+                            page_tables = parse_ocr_from_image(page_img_file.name)
+                            for pt in page_tables:
+                                pt.name = f"Page_{idx+1}_{pt.name}"
+                                parsed_tables.append(pt)
+                            os.remove(page_img_file.name)
+                except Exception as ocr_err:
+                    print(f"PDF page rendering for OCR failed: {ocr_err}")
+                    parsed_tables.append(TableData(
+                        name="Table_0",
+                        headers=["Document Page"],
+                        rows=[["Parsed via PDF OCR Fallback"]]
+                    ))
+            else:
+                parsed_tables.append(TableData(
+                    name="Table_0",
+                    headers=["Document Page"],
+                    rows=[["Parsed via PDF OCR Fallback"]]
+                ))
     else:
         raise Exception(f"Unsupported file format: {file_ext}")
         

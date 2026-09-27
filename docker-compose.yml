@@ -39,7 +39,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - GEMINI_API_KEY="test"
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-test}
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
       - AWS_DEFAULT_REGION=us-east-1
@@ -61,6 +61,7 @@ services:
     environment:
       - MONGO_URI=mongodb://mongo:27017/ind-spoiler-alert
       - SIDECAR_URL=http://sidecar:8000
+      - SIDE_CAR_URL=http://sidecar:8000
       - PORT=5001
       - NODE_ENV=production
       - AWS_ACCESS_KEY_ID=test
@@ -75,8 +76,8 @@ services:
       - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_SECURE=${SMTP_SECURE:-false}
-      - SMTP_USER=${SMTP_USER:-debashisroe1996@gmail.com}
-      - SMTP_PASS=${SMTP_PASS:-oijdrrlcfjcblrbi}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
     depends_on:
       - mongo
       - sidecar
