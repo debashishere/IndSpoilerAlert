@@ -1,3 +1,4 @@
+import io
 from fastapi.testclient import TestClient
 from main import app
 
@@ -61,4 +62,42 @@ def test_normalize_product_name():
     assert data_dairy["size"] == "1"
     assert data_dairy["unit"] == "l"
     assert data_dairy["category"] == "Dairy"
+
+def test_parse_document_image_ocr():
+    # Test OCR parsing on an image document (.png)
+    import io
+    from PIL import Image, ImageDraw, ImageFont
+
+    img = Image.new('RGB', (400, 100), color=(255, 255, 255))
+    d = ImageDraw.Draw(img)
+    d.text((10, 10), "Item,Quantity,Price", fill=(0, 0, 0))
+    d.text((10, 40), "Milk,10,2.50", fill=(0, 0, 0))
+    
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    buf.seek(0)
+
+    response = client.post("/parse-document", files={"file": ("invoice.png", buf, "image/png")})
+    assert response.status_code == 200
+    data = response.json()
+    assert "tables" in data
+    assert len(data["tables"]) > 0
+    table = data["tables"][0]
+    assert len(table["headers"]) > 0 or len(table["rows"]) > 0
+
+def test_parse_document_pdf_ocr_fallback(monkeypatch):
+    # Test PDF parsing fallback to OCR when Docling is unavailable or fails
+    import main
+    monkeypatch.setattr(main, "DOCLING_AVAILABLE", False)
+    monkeypatch.setattr(main, "doc_converter", None)
+
+    # Simple 1-page PDF or mock file
+    pdf_bytes = b"%PDF-1.4 header test document"
+    buf = io.BytesIO(pdf_bytes)
+
+    response = client.post("/parse-document", files={"file": ("scanned_invoice.pdf", buf, "application/pdf")})
+    assert response.status_code == 200
+    data = response.json()
+    assert "tables" in data
+
 

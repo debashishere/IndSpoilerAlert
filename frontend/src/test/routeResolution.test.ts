@@ -55,6 +55,12 @@ describe('resolveAppRoute', () => {
       token: 'qb-123',
     });
 
+    // staging.marketplace.inventoryflowing.com subdomain (even on root /)
+    expect(resolveAppRoute('/', 'staging.marketplace.inventoryflowing.com', '?token=stg-123')).toEqual({
+      type: 'marketplace',
+      token: 'stg-123',
+    });
+
     // marketplace.localhost:5173
     expect(resolveAppRoute('/', 'marketplace.localhost:5173', '')).toEqual({
       type: 'marketplace',
