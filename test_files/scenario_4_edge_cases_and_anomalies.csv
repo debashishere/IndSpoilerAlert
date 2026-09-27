@@ -1,0 +1,4 @@
+lotNumber,sku,brand,category,subCategory,description,productionDate,expirationDate,quantityCases,availableQty,costPerCase,standardSellPrice,status,fdaRegulated,temperatureMin,temperatureMax,warehouse
+"LOT-EDGE-001","SKU-SPECIAL-CHARS","Ben & Jerry's","Frozen","Ice Cream","Special ""Double Fudge"" Crunch, 100% Organic & Non-GMO (Contains: Milk, Eggs)","2026-09-16","2026-11-25",1000,1000,15.00,25.00,"active",true,-10,0,"Midwest Distribution Center, Chicago, IL"
+"LOT-EDGE-002","SKU-ZERO-STOCK","Lipton","Beverages","Iced Tea","Completely Sold-Out Lot for Ingestion System Zero Balance Test","2026-09-06","2026-10-26",500,0,5.00,10.00,"sold",false,50,70,"Northeast Logistics Hub, Newark, NJ"
+"LOT-EDGE-003","SKU-HIGH-VALUATION","Knorr","Dry Goods","Bouillon","Bulk Industrial Food Service Seasoning Drums (High Unit Value $250/cs)","2026-09-21","2027-03-25",50,50,150.00,250.00,"active",false,45,80,"Southern Gateway DC, Atlanta, GA"
