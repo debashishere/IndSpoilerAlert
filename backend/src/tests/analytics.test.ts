@@ -28,6 +28,15 @@ describe('Analytics API Endpoint', () => {
     const Award = mongoose.model('Award');
     const Donation = mongoose.model('Donation');
     const Disposal = mongoose.model('Disposal');
+    const Sale = mongoose.model('Sale');
+
+    // Clean up test collections before starting
+    await Supplier.deleteMany({ name: 'Test Supplier Analytics' });
+    await InventoryLot.deleteMany({});
+    await Award.deleteMany({});
+    await Donation.deleteMany({});
+    await Disposal.deleteMany({});
+    await Sale.deleteMany({});
 
     // Seed Supplier
     const supp = await Supplier.create({
@@ -156,14 +165,16 @@ describe('Analytics API Endpoint', () => {
     const Award = mongoose.model('Award');
     const Donation = mongoose.model('Donation');
     const Disposal = mongoose.model('Disposal');
+    const Sale = mongoose.model('Sale');
 
     await Supplier.deleteMany({ name: 'Test Supplier Analytics' });
     await DistributionCenter.deleteMany({ supplierId });
     await ProductMaster.deleteMany({ supplierId });
-    await InventoryLot.deleteMany({ supplierId });
+    await InventoryLot.deleteMany({});
     await Award.deleteMany({});
-    await Donation.deleteMany({ lotId: { $in: [lotId1, lotId2, lotId3, lotId4] } });
-    await Disposal.deleteMany({ lotId: { $in: [lotId1, lotId2, lotId3, lotId4] } });
+    await Donation.deleteMany({});
+    await Disposal.deleteMany({});
+    await Sale.deleteMany({});
 
     await mongoose.disconnect();
   });
@@ -177,4 +188,128 @@ describe('Analytics API Endpoint', () => {
     expect(res.body.summary.wasteDivertedTons).toBeGreaterThan(0);
     expect(res.body.summary.landfillFeesSaved).toBeGreaterThan(0);
   });
+
+  it('should calculate dynamic COGS recovery rate and waste diverted trends from real BE transactions', async () => {
+    // Clear Redis cache to ensure fresh computation
+    try {
+      const redis = await getRedisClient();
+      if (redis && redis.isOpen) {
+        await redis.del('analytics:summary');
+      }
+    } catch (e) {
+      console.warn('Could not clear Redis cache:', e);
+    }
+
+    const InventoryLot = mongoose.model('InventoryLot');
+    const Sale = mongoose.model('Sale');
+    const Donation = mongoose.model('Donation');
+    const Disposal = mongoose.model('Disposal');
+
+    const now = new Date();
+    // Four months ago (isolated from July 2026 seeded database entries)
+    const fourMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 4, 15);
+    const fourMonthsAgoMonthName = fourMonthsAgo.toLocaleString('en-US', { month: 'short' });
+    const currentMonthName = now.toLocaleString('en-US', { month: 'short' });
+
+    // Seed Lot for four months ago
+    const pastLot = await InventoryLot.create({
+      supplierId,
+      distributionCenterId: new mongoose.Types.ObjectId(),
+      productId: new mongoose.Types.ObjectId(),
+      lotNumber: 'LOT-ANA-PAST',
+      expirationDate: new Date(),
+      remainingShelfLife: 0.1,
+      quantityCases: 200,
+      availableQty: 0,
+      costPerCase: 10.00,
+      standardSellPrice: 20.00,
+      status: 'sold',
+      latestSalesDate: fourMonthsAgo
+    });
+
+    // Seed Sale four months ago: 200 cases @ $15 = $3,000 revenue. Cost = 200 * $10 = $2,000. Recovery = 150%
+    const pastSale = await Sale.create({
+      supplierId,
+      lotId: pastLot._id,
+      lotNumber: 'LOT-ANA-PAST',
+      sku: 'SKU-ANA-PAST',
+      description: 'Past Sale Product',
+      quantityCases: 200,
+      pricePerCase: 15.00,
+      totalValue: 3000.00,
+      saleDate: fourMonthsAgo,
+      status: 'delivered'
+    });
+
+    // Seed Donation four months ago: 5.5 tons landfill avoided
+    const pastDonation = await Donation.create({
+      lotId: pastLot._id,
+      foodBankName: 'Past Food Bank',
+      quantity: 100,
+      taxBenefit: 1000,
+      landfillAvoided: 5.5,
+      co2Saved: 12.0,
+      pickupDate: fourMonthsAgo
+    });
+
+    // Seed Disposal four months ago: recycling tons = (200 / 1.50) * 0.0075 = 1.0 ton
+    const pastDisposal = await Disposal.create({
+      lotId: pastLot._id,
+      method: 'recycle',
+      facility: 'Past Recycler',
+      landfillFee: 200,
+      recyclingFee: 50,
+      completedDate: fourMonthsAgo
+    });
+
+    const res = await request(app).get('/api/analytics/summary');
+    expect(res.status).toBe(200);
+    expect(res.body.trends).toBeInstanceOf(Array);
+    expect(res.body.trends).toHaveLength(6);
+
+    // Verify four months ago data point
+    const pastTrend = res.body.trends.find((t: any) => t.month === fourMonthsAgoMonthName);
+    expect(pastTrend).toBeDefined();
+    expect(pastTrend.recoveryRate).toBe(150);
+    expect(pastTrend.divertedTons).toBe(6.5); // 5.5 + 1.0
+
+    // Verify current month data point
+    const currentTrend = res.body.trends.find((t: any) => t.month === currentMonthName);
+    expect(currentTrend).toBeDefined();
+    expect(currentTrend.recoveryRate).toBe(80); // 800 / 1000 * 100
+    expect(currentTrend.divertedTons).toBe(0.7); // 0.375 + 0.3 = 0.675 -> 0.7
+
+    // Clean up past records
+    await InventoryLot.deleteOne({ _id: pastLot._id });
+    await Sale.deleteOne({ _id: pastSale._id });
+    await Donation.deleteOne({ _id: pastDonation._id });
+    await Disposal.deleteOne({ _id: pastDisposal._id });
+  });
+
+  it('should return clean zero-filled 6-month trajectory without NaN for months with no transactions', async () => {
+    try {
+      const redis = await getRedisClient();
+      if (redis && redis.isOpen) {
+        await redis.del('analytics:summary');
+      }
+    } catch (e) {
+      console.warn('Could not clear Redis cache:', e);
+    }
+
+    const res = await request(app).get('/api/analytics/summary');
+    expect(res.status).toBe(200);
+    expect(res.body.trends).toHaveLength(6);
+
+    res.body.trends.forEach((point: any) => {
+      expect(typeof point.month).toBe('string');
+      expect(point.month.length).toBeGreaterThan(0);
+      expect(typeof point.recoveryRate).toBe('number');
+      expect(Number.isNaN(point.recoveryRate)).toBe(false);
+      expect(typeof point.divertedTons).toBe('number');
+      expect(Number.isNaN(point.divertedTons)).toBe(false);
+      expect(point.recoveryRate).toBeGreaterThanOrEqual(0);
+      expect(point.divertedTons).toBeGreaterThanOrEqual(0);
+    });
+  });
 });
+

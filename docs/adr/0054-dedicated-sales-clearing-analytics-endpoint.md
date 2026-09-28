@@ -1,0 +1,3 @@
+# 54. Dedicated Sales & Clearing Analytics Aggregation Endpoint
+
+The Sales & Clearing charts within the Insight hub (`SalesDataView`) are powered by a dedicated server-side aggregation endpoint (`GET /api/analytics/sales`) rather than client-side derivation from raw ingestion records or bloat of the global recovery summary. This executes MongoDB aggregation pipelines (`$lookup` across `Sale`, `InventoryLot`, `ProductMaster`, and `Buyer`) to compute multi-timeframe trajectory curves, category COGS yield, buyer channel shares, RSL decay scatter points, and leaderboards server-side with Redis caching.

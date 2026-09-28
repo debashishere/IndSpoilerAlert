@@ -150,19 +150,240 @@ export async function getAnalyticsSummary() {
     }
   });
 
-  const cogsRecoveryRate = totalSoldCOGS > 0 ? (totalRecovered / totalSoldCOGS) * 100 : 64.0;
+  const cogsRecoveryRate = totalSoldCOGS > 0 ? (totalRecovered / totalSoldCOGS) * 100 : 0;
   const totalDivertedTons = dynamicDonationTons + dynamicRecyclingTons;
   const dynamicLandfillSavings = dynamicLandfillSavingsDonation + dynamicLandfillSavingsDisposal;
   const dynamicCO2Saved = dynamicCO2SavedDonation + dynamicCO2SavedDisposal;
 
-  const historicalTrends = [
-    { month: 'Jan', recoveryRate: 58, divertedTons: 12.4, donatedTons: 8.2, recycledTons: 4.2 },
-    { month: 'Feb', recoveryRate: 61, divertedTons: 14.8, donatedTons: 10.1, recycledTons: 4.7 },
-    { month: 'Mar', recoveryRate: 65, divertedTons: 18.2, donatedTons: 12.5, recycledTons: 5.7 },
-    { month: 'Apr', recoveryRate: 62, divertedTons: 15.1, donatedTons: 9.8, recycledTons: 5.3 },
-    { month: 'May', recoveryRate: 68, divertedTons: 22.5, donatedTons: 15.0, recycledTons: 7.5 },
-    { month: 'Jun', recoveryRate: Math.round(cogsRecoveryRate), divertedTons: parseFloat(totalDivertedTons.toFixed(1)) || 25.0, donatedTons: parseFloat(dynamicDonationTons.toFixed(1)) || 17.2, recycledTons: parseFloat(dynamicRecyclingTons.toFixed(1)) || 7.8 }
-  ];
+  // 4. Compute dynamic 6-month historical trends from real BE transactions
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+  const [
+    monthlyDonations,
+    monthlyDisposals,
+    monthlySales,
+    monthlyAwards,
+    monthlySoldLots
+  ] = await Promise.all([
+    Donation.aggregate([
+      {
+        $addFields: {
+          eventDate: { $ifNull: ["$pickupDate", "$createdAt"] }
+        }
+      },
+      {
+        $match: {
+          eventDate: { $gte: sixMonthsAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$eventDate" },
+            month: { $month: "$eventDate" }
+          },
+          donatedTons: { $sum: "$landfillAvoided" }
+        }
+      }
+    ]),
+    Disposal.aggregate([
+      {
+        $match: {
+          method: "recycle"
+        }
+      },
+      {
+        $addFields: {
+          eventDate: { $ifNull: ["$completedDate", "$createdAt"] }
+        }
+      },
+      {
+        $match: {
+          eventDate: { $gte: sixMonthsAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$eventDate" },
+            month: { $month: "$eventDate" }
+          },
+          totalLandfillFee: { $sum: "$landfillFee" }
+        }
+      }
+    ]),
+    Sale.aggregate([
+      {
+        $addFields: {
+          eventDate: { $ifNull: ["$saleDate", "$createdAt"] }
+        }
+      },
+      {
+        $match: {
+          eventDate: { $gte: sixMonthsAgo }
+        }
+      },
+      {
+        $lookup: {
+          from: "inventorylots",
+          localField: "lotId",
+          foreignField: "_id",
+          as: "lot"
+        }
+      },
+      {
+        $unwind: { path: "$lot", preserveNullAndEmptyArrays: true }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$eventDate" },
+            month: { $month: "$eventDate" }
+          },
+          revenue: { $sum: { $ifNull: ["$revenue", "$totalValue"] } },
+          cogs: {
+            $sum: {
+              $multiply: [
+                "$quantityCases",
+                { $ifNull: ["$lot.costPerCase", "$pricePerCase"] }
+              ]
+            }
+          }
+        }
+      }
+    ]),
+    Award.aggregate([
+      {
+        $addFields: {
+          eventDate: { $ifNull: ["$approvedDate", "$createdAt"] }
+        }
+      },
+      {
+        $match: {
+          eventDate: { $gte: sixMonthsAgo }
+        }
+      },
+      {
+        $lookup: {
+          from: "inventorylots",
+          localField: "lotId",
+          foreignField: "_id",
+          as: "lot"
+        }
+      },
+      {
+        $unwind: { path: "$lot", preserveNullAndEmptyArrays: true }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$eventDate" },
+            month: { $month: "$eventDate" }
+          },
+          revenue: {
+            $sum: {
+              $cond: [
+                { $gt: ["$totalAmount", 0] },
+                "$totalAmount",
+                { $multiply: ["$awardedQty", "$price"] }
+              ]
+            }
+          },
+          cogs: {
+            $sum: {
+              $multiply: [
+                "$awardedQty",
+                { $ifNull: ["$lot.costPerCase", "$price"] }
+              ]
+            }
+          }
+        }
+      }
+    ]),
+    InventoryLot.aggregate([
+      {
+        $match: { status: "sold" }
+      },
+      {
+        $addFields: {
+          eventDate: { $ifNull: ["$latestSalesDate", "$updatedAt", "$createdAt"] }
+        }
+      },
+      {
+        $match: {
+          eventDate: { $gte: sixMonthsAgo }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$eventDate" },
+            month: { $month: "$eventDate" }
+          },
+          soldCOGS: { $sum: { $multiply: ["$quantityCases", "$costPerCase"] } }
+        }
+      }
+    ])
+  ]);
+
+  const donationMap = new Map<string, number>();
+  monthlyDonations.forEach(d => {
+    donationMap.set(`${d._id.year}-${d._id.month}`, d.donatedTons);
+  });
+
+  const recyclingMap = new Map<string, number>();
+  monthlyDisposals.forEach(d => {
+    const tons = (d.totalLandfillFee / 1.50) * 0.0075;
+    recyclingMap.set(`${d._id.year}-${d._id.month}`, tons);
+  });
+
+  const salesMap = new Map<string, { revenue: number; cogs: number }>();
+  monthlySales.forEach(s => {
+    salesMap.set(`${s._id.year}-${s._id.month}`, { revenue: s.revenue, cogs: s.cogs });
+  });
+
+  const awardsMap = new Map<string, { revenue: number; cogs: number }>();
+  monthlyAwards.forEach(a => {
+    awardsMap.set(`${a._id.year}-${a._id.month}`, { revenue: a.revenue, cogs: a.cogs });
+  });
+
+  const soldLotsMap = new Map<string, number>();
+  monthlySoldLots.forEach(l => {
+    soldLotsMap.set(`${l._id.year}-${l._id.month}`, l.soldCOGS);
+  });
+
+  const historicalTrends = [];
+  for (let m = 5; m >= 0; m--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - m, 1);
+    const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
+    const month = d.toLocaleString('en-US', { month: 'short' });
+
+    const donTons = donationMap.get(key) || 0;
+    const recTons = recyclingMap.get(key) || 0;
+    const divertedTons = Math.round((donTons + recTons) * 10) / 10;
+
+    const saleData = salesMap.get(key);
+    const awardData = awardsMap.get(key);
+
+    const monthRevenue = (saleData && saleData.revenue > 0)
+      ? saleData.revenue
+      : (awardData?.revenue || 0);
+
+    let monthCOGS = (saleData && saleData.cogs > 0)
+      ? saleData.cogs
+      : (soldLotsMap.get(key) || awardData?.cogs || 0);
+
+    const recoveryRate = monthCOGS > 0 ? Math.round((monthRevenue / monthCOGS) * 100) : 0;
+
+    historicalTrends.push({
+      month,
+      recoveryRate,
+      divertedTons,
+      donatedTons: Math.round(donTons * 10) / 10,
+      recycledTons: Math.round(recTons * 10) / 10
+    });
+  }
 
   let categoryBreakdown = categoryStats;
   if (categoryBreakdown.length === 0) {

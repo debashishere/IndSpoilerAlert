@@ -200,6 +200,21 @@
   - **CO2 Emissions Saved**: Total greenhouse gas emissions (tons) prevented by diverting perishable goods from anaerobic decomposition in landfills (EPA WARM conversion factors).
 - **Recovery Analytics Visual Workbench**: The balanced two-column reporting layout within the Insight Recovery & Sustainability subtab pairing the 6-month historical recovery/diversion trendline (`COGSRecoveryDashboard`, 1.5fr) with the consolidated stock disposition and CPG category volume distribution rail (`RSLDistributionChart`, 1fr), formatted with institutional Tailwind tokens and responsive SVG geometries.
   _Avoid_: `Fragmented Chart Cards`, `Orphan Grid Cells`.
+- **Sales & Clearing Analytics Intelligence**: The dedicated server-side analytics aggregation engine and API seam (`GET /api/analytics/sales`) calculating real-time sales trajectory, category COGS recovery yield, buyer channel distribution, RSL decay curves, and fulfillment partner leaderboards across dynamic timeframes and warehouse filters.
+  _Avoid_: `Client-Side Table Derivations`, `Monolithic Global Summary Bloat`.
+- **Sales Analytics Zero-State**: The authentic zero-metric representation across Sales & Clearing charts and leaderboards when no transactions exist or match filters, displaying calculated mathematical baselines (`$0.00`, flat baseline coordinate grids) and contextual ingestion guidance without synthetic fallback data.
+  _Avoid_: `Synthetic Mock Fallbacks`, `Simulated Demo Points`, `Jarring Panel Collapses`.
+- **RSL Decay Scatter Matrix**: The 50-transaction recent closeout price realization scatter chart in Insight → Sales & Clearing, rendering price per case ($/cs) against days of remaining shelf life at sale (`saleDate` to `expirationDate`), fitted with dynamic least-squares regression and click-to-inspect transaction metadata.
+  _Avoid_: `Static Mock Scatter Curves`, `Uncapped DOM Node Bloat`.
+- **Sales Analytics State Seam**: The centralized Redux state slice in `coreSlice` (`salesAnalytics`, `salesAnalyticsLoading`, `fetchSalesAnalyticsThunk`) preserving cached analytical datasets across subtab transitions while decoupling reporting metrics from raw ingestion tabular payloads (`ingestionSlice`).
+  _Avoid_: `Ingestion State Polluting`, `Transient Local State Toggling`.
+- **Sales Revenue Velocity**: The period-over-period (PoP) comparison metric in the Sales & Clearing telemetry bar calculating percentage growth in realized revenue between the current selected timeframe window and the immediately preceding identical window, formatted with dynamic directional indicators (`+X.X%` or `-X.X%`) and neutral fallbacks for baseline periods without previous records.
+  _Avoid_: `Hardcoded Percentage Badges`, `Arbitrary Target Comparisons`.
+
+
+
+
+
 
 
 
