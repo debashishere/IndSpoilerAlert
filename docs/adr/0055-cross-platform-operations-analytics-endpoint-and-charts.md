@@ -1,0 +1,3 @@
+# 55. Cross-Platform Operations Analytics Aggregation Seam & Chart Suite
+
+The Cross-Platform Operations workbench within the Insight hub (`CrossPlatformOperationsPanel.tsx`) is backed by a dedicated server-side aggregation endpoint (`GET /api/analytics/operations`) uniting ingestion velocity, workflow runs, buyer dispatches, and cold-chain compliance telemetry without client-side mock fallbacks. This powers the 4 operational metric cards and a coordinated dual-chart visual workbench (Cross-Service Pipeline Velocity Trendline and Platform SLA & Yield Distribution) using MongoDB aggregations with Redis caching and graceful zero-state baselines.

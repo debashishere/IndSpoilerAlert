@@ -217,6 +217,36 @@ export async function fetchSalesAnalytics(params: {
   return await response.json();
 }
 
+export async function fetchOperationsAnalytics(params: {
+  timeframe?: string;
+  supplierId?: string;
+  token?: string;
+} = {}): Promise<any> {
+  const queryParams = new URLSearchParams();
+  if (params.timeframe) queryParams.append('timeframe', params.timeframe);
+  if (params.supplierId) queryParams.append('supplierId', params.supplierId);
+
+  const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+  const url = `${API_BASE_URL}/analytics/operations${queryString}`;
+
+  const headers: Record<string, string> = { ...defaultHeaders };
+  if (params.token) {
+    headers['Authorization'] = `Bearer ${params.token}`;
+  }
+
+  const response = await fetch(url, {
+    method: 'GET',
+    cache: 'no-store',
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Request to ${url} failed with status ${response.status}`);
+  }
+
+  return await response.json();
+}
+
 export const coreService = {
   API_BASE_URL,
   SIDECAR_BASE_URL,
@@ -226,6 +256,8 @@ export const coreService = {
   getBuyers,
   fetchAnalyticsSummary,
   fetchSalesAnalytics,
+  fetchOperationsAnalytics,
 };
 
 export default coreService;
+

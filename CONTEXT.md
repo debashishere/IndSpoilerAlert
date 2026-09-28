@@ -210,6 +210,16 @@
   _Avoid_: `Ingestion State Polluting`, `Transient Local State Toggling`.
 - **Sales Revenue Velocity**: The period-over-period (PoP) comparison metric in the Sales & Clearing telemetry bar calculating percentage growth in realized revenue between the current selected timeframe window and the immediately preceding identical window, formatted with dynamic directional indicators (`+X.X%` or `-X.X%`) and neutral fallbacks for baseline periods without previous records.
   _Avoid_: `Hardcoded Percentage Badges`, `Arbitrary Target Comparisons`.
+- **Cross-Platform Operations Workbench**: The unified operational telemetry and visual analytics cockpit within the Insight hub (`CrossPlatformOperationsPanel.tsx`) synthesizing cross-service health, pipeline velocity, automated campaign yields, buyer communications, and cold-chain compliance into real-time metrics and dynamic trendlines.
+  _Avoid_: `Static Operations Cards`, `Hardcoded Telemetry Dashboard`.
+- **Cross-Service Pipeline Velocity Trendline**: The multi-series time-bucketed area/line chart in Insight → Cross-Platform Operations tracking 30-day historical throughput across Ingestion lots, Workflow execution runs, and Buyer dispatch volume.
+  _Avoid_: `Single-Stream Pipeline Chart`, `Mock Velocity Curves`.
+- **Platform SLA & Operational Yield Distribution**: The comparative analytics chart in Insight → Cross-Platform Operations displaying authentic workflow execution success rates, buyer response velocity distributions, and HACCP cold-chain dock compliance percentages.
+  _Avoid_: `Simulated SLA Metrics`, `Hardcoded Yield Gauges`.
+- **Operations Multi-Timeframe Filtering**: The global temporal filtering mechanism (`7D`, `30D`, `90D`, `YTD`) dynamically scoping the Cross-Platform Operations workbench aggregations, synchronizing the 4 operational metric cards and dual-chart coordinate geometries to the active timeframe window.
+  _Avoid_: `Fixed Hardcoded Date Ranges`, `Unsynchronized Chart Timeframes`.
+- **Operations Authentic Zero-State**: The strict non-synthetic baseline rendering in the Cross-Platform Operations panel when no operational dispatches, workflow runs, or cold-chain records exist, displaying true computed zero coordinates (`0 Lots`, `0 Outbound`, `0.0 hrs`, `0%`) and flat coordinate axes with contextual guidance rather than simulated demo values.
+  _Avoid_: `Synthetic Fallback Multipliers`, `Hardcoded Demo Stats`.
 
 
 

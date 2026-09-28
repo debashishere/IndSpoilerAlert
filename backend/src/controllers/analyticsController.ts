@@ -26,3 +26,18 @@ export async function getSalesAnalytics(req: AuthenticatedRequest, res: Response
     return res.status(500).json({ error: error.message });
   }
 }
+
+export async function getOperationsAnalytics(req: AuthenticatedRequest, res: Response) {
+  try {
+    const { timeframe, supplierId } = req.query;
+    const result = await analyticsService.getOperationsAnalytics({
+      timeframe: timeframe ? String(timeframe) : undefined,
+      supplierId: supplierId ? String(supplierId) : undefined,
+      user: req.user,
+    });
+    return res.json(result);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+}
+

@@ -6,6 +6,14 @@ import Disposal from '../models/Disposal';
 import Sale from '../models/Sale';
 import Supplier from '../models/Supplier';
 import ProductMaster from '../models/ProductMaster';
+import Buyer from '../models/Buyer';
+import EmailDispatchLog from '../models/EmailDispatchLog';
+import EmailThread from '../models/EmailThread';
+import LiquidationAutomation from '../models/LiquidationAutomation';
+import AutomationRun from '../models/AutomationRun';
+import ColdChainLog from '../models/ColdChainLog';
+import Shipment from '../models/Shipment';
+import DockAppointment from '../models/DockAppointment';
 import { getRedisClient } from '../utils/redis';
 
 export async function getAnalyticsSummary() {
@@ -995,6 +1003,372 @@ export async function getSalesAnalytics(params: SalesAnalyticsParams = {}) {
     }
   } catch (err: any) {
     console.warn('Redis write error for sales analytics:', err.message || err);
+  }
+
+  return result;
+}
+
+export interface OperationsAnalyticsParams {
+  supplierId?: string;
+  timeframe?: string;
+  user?: any;
+}
+
+export async function getOperationsAnalytics(params: OperationsAnalyticsParams = {}) {
+  // 1. Resolve Supplier Scope
+  let targetSupplierId = params.supplierId;
+  if (!targetSupplierId && params.user?.email) {
+    const userEmail = params.user.email;
+    const supplier = await Supplier.findOne({
+      name: { $regex: new RegExp(`^${userEmail.split('@')[0]}`, 'i') }
+    });
+    if (supplier) {
+      targetSupplierId = supplier._id.toString();
+    }
+  }
+
+  const timeframe = params.timeframe || '30d';
+  const cacheKey = `analytics:operations:${targetSupplierId || 'all'}:${timeframe}`;
+
+  // 2. Try Redis Cache
+  try {
+    const redis = await getRedisClient();
+    if (redis && redis.isOpen) {
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    }
+  } catch (err: any) {
+    console.warn('Redis read error for operations analytics, falling back to MongoDB:', err.message || err);
+  }
+
+  // 3. Time boundaries
+  const now = new Date();
+  let currentStart: Date;
+  if (timeframe === '7d') {
+    currentStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  } else if (timeframe === '90d') {
+    currentStart = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+  } else if (timeframe === 'ytd') {
+    currentStart = new Date(now.getFullYear(), 0, 1);
+  } else {
+    currentStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  }
+
+  const supplierObjectId = (targetSupplierId && mongoose.Types.ObjectId.isValid(targetSupplierId))
+    ? new mongoose.Types.ObjectId(targetSupplierId)
+    : null;
+  const supplierStringId = targetSupplierId ? String(targetSupplierId) : null;
+
+  // 4. Ingestion / Portfolio Live Aggregation
+  const lotQuery: any = {
+    createdAt: { $gte: currentStart, $lte: now },
+    ...(supplierObjectId ? { supplierId: supplierObjectId } : {})
+  };
+  const allLots = await InventoryLot.find(lotQuery);
+
+  let portfolioValueRaw = 0;
+  let activeCases = 0;
+  let criticalCount = 0;
+  let soldCases = 0;
+  let totalCases = 0;
+  const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
+
+  for (const lot of allLots) {
+    const qty = Number(lot.quantityCases ?? lot.availableQty ?? 0);
+    const unitPrice = Number(lot.standardSellPrice ?? lot.costPerCase ?? 0);
+    totalCases += qty;
+
+    if (lot.status === 'sold') {
+      soldCases += qty;
+    } else if (lot.status === 'active' || lot.status === 'pending') {
+      portfolioValueRaw += qty * unitPrice;
+      activeCases += qty;
+    }
+
+    if ((lot.status as string) === 'critical' || lot.status === 'expired') {
+      criticalCount++;
+    } else if (lot.expirationDate) {
+      const expTime = new Date(lot.expirationDate).getTime();
+      if (!isNaN(expTime) && expTime - now.getTime() <= fourteenDaysMs) {
+        criticalCount++;
+      }
+    }
+  }
+
+  const liquidationVelocityRaw = totalCases > 0 ? (soldCases / totalCases) * 100 : 0;
+  const portfolioValue = portfolioValueRaw > 0 ? `$${Math.round(portfolioValueRaw).toLocaleString('en-US')}` : '$0';
+  const criticalRsl = `${criticalCount} ${criticalCount === 1 ? 'Lot' : 'Lots'}`;
+  const liquidationVelocity = totalCases > 0 ? `${liquidationVelocityRaw.toFixed(1)}%` : '0%';
+
+  // Matched Buyers
+  const buyerQuery: any = {
+    createdAt: { $gte: currentStart, $lte: now },
+    ...(supplierObjectId ? { supplierId: supplierObjectId } : {})
+  };
+  const activeBuyerCount = await Buyer.countDocuments({ ...buyerQuery, isActive: { $ne: false } });
+  const matchedBuyers = `${activeBuyerCount} Verified`;
+
+  // 5. Buyer Comms Engagement
+  const dispatchQuery: any = {
+    dispatchedAt: { $gte: currentStart, $lte: now },
+    ...(supplierStringId ? { supplierId: supplierStringId } : {})
+  };
+  const dispatchLogs = await EmailDispatchLog.find(dispatchQuery);
+  const dispatchVolume = dispatchLogs.length;
+  const openedLogs = dispatchLogs.filter((d: any) => (d.openCount && d.openCount > 0) || d.firstOpenedAt);
+  const engagementRate = dispatchVolume > 0 ? Math.round((openedLogs.length / dispatchVolume) * 1000) / 10 : 0;
+
+  // Response Velocity Turnaround & Distribution Buckets
+  const threadQuery: any = supplierStringId ? { supplierId: supplierStringId } : {};
+  const threads = await EmailThread.find(threadQuery);
+  let totalTurnaroundHours = 0;
+  let turnaroundCount = 0;
+
+  const turnaroundDistribution = {
+    under2h: { count: 0, pct: 0 },
+    twoToSixH: { count: 0, pct: 0 },
+    sixToTwentyFourH: { count: 0, pct: 0 },
+    over24h: { count: 0, pct: 0 },
+    totalEvaluated: 0,
+  };
+
+  for (const thread of threads) {
+    const msgs = (thread.messages || []).slice().sort((a: any, b: any) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+    for (let i = 0; i < msgs.length - 1; i++) {
+      const currentMsg = msgs[i];
+      const nextMsg = msgs[i + 1];
+      if (currentMsg.senderType === 'supplier' && nextMsg.senderType === 'buyer') {
+        const sentSupplier = new Date(currentMsg.sentAt).getTime();
+        const sentBuyer = new Date(nextMsg.sentAt).getTime();
+        if (!isNaN(sentSupplier) && !isNaN(sentBuyer) && sentBuyer >= sentSupplier) {
+          // Timeframe scoping: only evaluate turnaround events occurring within active window
+          if (sentBuyer >= currentStart.getTime() && sentBuyer <= now.getTime()) {
+            const diffHours = (sentBuyer - sentSupplier) / (1000 * 60 * 60);
+            totalTurnaroundHours += diffHours;
+            turnaroundCount++;
+
+            if (diffHours < 2) {
+              turnaroundDistribution.under2h.count++;
+            } else if (diffHours < 6) {
+              turnaroundDistribution.twoToSixH.count++;
+            } else if (diffHours < 24) {
+              turnaroundDistribution.sixToTwentyFourH.count++;
+            } else {
+              turnaroundDistribution.over24h.count++;
+            }
+          }
+        }
+      }
+    }
+  }
+  turnaroundDistribution.totalEvaluated = turnaroundCount;
+  if (turnaroundCount > 0) {
+    turnaroundDistribution.under2h.pct = Math.round((turnaroundDistribution.under2h.count / turnaroundCount) * 1000) / 10;
+    turnaroundDistribution.twoToSixH.pct = Math.round((turnaroundDistribution.twoToSixH.count / turnaroundCount) * 1000) / 10;
+    turnaroundDistribution.sixToTwentyFourH.pct = Math.round((turnaroundDistribution.sixToTwentyFourH.count / turnaroundCount) * 1000) / 10;
+    turnaroundDistribution.over24h.pct = Math.round((turnaroundDistribution.over24h.count / turnaroundCount) * 1000) / 10;
+  }
+  const responseVelocityHours = turnaroundCount > 0 ? Math.round((totalTurnaroundHours / turnaroundCount) * 10) / 10 : 0;
+
+  // 6. Workflow Campaigns
+  const autoQuery: any = supplierObjectId ? { supplierId: supplierObjectId } : {};
+  const automations = await LiquidationAutomation.find(autoQuery);
+  const activeCampaigns = automations.filter((a: any) => a.status === 'active' || a.isActive === true).length;
+  const inactiveCampaigns = automations.length - activeCampaigns;
+  const casesInScope = activeCases;
+
+  const autoIds = automations.map((a: any) => a._id);
+  let automationRuns = 0;
+  let successfulRuns = 0;
+  let executionYield = 0;
+  let allRuns: any[] = [];
+
+  if (autoIds.length > 0) {
+    allRuns = await AutomationRun.find({
+      automationId: { $in: autoIds },
+      dispatchedAt: { $gte: currentStart, $lte: now }
+    });
+    automationRuns = allRuns.length;
+    successfulRuns = allRuns.filter((r: any) =>
+      ['awarded', 'partially_awarded', 'fallback_executed'].includes(r.status) ||
+      (r.resolution?.action && !['failed', 'error'].includes(r.status))
+    ).length;
+    executionYield = automationRuns > 0 ? Math.round((successfulRuns / automationRuns) * 1000) / 10 : 0;
+  }
+
+  const workflowYield = {
+    yieldPct: executionYield,
+    successfulRuns,
+    totalRuns: automationRuns,
+  };
+
+  // 7. Cold Chain & Compliance
+  const lotIds = allLots.map((l: any) => l._id);
+  const awardQuery: any = lotIds.length > 0 ? { lotId: { $in: lotIds } } : (supplierObjectId ? { _id: null } : {});
+  const awards = await Award.find(awardQuery).select('_id');
+  const awardIds = awards.map((a: any) => a._id);
+
+  const shipmentQuery: any = awardIds.length > 0 ? { awardId: { $in: awardIds } } : (supplierObjectId ? { _id: null } : {});
+  shipmentQuery.createdAt = { $gte: currentStart, $lte: now };
+  const shipments = await Shipment.find(shipmentQuery);
+  const shipmentIds = shipments.map((s: any) => s._id);
+  const dockAppointments = shipmentIds.length > 0 ? await DockAppointment.find({ shipmentId: { $in: shipmentIds } }) : [];
+
+  const coldChainQuery: any = {
+    timestamp: { $gte: currentStart, $lte: now },
+    ...(lotIds.length > 0 ? { lotId: { $in: lotIds } } : (supplierObjectId ? { _id: null } : {}))
+  };
+  const coldLogs = await ColdChainLog.find(coldChainQuery);
+  const compliantLogs = coldLogs.filter((l: any) => l.complianceStatus === 'compliant');
+  const verifiedLogs = coldLogs.filter((l: any) => l.fsma204Audit?.verified);
+
+  const tempCompliancePct = coldLogs.length > 0
+    ? Math.round((compliantLogs.length / coldLogs.length) * 1000) / 10
+    : 0;
+  const tempComplianceSla = coldLogs.length > 0
+    ? `${((compliantLogs.length / coldLogs.length) * 100).toFixed(1)}%`
+    : '0%';
+  const fsma204Status = (coldLogs.length > 0 && verifiedLogs.length > 0)
+    ? 'Verified'
+    : 'Unverified';
+  let dockSla = '0.0 hrs';
+  if (dockAppointments.length > 0) {
+    let totalMinutes = 0;
+    let validAppointments = 0;
+    for (const appt of dockAppointments) {
+      if (appt.pickupWindowStart && appt.pickupWindowEnd) {
+        const diffMs = new Date(appt.pickupWindowEnd).getTime() - new Date(appt.pickupWindowStart).getTime();
+        if (diffMs > 0) {
+          totalMinutes += diffMs / (60 * 1000);
+          validAppointments++;
+        }
+      }
+    }
+    if (validAppointments > 0) {
+      const avgMinutes = totalMinutes / validAppointments;
+      if (avgMinutes <= 45) {
+        dockSla = '< 45 Min';
+      } else if (avgMinutes < 60) {
+        dockSla = `${Math.round(avgMinutes)} min`;
+      } else {
+        dockSla = `${(avgMinutes / 60).toFixed(1)} hrs`;
+      }
+    }
+  }
+  const logisticsLinkStatus = shipments.some((s: any) => ['scheduled', 'confirmed', 'in_transit'].includes(s.status))
+    ? 'Active'
+    : 'Disconnected';
+
+  let dockCompliancePct = 0;
+  if (dockAppointments.length > 0) {
+    const metAppointments = dockAppointments.filter((d: any) => d.slaMet !== false);
+    dockCompliancePct = Math.round((metAppointments.length / dockAppointments.length) * 1000) / 10;
+  }
+
+  const coldChainCompliance = {
+    dockCompliancePct,
+    tempCompliancePct,
+    totalShipments: shipments.length,
+    totalColdLogs: coldLogs.length,
+  };
+
+  const distribution = {
+    workflowYield,
+    turnaroundDistribution,
+    coldChainCompliance,
+  };
+
+  // 8. Velocity Trendline Bucketing
+  interface VelocityTrendPoint {
+    date: string;
+    label: string;
+    lots: number;
+    runs: number;
+    dispatches: number;
+  }
+
+  const velocityTrendline: VelocityTrendPoint[] = [];
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const bucketCount = timeframe === '7d' ? 7 : (timeframe === '30d' ? 30 : (timeframe === '90d' ? 13 : 12));
+
+  const stepMs = (timeframe === '7d' || timeframe === '30d')
+    ? (24 * 60 * 60 * 1000)
+    : (timeframe === '90d' ? 7 * 24 * 60 * 60 * 1000 : Math.max(1, Math.floor((now.getTime() - currentStart.getTime()) / bucketCount)));
+
+  for (let i = bucketCount - 1; i >= 0; i--) {
+    const d = new Date(now.getTime() - i * stepMs);
+    const dateStr = d.toISOString().split('T')[0];
+    const label = `${monthNames[d.getMonth()]} ${d.getDate()}`;
+    velocityTrendline.push({
+      date: dateStr,
+      label,
+      lots: 0,
+      runs: 0,
+      dispatches: 0,
+    });
+  }
+
+  const recordTelemetry = (items: any[], getTs: (x: any) => number, key: 'lots' | 'runs' | 'dispatches') => {
+    for (const item of items) {
+      const t = getTs(item);
+      if (t >= currentStart.getTime() && t <= now.getTime()) {
+        const diffSteps = Math.floor((now.getTime() - t) / stepMs);
+        const rawIdx = bucketCount - 1 - diffSteps;
+        const idx = Math.max(0, Math.min(bucketCount - 1, rawIdx));
+        velocityTrendline[idx][key]++;
+      }
+    }
+  };
+
+  recordTelemetry(allLots, (lot: any) => lot.createdAt ? new Date(lot.createdAt).getTime() : (lot._id ? lot._id.getTimestamp().getTime() : 0), 'lots');
+  recordTelemetry(allRuns, (run: any) => run.dispatchedAt ? new Date(run.dispatchedAt).getTime() : (run.executedAt ? new Date(run.executedAt).getTime() : 0), 'runs');
+  recordTelemetry(dispatchLogs, (disp: any) => disp.dispatchedAt ? new Date(disp.dispatchedAt).getTime() : (disp.createdAt ? new Date(disp.createdAt).getTime() : 0), 'dispatches');
+
+  const result = {
+    timeframe,
+    ingestion: {
+      portfolioValue,
+      portfolioValueRaw,
+      criticalRsl,
+      criticalRslCount: criticalCount,
+      liquidationVelocity,
+      liquidationVelocityRaw,
+      matchedBuyers,
+      matchedBuyersCount: activeBuyerCount,
+    },
+    buyerComms: {
+      activeBuyers: activeBuyerCount,
+      dispatchVolume,
+      engagementRate,
+      responseVelocityHours,
+    },
+    workflowCampaigns: {
+      activeCampaigns,
+      inactiveCampaigns,
+      casesInScope,
+      automationRuns,
+      executionYield,
+    },
+    coldChain: {
+      tempComplianceSla,
+      fsma204Status,
+      dockSla,
+      logisticsLinkStatus,
+    },
+    velocityTrendline,
+    distribution,
+  };
+
+  // 8. Cache in Redis (5 min TTL)
+  try {
+    const redis = await getRedisClient();
+    if (redis && redis.isOpen) {
+      await redis.set(cacheKey, JSON.stringify(result), { EX: 300 });
+    }
+  } catch (err: any) {
+    console.warn('Redis write error for operations analytics:', err.message || err);
   }
 
   return result;

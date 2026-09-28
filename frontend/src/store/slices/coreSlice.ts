@@ -100,6 +100,81 @@ export interface SalesAnalyticsData {
   recentCloseouts?: CloseoutTransactionPoint[];
 }
 
+export interface WorkflowYieldData {
+  yieldPct: number;
+  successfulRuns: number;
+  totalRuns: number;
+}
+
+export interface TurnaroundBucket {
+  count: number;
+  pct: number;
+}
+
+export interface TurnaroundDistributionData {
+  under2h: TurnaroundBucket;
+  twoToSixH: TurnaroundBucket;
+  sixToTwentyFourH: TurnaroundBucket;
+  over24h: TurnaroundBucket;
+  totalEvaluated: number;
+}
+
+export interface ColdChainComplianceData {
+  dockCompliancePct: number;
+  tempCompliancePct: number;
+  totalShipments: number;
+  totalColdLogs: number;
+}
+
+export interface PlatformSlaYieldDistributionData {
+  workflowYield: WorkflowYieldData;
+  turnaroundDistribution: TurnaroundDistributionData;
+  coldChainCompliance: ColdChainComplianceData;
+}
+
+export interface OperationsAnalyticsData {
+  timeframe: string;
+  ingestion: {
+    portfolioValue: string;
+    portfolioValueRaw: number;
+    criticalRsl: string;
+    criticalRslCount: number;
+    liquidationVelocity: string;
+    liquidationVelocityRaw: number;
+    matchedBuyers: string;
+    matchedBuyersCount: number;
+  };
+  buyerComms: {
+    activeBuyers: number;
+    dispatchVolume: number;
+    engagementRate: number;
+    responseVelocityHours: number;
+  };
+  workflowCampaigns: {
+    activeCampaigns: number;
+    inactiveCampaigns: number;
+    casesInScope: number;
+    automationRuns: number;
+    executionYield: number;
+  };
+  coldChain: {
+    tempComplianceSla: string;
+    fsma204Status: string;
+    dockSla: string;
+    logisticsLinkStatus: string;
+  };
+  velocityTrendline?: VelocityTrendPoint[];
+  distribution?: PlatformSlaYieldDistributionData;
+}
+
+export interface VelocityTrendPoint {
+  date: string;
+  label: string;
+  lots: number;
+  runs: number;
+  dispatches: number;
+}
+
 export interface CoreState {
   activeTab: NavigationTab;
   returnTab: NavigationTab | null;
@@ -115,6 +190,8 @@ export interface CoreState {
   analyticsLoading: boolean;
   salesAnalytics: SalesAnalyticsData | null;
   salesAnalyticsLoading: boolean;
+  operationsAnalytics: OperationsAnalyticsData | null;
+  operationsAnalyticsLoading: boolean;
 }
 
 export const checkSystemHealth = createAsyncThunk(
@@ -269,6 +346,25 @@ export const fetchSalesAnalyticsThunk = createAsyncThunk(
   }
 );
 
+export const fetchOperationsAnalyticsThunk = createAsyncThunk(
+  'core/fetchOperationsAnalytics',
+  async (
+    params: { timeframe?: string; supplierId?: string; token?: string } = {},
+    { rejectWithValue, getState }
+  ) => {
+    try {
+      let supplierId = params.supplierId;
+      if (!supplierId) {
+        const state = getState() as any;
+        supplierId = state?.ingestion?.selectedSupplier || undefined;
+      }
+      return await coreService.fetchOperationsAnalytics({ ...params, supplierId });
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to fetch operations analytics');
+    }
+  }
+);
+
 const getInitialTab = (): NavigationTab => {
   if (typeof window !== 'undefined' && window.location) {
     const params = new URLSearchParams(window.location.search);
@@ -322,6 +418,8 @@ const initialState: CoreState = {
   analyticsLoading: false,
   salesAnalytics: null,
   salesAnalyticsLoading: false,
+  operationsAnalytics: null,
+  operationsAnalyticsLoading: false,
 };
 
 export const coreSlice = createSlice({
@@ -423,6 +521,17 @@ export const coreSlice = createSlice({
         state.salesAnalyticsLoading = false;
         state.error = action.payload as string || 'Error fetching sales analytics';
       })
+      .addCase(fetchOperationsAnalyticsThunk.pending, (state) => {
+        state.operationsAnalyticsLoading = true;
+      })
+      .addCase(fetchOperationsAnalyticsThunk.fulfilled, (state, action) => {
+        state.operationsAnalyticsLoading = false;
+        state.operationsAnalytics = action.payload;
+      })
+      .addCase(fetchOperationsAnalyticsThunk.rejected, (state, action) => {
+        state.operationsAnalyticsLoading = false;
+        state.error = action.payload as string || 'Error fetching operations analytics';
+      })
       .addCase(fetchBuyerLists.fulfilled, (state, action) => {
         state.buyerLists = ensureDefaultBuyerLists(action.payload || []);
       })
@@ -476,6 +585,8 @@ export const selectAnalyticsSummary = (state: RootState) => state.core.analytics
 export const selectAnalyticsLoading = (state: RootState) => state.core.analyticsLoading;
 export const selectSalesAnalytics = (state: RootState) => state.core.salesAnalytics;
 export const selectSalesAnalyticsLoading = (state: RootState) => state.core.salesAnalyticsLoading;
+export const selectOperationsAnalytics = (state: RootState) => state.core.operationsAnalytics;
+export const selectOperationsAnalyticsLoading = (state: RootState) => state.core.operationsAnalyticsLoading;
 const selectInventoryList = (state: RootState) => (state.inventory ? state.inventory.inventoryList : []);
 
 export const selectCOGSRecoveryMetrics = createSelector(
