@@ -10,6 +10,7 @@ import {
   Layers,
   Sparkles,
   ArrowUpRight,
+  ArrowDownRight,
   Users,
   Building2,
   Tag,
@@ -20,10 +21,19 @@ import {
 } from 'lucide-react';
 import type { RootState } from '../../../store';
 import { fetchSalesRecordsThunk } from '../../../store/slices/ingestionSlice';
+import {
+  fetchSalesAnalyticsThunk,
+  selectSalesAnalytics,
+  selectSalesAnalyticsLoading,
+  type CloseoutTransactionPoint,
+} from '../../../store/slices/coreSlice';
 
 export const SalesDataView: React.FC = () => {
   const dispatch = useDispatch();
   const { salesRecords } = useSelector((state: RootState) => state.ingestion);
+  const salesAnalytics = useSelector(selectSalesAnalytics);
+  const salesAnalyticsLoading = useSelector(selectSalesAnalyticsLoading);
+  const selectedSupplier = useSelector((state: RootState) => state.ingestion?.selectedSupplier);
 
   // Global Interactive Filters
   const [timeframe, setTimeframe] = useState<'7d' | '30d' | '90d' | 'ytd'>('30d');
@@ -36,23 +46,48 @@ export const SalesDataView: React.FC = () => {
     dispatch(fetchSalesRecordsThunk() as any);
   }, [dispatch]);
 
-  // Extract unique DCs dynamically
-  const uniqueDCs = useMemo(() => {
-    const defaults = [
-      'Unilever Midwest DC',
-      'Kraft Heinz Midwest DC',
-      'Mondelez Midwest DC',
-      'Danone Midwest DC',
-      'Conagra Midwest DC',
+  useEffect(() => {
+    dispatch(
+      fetchSalesAnalyticsThunk({
+        timeframe,
+        category: categoryFilter,
+        warehouse: dcFilter,
+        supplierId: selectedSupplier,
+      }) as any
+    );
+  }, [dispatch, timeframe, categoryFilter, dcFilter, selectedSupplier]);
+
+  // Extract unique categories dynamically from backend
+  const uniqueCategories = useMemo(() => {
+    const dynamic = [
+      ...(salesAnalytics?.categories || []),
+      ...(salesRecords || []).map((r: any) => r.category).filter(Boolean),
     ];
-    const dynamic = (salesRecords || [])
-      .map((r: any) => r.warehouse || r.dc || r.location)
-      .filter(Boolean);
-    return Array.from(new Set([...defaults, ...dynamic]));
-  }, [salesRecords]);
+    return Array.from(new Set(dynamic));
+  }, [salesAnalytics?.categories, salesRecords]);
+
+  // Extract unique DCs dynamically from backend
+  const uniqueDCs = useMemo(() => {
+    const dynamic = [
+      ...(salesAnalytics?.warehouses || []),
+      ...(salesRecords || []).map((r: any) => r.warehouse || r.dc || r.location).filter(Boolean),
+    ];
+    return Array.from(new Set(dynamic));
+  }, [salesAnalytics?.warehouses, salesRecords]);
 
   // Dynamic calculations from Redux store
-  const { totalRevenue, totalVolume, avgPrice, reconciledCount, totalRecordsCount } = useMemo(() => {
+  const { totalRevenue, revenueGrowthPct, totalVolume, avgPrice, reconciledCount, totalRecordsCount } = useMemo(() => {
+    if (salesAnalytics) {
+      return {
+        totalRevenue: salesAnalytics.totalRevenue ?? 0,
+        revenueGrowthPct: salesAnalytics.revenueGrowthPct ?? 0,
+        totalVolume: salesAnalytics.totalVolume ?? 0,
+        avgPrice: salesAnalytics.avgPrice ?? 0,
+        reconciledCount: salesAnalytics.reconciledCount ?? 0,
+        totalRecordsCount: salesAnalytics.totalCount ?? 0,
+      };
+    }
+
     const records = salesRecords || [];
     let rev = 0;
     let vol = 0;
@@ -80,75 +115,201 @@ export const SalesDataView: React.FC = () => {
 
     return {
       totalRevenue: rev,
+      revenueGrowthPct: 0,
       totalVolume: vol,
       avgPrice: avg,
       reconciledCount: reconciled,
       totalRecordsCount: totalCount,
     };
-  }, [salesRecords]);
+  }, [salesAnalytics, salesRecords]);
 
-  // Chart 1: Revenue Trajectory Monthly / Weekly Data based on timeframe
+  // Chart 1: Revenue Trajectory Data based on live backend data or timeframe fallback
   const trajectoryData = useMemo(() => {
+    if (salesAnalytics?.trajectory && salesAnalytics.trajectory.length > 0) {
+      return salesAnalytics.trajectory;
+    }
     if (timeframe === '7d') {
-      return [
-        { period: 'Day 1', revenue: 14200, volume: 480 },
-        { period: 'Day 2', revenue: 18500, volume: 620 },
-        { period: 'Day 3', revenue: 12900, volume: 410 },
-        { period: 'Day 4', revenue: 22400, volume: 750 },
-        { period: 'Day 5', revenue: 31000, volume: 980 },
-        { period: 'Day 6', revenue: 27800, volume: 890 },
-        { period: 'Day 7', revenue: 35200, volume: 1120 },
-      ];
+      return Array.from({ length: 7 }, (_, i) => ({ period: `Day ${i + 1}`, revenue: 0, volume: 0 }));
     } else if (timeframe === '90d') {
-      return [
-        { period: 'Month 1', revenue: 115000, volume: 3900 },
-        { period: 'Month 2', revenue: 148000, volume: 4950 },
-        { period: 'Month 3', revenue: 176850, volume: 6000 },
-      ];
+      return Array.from({ length: 3 }, (_, i) => ({ period: `Month ${i + 1}`, revenue: 0, volume: 0 }));
     } else if (timeframe === 'ytd') {
       return [
-        { period: 'Q1', revenue: 320000, volume: 10800 },
-        { period: 'Q2', revenue: 410000, volume: 13900 },
-        { period: 'Q3', revenue: 439850, volume: 14850 },
+        { period: 'Q1', revenue: 0, volume: 0 },
+        { period: 'Q2', revenue: 0, volume: 0 },
+        { period: 'Q3', revenue: 0, volume: 0 },
       ];
     }
     // Default 30d (5 Weeks)
-    return [
-      { period: 'Week 1', revenue: 64200, volume: 2150 },
-      { period: 'Week 2', revenue: 82500, volume: 2780 },
-      { period: 'Week 3', revenue: 91400, volume: 3100 },
-      { period: 'Week 4', revenue: 105800, volume: 3560 },
-      { period: 'Week 5', revenue: 95950, volume: 3260 },
-    ];
-  }, [timeframe]);
+    return Array.from({ length: 5 }, (_, i) => ({ period: `Week ${i + 1}`, revenue: 0, volume: 0 }));
+  }, [salesAnalytics?.trajectory, timeframe]);
+
+  const isZeroTrajectory = useMemo(() => {
+    if (!trajectoryData || trajectoryData.length === 0) return true;
+    const totalRev = trajectoryData.reduce((acc, d) => acc + (d.revenue || 0), 0);
+    const totalVol = trajectoryData.reduce((acc, d) => acc + (d.volume || 0), 0);
+    return totalRev === 0 && totalVol === 0;
+  }, [trajectoryData]);
+
+  // Dynamic SVG path calculations for Chart 1
+  const { revAreaPath, revLinePath, volLinePath, revCoordinates } = useMemo(() => {
+    if (!trajectoryData || trajectoryData.length === 0 || isZeroTrajectory) {
+      return {
+        revAreaPath: '',
+        revLinePath: '',
+        volLinePath: '',
+        revCoordinates: [],
+      };
+    }
+
+    const n = trajectoryData.length;
+    const maxRev = Math.max(...trajectoryData.map((d) => d.revenue || 0), 1);
+    const maxVol = Math.max(...trajectoryData.map((d) => d.volume || 0), 1);
+
+    const revCoords = trajectoryData.map((d, i) => {
+      const x = n > 1 ? (i / (n - 1)) * 500 : 250;
+      const y = 140 - ((d.revenue || 0) / maxRev) * 110;
+      return { x, y };
+    });
+
+    const volCoords = trajectoryData.map((d, i) => {
+      const x = n > 1 ? (i / (n - 1)) * 500 : 250;
+      const y = 140 - ((d.volume || 0) / maxVol) * 110;
+      return { x, y };
+    });
+
+    const revLine = revCoords
+      .map((pt, i) => (i === 0 ? `M ${pt.x},${pt.y}` : `L ${pt.x},${pt.y}`))
+      .join(' ');
+
+    const revArea = `${revLine} L ${revCoords[revCoords.length - 1].x},140 L ${revCoords[0].x},140 Z`;
+
+    const volLine = volCoords
+      .map((pt, i) => (i === 0 ? `M ${pt.x},${pt.y}` : `L ${pt.x},${pt.y}`))
+      .join(' ');
+
+    return {
+      revAreaPath: revArea,
+      revLinePath: revLine,
+      volLinePath: volLine,
+      revCoordinates: revCoords,
+    };
+  }, [trajectoryData, isZeroTrajectory]);
 
   // Chart 2: COGS vs Realized Revenue Recovery by Category
-  const categoryRecoveryData = [
-    { category: 'Dry Goods', cogs: 120000, revenue: 94080, recoveryPct: 78.4, color: 'hsl(var(--primary))' },
-    { category: 'Dairy', cogs: 95000, revenue: 64790, recoveryPct: 68.2, color: 'hsl(var(--success))' },
-    { category: 'Beverages', cogs: 88000, revenue: 65120, recoveryPct: 74.0, color: 'hsl(var(--primary))' },
-    { category: 'Frozen Food', cogs: 110000, revenue: 68310, recoveryPct: 62.1, color: 'hsl(45, 93%, 47%)' },
-    { category: 'Bakery & Snacks', cogs: 65000, revenue: 45500, recoveryPct: 70.0, color: 'hsl(280, 80%, 65%)' },
-  ];
+  const categoryRecoveryData = useMemo(() => {
+    if (salesAnalytics?.categoryRecovery) {
+      return salesAnalytics.categoryRecovery;
+    }
+    return [];
+  }, [salesAnalytics?.categoryRecovery]);
+
+  const isZeroCategoryRecovery = categoryRecoveryData.length === 0;
 
   // Chart 3: Buyer Channel Revenue Share
-  const channelBreakdown = [
-    { channel: 'Off-Price Wholesalers', pct: 42, rev: 184737, color: 'hsl(var(--primary))' },
-    { channel: 'Regional Liquidators', pct: 28, rev: 123158, color: 'hsl(var(--success))' },
-    { channel: 'Food Rescue & Discount', pct: 18, rev: 79173, color: 'hsl(var(--primary))' },
-    { channel: 'Secondary Direct Export', pct: 12, rev: 52782, color: 'hsl(45, 93%, 47%)' },
-  ];
+  const channelBreakdown = useMemo(() => {
+    if (salesAnalytics?.channelDistribution) {
+      return salesAnalytics.channelDistribution;
+    }
+    return [];
+  }, [salesAnalytics?.channelDistribution]);
+
+  const isZeroChannelDistribution = channelBreakdown.length === 0;
+
+  // Dynamic SVG Donut calculations for Chart 3
+  const channelDonutSegments = useMemo(() => {
+    const palette = ['hsl(var(--primary))', 'hsl(var(--success))', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6'];
+    let cumulative = 0;
+    return channelBreakdown.map((ch, idx) => {
+      const offset = -cumulative;
+      cumulative += ch.pct;
+      const color = palette[idx % palette.length];
+      return {
+        ...ch,
+        offset,
+        color,
+      };
+    });
+  }, [channelBreakdown]);
 
   // Chart 4: Price Realization Velocity vs Remaining Shelf Life (RSL Scatter Plot Matrix)
-  const scatterPoints = [
-    { id: 1, sku: 'DRY-1092', product: 'Organic Almond Milk 12pk', rslDays: 68, price: 34.50, recovery: '82%', buyer: 'Grocery Outlet' },
-    { id: 2, sku: 'DAIRY-441', product: 'Greek Yogurt Vanilla 32oz', rslDays: 45, price: 28.00, recovery: '71%', buyer: 'Bargain Hunt' },
-    { id: 3, sku: 'BEV-8821', product: 'Sparkling Juice Crisp Apple', rslDays: 52, price: 29.80, recovery: '75%', buyer: 'Ollies Bargain' },
-    { id: 4, sku: 'FRZ-3301', product: 'Frozen Artisan Pizza 8ct', rslDays: 28, price: 21.50, recovery: '58%', buyer: 'Misfits Market' },
-    { id: 5, sku: 'BAK-9011', product: 'Gluten-Free Oats Cereal', rslDays: 85, price: 39.20, recovery: '88%', buyer: 'Imperfections Co' },
-    { id: 6, sku: 'DRY-2041', product: 'Whole Grain Pasta Barilla', rslDays: 14, price: 14.80, recovery: '42%', buyer: 'Second Harvest' },
-    { id: 7, sku: 'DAIRY-902', product: 'Shredded Mozzarella Cheese', rslDays: 9, price: 11.20, recovery: '32%', buyer: 'Direct Closeout' },
-  ];
+  const closeoutPoints: CloseoutTransactionPoint[] = useMemo(() => {
+    if (salesAnalytics?.recentCloseouts) {
+      return salesAnalytics.recentCloseouts;
+    }
+    return [];
+  }, [salesAnalytics?.recentCloseouts]);
+
+  const isZeroCloseoutPoints = closeoutPoints.length === 0;
+
+  // Compute dynamic coordinate mapping and least-squares regression line
+  const { mappedPoints, regressionPath } = useMemo(() => {
+    if (closeoutPoints.length === 0) {
+      return { mappedPoints: [], regressionPath: '' };
+    }
+
+    const maxRsl = Math.max(90, ...closeoutPoints.map((p) => p.rslDays));
+    const maxPrice = Math.max(45, ...closeoutPoints.map((p) => p.price));
+
+    const mapped = closeoutPoints.map((pt) => {
+      const cx = maxRsl > 0 ? (pt.rslDays / maxRsl) * 440 + 30 : 250;
+      const cy = maxPrice > 0 ? 140 - (pt.price / maxPrice) * 120 : 70;
+      return {
+        ...pt,
+        cx,
+        cy,
+      };
+    });
+
+    // Least Squares Linear Regression: y = m * x + c on canvas coordinates
+    let regressionLine = '';
+    const n = mapped.length;
+    if (n === 1) {
+      // Single point: render a flat horizontal segment across canvas
+      const y = mapped[0].cy;
+      regressionLine = `M 30,${y.toFixed(1)} L 470,${y.toFixed(1)}`;
+    } else {
+      let sumX = 0;
+      let sumY = 0;
+      let sumXY = 0;
+      let sumX2 = 0;
+
+      for (let i = 0; i < n; i++) {
+        const x = mapped[i].rslDays;
+        const y = mapped[i].price;
+        sumX += x;
+        sumY += y;
+        sumXY += x * y;
+        sumX2 += x * x;
+      }
+
+      const denominator = n * sumX2 - sumX * sumX;
+      let slope = 0;
+      let intercept = sumY / n;
+
+      if (denominator !== 0) {
+        slope = (n * sumXY - sumX * sumY) / denominator;
+        intercept = (sumY - slope * sumX) / n;
+      }
+
+      // Compute regression line at x = 0 days and x = maxRsl days
+      const rslMin = 0;
+      const rslMax = maxRsl;
+      const priceAtMin = Math.max(0, intercept + slope * rslMin);
+      const priceAtMax = Math.max(0, intercept + slope * rslMax);
+
+      const x1 = 30;
+      const y1 = maxPrice > 0 ? 140 - (priceAtMin / maxPrice) * 120 : 70;
+      const x2 = 470;
+      const y2 = maxPrice > 0 ? 140 - (priceAtMax / maxPrice) * 120 : 70;
+
+      regressionLine = `M ${x1.toFixed(1)},${y1.toFixed(1)} L ${x2.toFixed(1)},${y2.toFixed(1)}`;
+    }
+
+    return {
+      mappedPoints: mapped,
+      regressionPath: regressionLine,
+    };
+  }, [closeoutPoints]);
 
   // Leaderboard Data
   const topBuyers = [
@@ -211,9 +372,19 @@ export const SalesDataView: React.FC = () => {
               <span className="text-[20px] font-bold font-mono text-emerald-600 dark:text-emerald-400 leading-none">
                 ${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
-              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-                <ArrowUpRight className="w-3 h-3" /> +14.2%
-              </span>
+              {revenueGrowthPct > 0 ? (
+                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                  <ArrowUpRight className="w-3 h-3" /> +{revenueGrowthPct.toFixed(1)}%
+                </span>
+              ) : revenueGrowthPct < 0 ? (
+                <span className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-0.5">
+                  <ArrowDownRight className="w-3 h-3" /> {revenueGrowthPct.toFixed(1)}%
+                </span>
+              ) : (
+                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-0.5">
+                  0.0%
+                </span>
+              )}
             </div>
           </div>
           <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -321,11 +492,11 @@ export const SalesDataView: React.FC = () => {
               className="appearance-none pl-3 pr-8 py-1.5 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-[12.5px] border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-600 shadow-2xs cursor-pointer transition-colors"
             >
               <option value="all">All Categories</option>
-              <option value="Dry Goods">Dry Goods</option>
-              <option value="Dairy">Dairy</option>
-              <option value="Frozen">Frozen Food</option>
-              <option value="Beverages">Beverages</option>
-              <option value="Bakery">Bakery &amp; Snacks</option>
+              {uniqueCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
             </select>
             <ChevronDown className="w-4 h-4 absolute right-2.5 text-slate-400 pointer-events-none" />
           </div>
@@ -368,6 +539,14 @@ export const SalesDataView: React.FC = () => {
 
           {/* SVG Visual Area Chart */}
           <div className="h-[220px] w-full relative bg-slate-50 dark:bg-slate-950/60 rounded-lg border border-slate-200/60 dark:border-slate-800/60 p-4 flex flex-col justify-between">
+            {isZeroTrajectory && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center pointer-events-none z-10">
+                <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400">
+                  No closeout sales recorded for this timeframe/warehouse.
+                </p>
+              </div>
+            )}
+
             <svg viewBox="0 0 500 150" className="w-full h-full overflow-visible">
               <defs>
                 <linearGradient id="gradSalesRev" x1="0" y1="0" x2="0" y2="1">
@@ -385,23 +564,42 @@ export const SalesDataView: React.FC = () => {
               <line x1="0" y1="65" x2="500" y2="65" stroke="currentColor" className="text-slate-200 dark:text-slate-800" strokeDasharray="4 4" />
               <line x1="0" y1="105" x2="500" y2="105" stroke="currentColor" className="text-slate-200 dark:text-slate-800" strokeDasharray="4 4" />
 
-              {/* Area 1: Revenue ($) */}
-              <path d="M 0,110 Q 100,50 200,75 T 400,30 L 500,50 L 500,140 L 0,140 Z" fill="url(#gradSalesRev)" />
-              <path d="M 0,110 Q 100,50 200,75 T 400,30 L 500,50" fill="none" stroke="hsl(var(--success))" strokeWidth="3" />
+              {isZeroTrajectory ? (
+                /* Flat Baseline Axis Line */
+                <line
+                  data-testid="trajectory-baseline-axis"
+                  x1="0"
+                  y1="140"
+                  x2="500"
+                  y2="140"
+                  stroke="currentColor"
+                  className="text-slate-300 dark:text-slate-700"
+                  strokeWidth="2"
+                  strokeDasharray="4 4"
+                />
+              ) : (
+                <>
+                  {/* Area 1: Revenue ($) */}
+                  <path data-testid="trajectory-revenue-area" d={revAreaPath} fill="url(#gradSalesRev)" />
+                  <path data-testid="trajectory-revenue-line" d={revLinePath} fill="none" stroke="hsl(var(--success))" strokeWidth="3" />
 
-              {/* Line 2: Volume (Cases) */}
-              <path d="M 0,130 Q 100,90 200,105 T 400,70 L 500,85 L 500,140 L 0,140 Z" fill="url(#gradSalesVol)" />
-              <path d="M 0,130 Q 100,90 200,105 T 400,70 L 500,85" fill="none" stroke="hsl(var(--primary))" strokeWidth="2.5" strokeDasharray="5 3" />
+                  {/* Line 2: Volume (Cases) */}
+                  <path data-testid="trajectory-volume-line" d={volLinePath} fill="none" stroke="#6366f1" strokeWidth="2.5" strokeDasharray="5 3" />
 
-              {/* Interactive Point Nodes */}
-              {trajectoryData.map((_d, i) => {
-                const x = (i / (trajectoryData.length - 1)) * 500;
-                return (
-                  <g key={i}>
-                    <circle cx={x} cy={50 + Math.sin(i) * 20} r="5" fill="hsl(var(--success))" stroke="white" strokeWidth="2" />
-                  </g>
-                );
-              })}
+                  {/* Interactive Point Nodes */}
+                  {revCoordinates.map((pt, i) => (
+                    <circle
+                      key={i}
+                      cx={pt.x}
+                      cy={pt.y}
+                      r="4.5"
+                      fill="hsl(var(--success))"
+                      stroke="white"
+                      strokeWidth="2"
+                    />
+                  ))}
+                </>
+              )}
             </svg>
 
             <div className="flex justify-between text-[11px] font-mono text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2">
@@ -439,22 +637,34 @@ export const SalesDataView: React.FC = () => {
             </div>
           </div>
 
-          <div className="h-[220px] bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200/60 dark:border-slate-800/60 flex flex-col justify-around gap-2.5">
-            {categoryRecoveryData.map((cat, idx) => (
-              <div key={idx} className="flex flex-col gap-1">
-                <div className="flex justify-between text-xs">
-                  <span className="font-semibold text-slate-900 dark:text-slate-100">{cat.category}</span>
-                  <span className="text-slate-500 dark:text-slate-400">
-                    ${cat.revenue.toLocaleString()} / ${cat.cogs.toLocaleString()} COGS <span className="text-slate-300 dark:text-slate-600">·</span>{' '}
-                    <strong className="text-slate-800 dark:text-slate-200 font-mono">{cat.recoveryPct}% Recovery</strong>
-                  </span>
+          {isZeroCategoryRecovery ? (
+            <div className="h-[220px] bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-center text-center">
+              <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400">
+                No category recovery data recorded for this timeframe.
+              </p>
+            </div>
+          ) : (
+            <div className="h-[220px] bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200/60 dark:border-slate-800/60 flex flex-col justify-around gap-2.5 overflow-y-auto">
+              {categoryRecoveryData.map((cat, idx) => (
+                <div key={cat.category || idx} className="flex flex-col gap-1">
+                  <div className="flex justify-between text-xs">
+                    <span data-testid={`category-name-${cat.category}`} className="font-semibold text-slate-900 dark:text-slate-100">{cat.category}</span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      ${cat.revenue.toLocaleString()} / ${cat.cogs.toLocaleString()} COGS <span className="text-slate-300 dark:text-slate-600">·</span>{' '}
+                      <strong className="text-slate-800 dark:text-slate-200 font-mono">{cat.recoveryPct}% Recovery</strong>
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      data-testid={`category-progress-${cat.category}`}
+                      style={{ width: `${Math.min(cat.recoveryPct, 100)}%` }}
+                      className="h-full bg-emerald-500 rounded-full transition-all"
+                    />
+                  </div>
                 </div>
-                <div className="h-2 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div style={{ width: `${cat.recoveryPct}%` }} className="h-full bg-emerald-500 rounded-full" />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           <div className="text-[11px] text-slate-500 dark:text-slate-400 text-right">
             <span>Target COGS recovery benchmark: <strong>65.0%</strong></span>
@@ -481,36 +691,70 @@ export const SalesDataView: React.FC = () => {
             {/* SVG Donut Chart */}
             <div className="w-[130px] h-[130px] relative mx-auto">
               <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
-                {/* Off-Price Wholesalers (42%) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeDasharray="42 58" strokeDashoffset="0" />
-                {/* Regional Liquidators (28%) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(var(--success))" strokeWidth="4" strokeDasharray="28 72" strokeDashoffset="-42" />
-                {/* Food Rescue & Discount (18%) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" strokeDasharray="18 82" strokeDashoffset="-70" />
-                {/* Export (12%) */}
-                <circle cx="18" cy="18" r="15.915" fill="none" stroke="hsl(45, 93%, 47%)" strokeWidth="4" strokeDasharray="12 88" strokeDashoffset="-88" />
+                {isZeroChannelDistribution ? (
+                  <circle
+                    data-testid="donut-zero-ring"
+                    cx="18"
+                    cy="18"
+                    r="15.915"
+                    fill="none"
+                    stroke="currentColor"
+                    className="text-slate-200 dark:text-slate-800"
+                    strokeWidth="4"
+                    strokeDasharray="100 0"
+                    strokeDashoffset="0"
+                  />
+                ) : (
+                  channelDonutSegments.map((seg, idx) => (
+                    <circle
+                      key={seg.channel || idx}
+                      data-testid="donut-segment"
+                      cx="18"
+                      cy="18"
+                      r="15.915"
+                      fill="none"
+                      stroke={seg.color}
+                      strokeWidth="4"
+                      strokeDasharray={`${seg.pct} ${100 - seg.pct}`}
+                      strokeDashoffset={`${seg.offset}`}
+                    />
+                  ))
+                )}
               </svg>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                <span className="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 block leading-none">100%</span>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+                <span className="text-lg font-bold font-mono text-slate-900 dark:text-slate-100 block leading-none">
+                  {isZeroChannelDistribution ? '0%' : '100%'}
+                </span>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400">Revenue Share</span>
               </div>
             </div>
 
             {/* Legend Progress List */}
             <div className="flex flex-col gap-2.5">
-              {channelBreakdown.map((ch, idx) => (
-                <div key={idx}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">{ch.channel}</span>
-                    <span className="text-slate-600 dark:text-slate-400 font-mono">
-                      {ch.pct}% (${ch.rev.toLocaleString()})
-                    </span>
-                  </div>
-                  <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                    <div style={{ width: `${ch.pct}%` }} className="h-full bg-emerald-500" />
-                  </div>
+              {isZeroChannelDistribution ? (
+                <div className="flex items-center justify-center p-3 text-center">
+                  <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400">
+                    No channel distribution recorded for this timeframe.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                channelDonutSegments.map((ch, idx) => (
+                  <div key={ch.channel || idx}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">{ch.channel}</span>
+                      <span className="text-slate-600 dark:text-slate-400 font-mono">
+                        {ch.pct}% (${ch.revenue.toLocaleString()})
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                      <div
+                        style={{ width: `${Math.min(ch.pct, 100)}%`, backgroundColor: ch.color }}
+                        className="h-full rounded-full transition-all"
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -531,51 +775,82 @@ export const SalesDataView: React.FC = () => {
             </div>
           </div>
 
-          <div className="h-[220px] bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200/60 dark:border-slate-800/60 relative flex flex-col justify-between">
-            <svg viewBox="0 0 500 150" className="w-full h-full overflow-visible">
-              {/* Trendline */}
-              <path d="M 50,130 C 150,110 300,50 450,20" fill="none" stroke="hsl(45, 93%, 47%)" strokeWidth="2" strokeDasharray="6 4" opacity="0.8" />
-
-              {/* Scatter Nodes */}
-              {scatterPoints.map((pt) => {
-                const cx = (pt.rslDays / 90) * 440 + 30;
-                const cy = 140 - (pt.price / 45) * 120;
-                const isSelected = activeScatterPoint?.id === pt.id;
-
-                return (
-                  <g key={pt.id} onClick={() => setActiveScatterPoint(pt)} className="cursor-pointer">
-                    <circle
-                      cx={cx}
-                      cy={cy}
-                      r={isSelected ? '8' : '6'}
-                      fill={isSelected ? 'white' : 'hsl(45, 93%, 47%)'}
-                      stroke="hsl(45, 93%, 47%)"
-                      strokeWidth="2"
-                    />
-                    <text x={cx + 8} y={cy + 3} className="fill-slate-500 dark:fill-slate-400 text-[10px] font-mono font-semibold">
-                      ${pt.price.toFixed(1)}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
-
-            <div className="flex justify-between text-[11px] font-mono text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2">
-              <span>0 Days (Expiring)</span>
-              <span>30 Days RSL</span>
-              <span>60 Days RSL</span>
-              <span>90+ Days RSL</span>
+          {isZeroCloseoutPoints ? (
+            <div className="h-[220px] bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200/60 dark:border-slate-800/60 flex items-center justify-center text-center">
+              <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400">
+                No closeout transaction points recorded.
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className="h-[220px] bg-slate-50 dark:bg-slate-950/60 p-4 rounded-lg border border-slate-200/60 dark:border-slate-800/60 relative flex flex-col justify-between">
+              <svg viewBox="0 0 500 150" className="w-full h-full overflow-visible">
+                {/* Dynamic Least-Squares Regression Trendline */}
+                {regressionPath && (
+                  <path
+                    data-testid="rsl-regression-trendline"
+                    d={regressionPath}
+                    fill="none"
+                    stroke="hsl(45, 93%, 47%)"
+                    strokeWidth="2"
+                    strokeDasharray="6 4"
+                    opacity="0.8"
+                  />
+                )}
+
+                {/* Dynamic Scatter Nodes */}
+                {mappedPoints.map((pt) => {
+                  const isSelected = activeScatterPoint?.id === pt.id;
+
+                  return (
+                    <g
+                      key={pt.id}
+                      data-testid={`scatter-node-${pt.id}`}
+                      onClick={() => setActiveScatterPoint(pt)}
+                      className="cursor-pointer"
+                    >
+                      <circle
+                        cx={pt.cx}
+                        cy={pt.cy}
+                        r={isSelected ? '8' : '6'}
+                        fill={isSelected ? 'white' : 'hsl(45, 93%, 47%)'}
+                        stroke="hsl(45, 93%, 47%)"
+                        strokeWidth="2"
+                      />
+                      <text
+                        x={pt.cx + 8}
+                        y={pt.cy + 3}
+                        className="fill-slate-500 dark:fill-slate-400 text-[10px] font-mono font-semibold"
+                      >
+                        ${pt.price.toFixed(1)}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+
+              <div className="flex justify-between text-[11px] font-mono text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2">
+                <span>0 Days (Expiring)</span>
+                <span>30 Days RSL</span>
+                <span>60 Days RSL</span>
+                <span>90+ Days RSL</span>
+              </div>
+            </div>
+          )}
 
           {activeScatterPoint ? (
             <div className="bg-amber-50/70 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200 dark:border-amber-800/60 text-xs flex justify-between items-center text-slate-800 dark:text-slate-200">
               <div>
                 <strong>{activeScatterPoint.product}</strong> ({activeScatterPoint.sku}) <span className="text-slate-400">·</span>{' '}
                 <span className="text-amber-600 dark:text-amber-400 font-semibold">{activeScatterPoint.rslDays} Days RSL</span>
+                {activeScatterPoint.buyer && (
+                  <>
+                    {' '}<span className="text-slate-400">·</span>{' '}
+                    <span className="text-slate-500 dark:text-slate-400">{activeScatterPoint.buyer}</span>
+                  </>
+                )}
               </div>
               <div className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                ${activeScatterPoint.price.toFixed(2)}/cs ({activeScatterPoint.recovery} COGS)
+                ${activeScatterPoint.price.toFixed(2)}/cs ({activeScatterPoint.recoveryPct || activeScatterPoint.recovery}% COGS)
               </div>
             </div>
           ) : (

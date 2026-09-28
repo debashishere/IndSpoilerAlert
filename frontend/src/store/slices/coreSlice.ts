@@ -55,6 +55,51 @@ export type NavigationTab =
   | 'inbox'
   | 'settings';
 
+export interface SalesTrajectoryPoint {
+  period: string;
+  revenue: number;
+  volume: number;
+}
+
+export interface CategoryRecoveryData {
+  category: string;
+  revenue: number;
+  cogs: number;
+  recoveryPct: number;
+}
+
+export interface ChannelDistributionData {
+  channel: string;
+  revenue: number;
+  pct: number;
+}
+
+export interface CloseoutTransactionPoint {
+  id: string;
+  sku: string;
+  product: string;
+  rslDays: number;
+  price: number;
+  recoveryPct: number;
+  buyer: string;
+  saleDate: string;
+}
+
+export interface SalesAnalyticsData {
+  totalRevenue: number;
+  revenueGrowthPct: number;
+  totalVolume: number;
+  avgPrice: number;
+  reconciledCount: number;
+  totalCount: number;
+  categories: string[];
+  warehouses: string[];
+  trajectory: SalesTrajectoryPoint[];
+  categoryRecovery?: CategoryRecoveryData[];
+  channelDistribution?: ChannelDistributionData[];
+  recentCloseouts?: CloseoutTransactionPoint[];
+}
+
 export interface CoreState {
   activeTab: NavigationTab;
   returnTab: NavigationTab | null;
@@ -68,6 +113,8 @@ export interface CoreState {
   error: string | null;
   analyticsSummary: any | null;
   analyticsLoading: boolean;
+  salesAnalytics: SalesAnalyticsData | null;
+  salesAnalyticsLoading: boolean;
 }
 
 export const checkSystemHealth = createAsyncThunk(
@@ -203,6 +250,25 @@ export const fetchAnalyticsSummaryThunk = createAsyncThunk(
   }
 );
 
+export const fetchSalesAnalyticsThunk = createAsyncThunk(
+  'core/fetchSalesAnalytics',
+  async (
+    params: { timeframe?: string; category?: string; warehouse?: string; supplierId?: string; token?: string } = {},
+    { rejectWithValue, getState }
+  ) => {
+    try {
+      let supplierId = params.supplierId;
+      if (!supplierId) {
+        const state = getState() as any;
+        supplierId = state?.ingestion?.selectedSupplier || undefined;
+      }
+      return await coreService.fetchSalesAnalytics({ ...params, supplierId });
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to fetch sales analytics');
+    }
+  }
+);
+
 const getInitialTab = (): NavigationTab => {
   if (typeof window !== 'undefined' && window.location) {
     const params = new URLSearchParams(window.location.search);
@@ -254,6 +320,8 @@ const initialState: CoreState = {
   error: null,
   analyticsSummary: null,
   analyticsLoading: false,
+  salesAnalytics: null,
+  salesAnalyticsLoading: false,
 };
 
 export const coreSlice = createSlice({
@@ -344,6 +412,17 @@ export const coreSlice = createSlice({
         state.analyticsLoading = false;
         state.error = action.payload as string || 'Error fetching analytics summary';
       })
+      .addCase(fetchSalesAnalyticsThunk.pending, (state) => {
+        state.salesAnalyticsLoading = true;
+      })
+      .addCase(fetchSalesAnalyticsThunk.fulfilled, (state, action) => {
+        state.salesAnalyticsLoading = false;
+        state.salesAnalytics = action.payload;
+      })
+      .addCase(fetchSalesAnalyticsThunk.rejected, (state, action) => {
+        state.salesAnalyticsLoading = false;
+        state.error = action.payload as string || 'Error fetching sales analytics';
+      })
       .addCase(fetchBuyerLists.fulfilled, (state, action) => {
         state.buyerLists = ensureDefaultBuyerLists(action.payload || []);
       })
@@ -395,6 +474,8 @@ export const selectBuyers = (state: RootState) => state.core.buyers;
 
 export const selectAnalyticsSummary = (state: RootState) => state.core.analyticsSummary;
 export const selectAnalyticsLoading = (state: RootState) => state.core.analyticsLoading;
+export const selectSalesAnalytics = (state: RootState) => state.core.salesAnalytics;
+export const selectSalesAnalyticsLoading = (state: RootState) => state.core.salesAnalyticsLoading;
 const selectInventoryList = (state: RootState) => (state.inventory ? state.inventory.inventoryList : []);
 
 export const selectCOGSRecoveryMetrics = createSelector(

@@ -179,6 +179,44 @@ export async function fetchAnalyticsSummary(): Promise<any> {
   return await response.json();
 }
 
+export async function fetchSalesAnalytics(params: {
+  timeframe?: string;
+  category?: string;
+  warehouse?: string;
+  supplierId?: string;
+  token?: string;
+} = {}): Promise<any> {
+  const queryParams = new URLSearchParams();
+  if (params.timeframe) queryParams.append('timeframe', params.timeframe);
+  if (params.category && params.category !== 'all') queryParams.append('category', params.category);
+  if (params.warehouse && params.warehouse !== 'all') queryParams.append('warehouse', params.warehouse);
+  if (params.supplierId) queryParams.append('supplierId', params.supplierId);
+
+  const qs = queryParams.toString() ? `?${queryParams.toString()}` : '';
+  const url = `${API_BASE_URL}/analytics/sales${qs}`;
+
+  const headers: Record<string, string> = { ...defaultHeaders };
+  if (params.token) {
+    headers['Authorization'] = `Bearer ${params.token}`;
+  }
+
+  const response = await fetch(url, {
+    method: 'GET',
+    cache: 'no-store',
+    headers,
+  });
+
+  if (!response.ok && response.status !== 304) {
+    throw new Error(`Request to ${url} failed with status ${response.status}`);
+  }
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  return await response.json();
+}
+
 export const coreService = {
   API_BASE_URL,
   SIDECAR_BASE_URL,
@@ -187,6 +225,7 @@ export const coreService = {
   getSuppliers,
   getBuyers,
   fetchAnalyticsSummary,
+  fetchSalesAnalytics,
 };
 
 export default coreService;

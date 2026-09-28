@@ -168,6 +168,7 @@ router.post('/logistics/cold-chain', authenticateToken, logisticsController.crea
 
 // Analytics
 router.get('/analytics/summary', analyticsController.getAnalyticsSummary);
+router.get('/analytics/sales', authenticateToken, analyticsController.getSalesAnalytics);
 
 // Allergens & Exclusions Management
 router.put('/products/:id/allergens', generalController.updateProductAllergens);
