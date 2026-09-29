@@ -136,6 +136,30 @@ function createTestStore(preloadedAnalytics: SalesAnalyticsResponse | null = moc
   });
 }
 
+async function navigateToLeadBuyers() {
+  const leaderboardTab = screen.getByRole('tab', { name: /^leaderboard$/i });
+  await act(async () => {
+    fireEvent.click(leaderboardTab);
+  });
+  const buyersTab = screen.getByRole('tab', { name: /lead buyers/i });
+  await act(async () => {
+    fireEvent.click(buyersTab);
+  });
+  return buyersTab;
+}
+
+async function navigateToLeadWarehouses() {
+  const leaderboardTab = screen.getByRole('tab', { name: /^leaderboard$/i });
+  await act(async () => {
+    fireEvent.click(leaderboardTab);
+  });
+  const warehousesTab = screen.getByRole('tab', { name: /lead warehouses/i });
+  await act(async () => {
+    fireEvent.click(warehousesTab);
+  });
+  return warehousesTab;
+}
+
 describe('Issue 05: Sales & Clearing End-to-End Filter Synchronization, Zero-State & Regression', () => {
   let fetchSpy: any;
 
@@ -220,27 +244,21 @@ describe('Issue 05: Sales & Clearing End-to-End Filter Synchronization, Zero-Sta
         expect.any(Object)
       );
 
-      // 4. Switch to Top Buyers subtab and confirm filter selections are preserved
-      const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
-      await act(async () => {
-        fireEvent.click(buyersTab);
-      });
+      // 4. Switch to Leaderboard -> Lead Buyers and confirm filter selections are preserved
+      await navigateToLeadBuyers();
 
       expect(btn90d).toHaveClass('bg-emerald-600');
       expect(screen.getByDisplayValue('Beverages')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Midwest DC (Chicago, IL)')).toBeInTheDocument();
-      expect(screen.getByTestId('sales-subview-buyers')).not.toHaveClass('hidden');
+      expect(screen.getByTestId('sales-subview-buyers')).toBeInTheDocument();
 
-      // 5. Switch to Top Warehouses subtab and confirm filter selections are preserved
-      const warehousesTab = screen.getByRole('tab', { name: /top warehouses/i });
-      await act(async () => {
-        fireEvent.click(warehousesTab);
-      });
+      // 5. Switch to Leaderboard -> Lead Warehouses and confirm filter selections are preserved
+      await navigateToLeadWarehouses();
 
       expect(btn90d).toHaveClass('bg-emerald-600');
       expect(screen.getByDisplayValue('Beverages')).toBeInTheDocument();
       expect(screen.getByDisplayValue('Midwest DC (Chicago, IL)')).toBeInTheDocument();
-      expect(screen.getByTestId('sales-subview-warehouses')).not.toHaveClass('hidden');
+      expect(screen.getByTestId('sales-subview-warehouses')).toBeInTheDocument();
     });
   });
 
@@ -292,11 +310,8 @@ describe('Issue 05: Sales & Clearing End-to-End Filter Synchronization, Zero-Sta
       expect(screen.getByTestId('trajectory-baseline-axis')).toBeInTheDocument();
       expect(screen.getByText(/No closeout sales recorded for this timeframe\/warehouse/i)).toBeInTheDocument();
 
-      // 3. Navigate to Top Buyers subtab
-      const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
-      await act(async () => {
-        fireEvent.click(buyersTab);
-      });
+      // 3. Navigate to Leaderboard -> Lead Buyers subtab
+      await navigateToLeadBuyers();
 
       const buyersEmptyState = screen.getByTestId('top-buyers-empty-state');
       expect(buyersEmptyState).toBeInTheDocument();
@@ -315,11 +330,8 @@ describe('Issue 05: Sales & Clearing End-to-End Filter Synchronization, Zero-Sta
       // Reset activeTab back to inventory for warehouse test
       store.dispatch({ type: 'core/setActiveTab', payload: 'inventory' });
 
-      // 4. Navigate to Top Warehouses / DCs subtab
-      const warehousesTab = screen.getByRole('tab', { name: /top warehouses/i });
-      await act(async () => {
-        fireEvent.click(warehousesTab);
-      });
+      // 4. Navigate to Leaderboard -> Lead Warehouses subtab
+      await navigateToLeadWarehouses();
 
       const whEmptyState = screen.getByTestId('top-warehouses-empty-state');
       expect(whEmptyState).toBeInTheDocument();
@@ -350,11 +362,8 @@ describe('Issue 05: Sales & Clearing End-to-End Filter Synchronization, Zero-Sta
         );
       });
 
-      // 1. Switch to Top Buyers subtab
-      const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
-      await act(async () => {
-        fireEvent.click(buyersTab);
-      });
+      // 1. Switch to Leaderboard -> Lead Buyers
+      await navigateToLeadBuyers();
 
       // Buyer card exists
       const buyerCard = screen.getByTestId('buyer-card-buyer-1');
@@ -413,11 +422,8 @@ describe('Issue 05: Sales & Clearing End-to-End Filter Synchronization, Zero-Sta
         })
       );
 
-      // 2. Switch to Top Warehouses / DCs subtab
-      const warehousesTab = screen.getByRole('tab', { name: /top warehouses/i });
-      await act(async () => {
-        fireEvent.click(warehousesTab);
-      });
+      // 2. Switch to Leaderboard -> Lead Warehouses
+      await navigateToLeadWarehouses();
 
       const whCard = screen.getByTestId('warehouse-card-warehouse-1');
       expect(whCard).toBeInTheDocument();
@@ -475,14 +481,11 @@ describe('Issue 05: Sales & Clearing End-to-End Filter Synchronization, Zero-Sta
       expect(document.getElementById('sales-filter-bar')).toBeInTheDocument();
       expect(document.getElementById('sales-sub-nav-strip')).toBeInTheDocument();
 
-      // Navigate to Top Buyers subtab inside InventoryListView
-      const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
-      await act(async () => {
-        fireEvent.click(buyersTab);
-      });
+      // Navigate to Leaderboard -> Lead Buyers subtab inside InventoryListView
+      await navigateToLeadBuyers();
 
       const buyersSubView = screen.getByTestId('sales-subview-buyers');
-      expect(buyersSubView).not.toHaveClass('hidden');
+      expect(buyersSubView).toBeInTheDocument();
 
       // Expand buyer accordion inside full view
       const buyerTrigger = within(buyersSubView).getByRole('button', { name: /bargain hunt liquidation/i });
@@ -492,14 +495,11 @@ describe('Issue 05: Sales & Clearing End-to-End Filter Synchronization, Zero-Sta
 
       expect(within(buyersSubView).getByTestId('buyer-transactions-panel-buyer-1')).toBeInTheDocument();
 
-      // Navigate to Top Warehouses / DCs subtab inside InventoryListView
-      const warehousesTab = screen.getByRole('tab', { name: /top warehouses/i });
-      await act(async () => {
-        fireEvent.click(warehousesTab);
-      });
+      // Navigate to Leaderboard -> Lead Warehouses subtab inside InventoryListView
+      await navigateToLeadWarehouses();
 
       const warehousesSubView = screen.getByTestId('sales-subview-warehouses');
-      expect(warehousesSubView).not.toHaveClass('hidden');
+      expect(warehousesSubView).toBeInTheDocument();
 
       // Expand warehouse accordion inside full view
       const whTrigger = within(warehousesSubView).getByRole('button', { name: /Midwest DC \(Chicago, IL\)/i });

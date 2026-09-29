@@ -28,13 +28,8 @@ describe('SalesDataView Charts Dashboard', () => {
     expect(screen.getByText('Sales Channel Revenue Share')).toBeInTheDocument();
     expect(screen.getByText('Price Realization vs. Days to Expiry (RSL Decay)')).toBeInTheDocument();
 
-    // Leaderboard
-    expect(screen.getByText('Sales Channel & Fulfillment Leaderboard')).toBeInTheDocument();
-    expect(screen.getByText('Bargain Hunt Liquidation')).toBeInTheDocument();
-
-    // Leaderboard Tab Switch
-    const whTab = screen.getByRole('button', { name: /Top Warehouses \/ DCs/i });
-    fireEvent.click(whTab);
-    expect(screen.getAllByText(/Unilever Midwest DC/i).length).toBeGreaterThanOrEqual(1);
+    // Eliminated static Section 5 dummy leaderboard from Overview
+    expect(screen.queryByText('Sales Channel & Fulfillment Leaderboard')).not.toBeInTheDocument();
+    expect(screen.queryByText('Bargain Hunt Liquidation')).not.toBeInTheDocument();
   });
 });

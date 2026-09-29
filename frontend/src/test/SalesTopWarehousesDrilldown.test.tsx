@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { coreSlice, type SalesWarehouseSummary } from '../store/slices/coreSlice';
@@ -136,6 +136,14 @@ function createMockStore(topWarehouses: SalesWarehouseSummary[] = mockTopWarehou
   });
 }
 
+function navigateToLeadWarehouses() {
+  const leaderboardTab = screen.getByRole('tab', { name: /^leaderboard$/i });
+  fireEvent.click(leaderboardTab);
+  const warehousesTab = screen.getByRole('tab', { name: /lead warehouses/i });
+  fireEvent.click(warehousesTab);
+  return warehousesTab;
+}
+
 describe('Seam: Top Warehouses / DCs Expandable Accordion & Drilldown', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -149,9 +157,8 @@ describe('Seam: Top Warehouses / DCs Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    // Switch to Top Warehouses / DCs subtab
-    const warehousesTab = screen.getByRole('tab', { name: /top warehouses \/ dcs/i });
-    fireEvent.click(warehousesTab);
+    // Switch to Leaderboard -> Lead Warehouses
+    navigateToLeadWarehouses();
 
     // Verify subview container
     const warehousesPanel = screen.getByTestId('sales-subview-warehouses');
@@ -186,8 +193,8 @@ describe('Seam: Top Warehouses / DCs Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const warehousesTab = screen.getByRole('tab', { name: /top warehouses \/ dcs/i });
-    fireEvent.click(warehousesTab);
+    // Switch to Leaderboard -> Lead Warehouses
+    navigateToLeadWarehouses();
 
     expect(screen.getByTestId('top-warehouses-empty-state')).toBeInTheDocument();
     expect(screen.getByText(/no warehouse clearing activity recorded/i)).toBeInTheDocument();
@@ -201,8 +208,8 @@ describe('Seam: Top Warehouses / DCs Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const warehousesTab = screen.getByRole('tab', { name: /top warehouses \/ dcs/i });
-    fireEvent.click(warehousesTab);
+    // Switch to Leaderboard -> Lead Warehouses
+    navigateToLeadWarehouses();
 
     // Initially, transaction ledgers should not be visible
     expect(screen.queryByTestId('warehouse-transactions-panel-warehouse-1')).not.toBeInTheDocument();
@@ -240,8 +247,8 @@ describe('Seam: Top Warehouses / DCs Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const warehousesTab = screen.getByRole('tab', { name: /top warehouses \/ dcs/i });
-    fireEvent.click(warehousesTab);
+    // Switch to Leaderboard -> Lead Warehouses
+    navigateToLeadWarehouses();
 
     const wh1Trigger = screen.getByRole('button', { name: /unilever midwest dc/i });
     fireEvent.click(wh1Trigger);
@@ -299,8 +306,8 @@ describe('Seam: Top Warehouses / DCs Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const warehousesTab = screen.getByRole('tab', { name: /top warehouses \/ dcs/i });
-    fireEvent.click(warehousesTab);
+    // Switch to Leaderboard -> Lead Warehouses
+    navigateToLeadWarehouses();
 
     // Expand Warehouse 1
     const wh1Trigger = screen.getByRole('button', { name: /unilever midwest dc/i });
@@ -355,8 +362,8 @@ describe('Seam: Top Warehouses / DCs Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const warehousesTab = screen.getByRole('tab', { name: /top warehouses \/ dcs/i });
-    fireEvent.click(warehousesTab);
+    // Switch to Leaderboard -> Lead Warehouses
+    navigateToLeadWarehouses();
 
     // Expand Warehouse 1
     const wh1Trigger = screen.getByRole('button', { name: /unilever midwest dc/i });
@@ -389,11 +396,10 @@ describe('Seam: Top Warehouses / DCs Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const warehousesTab = screen.getByRole('tab', { name: /top warehouses \/ dcs/i });
     const overviewTab = screen.getByRole('tab', { name: /overview & analytics/i });
 
-    // 1. Switch to Top Warehouses
-    fireEvent.click(warehousesTab);
+    // 1. Switch to Leaderboard -> Lead Warehouses
+    navigateToLeadWarehouses();
 
     // 2. Expand Warehouse 1
     const wh1Trigger = screen.getByRole('button', { name: /unilever midwest dc/i });
@@ -411,8 +417,8 @@ describe('Seam: Top Warehouses / DCs Expandable Accordion & Drilldown', () => {
     // 4. Switch to Overview & Analytics sub-tab
     fireEvent.click(overviewTab);
 
-    // 5. Switch back to Top Warehouses / DCs sub-tab
-    fireEvent.click(warehousesTab);
+    // 5. Switch back to Leaderboard -> Lead Warehouses
+    navigateToLeadWarehouses();
 
     // 6. Assert Warehouse 1 is still expanded and search query is still intact
     const restoredPanel = screen.getByTestId('warehouse-transactions-panel-warehouse-1');

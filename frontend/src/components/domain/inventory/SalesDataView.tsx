@@ -30,12 +30,17 @@ import {
 import { TopBuyersDrilldown } from '../insights/TopBuyersDrilldown';
 import { TopWarehousesDrilldown } from '../insights/TopWarehousesDrilldown';
 
-export type SalesSubTab = 'overview' | 'buyers' | 'warehouses';
+export type SalesSubTab = 'overview' | 'leaderboard';
+export type LeaderboardSubTab = 'buyers' | 'warehouses';
 
 const SALES_SUB_TABS = [
   { id: 'overview' as const, label: 'Overview & Analytics', icon: BarChart3 },
-  { id: 'buyers' as const, label: 'Top Buyers', icon: Users },
-  { id: 'warehouses' as const, label: 'Top Warehouses / DCs', icon: Building2 },
+  { id: 'leaderboard' as const, label: 'Leaderboard', icon: Award },
+] as const;
+
+const LEADERBOARD_SUB_TABS = [
+  { id: 'buyers' as const, label: 'Lead Buyers', icon: Users },
+  { id: 'warehouses' as const, label: 'Lead Warehouses', icon: Building2 },
 ] as const;
 
 export interface SalesDataViewProps {
@@ -52,12 +57,55 @@ export const SalesDataView: React.FC<SalesDataViewProps> = ({ onOpenLotHub }) =>
   const [timeframe, setTimeframe] = useState<'7d' | '30d' | '90d' | 'ytd'>('30d');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [dcFilter, setDcFilter] = useState<string>('all');
-  const [activeLeaderboardTab, setActiveLeaderboardTab] = useState<'buyers' | 'dcs'>('buyers');
   const [activeScatterPoint, setActiveScatterPoint] = useState<any | null>(null);
 
   // Sub-Navigation State & Keyboard ARIA Tab Handling
   const [salesSubTab, setSalesSubTab] = useState<SalesSubTab>('overview');
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // Persistent drilldown state across sub-tab / primary tab navigation
+  const [expandedBuyerIds, setExpandedBuyerIds] = useState<Set<string>>(new Set());
+  const [buyerSearchQueries, setBuyerSearchQueries] = useState<Record<string, string>>({});
+  const [expandedWarehouseIds, setExpandedWarehouseIds] = useState<Set<string>>(new Set());
+  const [warehouseSearchQueries, setWarehouseSearchQueries] = useState<Record<string, string>>({});
+
+  const handleToggleBuyerExpand = (buyerKey: string) => {
+    setExpandedBuyerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(buyerKey)) {
+        next.delete(buyerKey);
+      } else {
+        next.add(buyerKey);
+      }
+      return next;
+    });
+  };
+
+  const handleBuyerSearchChange = (buyerKey: string, query: string) => {
+    setBuyerSearchQueries((prev) => ({
+      ...prev,
+      [buyerKey]: query,
+    }));
+  };
+
+  const handleToggleWarehouseExpand = (warehouseKey: string) => {
+    setExpandedWarehouseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(warehouseKey)) {
+        next.delete(warehouseKey);
+      } else {
+        next.add(warehouseKey);
+      }
+      return next;
+    });
+  };
+
+  const handleWarehouseSearchChange = (warehouseKey: string, query: string) => {
+    setWarehouseSearchQueries((prev) => ({
+      ...prev,
+      [warehouseKey]: query,
+    }));
+  };
 
   const handleTabKeyDown = (e: React.KeyboardEvent, index: number) => {
     let nextIndex = index;
@@ -79,6 +127,32 @@ export const SalesDataView: React.FC<SalesDataViewProps> = ({ onOpenLotHub }) =>
     const nextTab = SALES_SUB_TABS[nextIndex];
     setSalesSubTab(nextTab.id);
     tabRefs.current[nextIndex]?.focus();
+  };
+
+  // Leaderboard Secondary Sub-Navigation State & Keyboard ARIA Tab Handling
+  const [leaderboardSubTab, setLeaderboardSubTab] = useState<LeaderboardSubTab>('buyers');
+  const leaderboardTabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const handleLeaderboardTabKeyDown = (e: React.KeyboardEvent, index: number) => {
+    let nextIndex = index;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIndex = (index + 1) % LEADERBOARD_SUB_TABS.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextIndex = (index - 1 + LEADERBOARD_SUB_TABS.length) % LEADERBOARD_SUB_TABS.length;
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      nextIndex = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      nextIndex = LEADERBOARD_SUB_TABS.length - 1;
+    } else {
+      return;
+    }
+    const nextTab = LEADERBOARD_SUB_TABS[nextIndex];
+    setLeaderboardSubTab(nextTab.id);
+    leaderboardTabRefs.current[nextIndex]?.focus();
   };
 
   useEffect(() => {
@@ -350,22 +424,6 @@ export const SalesDataView: React.FC<SalesDataViewProps> = ({ onOpenLotHub }) =>
     };
   }, [closeoutPoints]);
 
-  // Leaderboard Data
-  const topBuyers = [
-    { name: 'Bargain Hunt Liquidation', totalSpent: 112400, casesPurchased: 3820, sharePct: 25.5 },
-    { name: 'Grocery Outlet Bargain Market', totalSpent: 98500, casesPurchased: 3150, sharePct: 22.4 },
-    { name: "Ollie's Bargain Outlet", totalSpent: 84200, casesPurchased: 2900, sharePct: 19.1 },
-    { name: 'Misfits Market / Imperfect Foods', totalSpent: 67100, casesPurchased: 2400, sharePct: 15.3 },
-    { name: 'Second Harvest Food Rescue', totalSpent: 41800, casesPurchased: 1800, sharePct: 9.5 },
-  ];
-
-  const topWarehouses = [
-    { name: 'Unilever Midwest DC (Chicago, IL)', clearedRevenue: 154200, casesCleared: 5200, recoveryPct: 76.5 },
-    { name: 'Kraft Heinz DC (Dallas, TX)', clearedRevenue: 118400, casesCleared: 4100, recoveryPct: 72.8 },
-    { name: 'Mondelez Midwest DC (Atlanta, GA)', clearedRevenue: 89600, casesCleared: 3050, recoveryPct: 69.4 },
-    { name: 'Danone Midwest DC (Columbus, OH)', clearedRevenue: 51250, casesCleared: 1700, recoveryPct: 71.0 },
-  ];
-
   return (
     <div className="flex flex-col gap-5" id="insight-sales-panel">
       {/* 1. Feature Summary Banner (Matching IngestionHubConnectors Style) */}
@@ -584,7 +642,7 @@ export const SalesDataView: React.FC<SalesDataViewProps> = ({ onOpenLotHub }) =>
                 onKeyDown={(e) => handleTabKeyDown(e, index)}
                 className={`px-4 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#0f4cc9] text-white shadow-xs'
+                    ? 'bg-[#0f4cc9] text-white shadow-xs shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]'
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 border border-transparent'
                 }`}
               >
@@ -951,176 +1009,117 @@ export const SalesDataView: React.FC<SalesDataViewProps> = ({ onOpenLotHub }) =>
           )}
         </div>
       </div>
+    </div>
+)}
 
-      {/* 5. Leaderboards Section: Top Buyers & Warehouses (Matching Ingestion Table Card) */}
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200/80 dark:border-slate-800 overflow-hidden mb-6">
-        <div className="p-4 bg-slate-50/70 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0 flex items-center gap-2">
-              <Award className="w-4 h-4 text-amber-500" /> Sales Channel &amp; Fulfillment Leaderboard
-            </h4>
-            <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5 m-0">
-              Top closeout buying partners and top performing distribution fulfillment nodes
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
-            <button
-              type="button"
-              onClick={() => setActiveLeaderboardTab('buyers')}
-              className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeLeaderboardTab === 'buyers'
-                  ? 'bg-blue-600 text-white shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" />
-              <span>Top Buyers</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveLeaderboardTab('dcs')}
-              className={`px-3 py-1 text-[11px] font-semibold rounded-md transition-all cursor-pointer flex items-center gap-1.5 ${
-                activeLeaderboardTab === 'dcs'
-                  ? 'bg-blue-600 text-white shadow-2xs'
-                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              <span>Top Warehouses / DCs</span>
-            </button>
-          </div>
-        </div>
-
-        {activeLeaderboardTab === 'buyers' ? (
-          <div className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
-            {topBuyers.map((b, idx) => (
-              <div
-                key={idx}
-                className="px-4 py-3 flex items-center justify-between hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors flex-wrap gap-2"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono font-bold text-xs flex items-center justify-center">
-                    #{idx + 1}
-                  </span>
-                  <div>
-                    <div className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {b.name}
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                      {b.casesPurchased.toLocaleString()} cases purchased
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="font-mono font-bold text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">
-                    ${b.totalSpent.toLocaleString()}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono bg-blue-50 text-blue-700 border border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60">
-                    {b.sharePct}% Share
-                  </span>
-                </div>
+      {/* Tab Panel: Leaderboard */}
+      {salesSubTab === 'leaderboard' && (
+        <div
+          role="tabpanel"
+          id="sales-tabpanel-leaderboard"
+          aria-labelledby="sales-tab-leaderboard"
+          data-testid="sales-subview-leaderboard"
+          className="flex flex-col gap-5"
+        >
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200/80 dark:border-slate-800 p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
+                <Award className="w-5 h-5" />
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
-            {topWarehouses.map((wh, idx) => (
-              <div
-                key={idx}
-                className="px-4 py-3 flex items-center justify-between hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors flex-wrap gap-2"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono font-bold text-xs flex items-center justify-center">
-                    #{idx + 1}
-                  </span>
-                  <div>
-                    <div className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {wh.name}
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">
-                      {wh.casesCleared.toLocaleString()} cases cleared
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="font-mono font-bold text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">
-                    ${wh.clearedRevenue.toLocaleString()}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono bg-emerald-50 text-emerald-700 border border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60">
-                    {wh.recoveryPct}% Recovery
-                  </span>
-                </div>
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0">
+                  Sales Channel &amp; Fulfillment Leaderboard
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 m-0">
+                  Top closeout buying partners and top performing distribution fulfillment nodes.
+                </p>
               </div>
-            ))}
+            </div>
+
+            {/* Secondary Segmented Pill-Toggle Bar */}
+            <div
+              role="tablist"
+              aria-label="Leaderboard Sub-navigation"
+              className="flex items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-full border border-slate-200/80 dark:border-slate-700/80 w-fit shrink-0"
+              id="leaderboard-sub-nav-strip"
+            >
+              {LEADERBOARD_SUB_TABS.map((tab, index) => {
+                const Icon = tab.icon;
+                const isSelected = leaderboardSubTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    ref={(el) => {
+                      leaderboardTabRefs.current[index] = el;
+                    }}
+                    role="tab"
+                    id={`leaderboard-tab-${tab.id}`}
+                    aria-controls={`leaderboard-subpanel-${tab.id}`}
+                    aria-selected={isSelected}
+                    tabIndex={isSelected ? 0 : -1}
+                    onClick={() => setLeaderboardSubTab(tab.id)}
+                    onKeyDown={(e) => handleLeaderboardTabKeyDown(e, index)}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#0f4cc9] text-white shadow-xs shadow-[inset_0_1px_0_rgba(255,255,255,0.15)]'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 border border-transparent'
+                    }`}
+                  >
+                    <Icon
+                      className={`w-3.5 h-3.5 ${
+                        isSelected
+                          ? 'text-white'
+                          : 'text-slate-400 dark:text-slate-500'
+                      }`}
+                    />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        )}
-      </div>
+
+          {leaderboardSubTab === 'buyers' && (
+            <div
+              role="tabpanel"
+              id="leaderboard-subpanel-buyers"
+              aria-labelledby="leaderboard-tab-buyers"
+              data-testid="sales-subview-buyers"
+              className="flex flex-col gap-5"
+            >
+              <TopBuyersDrilldown
+                topBuyers={salesAnalytics?.topBuyers}
+                onOpenLotHub={onOpenLotHub}
+                expandedBuyerIds={expandedBuyerIds}
+                onToggleExpand={handleToggleBuyerExpand}
+                searchQueries={buyerSearchQueries}
+                onSearchChange={handleBuyerSearchChange}
+              />
+            </div>
+          )}
+
+          {leaderboardSubTab === 'warehouses' && (
+            <div
+              role="tabpanel"
+              id="leaderboard-subpanel-warehouses"
+              aria-labelledby="leaderboard-tab-warehouses"
+              data-testid="sales-subview-warehouses"
+              className="flex flex-col gap-5"
+            >
+              <TopWarehousesDrilldown
+                topWarehouses={salesAnalytics?.topWarehouses}
+                onOpenLotHub={onOpenLotHub}
+                expandedWarehouseIds={expandedWarehouseIds}
+                onToggleExpand={handleToggleWarehouseExpand}
+                searchQueries={warehouseSearchQueries}
+                onSearchChange={handleWarehouseSearchChange}
+              />
+            </div>
+          )}
         </div>
       )}
-
-      {/* Tab Panel: Top Buyers */}
-      <div
-        role="tabpanel"
-        id="sales-tabpanel-buyers"
-        aria-labelledby="sales-tab-buyers"
-        data-testid="sales-subview-buyers"
-        className={`flex flex-col gap-5 ${salesSubTab === 'buyers' ? '' : 'hidden'}`}
-      >
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200/80 dark:border-slate-800 p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
-              <Users className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0">
-                Top Buyers Performance &amp; Transaction Drilldown
-              </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 m-0">
-                Detailed closeout ledger and purchasing volume breakdown across buyer partners.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <TopBuyersDrilldown
-          topBuyers={salesAnalytics?.topBuyers}
-          onOpenLotHub={onOpenLotHub}
-        />
-      </div>
-
-      {/* Tab Panel: Top Warehouses / DCs */}
-      <div
-        role="tabpanel"
-        id="sales-tabpanel-warehouses"
-        aria-labelledby="sales-tab-warehouses"
-        data-testid="sales-subview-warehouses"
-        className={`flex flex-col gap-5 ${salesSubTab === 'warehouses' ? '' : 'hidden'}`}
-      >
-        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200/80 dark:border-slate-800 p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0">
-                Top Warehouses / DCs Clearing Performance
-              </h4>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 m-0">
-                Fulfillment clearing throughput, case recovery percentages, and facility ledgers.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <TopWarehousesDrilldown
-          topWarehouses={salesAnalytics?.topWarehouses}
-          onOpenLotHub={onOpenLotHub}
-        />
-      </div>
     </div>
   );
 };
-
 
 export default SalesDataView;

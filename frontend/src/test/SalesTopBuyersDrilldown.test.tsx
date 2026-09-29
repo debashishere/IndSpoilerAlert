@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { coreSlice, type SalesBuyerSummary } from '../store/slices/coreSlice';
@@ -137,6 +137,14 @@ function createMockStore(topBuyers: SalesBuyerSummary[] = mockTopBuyers) {
   });
 }
 
+function navigateToLeadBuyers() {
+  const leaderboardTab = screen.getByRole('tab', { name: /^leaderboard$/i });
+  fireEvent.click(leaderboardTab);
+  const buyersTab = screen.getByRole('tab', { name: /lead buyers/i });
+  fireEvent.click(buyersTab);
+  return buyersTab;
+}
+
 describe('Seam: Top Buyers Expandable Accordion & Drilldown', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -150,9 +158,8 @@ describe('Seam: Top Buyers Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    // Switch to Top Buyers subtab
-    const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
-    fireEvent.click(buyersTab);
+    // Switch to Leaderboard -> Lead Buyers
+    navigateToLeadBuyers();
 
     // Should find the ranked cards container
     const buyersPanel = screen.getByTestId('sales-subview-buyers');
@@ -189,8 +196,8 @@ describe('Seam: Top Buyers Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
-    fireEvent.click(buyersTab);
+    // Switch to Leaderboard -> Lead Buyers
+    navigateToLeadBuyers();
 
     expect(screen.getByTestId('top-buyers-empty-state')).toBeInTheDocument();
     expect(screen.getByText(/no buyer closeout sales recorded/i)).toBeInTheDocument();
@@ -204,8 +211,8 @@ describe('Seam: Top Buyers Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
-    fireEvent.click(buyersTab);
+    // Switch to Leaderboard -> Lead Buyers
+    navigateToLeadBuyers();
 
     // Initially, transaction ledgers should not be visible
     expect(screen.queryByTestId('buyer-transactions-panel-buyer-1')).not.toBeInTheDocument();
@@ -243,11 +250,13 @@ describe('Seam: Top Buyers Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
-    fireEvent.click(buyersTab);
+    // Switch to Leaderboard -> Lead Buyers
+    navigateToLeadBuyers();
 
     const buyer1Trigger = screen.getByRole('button', { name: /bargain hunt liquidation/i });
-    fireEvent.click(buyer1Trigger);
+    act(() => {
+      fireEvent.click(buyer1Trigger);
+    });
 
     const panel = screen.getByTestId('buyer-transactions-panel-buyer-1');
     expect(panel).toBeInTheDocument();
@@ -299,8 +308,8 @@ describe('Seam: Top Buyers Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
-    fireEvent.click(buyersTab);
+    // Switch to Leaderboard -> Lead Buyers
+    navigateToLeadBuyers();
 
     // Expand Buyer 1
     const buyer1Trigger = screen.getByRole('button', { name: /bargain hunt liquidation/i });
@@ -350,8 +359,8 @@ describe('Seam: Top Buyers Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
-    fireEvent.click(buyersTab);
+    // Switch to Leaderboard -> Lead Buyers
+    navigateToLeadBuyers();
 
     // Expand Buyer 1
     const buyer1Trigger = screen.getByRole('button', { name: /bargain hunt liquidation/i });
@@ -384,11 +393,10 @@ describe('Seam: Top Buyers Expandable Accordion & Drilldown', () => {
       </Provider>
     );
 
-    const buyersTab = screen.getByRole('tab', { name: /top buyers/i });
     const overviewTab = screen.getByRole('tab', { name: /overview & analytics/i });
 
-    // 1. Switch to Top Buyers
-    fireEvent.click(buyersTab);
+    // 1. Switch to Leaderboard -> Lead Buyers
+    navigateToLeadBuyers();
 
     // 2. Expand Buyer 1
     const buyer1Trigger = screen.getByRole('button', { name: /bargain hunt liquidation/i });
@@ -406,8 +414,8 @@ describe('Seam: Top Buyers Expandable Accordion & Drilldown', () => {
     // 4. Switch to Overview & Analytics sub-tab
     fireEvent.click(overviewTab);
 
-    // 5. Switch back to Top Buyers sub-tab
-    fireEvent.click(buyersTab);
+    // 5. Switch back to Leaderboard -> Lead Buyers
+    navigateToLeadBuyers();
 
     // 6. Assert Buyer 1 is still expanded and search query is still intact
     const restoredPanel = screen.getByTestId('buyer-transactions-panel-buyer-1');

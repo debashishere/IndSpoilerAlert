@@ -18,18 +18,30 @@ export interface TopBuyersDrilldownProps {
   topBuyers?: SalesBuyerSummary[];
   onOpenLotHub?: (lot: any) => void;
   onNavigateToIngestion?: () => void;
+  expandedBuyerIds?: Set<string>;
+  onToggleExpand?: (buyerKey: string) => void;
+  searchQueries?: Record<string, string>;
+  onSearchChange?: (buyerKey: string, query: string) => void;
 }
 
 export const TopBuyersDrilldown: React.FC<TopBuyersDrilldownProps> = ({
   topBuyers = [],
   onOpenLotHub,
   onNavigateToIngestion,
+  expandedBuyerIds: controlledExpandedBuyerIds,
+  onToggleExpand: controlledToggleExpand,
+  searchQueries: controlledSearchQueries,
+  onSearchChange: controlledSearchChange,
 }) => {
   const dispatch = useDispatch();
-  // Set of expanded buyer IDs
-  const [expandedBuyerIds, setExpandedBuyerIds] = useState<Set<string>>(new Set());
-  // Search queries per buyer ID
-  const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
+  // Internal fallback state if uncontrolled
+  const [internalExpandedBuyerIds, setInternalExpandedBuyerIds] = useState<Set<string>>(new Set());
+  const [internalSearchQueries, setInternalSearchQueries] = useState<Record<string, string>>({});
+
+  const expandedBuyerIds =
+    controlledExpandedBuyerIds !== undefined ? controlledExpandedBuyerIds : internalExpandedBuyerIds;
+  const searchQueries =
+    controlledSearchQueries !== undefined ? controlledSearchQueries : internalSearchQueries;
 
   const handleIngestClick = () => {
     if (onNavigateToIngestion) {
@@ -40,22 +52,30 @@ export const TopBuyersDrilldown: React.FC<TopBuyersDrilldownProps> = ({
   };
 
   const toggleExpand = (buyerKey: string) => {
-    setExpandedBuyerIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(buyerKey)) {
-        next.delete(buyerKey);
-      } else {
-        next.add(buyerKey);
-      }
-      return next;
-    });
+    if (controlledToggleExpand) {
+      controlledToggleExpand(buyerKey);
+    } else {
+      setInternalExpandedBuyerIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(buyerKey)) {
+          next.delete(buyerKey);
+        } else {
+          next.add(buyerKey);
+        }
+        return next;
+      });
+    }
   };
 
   const handleSearchChange = (buyerKey: string, query: string) => {
-    setSearchQueries((prev) => ({
-      ...prev,
-      [buyerKey]: query,
-    }));
+    if (controlledSearchChange) {
+      controlledSearchChange(buyerKey, query);
+    } else {
+      setInternalSearchQueries((prev) => ({
+        ...prev,
+        [buyerKey]: query,
+      }));
+    }
   };
 
   if (!topBuyers || topBuyers.length === 0) {

@@ -19,18 +19,34 @@ export interface TopWarehousesDrilldownProps {
   topWarehouses?: SalesWarehouseSummary[];
   onOpenLotHub?: (lot: any) => void;
   onNavigateToIngestion?: () => void;
+  expandedWarehouseIds?: Set<string>;
+  onToggleExpand?: (warehouseKey: string) => void;
+  searchQueries?: Record<string, string>;
+  onSearchChange?: (warehouseKey: string, query: string) => void;
 }
 
 export const TopWarehousesDrilldown: React.FC<TopWarehousesDrilldownProps> = ({
   topWarehouses = [],
   onOpenLotHub,
   onNavigateToIngestion,
+  expandedWarehouseIds: controlledExpandedWarehouseIds,
+  onToggleExpand: controlledToggleExpand,
+  searchQueries: controlledSearchQueries,
+  onSearchChange: controlledSearchChange,
 }) => {
   const dispatch = useDispatch();
-  // Set of expanded warehouse IDs
-  const [expandedWarehouseIds, setExpandedWarehouseIds] = useState<Set<string>>(new Set());
-  // Search queries per warehouse ID
-  const [searchQueries, setSearchQueries] = useState<Record<string, string>>({});
+  // Internal fallback state if uncontrolled
+  const [internalExpandedWarehouseIds, setInternalExpandedWarehouseIds] = useState<Set<string>>(
+    new Set()
+  );
+  const [internalSearchQueries, setInternalSearchQueries] = useState<Record<string, string>>({});
+
+  const expandedWarehouseIds =
+    controlledExpandedWarehouseIds !== undefined
+      ? controlledExpandedWarehouseIds
+      : internalExpandedWarehouseIds;
+  const searchQueries =
+    controlledSearchQueries !== undefined ? controlledSearchQueries : internalSearchQueries;
 
   const handleIngestClick = () => {
     if (onNavigateToIngestion) {
@@ -41,22 +57,30 @@ export const TopWarehousesDrilldown: React.FC<TopWarehousesDrilldownProps> = ({
   };
 
   const toggleExpand = (warehouseKey: string) => {
-    setExpandedWarehouseIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(warehouseKey)) {
-        next.delete(warehouseKey);
-      } else {
-        next.add(warehouseKey);
-      }
-      return next;
-    });
+    if (controlledToggleExpand) {
+      controlledToggleExpand(warehouseKey);
+    } else {
+      setInternalExpandedWarehouseIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(warehouseKey)) {
+          next.delete(warehouseKey);
+        } else {
+          next.add(warehouseKey);
+        }
+        return next;
+      });
+    }
   };
 
   const handleSearchChange = (warehouseKey: string, query: string) => {
-    setSearchQueries((prev) => ({
-      ...prev,
-      [warehouseKey]: query,
-    }));
+    if (controlledSearchChange) {
+      controlledSearchChange(warehouseKey, query);
+    } else {
+      setInternalSearchQueries((prev) => ({
+        ...prev,
+        [warehouseKey]: query,
+      }));
+    }
   };
 
   if (!topWarehouses || topWarehouses.length === 0) {
