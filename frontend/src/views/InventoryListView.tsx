@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { DollarSign, Award, Leaf, ShieldAlert, Tag, TrendingUp, Recycle, Activity } from 'lucide-react';
+import { Tag, TrendingUp, Recycle, Activity } from 'lucide-react';
 import type { RootState } from '../store';
-import { fetchAnalyticsSummaryThunk, selectAnalyticsSummary, selectAnalyticsLoading } from '../store/slices/coreSlice';
+import {
+  fetchAnalyticsSummaryThunk,
+  selectAnalyticsSummary,
+  selectAnalyticsLoading,
+  selectSalesAnalytics,
+} from '../store/slices/coreSlice';
 import { RiskAssessmentModal } from '../components/domain/inventory/RiskAssessmentModal';
 import { ComplianceModal } from '../components/domain/inventory/ComplianceModal';
 import { SalesDataView } from '../components/domain/inventory/SalesDataView';
@@ -12,13 +17,13 @@ import COGSRecoveryDashboard from '../components/analytics/COGSRecoveryDashboard
 import RSLDistributionChart from '../components/analytics/RSLDistributionChart';
 import { InsightCard } from '../components/InsightCard';
 import { useIngestionTelemetry } from '../components/domain/ingestion/hooks/useIngestionTelemetry';
-import { Wallet } from 'lucide-react';
 import { CrossPlatformOperationsPanel } from '../components/domain/insights/CrossPlatformOperationsPanel';
 
 export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> = ({ onOpenLotHub }) => {
   const dispatch = useDispatch();
   const { inventoryList, analyticsData, allBids } = useSelector((state: RootState) => state.inventory);
   const salesRecords = useSelector((state: RootState) => state.ingestion?.salesRecords || []);
+  const salesAnalytics = useSelector(selectSalesAnalytics);
   const analyticsSummary = useSelector(selectAnalyticsSummary);
   const analyticsLoading = useSelector(selectAnalyticsLoading);
   const { metrics } = useIngestionTelemetry();
@@ -56,7 +61,10 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
       : 0;
 
   const bidsCount = (allBids || []).length;
-  const salesCount = (salesRecords || []).length || 48;
+  const salesCount = Math.max(
+    salesAnalytics?.totalCount ?? 0,
+    (salesRecords || []).length
+  );
 
   return (
     <div
@@ -225,6 +233,7 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
               <TrendingUp className="w-4 h-4 hidden" aria-hidden="true" />
               <span>Sales &amp; Clearing</span>
               <span
+                data-testid="sales-clearing-tab-count"
                 className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold transition-colors ${
                   inventorySubTab === 'sales'
                     ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'

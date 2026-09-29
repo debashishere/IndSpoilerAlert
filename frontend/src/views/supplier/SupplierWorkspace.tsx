@@ -35,7 +35,7 @@ import { setActiveTab as setActiveTabRedux, setReturnTab as setReturnTabRedux, f
 import { clearWorkflowState } from '../../store/slices/workflowSlice';
 import { clearInventoryState } from '../../store/slices/inventorySlice';
 import { setBuyerAuth } from '../../store/slices/authSlice';
-import { setSelectedSupplier as setSelectedSupplierIngestion } from '../../store/slices/ingestionSlice';
+import { setSelectedSupplier as setSelectedSupplierIngestion, setSalesRecords as setReduxSalesRecords } from '../../store/slices/ingestionSlice';
 import { fetchShipmentsThunk } from '../../store/slices/logisticsSlice';
 import { fetchInventoryLotsThunk } from '../../services/inventoryService';
 const AnalyticsView = React.lazy(() => import('../AnalyticsView').then(m => ({ default: m.AnalyticsView || m.default })));
@@ -491,6 +491,7 @@ export function SupplierWorkspace() {
       setLiquidationCycles([]);
       setAutomationList([]);
       setSalesRecords([]);
+      dispatch(setReduxSalesRecords([]));
       setBids([]);
       setAllBids([]);
       setBuyers([]);
@@ -523,6 +524,7 @@ export function SupplierWorkspace() {
       if (res.ok) {
         const data = await res.json();
         setSalesRecords(data);
+        dispatch(setReduxSalesRecords(data));
       }
     } catch (err) {
       console.error('Error fetching sales:', err);
@@ -1529,6 +1531,7 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
     setLiquidationCycles([]);
     setAutomationList([]);
     setSalesRecords([]);
+    dispatch(setReduxSalesRecords([]));
     setBids([]);
     setAllBids([]);
     setSelectedCycleId('');

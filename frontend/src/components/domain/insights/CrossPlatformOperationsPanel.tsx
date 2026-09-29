@@ -9,6 +9,7 @@ import {
   selectOperationsAnalyticsLoading,
   type OperationsAnalyticsData,
 } from '../../../store/slices/coreSlice';
+import { selectColdChainMetrics } from '../../../store/slices/logisticsSlice';
 import { CrossServicePipelineVelocityChart } from './CrossServicePipelineVelocityChart';
 import { PlatformSlaYieldDistributionChart } from './PlatformSlaYieldDistributionChart';
 
@@ -71,6 +72,7 @@ export const CrossPlatformOperationsPanel: React.FC = () => {
   const [timeframe, setTimeframe] = useState<'7d' | '30d' | '90d' | 'ytd'>('30d');
 
   const opsAnalytics = useSelector(selectOperationsAnalytics);
+  const coldChainMetrics = useSelector(selectColdChainMetrics);
   const loading = useSelector(selectOperationsAnalyticsLoading);
   const selectedSupplier = useSelector((state: RootState) => state.ingestion?.selectedSupplier);
 
@@ -93,10 +95,10 @@ export const CrossPlatformOperationsPanel: React.FC = () => {
       ...(opsAnalytics?.workflowCampaigns || {}),
     },
     coldChain: {
-      tempComplianceSla: opsAnalytics?.coldChain?.tempComplianceSla ?? defaultOperationsAnalytics.coldChain.tempComplianceSla,
-      fsma204Status: opsAnalytics?.coldChain?.fsma204Status ?? defaultOperationsAnalytics.coldChain.fsma204Status,
-      dockSla: opsAnalytics?.coldChain?.dockSla ?? defaultOperationsAnalytics.coldChain.dockSla,
-      logisticsLinkStatus: opsAnalytics?.coldChain?.logisticsLinkStatus ?? defaultOperationsAnalytics.coldChain.logisticsLinkStatus,
+      tempComplianceSla: opsAnalytics?.coldChain?.tempComplianceSla ?? coldChainMetrics?.tempComplianceSla ?? defaultOperationsAnalytics.coldChain.tempComplianceSla,
+      fsma204Status: opsAnalytics?.coldChain?.fsma204Status ?? coldChainMetrics?.status ?? defaultOperationsAnalytics.coldChain.fsma204Status,
+      dockSla: opsAnalytics?.coldChain?.dockSla ?? coldChainMetrics?.dockSla ?? defaultOperationsAnalytics.coldChain.dockSla,
+      logisticsLinkStatus: opsAnalytics?.coldChain?.logisticsLinkStatus ?? coldChainMetrics?.logisticsLinkStatus ?? defaultOperationsAnalytics.coldChain.logisticsLinkStatus,
     },
     velocityTrendline: opsAnalytics?.velocityTrendline || defaultOperationsAnalytics.velocityTrendline || [],
     distribution: opsAnalytics?.distribution || defaultOperationsAnalytics.distribution,

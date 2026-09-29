@@ -138,4 +138,36 @@ describe('Centralized Insight Hub — Recovery & Sustainability Panel', () => {
     );
     expect(analyticsFetch).toBeDefined();
   });
+
+  it('should display 0 (not 48 fallback) in Sales & Clearing tab badge when no sales data exists', () => {
+    store = createTestStore();
+
+    render(
+      <Provider store={store}>
+        <InventoryListView />
+      </Provider>
+    );
+
+    const badge = screen.getByTestId('sales-clearing-tab-count');
+    expect(badge).toHaveTextContent('0');
+    expect(badge).not.toHaveTextContent('48');
+  });
+
+  it('should display live sales count in Sales & Clearing tab badge when sales records exist', () => {
+    store = createTestStore();
+    store.dispatch({
+      type: 'ingestion/setSalesRecords',
+      payload: [{ id: 's1' }, { id: 's2' }, { id: 's3' }],
+    });
+
+    render(
+      <Provider store={store}>
+        <InventoryListView />
+      </Provider>
+    );
+
+    const badge = screen.getByTestId('sales-clearing-tab-count');
+    expect(badge).toHaveTextContent('3');
+  });
 });
+
