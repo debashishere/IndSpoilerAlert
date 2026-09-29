@@ -12,16 +12,39 @@ import {
   RefreshCw, 
   FileText, 
   Upload,
-  LayoutGrid
+  LayoutGrid,
+  Settings
 } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
+import { syncGoogleSheetsNowThunk } from '../../../../store/slices/ingestionSlice';
 import { INGESTION_CONSTANTS } from '../constants/ingestionConstants';
 import type { IngestionHubConnectorsProps } from '../types/ingestion.types';
+
+function formatRelativeTime(dateStr?: string | null): string {
+  if (!dateStr) return 'just now';
+  const diffMs = Math.max(0, Date.now() - new Date(dateStr).getTime());
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
 
 export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
   className = '',
   onOpenUploadModal,
+  onOpenGoogleSheetsDrawer,
   defaultCollapsed = false,
 }) => {
+  const dispatch = useAppDispatch();
+  const googleSheetsSync = useAppSelector((state) => state.ingestion.googleSheetsSync);
+  const selectedSupplier = useAppSelector((state) => state.ingestion.selectedSupplier);
+  const suppliers = useAppSelector((state) => state.core?.suppliers || []);
+
+  const isConnected = googleSheetsSync?.connectionStatus === 'connected';
+  const isSyncing = Boolean(googleSheetsSync?.isSyncing);
+
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -29,6 +52,19 @@ export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
     setNotification(message);
     setTimeout(() => setNotification(null), 3000);
   };
+
+  const handleSyncNow = async () => {
+    const currentSupplier = suppliers.find((s) => s._id === selectedSupplier) || suppliers[0];
+    const targetSupplierId = selectedSupplier || currentSupplier?._id || '';
+    handleActionClick('Google Sheets sync pass triggered. Fetching latest inventory...');
+    try {
+      const res = await dispatch(syncGoogleSheetsNowThunk({ supplierId: targetSupplierId })).unwrap();
+      handleActionClick(`Google Sheets synchronization pass completed. ${res.syncedLotCount ?? 0} active lots synchronized.`);
+    } catch (err: any) {
+      handleActionClick(`Google Sheets sync failed: ${err}`);
+    }
+  };
+
 
   return (
     <div
@@ -131,39 +167,86 @@ export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
               </div>
             </div>
 
-            {/* Card 2: Google Sheets Sync */}
-            <div className="p-3.5 rounded-xl bg-slate-50/50 hover:bg-slate-50 border border-slate-200 flex flex-col justify-between transition-colors shadow-2xs group">
+            {/* Card 2: Google Sheets Sync (Dual-State) */}
+            <div className="p-3.5 rounded-xl bg-slate-50/50 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col justify-between transition-colors shadow-2xs group">
               <div className="space-y-1 mb-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                     <span className="material-symbols-outlined text-[18px]">table_chart</span>
                     <Table className="w-4 h-4 hidden" aria-hidden="true" />
                   </div>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                    Two-way Sync
-                  </span>
+                  {isConnected ? (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Active Trigger • Auto-Sync
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60">
+                      Two-way Sync
+                    </span>
+                  )}
                 </div>
-                <h3 className="text-[13px] font-bold text-slate-900 mt-1">Google Sheets Sync</h3>
-                <p className="text-[11px] text-slate-500 leading-snug">
-                  Real-time spreadsheet link for batch manifest sync and live status updates.
+                <h3 className="text-[13px] font-bold text-slate-900 dark:text-slate-100 mt-1">Google Sheets Sync</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                  {isConnected
+                    ? 'Live spreadsheet connection active with automatic ingress trigger and on-demand refresh.'
+                    : 'Real-time spreadsheet link for batch manifest sync and live status updates.'}
                 </p>
               </div>
               <div className="space-y-1.5">
-                <button
-                  type="button"
-                  onClick={() => handleActionClick(INGESTION_CONSTANTS.CONNECTORS.SHEETS_FEEDBACK)}
-                  className="w-full py-1.5 px-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer border border-slate-200/70"
-                >
-                  <span className="material-symbols-outlined text-[14px]">sync</span>
-                  <RefreshCw className="w-3.5 h-3.5 hidden" aria-hidden="true" />
-                  <span>Connect Sheets</span>
-                </button>
-                <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
-                  <span>Status</span>
-                  <span className="text-emerald-700 font-semibold">Sync on Edit</span>
-                </div>
+                {isConnected ? (
+                  <>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={isSyncing}
+                        onClick={handleSyncNow}
+                        className="flex-1 py-1.5 px-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed shadow-2xs"
+                      >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                        <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Google Sheets Settings"
+                        onClick={() => onOpenGoogleSheetsDrawer?.()}
+                        className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 transition-colors cursor-pointer border border-slate-200/70 dark:border-slate-700"
+                        title="Configure Sheets"
+                      >
+                        <Settings className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                      <span>Last synced: {formatRelativeTime(googleSheetsSync?.lastSyncedAt)}</span>
+                      <span className="text-emerald-700 dark:text-emerald-400 font-semibold">{googleSheetsSync?.syncedLotCount ?? 0} lots synced</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onOpenGoogleSheetsDrawer) {
+                          onOpenGoogleSheetsDrawer();
+                        } else {
+                          handleActionClick(INGESTION_CONSTANTS.CONNECTORS.SHEETS_FEEDBACK);
+                        }
+                      }}
+                      className="w-full py-1.5 px-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer border border-slate-200/70 dark:border-slate-700"
+                    >
+                      <span className="material-symbols-outlined text-[14px]">sync</span>
+                      <RefreshCw className="w-3.5 h-3.5 hidden" aria-hidden="true" />
+                      <span>Connect Sheets</span>
+                    </button>
+                    <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                      <span>Status</span>
+                      <span className="text-emerald-700 font-semibold">Sync on Edit</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
+
 
             {/* Card 3: Image & Doc Scanner */}
             <div className="p-3.5 rounded-xl bg-slate-50/50 hover:bg-slate-50 border border-slate-200 flex flex-col justify-between transition-colors shadow-2xs group">

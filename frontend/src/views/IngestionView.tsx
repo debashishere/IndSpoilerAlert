@@ -6,8 +6,10 @@ import {
   SalesRegistryPanel,
   InventoryRegistryPanel,
   IngestionHubConnectors,
+  IngestionTelemetryBar,
   PipelineSwitcherBar,
   UnifiedIngestionModal,
+  GoogleSheetsConfigDrawer,
   type IngestionTarget
 } from '../components/domain/ingestion';
 import { INGESTION_CONSTANTS } from '../components/domain/ingestion/constants/ingestionConstants';
@@ -16,9 +18,16 @@ import type { IngestionViewProps } from '../components/domain/ingestion/types/in
 export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) => {
   const dispatch = useAppDispatch();
   const pipelineTab = useAppSelector((state) => state.ingestion.pipelineTab);
+  const selectedSupplier = useAppSelector((state) => state.ingestion.selectedSupplier);
+  const suppliers = useAppSelector((state) => state.core.suppliers);
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isGoogleSheetsDrawerOpen, setIsGoogleSheetsDrawerOpen] = useState(false);
   const [modalTarget, setModalTarget] = useState<IngestionTarget>('inventory');
+
+  const currentSupplier = suppliers.find((s) => s._id === selectedSupplier) || suppliers[0];
+  const supplierId = selectedSupplier || currentSupplier?._id || '';
+  const supplierName = currentSupplier?.name || 'Verified Supplier';
 
   const handleTabChange = useCallback((tab: PipelineTab) => {
     dispatch(setPipelineTab(tab));
@@ -76,7 +85,13 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
       </header>
 
       {/* 2. Collapsible Dedicated Ingestion Hub & Connectors */}
-      <IngestionHubConnectors onOpenUploadModal={() => handleOpenUploadModal(pipelineTab as IngestionTarget)} />
+      <IngestionHubConnectors
+        onOpenUploadModal={() => handleOpenUploadModal(pipelineTab as IngestionTarget)}
+        onOpenGoogleSheetsDrawer={() => setIsGoogleSheetsDrawerOpen(true)}
+      />
+
+      {/* 2.5 Live Ingestion Telemetry Bar */}
+      <IngestionTelemetryBar className="mt-4" />
 
       {/* 3. Master Pipeline Switcher Bar */}
       <PipelineSwitcherBar
@@ -113,6 +128,18 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
         isOpen={isUploadModalOpen}
         initialTarget={modalTarget}
         onClose={handleCloseUploadModal}
+      />
+
+      {/* 6. Google Sheets Integration & Mapping Drawer */}
+      <GoogleSheetsConfigDrawer
+        isOpen={isGoogleSheetsDrawerOpen}
+        onClose={() => setIsGoogleSheetsDrawerOpen(false)}
+        supplierId={supplierId}
+        supplierName={supplierName}
+        onMappingHandoff={() => {
+          dispatch(setPipelineTab('inventory'));
+          setIsGoogleSheetsDrawerOpen(false);
+        }}
       />
     </div>
   );

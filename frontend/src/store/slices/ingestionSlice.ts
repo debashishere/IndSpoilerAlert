@@ -1,4 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import ingestionService from '../../services/ingestionService';
+import googleSheetsSyncService from '../../services/googleSheetsSyncService';
 
 export type PipelineTab = 'inventory' | 'sales' | 'buyers';
 
@@ -64,6 +66,31 @@ export interface IngestionState {
   buyerSaving: boolean;
   buyerSuccess: string;
   buyerError: string;
+
+  // Google Sheets Sync & Configuration State
+  googleSheetsConfig: {
+    spreadsheetId: string;
+    sheetName: string;
+    connectedEmail: string;
+    oauthConnected: boolean;
+    ingressKey?: string;
+  };
+  googleSheetsScript: string | null;
+  googleSheetsScriptLoading: boolean;
+  googleSheetsScriptError: string | null;
+  googleSheetsPingStatus: 'idle' | 'testing' | 'connected' | 'error';
+  googleSheetsPingLatencyMs: number | null;
+  googleSheetsPingError: string | null;
+  googleSheetsHandshakeLoading: boolean;
+
+  // Dual-State Google Sheets Sync Health & Dispatch
+  googleSheetsSync: {
+    connectionStatus: 'unconnected' | 'connected' | 'error';
+    lastSyncedAt: string | null;
+    syncedLotCount: number;
+    isSyncing: boolean;
+    error: string | null;
+  };
 }
 
 const initialState: IngestionState = {
@@ -112,7 +139,31 @@ const initialState: IngestionState = {
   buyerSaving: false,
   buyerSuccess: '',
   buyerError: '',
+
+  googleSheetsConfig: {
+    spreadsheetId: '',
+    sheetName: 'Sheet1',
+    connectedEmail: '',
+    oauthConnected: false,
+    ingressKey: '',
+  },
+  googleSheetsScript: null,
+  googleSheetsScriptLoading: false,
+  googleSheetsScriptError: null,
+  googleSheetsPingStatus: 'idle',
+  googleSheetsPingLatencyMs: null,
+  googleSheetsPingError: null,
+  googleSheetsHandshakeLoading: false,
+
+  googleSheetsSync: {
+    connectionStatus: 'unconnected',
+    lastSyncedAt: null,
+    syncedLotCount: 0,
+    isSyncing: false,
+    error: null,
+  },
 };
+
 
 export const ingestionSlice = createSlice({
   name: 'ingestion',
@@ -292,6 +343,83 @@ export const ingestionSlice = createSlice({
       state.buyerLoading = false;
       state.buyerLoadingStep = '';
     },
+    setGoogleSheetsConfig: (
+      state,
+      action: PayloadAction<{
+        spreadsheetId?: string;
+        sheetName?: string;
+        connectedEmail?: string;
+        oauthConnected?: boolean;
+        ingressKey?: string;
+      }>
+    ) => {
+      state.googleSheetsConfig = {
+        ...state.googleSheetsConfig,
+        ...action.payload,
+      };
+    },
+    setGoogleSheetsScript: (state, action: PayloadAction<string | null>) => {
+      state.googleSheetsScript = action.payload;
+    },
+    setGoogleSheetsScriptLoading: (state, action: PayloadAction<boolean>) => {
+      state.googleSheetsScriptLoading = action.payload;
+    },
+    setGoogleSheetsScriptError: (state, action: PayloadAction<string | null>) => {
+      state.googleSheetsScriptError = action.payload;
+    },
+    setGoogleSheetsPingStatus: (
+      state,
+      action: PayloadAction<'idle' | 'testing' | 'connected' | 'error'>
+    ) => {
+      state.googleSheetsPingStatus = action.payload;
+    },
+    setGoogleSheetsPingResult: (
+      state,
+      action: PayloadAction<{ latencyMs: number | null; error?: string | null }>
+    ) => {
+      state.googleSheetsPingLatencyMs = action.payload.latencyMs;
+      state.googleSheetsPingError = action.payload.error || null;
+    },
+    setGoogleSheetsHandshakeLoading: (state, action: PayloadAction<boolean>) => {
+      state.googleSheetsHandshakeLoading = action.payload;
+    },
+    setGoogleSheetsSyncState: (
+      state,
+      action: PayloadAction<
+        Partial<{
+          connectionStatus: 'unconnected' | 'connected' | 'error';
+          lastSyncedAt: string | null;
+          syncedLotCount: number;
+          isSyncing: boolean;
+          error: string | null;
+        }>
+      >
+    ) => {
+      state.googleSheetsSync = {
+        ...state.googleSheetsSync,
+        ...action.payload,
+      };
+    },
+    setGoogleSheetsSyncLoading: (state, action: PayloadAction<boolean>) => {
+      state.googleSheetsSync.isSyncing = action.payload;
+    },
+    setGoogleSheetsSyncSuccess: (
+      state,
+      action: PayloadAction<{ lastSyncedAt: string; syncedLotCount: number }>
+    ) => {
+      state.googleSheetsSync.isSyncing = false;
+      state.googleSheetsSync.connectionStatus = 'connected';
+      state.googleSheetsSync.lastSyncedAt = action.payload.lastSyncedAt;
+      state.googleSheetsSync.syncedLotCount = action.payload.syncedLotCount;
+      state.googleSheetsSync.error = null;
+    },
+    setGoogleSheetsSyncError: (state, action: PayloadAction<string | null>) => {
+      state.googleSheetsSync.isSyncing = false;
+      state.googleSheetsSync.error = action.payload;
+      if (action.payload) {
+        state.googleSheetsSync.connectionStatus = 'error';
+      }
+    },
   },
 });
 
@@ -334,7 +462,19 @@ export const {
   setBuyerParsedResult,
   updateBuyerMapping,
   setBuyerImportSuccess,
+  setGoogleSheetsConfig,
+  setGoogleSheetsScript,
+  setGoogleSheetsScriptLoading,
+  setGoogleSheetsScriptError,
+  setGoogleSheetsPingStatus,
+  setGoogleSheetsPingResult,
+  setGoogleSheetsHandshakeLoading,
+  setGoogleSheetsSyncState,
+  setGoogleSheetsSyncLoading,
+  setGoogleSheetsSyncSuccess,
+  setGoogleSheetsSyncError,
 } = ingestionSlice.actions;
+
 
 export const uploadInventoryThunk = createAsyncThunk(
   'ingestion/uploadInventory',
@@ -583,6 +723,104 @@ export const confirmBuyerThunk = createAsyncThunk(
   }
 );
 
-import ingestionService from '../../services/ingestionService';
+export const fetchGoogleSheetsScriptThunk = createAsyncThunk(
+  'ingestion/fetchGoogleSheetsScript',
+  async (supplierId: string, { dispatch, rejectWithValue }) => {
+    try {
+      dispatch(setGoogleSheetsScriptLoading(true));
+      dispatch(setGoogleSheetsScriptError(null));
+      const res = await googleSheetsSyncService.fetchScriptTemplate(supplierId);
+      dispatch(setGoogleSheetsScript(res.script));
+      dispatch(
+        setGoogleSheetsConfig({
+          spreadsheetId: res.spreadsheetId,
+          sheetName: res.sheetName,
+          ingressKey: res.ingressKey,
+        })
+      );
+      dispatch(setGoogleSheetsScriptLoading(false));
+      return res;
+    } catch (err: any) {
+      dispatch(setGoogleSheetsScriptError(err.message || 'Failed to fetch script template.'));
+      dispatch(setGoogleSheetsScriptLoading(false));
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const testGoogleSheetsPingThunk = createAsyncThunk(
+  'ingestion/testGoogleSheetsPing',
+  async (
+    payload: { ingressKey: string; spreadsheetId?: string; sheetName?: string },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      dispatch(setGoogleSheetsPingStatus('testing'));
+      dispatch(setGoogleSheetsPingResult({ latencyMs: null, error: null }));
+      const res = await googleSheetsSyncService.testPing(payload);
+      dispatch(setGoogleSheetsPingStatus('connected'));
+      dispatch(setGoogleSheetsPingResult({ latencyMs: res.latencyMs }));
+      return res;
+    } catch (err: any) {
+      dispatch(setGoogleSheetsPingStatus('error'));
+      dispatch(setGoogleSheetsPingResult({ latencyMs: null, error: err.message || 'Ping failed' }));
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const hydrateGoogleSheetsHandshakeThunk = createAsyncThunk(
+  'ingestion/hydrateGoogleSheetsHandshake',
+  async (
+    payload: { supplierId: string; spreadsheetId: string; sheetName?: string },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      dispatch(setGoogleSheetsHandshakeLoading(true));
+      const result = await googleSheetsSyncService.fetchSampleRows(payload);
+      dispatch(setInventoryParsedResult(result));
+      if (result.suggestedMapping) {
+        Object.entries(result.suggestedMapping).forEach(([dbField, headerName]) => {
+          dispatch(updateInventoryMapping({ dbField, headerName }));
+        });
+      }
+      dispatch(setGoogleSheetsHandshakeLoading(false));
+      return result;
+    } catch (err: any) {
+      dispatch(setGoogleSheetsHandshakeLoading(false));
+      return rejectWithValue(err.message);
+    }
+  }
+);
+
+export const hydrateGoogleSheetsHandshakeMappingThunk = hydrateGoogleSheetsHandshakeThunk;
+
+export const syncGoogleSheetsNowThunk = createAsyncThunk(
+  'ingestion/syncGoogleSheetsNow',
+  async (
+    payload: { supplierId?: string; ingressKey?: string; headers?: string[]; rows?: string[][] },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      dispatch(setGoogleSheetsSyncLoading(true));
+      dispatch(setGoogleSheetsSyncError(null));
+      const res = await googleSheetsSyncService.syncNow(payload);
+      dispatch(
+        setGoogleSheetsSyncSuccess({
+          lastSyncedAt: res.lastSyncedAt,
+          syncedLotCount: res.syncedLotCount,
+        })
+      );
+      return res;
+    } catch (err: any) {
+      const errorMsg = err.message || 'Failed to trigger on-demand sync.';
+      dispatch(setGoogleSheetsSyncError(errorMsg));
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
 
 export default ingestionSlice.reducer;
+
+
+

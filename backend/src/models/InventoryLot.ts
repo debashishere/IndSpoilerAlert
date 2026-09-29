@@ -14,7 +14,7 @@ export interface IInventoryLot extends Document {
   availableQty: number;
   costPerCase: number;
   standardSellPrice: number;
-  status: 'pending' | 'active' | 'sold' | 'expired' | 'donated' | 'recycled';
+  status: 'pending' | 'active' | 'sold' | 'expired' | 'donated' | 'recycled' | 'depleted' | 'archived';
   comment?: string;
   latestSalesDate?: Date;
   attributes?: Map<string, any>;
@@ -42,7 +42,7 @@ const InventoryLotSchema: Schema = new Schema({
   standardSellPrice: { type: Number, required: true },
   status: {
     type: String,
-    enum: ['pending', 'active', 'sold', 'expired', 'donated', 'recycled'],
+    enum: ['pending', 'active', 'sold', 'expired', 'donated', 'recycled', 'depleted', 'archived'],
     default: 'pending'
   },
   comment: { type: String, default: '' },

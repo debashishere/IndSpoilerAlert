@@ -143,6 +143,23 @@
 
 - **Dedicated Ingestion Hub & Connectors**: The collapsible top-level multi-source ingestion workbench in the Ingestion Tab displaying ingestion channel cards (`Zapier Webhooks`, `Google Sheets Sync`, `Image & Doc Scanner`, `CSV / Excel Upload`, and `+ Add Integration` Directory) with real-time status and sync telemetry.
   _Avoid_: `Simple File Dropzone`, `Upload-Only Banner`.
+- **Google Sheets Ingestion Sync**: The automated inbound data integration connector in the Ingestion Hub linking a supplier's Google Spreadsheet to the surplus inventory pipeline, periodically polling or ingesting spreadsheet rows into staged inventory lots with column schema normalization.
+  _Avoid_: `Insight Google Sheets Sync`, `Outbound Sheet Export`.
+- **Google Sheets Configuration Drawer**: The slide-over configuration interface triggered by the "Google Sheets Sync" connector card in the Ingestion Hub, presenting OAuth connection status, authorized Google Workspace account details, spreadsheet selector, worksheet tab picker, column mapping preset selector, and sync schedule settings.
+  _Avoid_: `Sheets Popup Modal`, `Raw Webhook Settings`.
+- **Google Sheets Ingress Webhook Trigger**: The authenticated event-driven HTTP endpoint (`/api/v1/ingestion/google-sheets/webhook`) invoked by a Google Apps Script installable `onChange` trigger or native sheet menu action, accepting pushed row data or change alerts with cryptographic supplier token verification.
+  _Avoid_: `Polling Ingress Daemon`, `Google Drive Watch Channel`.
+- **Native Sheet Action Menu**: The client-side menu extension injected into the supplier's Google Spreadsheet toolbar ("SpoilerAlert OS ⚡ > Sync to Platform Now") enabling warehouse operators to dispatch immediate inventory synchronization directly from the Google Sheets interface.
+  _Avoid_: `External Webhook Bookmarklet`.
+- **Direct Grid Payload Ingress**: The webhook ingest strategy where Google Apps Script packages sheet rows directly into the HTTP request body with cryptographic ingress authentication (`X-Ingress-Key`), bypassing round-trip Google Sheets API requests unless payload size limits necessitate an authenticated fetch fallback.
+  _Avoid_: `Polling-Only Ingress`, `Blind Ping Relay`.
+- **Dual-State Dynamic Connector Card**: The interactive UI representation of an external integration in `IngestionHubConnectors.tsx` toggling between an unconfigured setup state (`Connect Sheets` CTA) and an active operational state (`Active Trigger` pulse badge, `Sync Now` manual trigger, settings gear, and live sync timestamps).
+  _Avoid_: `Static Connector Card`, `Toast-Only Button`.
+- **Google Sheets Sync Configuration**: The persisted integration record (`GoogleSheetsSyncConfig`) linking a supplier ID to a Google Spreadsheet ID, sheet tab name, sync cadence, sync status (`idle`, `syncing`, `error`), last sync timestamp, and bound `SupplierTemplate` column mapping.
+- **Initial In-Situ Mapping Handshake**: The user verification step during Google Sheets setup where sample rows from the external sheet are rendered into `GridMapperTable` for supplier confirmation before autonomous background sync is activated.
+  _Avoid_: `Blind Ingestion`, `Direct Sheet Pipe`.
+- **Idempotent Inventory Sheet Reconciliation**: The synchronization logic matching inbound spreadsheet rows against existing `InventoryLot` documents via composite natural key (`sku` + `lotNumber`), updating mutable physical inventory properties (quantity, price, location) while maintaining campaign bindings, bids, and historical audit immutability.
+  _Avoid_: `Destructive Sheet Purge`, `Blind Batch Duplication`.
 - **Unified Surplus Data Ingestion Modal**: The centralized modal overlay triggered by the "CSV / Excel Upload" connector or pipeline import action buttons, providing a 2-step batch upload flow: 1) dataset destination selection (`Inventory Data`, `Sales Data`, or `Buyer Data`), and 2) file drag-and-drop / selection that advances to the Ingestion Mapping Window.
   _Avoid_: `Fragmented Upload Modals`, `Per-Tab File Uploaders`.
 - **Progressive Row Inspection Drawer**: The collapsible in-situ accordion inspection workbench expanding directly beneath table rows (across Inventory, Sales, and Buyer pipelines) when selected, presenting detailed cold-chain/environmental telemetry, FEFO lifecycle matrix, date audit logs, financial settlement remittance, and context-sensitive operational actions.

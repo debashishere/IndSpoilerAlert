@@ -1,0 +1,3 @@
+# 59. Google Sheets OAuth Delegation and Ingress Architecture
+
+To enable automated inbound surplus inventory synchronization from Google Spreadsheets without requiring suppliers to manually share sensitive internal sheets with external bot accounts, the platform implements Google OAuth 2.0 multi-tenant user delegation scoped to `spreadsheets.readonly` and `drive.metadata.readonly`. Supplier OAuth tokens (encrypted refresh and access tokens) are persisted per supplier ID, powering both interactive sheet discovery in a dedicated configuration drawer and scheduled background polling with schema normalization.

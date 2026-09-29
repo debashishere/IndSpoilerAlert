@@ -32,12 +32,14 @@ import marketplaceRouter from './marketplaceRoutes';
 import buyerListRoutes from './buyerListRoutes';
 import dealRoutes from './dealRoutes';
 import portalRoutes from './portalRoutes';
+import ingestionRoutes from './ingestionRoutes';
 
 const router = Router();
 
 // Route Namespaces (0083)
 router.use('/v1/supplier', supplierRouter);
 router.use('/v1/marketplace', marketplaceRouter);
+router.use('/v1/ingestion', ingestionRoutes);
 router.use('/marketplace', marketplaceRouter);
 router.use('/buyer-lists', buyerListRoutes);
 router.use('/deals', dealRoutes);

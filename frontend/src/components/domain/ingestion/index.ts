@@ -4,6 +4,7 @@ export * from './SemanticRulesEditor';
 export * from './BuyerRegistryPanel';
 export * from './SalesRegistryPanel';
 export * from './InventoryRegistryPanel';
+export * from './GoogleSheetsConfigDrawer';
 export * from './subcomponents/IngestionTelemetryBar';
 export * from './subcomponents/IngestionHubConnectors';
 export * from './subcomponents/PipelineSwitcherBar';

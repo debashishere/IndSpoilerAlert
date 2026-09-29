@@ -20,6 +20,7 @@ export interface IngestionTelemetryBarProps {
 export interface IngestionHubConnectorsProps {
   className?: string;
   onOpenUploadModal?: () => void;
+  onOpenGoogleSheetsDrawer?: () => void;
   defaultCollapsed?: boolean;
 }
 
