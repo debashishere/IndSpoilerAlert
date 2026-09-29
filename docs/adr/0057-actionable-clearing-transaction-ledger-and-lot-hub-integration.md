@@ -1,0 +1,3 @@
+# 57. Actionable Clearing Transaction Ledger and Lot Hub Integration
+
+The transaction drill-down tables embedded within the "Top Buyers" and "Top Warehouses / DCs" sub-tabs provide in-situ search and interactive Lot Operations Hub links (`onOpenLotHub`) rather than remaining passive, static read-only tables. While ADR 0028 moved raw inventory and buyer lists to the Ingestion pipeline to keep Insight focused on analytics, users require operational traceability from aggregated closeout sales back to physical lot provenance, certificates of analysis, and shelf-life metrics without leaving the Sales & Clearing workbench.

@@ -85,6 +85,49 @@ export interface CloseoutTransactionPoint {
   saleDate: string;
 }
 
+export interface SalesTransactionPoint {
+  id: string;
+  saleDate: string;
+  lotId?: string | null;
+  lotNumber: string;
+  invoiceNumber?: string;
+  sku: string;
+  product: string;
+  brand?: string;
+  buyer?: string;
+  buyerSegment?: string;
+  warehouse?: string;
+  quantityCases: number;
+  pricePerCase: number;
+  totalValue?: number;
+  revenue: number;
+  cogs?: number;
+  recoveryPct?: number;
+  status?: string;
+}
+
+export interface SalesBuyerSummary {
+  rank: number;
+  buyerId?: string;
+  buyerName: string;
+  segment?: string;
+  totalSpent: number;
+  totalVolume: number;
+  revenueSharePct: number;
+  transactionCount: number;
+  transactions: SalesTransactionPoint[];
+}
+
+export interface SalesWarehouseSummary {
+  rank: number;
+  warehouse: string;
+  clearedRevenue: number;
+  casesCleared: number;
+  recoveryPct: number;
+  transactionCount: number;
+  transactions: SalesTransactionPoint[];
+}
+
 export interface SalesAnalyticsData {
   totalRevenue: number;
   revenueGrowthPct: number;
@@ -98,6 +141,8 @@ export interface SalesAnalyticsData {
   categoryRecovery?: CategoryRecoveryData[];
   channelDistribution?: ChannelDistributionData[];
   recentCloseouts?: CloseoutTransactionPoint[];
+  topBuyers?: SalesBuyerSummary[];
+  topWarehouses?: SalesWarehouseSummary[];
 }
 
 export interface WorkflowYieldData {

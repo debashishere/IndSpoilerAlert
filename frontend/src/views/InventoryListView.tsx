@@ -281,7 +281,7 @@ export const InventoryListView: React.FC<{ onOpenLotHub?: (lot: any) => void }> 
 
         {inventorySubTab === 'sales' && (
           <div id="panel-insight-sales">
-            <SalesDataView />
+            <SalesDataView onOpenLotHub={onOpenLotHub} />
           </div>
         )}
 

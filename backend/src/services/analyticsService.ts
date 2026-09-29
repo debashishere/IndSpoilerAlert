@@ -451,6 +451,193 @@ export interface SalesAnalyticsParams {
   user?: any;
 }
 
+function getSalesTransactionLedgerStages(currentFilter: any): mongoose.PipelineStage[] {
+  return [
+    { $match: currentFilter },
+    { $sort: { saleDate: -1, createdAt: -1 } },
+    {
+      $lookup: {
+        from: "buyers",
+        localField: "buyerId",
+        foreignField: "_id",
+        as: "buyerDoc"
+      }
+    },
+    {
+      $unwind: { path: "$buyerDoc", preserveNullAndEmptyArrays: true }
+    },
+    {
+      $lookup: {
+        from: "inventorylots",
+        localField: "lotId",
+        foreignField: "_id",
+        as: "lotFromId"
+      }
+    },
+    {
+      $lookup: {
+        from: "inventorylots",
+        localField: "lotNumber",
+        foreignField: "lotNumber",
+        as: "lotFromNumber"
+      }
+    },
+    {
+      $addFields: {
+        lot: {
+          $ifNull: [
+            { $arrayElemAt: ["$lotFromId", 0] },
+            { $arrayElemAt: ["$lotFromNumber", 0] }
+          ]
+        }
+      }
+    },
+    {
+      $lookup: {
+        from: "productmasters",
+        localField: "lot.productId",
+        foreignField: "_id",
+        as: "productFromLot"
+      }
+    },
+    {
+      $lookup: {
+        from: "productmasters",
+        localField: "sku",
+        foreignField: "sku",
+        as: "productFromSku"
+      }
+    },
+    {
+      $addFields: {
+        productDoc: {
+          $ifNull: [
+            { $arrayElemAt: ["$productFromLot", 0] },
+            { $arrayElemAt: ["$productFromSku", 0] }
+          ]
+        }
+      }
+    },
+    {
+      $project: {
+        _id: 1,
+        buyerId: 1,
+        buyerName: {
+          $ifNull: [
+            "$buyerDoc.companyName",
+            { $ifNull: ["$buyerEmail", "Direct Closeout"] }
+          ]
+        },
+        segment: {
+          $ifNull: [
+            "$buyerDoc.segment",
+            { $ifNull: ["$buyerDoc.buyerType", "Unassigned"] }
+          ]
+        },
+        buyerSegment: {
+          $ifNull: [
+            "$buyerDoc.segment",
+            { $ifNull: ["$buyerDoc.buyerType", "Unassigned"] }
+          ]
+        },
+        saleDate: { $ifNull: ["$saleDate", "$createdAt"] },
+        lotId: {
+          $ifNull: [
+            "$lotId",
+            "$lot._id"
+          ]
+        },
+        lotNumber: 1,
+        invoiceNumber: 1,
+        sku: 1,
+        product: {
+          $ifNull: [
+            "$productDoc.description",
+            { $ifNull: ["$description", "$sku"] }
+          ]
+        },
+        brand: {
+          $ifNull: ["$brand", "$productDoc.brand"]
+        },
+        warehouse: {
+          $ifNull: ["$warehouse", "Unassigned Facility"]
+        },
+        quantityCases: { $ifNull: ["$quantityCases", 0] },
+        pricePerCase: {
+          $round: [
+            {
+              $cond: [
+                { $gt: [{ $ifNull: ["$pricePerCase", 0] }, 0] },
+                "$pricePerCase",
+                {
+                  $cond: [
+                    { $gt: [{ $ifNull: ["$quantityCases", 0] }, 0] },
+                    { $divide: [{ $ifNull: ["$revenue", "$totalValue"] }, "$quantityCases"] },
+                    0
+                  ]
+                }
+              ]
+            },
+            2
+          ]
+        },
+        revenue: {
+          $round: [{ $ifNull: ["$revenue", "$totalValue"] }, 2]
+        },
+        totalValue: {
+          $round: [{ $ifNull: ["$totalValue", { $ifNull: ["$revenue", 0] }] }, 2]
+        },
+        cogs: {
+          $round: [
+            {
+              $multiply: [
+                { $ifNull: ["$quantityCases", 0] },
+                { $ifNull: ["$lot.costPerCase", 0] }
+              ]
+            },
+            2
+          ]
+        },
+        recoveryPct: {
+          $cond: [
+            { $gt: [{ $ifNull: ["$lot.costPerCase", 0] }, 0] },
+            {
+              $round: [
+                {
+                  $multiply: [
+                    {
+                      $divide: [
+                        {
+                          $cond: [
+                            { $gt: [{ $ifNull: ["$pricePerCase", 0] }, 0] },
+                            "$pricePerCase",
+                            {
+                              $cond: [
+                                { $gt: [{ $ifNull: ["$quantityCases", 0] }, 0] },
+                                { $divide: [{ $ifNull: ["$revenue", "$totalValue"] }, "$quantityCases"] },
+                                0
+                              ]
+                            }
+                          ]
+                        },
+                        "$lot.costPerCase"
+                      ]
+                    },
+                    100
+                  ]
+                },
+                1
+              ]
+            },
+            0
+          ]
+        },
+        status: { $ifNull: ["$status", "delivered"] }
+      }
+    }
+  ];
+}
+
 export async function getSalesAnalytics(params: SalesAnalyticsParams = {}) {
   // 1. Resolve Supplier Scope
   let targetSupplierId = params.supplierId;
@@ -546,7 +733,9 @@ export async function getSalesAnalytics(params: SalesAnalyticsParams = {}) {
     currentSales,
     rawCategoryRecovery,
     rawChannelDistribution,
-    rawRecentCloseouts
+    rawRecentCloseouts,
+    rawTopBuyers,
+    rawTopWarehouses
   ] = await Promise.all([
     Sale.aggregate([
       { $match: currentFilter },
@@ -817,6 +1006,83 @@ export async function getSalesAnalytics(params: SalesAnalyticsParams = {}) {
           saleDate: { $ifNull: ["$saleDate", "$createdAt"] }
         }
       }
+    ]),
+    Sale.aggregate([
+      ...getSalesTransactionLedgerStages(currentFilter),
+      {
+        $group: {
+          _id: {
+            buyerId: "$buyerId",
+            buyerName: "$buyerName",
+            segment: "$segment"
+          },
+          totalSpent: { $sum: "$revenue" },
+          totalVolume: { $sum: "$quantityCases" },
+          transactionCount: { $sum: 1 },
+          transactions: {
+            $push: {
+              id: { $toString: "$_id" },
+              saleDate: "$saleDate",
+              lotId: { $cond: [{ $ifNull: ["$lotId", false] }, { $toString: "$lotId" }, null] },
+              lotNumber: "$lotNumber",
+              invoiceNumber: "$invoiceNumber",
+              sku: "$sku",
+              product: "$product",
+              brand: "$brand",
+              buyer: "$buyerName",
+              buyerSegment: "$segment",
+              warehouse: "$warehouse",
+              quantityCases: "$quantityCases",
+              pricePerCase: "$pricePerCase",
+              totalValue: "$totalValue",
+              revenue: "$revenue",
+              cogs: "$cogs",
+              recoveryPct: "$recoveryPct",
+              status: "$status"
+            }
+          }
+        }
+      },
+      {
+        $sort: { totalSpent: -1 }
+      }
+    ]),
+    Sale.aggregate([
+      ...getSalesTransactionLedgerStages(currentFilter),
+      {
+        $group: {
+          _id: "$warehouse",
+          clearedRevenue: { $sum: "$revenue" },
+          casesCleared: { $sum: "$quantityCases" },
+          totalCOGS: { $sum: "$cogs" },
+          transactionCount: { $sum: 1 },
+          transactions: {
+            $push: {
+              id: { $toString: "$_id" },
+              saleDate: "$saleDate",
+              lotId: { $cond: [{ $ifNull: ["$lotId", false] }, { $toString: "$lotId" }, null] },
+              lotNumber: "$lotNumber",
+              invoiceNumber: "$invoiceNumber",
+              sku: "$sku",
+              product: "$product",
+              brand: "$brand",
+              buyer: "$buyerName",
+              buyerSegment: "$buyerSegment",
+              warehouse: "$warehouse",
+              quantityCases: "$quantityCases",
+              pricePerCase: "$pricePerCase",
+              totalValue: "$totalValue",
+              revenue: "$revenue",
+              cogs: "$cogs",
+              recoveryPct: "$recoveryPct",
+              status: "$status"
+            }
+          }
+        }
+      },
+      {
+        $sort: { clearedRevenue: -1 }
+      }
     ])
   ]);
 
@@ -978,6 +1244,37 @@ export async function getSalesAnalytics(params: SalesAnalyticsParams = {}) {
     };
   });
 
+  const topBuyers = (rawTopBuyers || []).map((item: any, index: number) => {
+    const totalSpent = Math.round(item.totalSpent * 100) / 100;
+    const revenueSharePct = totalRevenue > 0 ? Math.round((totalSpent / totalRevenue) * 1000) / 10 : 0;
+    return {
+      rank: index + 1,
+      buyerId: item._id.buyerId ? item._id.buyerId.toString() : undefined,
+      buyerName: item._id.buyerName,
+      segment: item._id.segment,
+      totalSpent,
+      totalVolume: item.totalVolume,
+      revenueSharePct,
+      transactionCount: item.transactionCount,
+      transactions: item.transactions || [],
+    };
+  });
+
+  const topWarehouses = (rawTopWarehouses || []).map((item: any, index: number) => {
+    const clearedRevenue = Math.round(item.clearedRevenue * 100) / 100;
+    const totalCOGS = item.totalCOGS || 0;
+    const recoveryPct = totalCOGS > 0 ? Math.round((clearedRevenue / totalCOGS) * 1000) / 10 : 0;
+    return {
+      rank: index + 1,
+      warehouse: item._id,
+      clearedRevenue,
+      casesCleared: item.casesCleared,
+      recoveryPct,
+      transactionCount: item.transactionCount,
+      transactions: item.transactions || [],
+    };
+  });
+
   const result = {
     totalRevenue,
     revenueGrowthPct,
@@ -991,6 +1288,8 @@ export async function getSalesAnalytics(params: SalesAnalyticsParams = {}) {
     categoryRecovery,
     channelDistribution,
     recentCloseouts,
+    topBuyers,
+    topWarehouses,
   };
 
   // 6. Save to Redis Cache (5 mins TTL)

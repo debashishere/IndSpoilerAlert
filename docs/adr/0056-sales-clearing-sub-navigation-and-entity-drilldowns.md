@@ -1,0 +1,3 @@
+# 56. Scoped Sub-Navigation and Entity Drilldowns for Sales & Clearing
+
+Inside the Insight hub, "Top Buyers" and "Top Warehouses / DCs" are structured as scoped sub-tabs within **Sales & Clearing** (`Overview & Analytics`, `Top Buyers`, `Top Warehouses / DCs`) rather than elevating them to 6 primary workbench tabs. This preserves a clean 4-tab top-level Information Architecture (`Recovery & Sustainability`, `Current Bidding Data`, `Sales & Clearing`, `Cross-Platform Operations`), prevents horizontal tab bar overcrowding on laptop displays, shares global timeframe/category filters across views, and provides full horizontal width for granular nested transaction list views under each buyer and distribution center.

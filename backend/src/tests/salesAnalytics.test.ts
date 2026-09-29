@@ -9,6 +9,7 @@ describe('Sales Analytics API Endpoint (GET /api/analytics/sales)', () => {
   let supplierId: string;
   let otherSupplierId: string;
   let lotId: string;
+  let lot2Id: string;
 
   beforeAll(async () => {
     // Wait for connection if needed
@@ -107,6 +108,7 @@ describe('Sales Analytics API Endpoint (GET /api/analytics/sales)', () => {
       standardSellPrice: 20.00,
       status: 'sold'
     });
+    lot2Id = lot2._id.toString();
 
     // Seed Sales for Supplier 1:
     // Current period (last 7 days):
@@ -421,11 +423,219 @@ describe('Sales Analytics API Endpoint (GET /api/analytics/sales)', () => {
     expect(res.body.categoryRecovery).toEqual([]);
     expect(res.body.channelDistribution).toEqual([]);
     expect(res.body.recentCloseouts).toEqual([]);
+    expect(res.body.topBuyers).toEqual([]);
+    expect(res.body.topWarehouses).toEqual([]);
     expect(res.body.trajectory).toBeDefined();
     expect(res.body.trajectory).toHaveLength(5);
     res.body.trajectory.forEach((bucket: any) => {
       expect(bucket.revenue).toBe(0);
       expect(bucket.volume).toBe(0);
     });
+  });
+
+  it('aggregates top buyers leaderboard ranking with revenue share % and itemized child transactions', async () => {
+    // Clear Redis cache before calling
+    try {
+      const redis = await getRedisClient();
+      if (redis && redis.isOpen) {
+        const keys = await redis.keys('analytics:sales:*');
+        if (keys.length > 0) {
+          await redis.del(keys);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    const res = await request(app)
+      .get(`/api/analytics/sales?timeframe=7d&supplierId=${supplierId}`)
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.topBuyers).toBeDefined();
+    expect(Array.isArray(res.body.topBuyers)).toBe(true);
+    expect(res.body.topBuyers.length).toBe(2);
+
+    const buyer1 = res.body.topBuyers[0];
+    expect(buyer1.rank).toBe(1);
+    expect(buyer1.buyerName).toBe('Off-Price Wholesalers LLC');
+    expect(buyer1.segment).toBe('Off-Price Wholesalers');
+    expect(buyer1.totalSpent).toBe(3000);
+    expect(buyer1.totalVolume).toBe(200);
+    expect(buyer1.revenueSharePct).toBe(75);
+    expect(buyer1.transactionCount).toBe(1);
+    expect(buyer1.transactions).toHaveLength(1);
+    expect(buyer1.transactions[0].sku).toBe('SKU-SALES-001');
+    expect(buyer1.transactions[0].product).toBe('Organic Cold Brew 12pk');
+    expect(buyer1.transactions[0].lotNumber).toBe('LOT-SALES-101');
+    expect(buyer1.transactions[0].quantityCases).toBe(200);
+    expect(buyer1.transactions[0].pricePerCase).toBe(15);
+    expect(buyer1.transactions[0].revenue).toBe(3000);
+    expect(buyer1.transactions[0].recoveryPct).toBe(150);
+    expect(buyer1.transactions[0].warehouse).toBe('Chicago DC');
+    expect(buyer1.transactions[0].status).toBe('delivered');
+
+    const buyer2 = res.body.topBuyers[1];
+    expect(buyer2.rank).toBe(2);
+    expect(buyer2.buyerName).toBe('Regional Liquidators Inc');
+    expect(buyer2.segment).toBe('Regional Liquidators');
+    expect(buyer2.totalSpent).toBe(1000);
+    expect(buyer2.totalVolume).toBe(50);
+    expect(buyer2.revenueSharePct).toBe(25);
+    expect(buyer2.transactionCount).toBe(1);
+    expect(buyer2.transactions).toHaveLength(1);
+    expect(buyer2.transactions[0].sku).toBe('SKU-SALES-002');
+    expect(buyer2.transactions[0].product).toBe('Gluten Free Chips');
+    expect(buyer2.transactions[0].lotNumber).toBe('LOT-SALES-102');
+    expect(buyer2.transactions[0].lotId).toBe(lot2Id);
+    expect(buyer2.transactions[0].quantityCases).toBe(50);
+    expect(buyer2.transactions[0].pricePerCase).toBe(20);
+    expect(buyer2.transactions[0].revenue).toBe(1000);
+    expect(buyer2.transactions[0].recoveryPct).toBe(125);
+    expect(buyer2.transactions[0].warehouse).toBe('Dallas DC');
+    expect(buyer2.transactions[0].status).toBe('scheduled');
+  });
+
+  it('aggregates top warehouses / DCs leaderboard ranking with COGS recovery % and itemized child transactions', async () => {
+    // Clear Redis cache before calling
+    try {
+      const redis = await getRedisClient();
+      if (redis && redis.isOpen) {
+        const keys = await redis.keys('analytics:sales:*');
+        if (keys.length > 0) {
+          await redis.del(keys);
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    const res = await request(app)
+      .get(`/api/analytics/sales?timeframe=7d&supplierId=${supplierId}`)
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.topWarehouses).toBeDefined();
+    expect(Array.isArray(res.body.topWarehouses)).toBe(true);
+    expect(res.body.topWarehouses.length).toBe(2);
+
+    const dc1 = res.body.topWarehouses[0];
+    expect(dc1.rank).toBe(1);
+    expect(dc1.warehouse).toBe('Chicago DC');
+    expect(dc1.clearedRevenue).toBe(3000);
+    expect(dc1.casesCleared).toBe(200);
+    expect(dc1.recoveryPct).toBe(150);
+    expect(dc1.transactionCount).toBe(1);
+    expect(dc1.transactions).toHaveLength(1);
+    expect(dc1.transactions[0].sku).toBe('SKU-SALES-001');
+    expect(dc1.transactions[0].product).toBe('Organic Cold Brew 12pk');
+    expect(dc1.transactions[0].buyer).toBe('Off-Price Wholesalers LLC');
+    expect(dc1.transactions[0].lotNumber).toBe('LOT-SALES-101');
+    expect(dc1.transactions[0].quantityCases).toBe(200);
+    expect(dc1.transactions[0].pricePerCase).toBe(15);
+    expect(dc1.transactions[0].revenue).toBe(3000);
+    expect(dc1.transactions[0].recoveryPct).toBe(150);
+    expect(dc1.transactions[0].warehouse).toBe('Chicago DC');
+    expect(dc1.transactions[0].status).toBe('delivered');
+
+    const dc2 = res.body.topWarehouses[1];
+    expect(dc2.rank).toBe(2);
+    expect(dc2.warehouse).toBe('Dallas DC');
+    expect(dc2.clearedRevenue).toBe(1000);
+    expect(dc2.casesCleared).toBe(50);
+    expect(dc2.recoveryPct).toBe(125);
+    expect(dc2.transactionCount).toBe(1);
+    expect(dc2.transactions).toHaveLength(1);
+    expect(dc2.transactions[0].sku).toBe('SKU-SALES-002');
+    expect(dc2.transactions[0].product).toBe('Gluten Free Chips');
+    expect(dc2.transactions[0].buyer).toBe('Regional Liquidators Inc');
+    expect(dc2.transactions[0].lotNumber).toBe('LOT-SALES-102');
+    expect(dc2.transactions[0].lotId).toBe(lot2Id);
+    expect(dc2.transactions[0].quantityCases).toBe(50);
+    expect(dc2.transactions[0].pricePerCase).toBe(20);
+    expect(dc2.transactions[0].revenue).toBe(1000);
+    expect(dc2.transactions[0].recoveryPct).toBe(125);
+    expect(dc2.transactions[0].warehouse).toBe('Dallas DC');
+    expect(dc2.transactions[0].status).toBe('scheduled');
+  });
+
+  it('filters top buyers and top warehouses by category and warehouse with authentic zero-state fallbacks', async () => {
+    // 1. Filter by category=Beverages (Only Sale 1 in Chicago DC with buyer 1)
+    const resBev = await request(app)
+      .get(`/api/analytics/sales?timeframe=7d&category=Beverages&supplierId=${supplierId}`)
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(resBev.status).toBe(200);
+    expect(resBev.body.topBuyers).toHaveLength(1);
+    expect(resBev.body.topBuyers[0].buyerName).toBe('Off-Price Wholesalers LLC');
+    expect(resBev.body.topBuyers[0].revenueSharePct).toBe(100);
+    expect(resBev.body.topWarehouses).toHaveLength(1);
+    expect(resBev.body.topWarehouses[0].warehouse).toBe('Chicago DC');
+
+    // 2. Filter by warehouse=Dallas DC (Only Sale 2 with buyer 2)
+    const resDallas = await request(app)
+      .get(`/api/analytics/sales?timeframe=7d&warehouse=Dallas%20DC&supplierId=${supplierId}`)
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(resDallas.status).toBe(200);
+    expect(resDallas.body.topBuyers).toHaveLength(1);
+    expect(resDallas.body.topBuyers[0].buyerName).toBe('Regional Liquidators Inc');
+    expect(resDallas.body.topBuyers[0].revenueSharePct).toBe(100);
+    expect(resDallas.body.topWarehouses).toHaveLength(1);
+    expect(resDallas.body.topWarehouses[0].warehouse).toBe('Dallas DC');
+
+    // 3. Filter by non-existent category
+    const resEmpty = await request(app)
+      .get(`/api/analytics/sales?timeframe=7d&category=NonExistentCategory&supplierId=${supplierId}`)
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(resEmpty.status).toBe(200);
+    expect(resEmpty.body.topBuyers).toEqual([]);
+    expect(resEmpty.body.topWarehouses).toEqual([]);
+  });
+
+  it('hydrates Redis cache with 5-minute TTL storing top buyers and top warehouses datasets', async () => {
+    const redis = await getRedisClient();
+    if (!redis || !redis.isOpen) {
+      // In environments where redis isn't active, skip redis assertion
+      return;
+    }
+
+    const cacheKey = `analytics:sales:${supplierId}:7d:all:all`;
+    await redis.del(cacheKey);
+
+    // Initial request populates cache
+    const res1 = await request(app)
+      .get(`/api/analytics/sales?timeframe=7d&supplierId=${supplierId}`)
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(res1.status).toBe(200);
+    expect(res1.body.topBuyers).toHaveLength(2);
+    expect(res1.body.topWarehouses).toHaveLength(2);
+
+    // Verify key exists in Redis and has 5-minute TTL (<= 300 seconds)
+    const exists = await redis.exists(cacheKey);
+    expect(exists).toBe(1);
+
+    const ttl = await redis.ttl(cacheKey);
+    expect(ttl).toBeGreaterThan(0);
+    expect(ttl).toBeLessThanOrEqual(300);
+
+    const cachedRaw = await redis.get(cacheKey);
+    expect(cachedRaw).not.toBeNull();
+    const cachedData = JSON.parse(cachedRaw!);
+    expect(cachedData.topBuyers).toHaveLength(2);
+    expect(cachedData.topWarehouses).toHaveLength(2);
+    expect(cachedData.topBuyers[0].buyerName).toBe('Off-Price Wholesalers LLC');
+    expect(cachedData.topWarehouses[0].warehouse).toBe('Chicago DC');
+
+    // Second request reads from cache
+    const res2 = await request(app)
+      .get(`/api/analytics/sales?timeframe=7d&supplierId=${supplierId}`)
+      .set('Authorization', `Bearer ${validToken}`);
+
+    expect(res2.status).toBe(200);
+    expect(res2.body.topBuyers).toEqual(cachedData.topBuyers);
+    expect(res2.body.topWarehouses).toEqual(cachedData.topWarehouses);
   });
 });

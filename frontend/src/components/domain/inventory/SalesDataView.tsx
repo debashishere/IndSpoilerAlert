@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   DollarSign,
@@ -24,15 +24,28 @@ import { fetchSalesRecordsThunk } from '../../../store/slices/ingestionSlice';
 import {
   fetchSalesAnalyticsThunk,
   selectSalesAnalytics,
-  selectSalesAnalyticsLoading,
   type CloseoutTransactionPoint,
 } from '../../../store/slices/coreSlice';
 
-export const SalesDataView: React.FC = () => {
+import { TopBuyersDrilldown } from '../insights/TopBuyersDrilldown';
+import { TopWarehousesDrilldown } from '../insights/TopWarehousesDrilldown';
+
+export type SalesSubTab = 'overview' | 'buyers' | 'warehouses';
+
+const SALES_SUB_TABS = [
+  { id: 'overview' as const, label: 'Overview & Analytics', icon: BarChart3 },
+  { id: 'buyers' as const, label: 'Top Buyers', icon: Users },
+  { id: 'warehouses' as const, label: 'Top Warehouses / DCs', icon: Building2 },
+] as const;
+
+export interface SalesDataViewProps {
+  onOpenLotHub?: (lot: any) => void;
+}
+
+export const SalesDataView: React.FC<SalesDataViewProps> = ({ onOpenLotHub }) => {
   const dispatch = useDispatch();
   const { salesRecords } = useSelector((state: RootState) => state.ingestion);
   const salesAnalytics = useSelector(selectSalesAnalytics);
-  const salesAnalyticsLoading = useSelector(selectSalesAnalyticsLoading);
   const selectedSupplier = useSelector((state: RootState) => state.ingestion?.selectedSupplier);
 
   // Global Interactive Filters
@@ -41,6 +54,32 @@ export const SalesDataView: React.FC = () => {
   const [dcFilter, setDcFilter] = useState<string>('all');
   const [activeLeaderboardTab, setActiveLeaderboardTab] = useState<'buyers' | 'dcs'>('buyers');
   const [activeScatterPoint, setActiveScatterPoint] = useState<any | null>(null);
+
+  // Sub-Navigation State & Keyboard ARIA Tab Handling
+  const [salesSubTab, setSalesSubTab] = useState<SalesSubTab>('overview');
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const handleTabKeyDown = (e: React.KeyboardEvent, index: number) => {
+    let nextIndex = index;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      nextIndex = (index + 1) % SALES_SUB_TABS.length;
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      nextIndex = (index - 1 + SALES_SUB_TABS.length) % SALES_SUB_TABS.length;
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      nextIndex = 0;
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      nextIndex = SALES_SUB_TABS.length - 1;
+    } else {
+      return;
+    }
+    const nextTab = SALES_SUB_TABS[nextIndex];
+    setSalesSubTab(nextTab.id);
+    tabRefs.current[nextIndex]?.focus();
+  };
 
   useEffect(() => {
     dispatch(fetchSalesRecordsThunk() as any);
@@ -519,9 +558,61 @@ export const SalesDataView: React.FC = () => {
         </div>
       </div>
 
-      {/* 4. Interactive Charts Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Chart 1: Sales Revenue & Volume Trajectory */}
+      {/* 3.5. Segmented 3-Pill Sub-Navigation Shell */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div
+          role="tablist"
+          aria-label="Sales & Clearing Sub-navigation"
+          className="flex items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-slate-800/80 rounded-full border border-slate-200/80 dark:border-slate-700/80 w-fit"
+          id="sales-sub-nav-strip"
+        >
+          {SALES_SUB_TABS.map((tab, index) => {
+            const Icon = tab.icon;
+            const isSelected = salesSubTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                ref={(el) => {
+                  tabRefs.current[index] = el;
+                }}
+                role="tab"
+                id={`sales-tab-${tab.id}`}
+                aria-controls={`sales-tabpanel-${tab.id}`}
+                aria-selected={isSelected}
+                tabIndex={isSelected ? 0 : -1}
+                onClick={() => setSalesSubTab(tab.id)}
+                onKeyDown={(e) => handleTabKeyDown(e, index)}
+                className={`px-4 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 transition-all cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#0f4cc9] text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 border border-transparent'
+                }`}
+              >
+                <Icon
+                  className={`w-3.5 h-3.5 ${
+                    isSelected
+                      ? 'text-white'
+                      : 'text-slate-400 dark:text-slate-500'
+                  }`}
+                />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 4. Sub-Tab Panels */}
+      {salesSubTab === 'overview' && (
+        <div
+          role="tabpanel"
+          id="sales-tabpanel-overview"
+          aria-labelledby="sales-tab-overview"
+          className="flex flex-col gap-5"
+        >
+          {/* Interactive Charts Dashboard Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Chart 1: Sales Revenue & Volume Trajectory */}
         <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-xs flex flex-col gap-4">
           <div className="flex justify-between items-start">
             <div>
@@ -965,8 +1056,71 @@ export const SalesDataView: React.FC = () => {
           </div>
         )}
       </div>
+        </div>
+      )}
+
+      {/* Tab Panel: Top Buyers */}
+      <div
+        role="tabpanel"
+        id="sales-tabpanel-buyers"
+        aria-labelledby="sales-tab-buyers"
+        data-testid="sales-subview-buyers"
+        className={`flex flex-col gap-5 ${salesSubTab === 'buyers' ? '' : 'hidden'}`}
+      >
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200/80 dark:border-slate-800 p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0">
+                Top Buyers Performance &amp; Transaction Drilldown
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 m-0">
+                Detailed closeout ledger and purchasing volume breakdown across buyer partners.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <TopBuyersDrilldown
+          topBuyers={salesAnalytics?.topBuyers}
+          onOpenLotHub={onOpenLotHub}
+        />
+      </div>
+
+      {/* Tab Panel: Top Warehouses / DCs */}
+      <div
+        role="tabpanel"
+        id="sales-tabpanel-warehouses"
+        aria-labelledby="sales-tab-warehouses"
+        data-testid="sales-subview-warehouses"
+        className={`flex flex-col gap-5 ${salesSubTab === 'warehouses' ? '' : 'hidden'}`}
+      >
+        <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200/80 dark:border-slate-800 p-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 m-0">
+                Top Warehouses / DCs Clearing Performance
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 m-0">
+                Fulfillment clearing throughput, case recovery percentages, and facility ledgers.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <TopWarehousesDrilldown
+          topWarehouses={salesAnalytics?.topWarehouses}
+          onOpenLotHub={onOpenLotHub}
+        />
+      </div>
     </div>
   );
 };
+
 
 export default SalesDataView;
