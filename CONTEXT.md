@@ -145,8 +145,14 @@
   _Avoid_: `Simple File Dropzone`, `Upload-Only Banner`.
 - **Google Sheets Ingestion Sync**: The automated inbound data integration connector in the Ingestion Hub linking a supplier's Google Spreadsheet to the surplus inventory pipeline, periodically polling or ingesting spreadsheet rows into staged inventory lots with column schema normalization.
   _Avoid_: `Insight Google Sheets Sync`, `Outbound Sheet Export`.
-- **Google Sheets Configuration Drawer**: The slide-over configuration interface triggered by the "Google Sheets Sync" connector card in the Ingestion Hub, presenting OAuth connection status, authorized Google Workspace account details, spreadsheet selector, worksheet tab picker, column mapping preset selector, and sync schedule settings.
-  _Avoid_: `Sheets Popup Modal`, `Raw Webhook Settings`.
+- **Google Sheets Configuration Drawer**: The slide-over configuration interface triggered by the "Google Sheets Sync" connector card in the Ingestion Hub, presenting the master Apps Script setup instructions, ingress key credentials, and the live Connected Sheets Roster.
+  _Avoid_: `Single-Sheet Settings`, `OAuth Credentials Form`.
+- **Dynamic Multi-Sheet Ingress**: The architecture where a supplier's single master ingress key allows multiple independent Google Spreadsheets and worksheet tabs to dynamically auto-register and stream inventory batches upon their first webhook dispatch.
+  _Avoid_: `Single-Sheet Sync Lock`, `Per-Sheet API Keys`.
+- **Connected Sheets Roster**: The interactive table and status registry inside the Google Sheets Configuration Drawer rendering every connected spreadsheet (`Spreadsheet ID`, `Worksheet Tab Name`, `Last Synced`, `Lot Count`, and `Sync Status`) dynamically discovered through webhook traffic.
+  _Avoid_: `Static Sheet Inputs`, `Manual Sheet Coordinate Box`.
+- **Per-Sheet Template Mapping**: The schema mapping paradigm where each dynamically discovered spreadsheet maintains an autonomous column mapping template (`SupplierTemplate`), applying canonical heuristic suggestions on first ingest while providing an in-situ 'Edit Mapping' action in the Connected Sheets Roster.
+  _Avoid_: `Monolithic Supplier Schema`, `Forced Uniform Columns`.
 - **Google Sheets Ingress Webhook Trigger**: The authenticated event-driven HTTP endpoint (`/api/v1/ingestion/google-sheets/webhook`) invoked by a Google Apps Script installable `onChange` trigger or native sheet menu action, accepting pushed row data or change alerts with cryptographic supplier token verification.
   _Avoid_: `Polling Ingress Daemon`, `Google Drive Watch Channel`.
 - **Native Sheet Action Menu**: The client-side menu extension injected into the supplier's Google Spreadsheet toolbar ("SpoilerAlert OS ⚡ > Sync to Platform Now") enabling warehouse operators to dispatch immediate inventory synchronization directly from the Google Sheets interface.
@@ -158,8 +164,12 @@
 - **Google Sheets Sync Configuration**: The persisted integration record (`GoogleSheetsSyncConfig`) linking a supplier ID to a Google Spreadsheet ID, sheet tab name, sync cadence, sync status (`idle`, `syncing`, `error`), last sync timestamp, and bound `SupplierTemplate` column mapping.
 - **Initial In-Situ Mapping Handshake**: The user verification step during Google Sheets setup where sample rows from the external sheet are rendered into `GridMapperTable` for supplier confirmation before autonomous background sync is activated.
   _Avoid_: `Blind Ingestion`, `Direct Sheet Pipe`.
-- **Idempotent Inventory Sheet Reconciliation**: The synchronization logic matching inbound spreadsheet rows against existing `InventoryLot` documents via composite natural key (`sku` + `lotNumber`), updating mutable physical inventory properties (quantity, price, location) while maintaining campaign bindings, bids, and historical audit immutability.
-  _Avoid_: `Destructive Sheet Purge`, `Blind Batch Duplication`.
+- **Ingestion Batch (`IngestionBatch`)**: The standardized domain contract (`supplierId`, `headers`, `rows`, `columnMappings`, `source`, `metadata`) decoupling raw tabular ingestion sources (CSV files, Google Sheets webhooks, manual grid paste) from physical database models.
+  _Avoid_: `Raw CSV Grid`, `Sheet Webhook Payload`.
+- **Batch Ingestion Engine**: The centralized core execution pipeline (`ingestService.processBatch`) behind the tabular ingestion seam. Transforms heterogeneous tabular inputs (`IngestionBatch`) into normalized, deduplicated `ProductMaster` records and staged/reconciled `InventoryLot` documents across all ingestion channels (CSV uploads, Google Sheets webhooks, direct grid pushes).
+  _Avoid_: `Ad-Hoc Ingestion Loop`, `Per-Source Ingestion Pipeline`.
+- **Idempotent Tabular Ingestion Reconciliation**: The synchronization logic matching inbound tabular rows against existing `InventoryLot` documents via composite natural key (`distributionCenterId` + `productId` + `lotNumber`), updating mutable physical inventory properties (quantity, price, location, remaining shelf life) while maintaining campaign bindings, bids, and historical audit immutability across all ingestion sources (Google Sheets sync, CSV uploads, manual grid).
+  _Avoid_: `Destructive Sheet Purge`, `Blind Batch Duplication`, `Source-Specific Reconciliation Drift`.
 - **Unified Surplus Data Ingestion Modal**: The centralized modal overlay triggered by the "CSV / Excel Upload" connector or pipeline import action buttons, providing a 2-step batch upload flow: 1) dataset destination selection (`Inventory Data`, `Sales Data`, or `Buyer Data`), and 2) file drag-and-drop / selection that advances to the Ingestion Mapping Window.
   _Avoid_: `Fragmented Upload Modals`, `Per-Tab File Uploaders`.
 - **Progressive Row Inspection Drawer**: The collapsible in-situ accordion inspection workbench expanding directly beneath table rows (across Inventory, Sales, and Buyer pipelines) when selected, presenting detailed cold-chain/environmental telemetry, FEFO lifecycle matrix, date audit logs, financial settlement remittance, and context-sensitive operational actions.

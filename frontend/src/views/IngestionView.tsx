@@ -6,7 +6,6 @@ import {
   SalesRegistryPanel,
   InventoryRegistryPanel,
   IngestionHubConnectors,
-  IngestionTelemetryBar,
   PipelineSwitcherBar,
   UnifiedIngestionModal,
   GoogleSheetsConfigDrawer,
@@ -89,9 +88,6 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
         onOpenUploadModal={() => handleOpenUploadModal(pipelineTab as IngestionTarget)}
         onOpenGoogleSheetsDrawer={() => setIsGoogleSheetsDrawerOpen(true)}
       />
-
-      {/* 2.5 Live Ingestion Telemetry Bar */}
-      <IngestionTelemetryBar className="mt-4" />
 
       {/* 3. Master Pipeline Switcher Bar */}
       <PipelineSwitcherBar

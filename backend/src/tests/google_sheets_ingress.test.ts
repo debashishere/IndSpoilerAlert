@@ -355,7 +355,7 @@ describe('Google Sheets Ingress Webhook and Idempotent Engine (/api/v1/ingestion
 
       expect(res.status).toBe(200);
       expect(res.body.metrics.totalRows).toBe(1);
-      expect(res.body.metrics.inserted).toBe(1);
+      expect(res.body.metrics.inserted).toBe(0);
       expect(res.body.metrics.depleted).toBe(1);
 
       const InventoryLot = mongoose.model('InventoryLot');

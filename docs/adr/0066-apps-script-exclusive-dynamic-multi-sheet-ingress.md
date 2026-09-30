@@ -1,0 +1,3 @@
+# 66. Google Apps Script Exclusive Integration and Dynamic Multi-Sheet Ingress
+
+To eliminate fragile third-party OAuth delegation friction and deceptive static URL pull mechanisms that fail against private spreadsheets, Google Sheets Ingestion is streamlined exclusively around authenticated Google Apps Script push webhooks (`/api/v1/ingestion/google-sheets/webhook`). Suppliers utilize a single master Ingress Key (`X-Ingress-Key`), enabling any authorized Google Spreadsheet to auto-register upon its initial sync handshake and stream inventory batches dynamically into a unified Connected Sheets Roster.

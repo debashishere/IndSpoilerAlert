@@ -258,4 +258,52 @@ describe('Slice 2: GoogleSheetsConfigDrawer Component Tests', () => {
     expect(errorBanner?.className).toContain('bg-[#fef2f2]');
     expect(errorBanner?.className).toContain('text-[#b91c1c]');
   });
+
+  it('verifies dynamic handshake mapping handoff through unified ingestion seam', async () => {
+    const handleMappingHandoff = vi.fn();
+    const dynamicSampleRows = {
+      documentId: 'gsheet-handshake-1BxiMVs0',
+      fileName: 'Google Sheets: Inventory Master',
+      rawGrid: [
+        ['SKU / Item Code', 'Product Title', 'Cases Available', 'Expiry Date', 'Unit Price ($)', 'Warehouse Location'],
+        ['SKU-ORG-101', 'Organic Almond Milk 1L', '240', '2026-11-30', '3.85', 'Cold Facility A']
+      ],
+      suggestedMapping: {
+        sku: 'SKU / Item Code',
+        description: 'Product Title',
+        quantity: 'Cases Available',
+        expirationDate: 'Expiry Date',
+        originalPrice: 'Unit Price ($)',
+        warehouse: 'Warehouse Location'
+      }
+    };
+
+    (googleSheetsSyncService.fetchSampleRows as any).mockResolvedValueOnce(dynamicSampleRows);
+
+    render(
+      <Provider store={store}>
+        <GoogleSheetsConfigDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          supplierId="sup-1"
+          supplierName="Acme Organics"
+          onMappingHandoff={handleMappingHandoff}
+        />
+      </Provider>
+    );
+
+    const handshakeBtn = screen.getByRole('button', {
+      name: /Fetch Sample Rows & Open Column Mapper/i,
+    });
+    fireEvent.click(handshakeBtn);
+
+    await waitFor(() => {
+      expect(handleMappingHandoff).toHaveBeenCalledWith(dynamicSampleRows);
+    });
+
+    // Check that Redux store inventoryParsedResult is populated with dynamic sample rows
+    const state = store.getState().ingestion;
+    expect(state.inventoryParsedResult).toEqual(dynamicSampleRows);
+  });
 });
+

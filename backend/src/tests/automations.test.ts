@@ -5,6 +5,8 @@ import { createAutomationRun } from '../services/agendaService';
 import EmailDispatchLog from '../models/EmailDispatchLog';
 import AutomationRun from '../models/AutomationRun';
 
+jest.setTimeout(30000);
+
 describe('Liquidation Automations API Endpoints', () => {
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {

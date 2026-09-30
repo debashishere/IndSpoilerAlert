@@ -178,53 +178,58 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
 
   it('recalculates live Ingestion Telemetry metrics when sheet lots are synced into the pipeline', async () => {
     const { setInventoryList } = await import('../store/slices/inventorySlice');
+    const { useIngestionTelemetry } = await import('../components/domain/ingestion/hooks/useIngestionTelemetry');
+    const { renderHook } = await import('@testing-library/react');
 
-    render(
-      <Provider store={store}>
-        <IngestionView />
-      </Provider>
+    const wrapper = ({ children }: { children: React.ReactNode }) => (
+      <Provider store={store}>{children}</Provider>
     );
 
+    const { result } = renderHook(() => useIngestionTelemetry(), { wrapper });
+
     // Initial state: 0 critical lots
-    expect(screen.getByText('0 Lots')).toBeDefined();
+    expect(result.current.metrics.criticalRsl).toBe('0 Lots');
 
     // Simulate Google Sheets sync updating inventory with critical and standard lots
     const now = new Date();
     const criticalExpiry = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString(); // 5 days remaining
     const normalExpiry = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000).toISOString();
 
-    store.dispatch(
-      setInventoryList([
-        {
-          _id: 'lot-gs-1',
-          lotNumber: 'LOT-GS-001',
-          sku: 'GS-ALMOND-101',
-          description: 'Organic Almond Milk 1L',
-          quantityCases: 100,
-          availableQty: 100,
-          costPerCase: 20,
-          standardSellPrice: 25,
-          expirationDate: criticalExpiry,
-          status: 'critical',
-        },
-        {
-          _id: 'lot-gs-2',
-          lotNumber: 'LOT-GS-002',
-          sku: 'GS-OAT-102',
-          description: 'Barista Oat Milk 1L',
-          quantityCases: 200,
-          availableQty: 200,
-          costPerCase: 15,
-          standardSellPrice: 18,
-          expirationDate: normalExpiry,
-          status: 'active',
-        },
-      ])
-    );
+    const { act } = await import('@testing-library/react');
+    act(() => {
+      store.dispatch(
+        setInventoryList([
+          {
+            _id: 'lot-gs-1',
+            lotNumber: 'LOT-GS-001',
+            sku: 'GS-ALMOND-101',
+            description: 'Organic Almond Milk 1L',
+            quantityCases: 100,
+            availableQty: 100,
+            costPerCase: 20,
+            standardSellPrice: 25,
+            expirationDate: criticalExpiry,
+            status: 'critical',
+          },
+          {
+            _id: 'lot-gs-2',
+            lotNumber: 'LOT-GS-002',
+            sku: 'GS-OAT-102',
+            description: 'Barista Oat Milk 1L',
+            quantityCases: 200,
+            availableQty: 200,
+            costPerCase: 15,
+            standardSellPrice: 18,
+            expirationDate: normalExpiry,
+            status: 'active',
+          },
+        ])
+      );
+    });
 
-    // After sheet sync hydration, telemetry bar must show 1 Critical Lot (<14 Days)
+    // After sheet sync hydration, telemetry hook recalculates to show 1 Critical Lot (<14 Days)
     await waitFor(() => {
-      expect(screen.getByText('1 Lot')).toBeDefined();
+      expect(result.current.metrics.criticalRsl).toBe('1 Lot');
     });
   });
 

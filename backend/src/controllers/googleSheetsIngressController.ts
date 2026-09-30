@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
+import GoogleSheetsSyncConfig from '../models/GoogleSheetsSyncConfig';
+import Supplier from '../models/Supplier';
+import SupplierTemplate from '../models/SupplierTemplate';
 import { validateIngressKey, processGoogleSheetsWebhook } from '../services/googleSheetsIngressService';
+import { generateGoogleAppsScript } from '../services/googleAppsScriptGenerator';
+import * as ingestService from '../services/ingestService';
 
 export async function authenticateIngressKeyHeader(req: Request): Promise<{ config?: any; error?: { status: number; message: string } }> {
   const rawIngressKey = req.headers['x-ingress-key'] as string;
@@ -55,9 +60,6 @@ export async function getScriptTemplate(req: Request, res: Response) {
       });
     }
 
-    const GoogleSheetsSyncConfig = (await import('../models/GoogleSheetsSyncConfig')).default;
-    const { generateGoogleAppsScript } = await import('../services/googleAppsScriptGenerator');
-
     const config = await GoogleSheetsSyncConfig.findOne({ supplierId: supplierId.trim() });
     if (!config) {
       return res.status(404).json({
@@ -109,8 +111,6 @@ export async function testPingGoogleSheets(req: Request, res: Response) {
     }
 
     const config = auth.config;
-
-    const Supplier = (await import('../models/Supplier')).default;
     const supplier = await Supplier.findById(config.supplierId);
 
     return res.status(200).json({
@@ -143,38 +143,15 @@ export async function getSampleRows(req: Request, res: Response) {
       });
     }
 
-    const SupplierTemplate = (await import('../models/SupplierTemplate')).default;
-    const existingTemplate = await SupplierTemplate.findOne({ supplierId });
-
-    // Deterministic sample headers and preview rows for spreadsheet handshake
-    const rawHeaders = ['SKU / Item Code', 'Product Title', 'Cases Available', 'Expiry Date', 'Unit Price ($)', 'Warehouse Location'];
-    const sampleRow1 = ['SKU-ORG-101', 'Organic Almond Milk 1L', '240', '2026-11-30', '3.85', 'Cold Facility A'];
-    const sampleRow2 = ['SKU-ORG-102', 'Organic Oat Barista 1L', '180', '2026-12-15', '4.10', 'Ambient Bay 4'];
-    const sampleRow3 = ['SKU-ORG-103', 'Greek Yogurt Plain 500g', '95', '2026-10-18', '2.40', 'Cold Facility B'];
-
-    let suggestedMapping: Record<string, string> = {
-      sku: 'SKU / Item Code',
-      description: 'Product Title',
-      quantity: 'Cases Available',
-      expirationDate: 'Expiry Date',
-      originalPrice: 'Unit Price ($)',
-      warehouse: 'Warehouse Location'
-    };
-
-    if (existingTemplate && existingTemplate.columnMappings) {
-      const templateMappings: Record<string, string> = {};
-      existingTemplate.columnMappings.forEach((val: string, key: string) => {
-        templateMappings[key] = val;
-      });
-      suggestedMapping = { ...suggestedMapping, ...templateMappings };
-    }
+    const sampleResult = await ingestService.getGoogleSheetsSampleRows({
+      supplierId,
+      spreadsheetId,
+      sheetName
+    });
 
     return res.status(200).json({
       success: true,
-      documentId: `gsheet-handshake-${spreadsheetId.slice(0, 8)}`,
-      fileName: `Google Sheets: ${sheetName}`,
-      rawGrid: [rawHeaders, sampleRow1, sampleRow2, sampleRow3],
-      suggestedMapping
+      ...sampleResult
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -195,9 +172,6 @@ export async function syncNowGoogleSheets(req: Request, res: Response) {
         error: 'Unauthorized: Missing X-Ingress-Key header or supplier identifier.'
       });
     }
-
-    const GoogleSheetsSyncConfig = (await import('../models/GoogleSheetsSyncConfig')).default;
-    const InventoryLot = (await import('../models/InventoryLot')).default;
 
     let config = null;
     if (rawIngressKey) {
@@ -224,16 +198,15 @@ export async function syncNowGoogleSheets(req: Request, res: Response) {
     if (req.body?.rows && Array.isArray(req.body.rows)) {
       const ingressResult = await processGoogleSheetsWebhook(config, req.body);
       metrics = ingressResult.metrics;
+      config = await GoogleSheetsSyncConfig.findById(config._id) || config;
     } else {
-      config.syncStatus = 'success';
-      config.lastSyncedAt = new Date();
-      await config.save();
+      const updatedConfig = await ingestService.recordSyncCompletion(config._id, metrics, 'success');
+      if (updatedConfig) {
+        config = updatedConfig;
+      }
     }
 
-    const syncedLotCount = await InventoryLot.countDocuments({
-      supplierId: config.supplierId,
-      status: { $ne: 'depleted' }
-    });
+    const syncedLotCount = await ingestService.getActiveLotCount(config.supplierId);
 
     return res.status(200).json({
       success: true,
@@ -262,40 +235,17 @@ export async function saveMappingHandshake(req: Request, res: Response) {
       });
     }
 
-    const SupplierTemplate = (await import('../models/SupplierTemplate')).default;
-    const GoogleSheetsSyncConfig = (await import('../models/GoogleSheetsSyncConfig')).default;
-
-    let template = await SupplierTemplate.findOne({
+    const { supplierTemplateId } = await ingestService.saveGoogleSheetsMapping({
       supplierId,
-      templateName: templateName || 'Google Sheets Template'
+      spreadsheetId,
+      sheetName,
+      templateName,
+      columnMappings
     });
-
-    if (template) {
-      template.columnMappings = columnMappings;
-      await template.save();
-    } else {
-      template = await SupplierTemplate.create({
-        supplierId,
-        templateName: templateName || 'Google Sheets Template',
-        columnMappings,
-        hasHeaderRow: true,
-        dateFormat: 'YYYY-MM-DD',
-        delimiter: ','
-      });
-    }
-
-    // Bind template to GoogleSheetsSyncConfig
-    const config = await GoogleSheetsSyncConfig.findOne({ supplierId });
-    if (config) {
-      config.supplierTemplateId = template._id;
-      if (spreadsheetId) config.spreadsheetId = spreadsheetId;
-      if (sheetName) config.sheetName = sheetName;
-      await config.save();
-    }
 
     return res.status(200).json({
       success: true,
-      supplierTemplateId: template._id.toString(),
+      supplierTemplateId,
       message: 'Google Sheets column mapping saved and bound to sync configuration successfully.'
     });
   } catch (error: any) {

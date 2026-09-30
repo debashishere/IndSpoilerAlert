@@ -541,7 +541,7 @@ export const selectFilteredInventoryLots = createSelector(
       const matchesCategory = !category || categoryName === category;
 
       const lotStatusLower = (lot.status || '').toLowerCase();
-      const filterStatusLower = status.toLowerCase();
+      const filterStatusLower = (status || '').toLowerCase();
       let matchesStatus = !status || lotStatusLower === filterStatusLower;
       if (!matchesStatus && status) {
         if (filterStatusLower === 'active' || filterStatusLower === 'active list') {

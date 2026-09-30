@@ -480,6 +480,9 @@ export async function executeWorkflowFallback({ runId }: { runId: string }) {
     const publishedListingIds: mongoose.Types.ObjectId[] = [];
     const complianceHoldLotIds: mongoose.Types.ObjectId[] = [];
 
+    run.status = 'fallback_executed';
+    await run.save();
+
     for (const lotId of run.snapshotInventoryIds) {
       try {
         const lot = await InventoryLot.findById(lotId).populate('complianceDocs');

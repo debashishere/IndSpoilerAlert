@@ -11,9 +11,31 @@ import InventoryLot from '../models/InventoryLot';
 import Buyer from '../models/Buyer';
 import BuyerList from '../models/BuyerList';
 import Sale from '../models/Sale';
+import GoogleSheetsSyncConfig, { ISyncMetrics, IGoogleSheetsSyncConfig } from '../models/GoogleSheetsSyncConfig';
 import { suggestMappings } from '../utils/mapper';
 import { uploadToS3, sendSQSMessage } from '../utils/aws';
 import { translateAttributes, computeGridAggregates } from './translatorService';
+import {
+  IngestionBatch,
+  IngestionBatchResult,
+  IngestionSource,
+  parseIngestionDate,
+  calculateRemainingShelfLife,
+  generateFallbackSku,
+  getCategoryShelfLifeDays,
+  categoryDefaults
+} from '../utils/ingestionNormalization';
+
+export {
+  IngestionBatch,
+  IngestionBatchResult,
+  IngestionSource,
+  parseIngestionDate,
+  calculateRemainingShelfLife,
+  generateFallbackSku,
+  getCategoryShelfLifeDays,
+  categoryDefaults
+};
 
 export function getSidecarUrl(): string {
   return process.env.SIDE_CAR_URL || process.env.SIDECAR_URL || 'http://localhost:8000';
@@ -402,55 +424,8 @@ export async function confirmIngestion(
     throw new Error('Document does not contain any data rows.');
   }
 
-  const headers = docImport.rawGrid[0];
-  const skuHeader = mappings.sku;
-  const descHeader = mappings.description;
-  const brandHeader = mappings.brand;
-  const qtyHeader = mappings.quantityCases || mappings.quantity;
-  const availableQtyHeader = mappings.availableQty;
-  const expHeader = mappings.expirationDate;
-  const priceHeader = mappings.originalPrice;
-  const lotNumberHeader = mappings.lotNumber;
-  const productionDateHeader = mappings.productionDate;
-  const categoryHeader = mappings.category;
-  const subCategoryHeader = mappings.subCategory;
-  const statusHeader = mappings.status;
-  const tempMinHeader = mappings.temperatureMin;
-  const tempMaxHeader = mappings.temperatureMax;
-  const standardSellPriceHeader = mappings.standardSellPrice;
-  const warehouseHeader = mappings.warehouse;
-  const commentHeader = mappings.comment;
-  const fdaRegulatedHeader = mappings.fdaRegulated;
-
-  const skuIdx = skuHeader ? headers.indexOf(skuHeader) : -1;
-  const descIdx = descHeader ? headers.indexOf(descHeader) : -1;
-  const brandIdx = brandHeader ? headers.indexOf(brandHeader) : -1;
-  const qtyIdx = qtyHeader ? headers.indexOf(qtyHeader) : -1;
-  const availableQtyIdx = availableQtyHeader ? headers.indexOf(availableQtyHeader) : -1;
-  const expIdx = expHeader ? headers.indexOf(expHeader) : -1;
-  const priceIdx = priceHeader ? headers.indexOf(priceHeader) : -1;
-  const lotNumberIdx = lotNumberHeader ? headers.indexOf(lotNumberHeader) : -1;
-  const productionDateIdx = productionDateHeader ? headers.indexOf(productionDateHeader) : -1;
-  const categoryIdx = categoryHeader ? headers.indexOf(categoryHeader) : -1;
-  const subCategoryIdx = subCategoryHeader ? headers.indexOf(subCategoryHeader) : -1;
-  const statusIdx = statusHeader ? headers.indexOf(statusHeader) : -1;
-  const tempMinIdx = tempMinHeader ? headers.indexOf(tempMinHeader) : -1;
-  const tempMaxIdx = tempMaxHeader ? headers.indexOf(tempMaxHeader) : -1;
-  const standardSellPriceIdx = standardSellPriceHeader ? headers.indexOf(standardSellPriceHeader) : -1;
-  const warehouseIdx = warehouseHeader ? headers.indexOf(warehouseHeader) : -1;
-  const fdaRegulatedIdx = fdaRegulatedHeader ? headers.indexOf(fdaRegulatedHeader) : -1;
-  const commentIdx = commentHeader ? headers.indexOf(commentHeader) : -1;
-
-  // Determine unmapped headers list
-  const mappedHeadersList = Object.values(mappings).filter(Boolean) as string[];
-  const unmappedColumnIndices: { header: string; idx: number }[] = [];
-  headers.forEach((header, idx) => {
-    if (!mappedHeadersList.includes(header)) {
-      unmappedColumnIndices.push({ header, idx });
-    }
-  });
-
   // Save column layout template if requested
+  let savedTemplateId: string | undefined = undefined;
   if (saveTemplate) {
     const nameOfTemplate = templateName || `Template_${Date.now()}`;
     const updatePayload: Record<string, any> = {
@@ -461,319 +436,48 @@ export async function confirmIngestion(
     if (Array.isArray(semanticRulesInput)) {
       updatePayload.semanticRules = semanticRulesInput;
     }
-    await SupplierTemplate.findOneAndUpdate(
+    const savedTemplate = await SupplierTemplate.findOneAndUpdate(
       { supplierId },
       updatePayload,
       { upsert: true, new: true }
     );
+    if (savedTemplate) {
+      savedTemplateId = savedTemplate._id.toString();
+    }
   }
 
-
-  // Find supplier distribution center (DC)
-  let dc = await DistributionCenter.findOne({ supplierId });
-  if (!dc) {
-    const supplier = await Supplier.findById(supplierId);
-    const supplierName = supplier?.name || 'Unknown';
-    const companyCode = supplier?.companyCode || 'SUP';
-    
-    dc = new DistributionCenter({
-      supplierId,
-      name: `${supplierName} Default DC`,
-      code: `${companyCode}-DEFAULT-DC`,
-      address: '100 Logistics Way, Chicago, IL',
-      coordinates: { lat: 41.8781, lng: -87.6298 },
-      coldStorage: true
-    });
-    await dc.save();
-  }
-  const distributionCenterId = dc._id;
-
-  const lotIds: string[] = [];
+  const headers = docImport.rawGrid[0];
   const rows = docImport.rawGrid.slice(1);
-  const importErrors: string[] = [];
 
-  const existingTemplate = await SupplierTemplate.findOne({ supplierId });
-  const semanticRules = Array.isArray(semanticRulesInput) ? semanticRulesInput : (existingTemplate?.semanticRules || []);
-  const aggregates = computeGridAggregates(docImport.rawGrid, semanticRules as any);
-
-
-  for (let i = 0; i < rows.length; i++) {
-
-    const row = rows[i];
-    const rawSku = skuIdx !== -1 ? row[skuIdx]?.trim() : '';
-    const rawDesc = descIdx !== -1 ? row[descIdx]?.trim() : '';
-    const rawBrand = brandIdx !== -1 ? row[brandIdx]?.trim() : '';
-    const rawQty = qtyIdx !== -1 ? row[qtyIdx]?.trim() : '';
-    const rawExp = expIdx !== -1 ? row[expIdx]?.trim() : '';
-    const rawPrice = priceIdx !== -1 ? row[priceIdx]?.trim() : '';
-    const rawLotNumber = lotNumberIdx !== -1 ? row[lotNumberIdx]?.trim() : '';
-    const rawProductionDate = productionDateIdx !== -1 ? row[productionDateIdx]?.trim() : '';
-    const rawCategory = categoryIdx !== -1 ? row[categoryIdx]?.trim() : '';
-    const rawSubCategory = subCategoryIdx !== -1 ? row[subCategoryIdx]?.trim() : '';
-    const rawListPrice = standardSellPriceIdx !== -1 ? row[standardSellPriceIdx]?.trim() : '';
-    const rawWarehouse = warehouseIdx !== -1 ? row[warehouseIdx]?.trim() : '';
-    const rawComment = commentIdx !== -1 ? row[commentIdx]?.trim() : '';
-
-    if (!rawSku && !rawDesc) {
-      // Skip entirely empty row
-      continue;
+  const batch: IngestionBatch = {
+    supplierId,
+    headers,
+    rows,
+    columnMappings: mappings,
+    source: 'csv',
+    metadata: {
+      documentId: docImport._id.toString(),
+      fileName: docImport.fileName,
+      ...(Array.isArray(semanticRulesInput) ? { semanticRules: semanticRulesInput } : {})
     }
+  };
 
-    let finalSku = rawSku;
-    if (!finalSku && rawDesc) {
-      // Fallback: generate unique reproducible SKU from description
-      finalSku = rawDesc
-        .toUpperCase()
-        .replace(/[^A-Z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
-      if (!finalSku) {
-        finalSku = 'SKU-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-      }
-    }
-
-    if (!finalSku || !rawDesc) {
-      importErrors.push(`Row ${i + 1}: Missing SKU or Description.`);
-      continue;
-    }
-
-    // Parse quantity and price
-    const quantityCases = parseInt(rawQty ? rawQty.replace(/,/g, '') : '0', 10) || 0;
-    const costPerCase = parseFloat(rawPrice ? rawPrice.replace(/[$,]/g, '') : '0') || 0;
-    const listPrice = parseFloat(rawListPrice ? rawListPrice.replace(/[$,]/g, '') : '0') || costPerCase;
-
-    // Parse expiration date
-    let expirationDate = new Date(rawExp);
-    if (isNaN(expirationDate.getTime()) && rawExp) {
-      // Try common formats (e.g., MM/DD/YYYY or DD-MM-YYYY)
-      const dateParts = rawExp.split(/[\/\-]/);
-      if (dateParts.length === 3) {
-        const part0 = parseInt(dateParts[0], 10);
-        const part1 = parseInt(dateParts[1], 10);
-        const part2 = parseInt(dateParts[2], 10);
-        const candidate = new Date(part2 < 100 ? 2000 + part2 : part2, part0 - 1, part1);
-        if (!isNaN(candidate.getTime())) {
-          expirationDate = candidate;
-        }
-      }
-    }
-
-    if (isNaN(expirationDate.getTime())) {
-      // Default to 30 days out if invalid/empty
-      expirationDate = new Date();
-      expirationDate.setDate(expirationDate.getDate() + 30);
-    }
-
-    // Parse production date
-    let productionDate: Date | undefined = undefined;
-    if (rawProductionDate) {
-      const parsedMfg = new Date(rawProductionDate);
-      if (!isNaN(parsedMfg.getTime())) {
-        productionDate = parsedMfg;
-      } else {
-        // Try common formats (e.g. YYYY-MM-DD, MM/DD/YYYY)
-        const dateParts = rawProductionDate.split(/[\/\-]/);
-        if (dateParts.length === 3) {
-          const part0 = parseInt(dateParts[0], 10);
-          const part1 = parseInt(dateParts[1], 10);
-          const part2 = parseInt(dateParts[2], 10);
-          const candidate = new Date(part2 < 100 ? 2000 + part2 : part2, part0 - 1, part1);
-          if (!isNaN(candidate.getTime())) {
-            productionDate = candidate;
-          }
-        }
-      }
-    }
-
-    // Resolve warehouse / distribution center dynamically
-    let rowDistributionCenterId = distributionCenterId;
-    if (rawWarehouse) {
-      let rowDc = await DistributionCenter.findOne({ supplierId, name: rawWarehouse });
-      if (!rowDc) {
-        rowDc = new DistributionCenter({
-          supplierId,
-          name: rawWarehouse,
-          code: `${dc.code.split('-')[0]}-${rawWarehouse.toUpperCase().replace(/[^A-Z0-9]+/g, '-')}-DC`,
-          address: `${rawWarehouse}, United States`,
-          coordinates: { lat: 39.8283, lng: -98.5795 }, // Midpoint USA
-          coldStorage: true
-        });
-        await rowDc.save();
-      }
-      rowDistributionCenterId = rowDc._id;
-    }
-
-    // Call sidecar to normalize name and category
-    let clean_name = rawDesc;
-    let category = rawCategory || 'Dry Goods';
-    const sidecarUrl = getSidecarUrl();
-    if (!rawCategory) {
-      try {
-        const sidecarRes = await axios.post(`${sidecarUrl}/normalize-product-name`, {
-          name: rawDesc
-        });
-        if (sidecarRes.data) {
-          clean_name = sidecarRes.data.clean_name || rawDesc;
-          category = sidecarRes.data.category || 'Dry Goods';
-        }
-      } catch (err: any) {
-        console.error(`Error calling sidecar for row ${i + 1} normalization:`, err.message);
-      }
-    } else {
-      try {
-        const sidecarRes = await axios.post(`${sidecarUrl}/normalize-product-name`, {
-          name: rawDesc
-        });
-        if (sidecarRes.data) {
-          clean_name = sidecarRes.data.clean_name || rawDesc;
-        }
-      } catch (err: any) {
-        console.error(`Error calling sidecar for name cleaning on row ${i + 1}:`, err.message);
-      }
-    }
-
-    // Category defaults for product shelf life when not explicitly set
-    const categoryDefaults: Record<string, number> = {
-      'Dairy': 45,
-      'Produce': 30,
-      'Meat': 90,
-      'Meat & Poultry': 90,
-      'Beverages': 120,
-      'Dry Goods': 180,
-      'Frozen Foods': 180
-    };
-    const defaultCategoryShelfLife = categoryDefaults[category] || 90;
-
-    // Find or create ProductMaster
-    let product = await ProductMaster.findOne({ supplierId, sku: finalSku });
-    if (!product) {
-      product = new ProductMaster({
-        supplierId,
-        sku: finalSku,
-        brand: rawBrand || undefined,
-        category,
-        subCategory: rawSubCategory || undefined,
-        description: clean_name,
-        shelfLifeDays: defaultCategoryShelfLife
-      });
-      await product.save();
-    } else {
-      // update description/category/brand/subCategory if changed
-      product.description = clean_name;
-      product.category = category;
-      if (rawBrand) product.brand = rawBrand;
-      if (rawSubCategory) product.subCategory = rawSubCategory;
-      if (!product.shelfLifeDays || product.shelfLifeDays === 30) {
-        product.shelfLifeDays = defaultCategoryShelfLife;
-      }
-      await product.save();
-    }
-
-    // Calculate remaining shelf life proportion
-    const today = new Date();
-    const diffTime = expirationDate.getTime() - today.getTime();
-    const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-    let totalShelfDays = product.shelfLifeDays || defaultCategoryShelfLife;
-    if (productionDate) {
-      const totalDiff = expirationDate.getTime() - productionDate.getTime();
-      const calcDays = Math.ceil(totalDiff / (1000 * 60 * 60 * 24));
-      if (calcDays > 0) totalShelfDays = calcDays;
-    }
-    const remainingShelfLife = Math.min(1.0, Math.max(0.0, Number((daysRemaining / totalShelfDays).toFixed(4))));
-
-    // Determine lot number (custom or generated)
-    const lotNumber = rawLotNumber || `LOT-${finalSku}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
-
-    // Populate dynamic attributes via Dynamic Data Translator
-    const rawUnmappedObject: Record<string, any> = {};
-
-    const rawStatus = statusIdx !== -1 ? row[statusIdx]?.trim().toLowerCase() : '';
-    const rawTempMinStr = tempMinIdx !== -1 ? row[tempMinIdx]?.trim() : '';
-    const rawTempMaxStr = tempMaxIdx !== -1 ? row[tempMaxIdx]?.trim() : '';
-    const rawAvailableQtyStr = availableQtyIdx !== -1 ? row[availableQtyIdx]?.trim() : '';
-    const rawFdaRegulated = fdaRegulatedIdx !== -1 ? row[fdaRegulatedIdx]?.trim() : '';
-
-    let parsedTempMin: number | undefined = undefined;
-    if (rawTempMinStr) {
-      const num = parseFloat(rawTempMinStr.replace(/[^\d\.\-]/g, ''));
-      if (!isNaN(num)) parsedTempMin = num;
-    }
-
-    let parsedTempMax: number | undefined = undefined;
-    if (rawTempMaxStr) {
-      const num = parseFloat(rawTempMaxStr.replace(/[^\d\.\-]/g, ''));
-      if (!isNaN(num)) parsedTempMax = num;
-    }
-
-    let lotAvailableQty = quantityCases;
-    if (rawAvailableQtyStr) {
-      const parsedAvail = parseInt(rawAvailableQtyStr.replace(/,/g, ''), 10);
-      if (!isNaN(parsedAvail)) lotAvailableQty = Math.max(0, parsedAvail);
-    }
-
-    const validStatuses = ['pending', 'active', 'sold', 'expired', 'donated', 'recycled'];
-    let lotStatus: 'pending' | 'active' | 'sold' | 'expired' | 'donated' | 'recycled' = 'pending';
-
-    if (validStatuses.includes(rawStatus)) {
-      lotStatus = rawStatus as any;
-    } else if (lotAvailableQty === 0) {
-      lotStatus = 'sold';
-    }
-
-    if (lotStatus === 'sold') {
-      lotAvailableQty = 0;
-    }
-
-    let isFdaRegulated = false;
-    if (rawFdaRegulated) {
-      const lower = rawFdaRegulated.toLowerCase();
-      isFdaRegulated = lower === 'true' || lower === 'yes' || lower === '1' || lower === 'y';
-    }
-
-    for (const col of unmappedColumnIndices) {
-      rawUnmappedObject[col.header] = row[col.idx]?.trim() || '';
-    }
-    const translated = translateAttributes(rawUnmappedObject, semanticRules as any, aggregates);
-
-    const attributes = new Map<string, any>(Object.entries(translated.attributes));
-    const rawAttributes = new Map<string, any>(Object.entries(translated.rawAttributes));
-
-    // Create InventoryLot
-    const inventoryLot = new InventoryLot({
-      supplierId,
-      distributionCenterId: rowDistributionCenterId,
-      productId: product._id,
-      lotNumber,
-      productionDate,
-      expirationDate,
-      remainingShelfLife,
-      quantityCases,
-      availableQty: lotAvailableQty,
-      costPerCase,
-      standardSellPrice: listPrice,
-      status: lotStatus,
-      fdaRegulated: isFdaRegulated,
-      temperatureMin: parsedTempMin,
-      temperatureMax: parsedTempMax,
-      comment: rawComment || '',
-      attributes,
-      rawAttributes
-    });
-
-
-    await inventoryLot.save();
-    lotIds.push(inventoryLot._id.toString());
-  }
+  const batchResult: IngestionBatchResult = await processBatch(batch);
 
   docImport.status = 'imported';
   docImport.supplierId = supplierId;
-  docImport.recordsParsed = lotIds.length;
-  docImport.importErrors = importErrors;
+  docImport.recordsParsed = batchResult.lotIds.length;
+  docImport.importErrors = batchResult.errors;
   await docImport.save();
 
   return {
-    countImported: lotIds.length,
-    lotIds,
-    errors: importErrors
+    countImported: batchResult.lotIds.length,
+    lotIds: batchResult.lotIds,
+    errors: batchResult.errors,
+    aggregates: batchResult.aggregates,
+    templateId: savedTemplateId,
+    importedLotsCount: batchResult.lotIds.length,
+    lots: batchResult.lotIds
   };
 }
 
@@ -1328,4 +1032,579 @@ export async function confirmBuyerIngestion(
   };
 }
 
+export async function processBatch(batch: IngestionBatch): Promise<IngestionBatchResult> {
+  const supplierId = await ensureValidSupplierId(batch.supplierId);
+  const headers = batch.headers || [];
+  const rows = batch.rows || [];
+
+  // Align mappings dynamically from batch.columnMappings or fallback to suggestMappings
+  let mappings = batch.columnMappings || {};
+  if (Object.keys(mappings).length === 0 || Object.values(mappings).every(v => !v)) {
+    mappings = suggestMappings(headers);
+  }
+
+  const skuHeader = mappings.sku;
+  const descHeader = mappings.description;
+  const brandHeader = mappings.brand;
+  const qtyHeader = mappings.quantityCases || mappings.quantity || mappings.availableQty || mappings.cases || mappings.qty;
+  const availableQtyHeader = mappings.availableQty;
+  const expHeader = mappings.expirationDate;
+  const priceHeader = mappings.originalPrice || mappings.price || mappings.costPerCase;
+  const lotNumberHeader = mappings.lotNumber;
+  const productionDateHeader = mappings.productionDate;
+  const categoryHeader = mappings.category;
+  const subCategoryHeader = mappings.subCategory;
+  const statusHeader = mappings.status;
+  const tempMinHeader = mappings.temperatureMin;
+  const tempMaxHeader = mappings.temperatureMax;
+  const standardSellPriceHeader = mappings.standardSellPrice || mappings.listPrice;
+  const warehouseHeader = mappings.warehouse || mappings.dc || mappings.location;
+  const commentHeader = mappings.comment;
+  const fdaRegulatedHeader = mappings.fdaRegulated;
+
+  const skuIdx = skuHeader ? headers.indexOf(skuHeader) : -1;
+  const descIdx = descHeader ? headers.indexOf(descHeader) : -1;
+  const brandIdx = brandHeader ? headers.indexOf(brandHeader) : -1;
+  const qtyIdx = qtyHeader ? headers.indexOf(qtyHeader) : -1;
+  const availableQtyIdx = availableQtyHeader ? headers.indexOf(availableQtyHeader) : -1;
+  const expIdx = expHeader ? headers.indexOf(expHeader) : -1;
+  const priceIdx = priceHeader ? headers.indexOf(priceHeader) : -1;
+  const lotNumberIdx = lotNumberHeader ? headers.indexOf(lotNumberHeader) : -1;
+  const productionDateIdx = productionDateHeader ? headers.indexOf(productionDateHeader) : -1;
+  const categoryIdx = categoryHeader ? headers.indexOf(categoryHeader) : -1;
+  const subCategoryIdx = subCategoryHeader ? headers.indexOf(subCategoryHeader) : -1;
+  const statusIdx = statusHeader ? headers.indexOf(statusHeader) : -1;
+  const tempMinIdx = tempMinHeader ? headers.indexOf(tempMinHeader) : -1;
+  const tempMaxIdx = tempMaxHeader ? headers.indexOf(tempMaxHeader) : -1;
+  const standardSellPriceIdx = standardSellPriceHeader ? headers.indexOf(standardSellPriceHeader) : -1;
+  const warehouseIdx = warehouseHeader ? headers.indexOf(warehouseHeader) : -1;
+  const commentIdx = commentHeader ? headers.indexOf(commentHeader) : -1;
+  const fdaRegulatedIdx = fdaRegulatedHeader ? headers.indexOf(fdaRegulatedHeader) : -1;
+
+  // Determine unmapped headers list
+  const mappedHeadersList = Object.values(mappings).filter(Boolean) as string[];
+  const unmappedColumnIndices: { header: string; idx: number }[] = [];
+  headers.forEach((header, idx) => {
+    if (!mappedHeadersList.includes(header)) {
+      unmappedColumnIndices.push({ header, idx });
+    }
+  });
+
+  // Resolve semantic rules: batch metadata takes precedence, otherwise fallback to SupplierTemplate
+  let semanticRules = Array.isArray(batch.metadata?.semanticRules) ? batch.metadata.semanticRules : undefined;
+  if (!semanticRules) {
+    const existingTemplate = await SupplierTemplate.findOne({ supplierId });
+    semanticRules = existingTemplate?.semanticRules || [];
+  }
+
+  // Compute grid aggregates across headers and rows
+  const aggregates = (headers.length > 0 && rows.length > 0)
+    ? computeGridAggregates([headers, ...rows], semanticRules as any)
+    : {};
+
+  // Resolve or create primary DistributionCenter
+  let primaryDc = await DistributionCenter.findOne({ supplierId });
+  if (!primaryDc) {
+    const supplier = await Supplier.findById(supplierId);
+    const supplierName = supplier?.name || 'Unknown';
+    const companyCode = supplier?.companyCode || 'SUP';
+
+    primaryDc = new DistributionCenter({
+      supplierId,
+      name: `${supplierName} Default DC`,
+      code: `${companyCode}-DEFAULT-DC`,
+      address: '100 Logistics Way, Chicago, IL',
+      coordinates: { lat: 41.8781, lng: -87.6298 },
+      coldStorage: true
+    });
+    await primaryDc.save();
+  }
+  const defaultDistributionCenterId = primaryDc._id.toString();
+
+  let totalRows = 0;
+  let inserted = 0;
+  let updated = 0;
+  let depleted = 0;
+  const errors: string[] = [];
+  const lotIds: string[] = [];
+
+  // Pre-index ProductMaster across batch rows via single $in query
+  const candidateSkus = new Set<string>();
+  for (const row of rows) {
+    const rawSku = skuIdx !== -1 ? row[skuIdx]?.trim() : '';
+    const rawDesc = descIdx !== -1 ? row[descIdx]?.trim() : '';
+    if (rawSku) {
+      candidateSkus.add(rawSku);
+    } else if (rawDesc) {
+      candidateSkus.add(generateFallbackSku(rawDesc));
+    }
+  }
+
+  const productMap = new Map<string, any>();
+  if (candidateSkus.size > 0) {
+    const existingProducts = await ProductMaster.find({
+      supplierId,
+      sku: { $in: Array.from(candidateSkus) }
+    });
+    for (const prod of existingProducts) {
+      productMap.set(prod.sku, prod);
+    }
+  }
+
+  const dcCache = new Map<string, string>();
+  dcCache.set('', defaultDistributionCenterId);
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rawSku = skuIdx !== -1 ? row[skuIdx]?.trim() : '';
+    const rawDesc = descIdx !== -1 ? row[descIdx]?.trim() : '';
+    const rawBrand = brandIdx !== -1 ? row[brandIdx]?.trim() : '';
+    const rawQty = qtyIdx !== -1 ? row[qtyIdx]?.trim() : '';
+    const rawExp = expIdx !== -1 ? row[expIdx]?.trim() : '';
+    const rawPrice = priceIdx !== -1 ? row[priceIdx]?.trim() : '';
+    const rawLotNumber = lotNumberIdx !== -1 ? row[lotNumberIdx]?.trim() : '';
+    const rawProductionDate = productionDateIdx !== -1 ? row[productionDateIdx]?.trim() : '';
+    const rawCategory = categoryIdx !== -1 ? row[categoryIdx]?.trim() : '';
+    const rawSubCategory = subCategoryIdx !== -1 ? row[subCategoryIdx]?.trim() : '';
+    const rawListPrice = standardSellPriceIdx !== -1 ? row[standardSellPriceIdx]?.trim() : '';
+    const rawWarehouse = warehouseIdx !== -1 ? row[warehouseIdx]?.trim() : '';
+    const rawComment = commentIdx !== -1 ? row[commentIdx]?.trim() : '';
+    const rawStatus = statusIdx !== -1 ? row[statusIdx]?.trim().toLowerCase() : '';
+    const rawAvailableQtyStr = availableQtyIdx !== -1 ? row[availableQtyIdx]?.trim() : '';
+    const rawTempMinStr = tempMinIdx !== -1 ? row[tempMinIdx]?.trim() : '';
+    const rawTempMaxStr = tempMaxIdx !== -1 ? row[tempMaxIdx]?.trim() : '';
+    const rawFdaRegulated = fdaRegulatedIdx !== -1 ? row[fdaRegulatedIdx]?.trim() : '';
+
+    const isEntirelyEmpty = row.length === 0 || row.every(cell => !cell || !cell.trim());
+    if (isEntirelyEmpty) {
+      continue;
+    }
+
+    totalRows++;
+
+    let finalSku = rawSku;
+    if (!finalSku && rawDesc) {
+      finalSku = generateFallbackSku(rawDesc);
+    }
+
+    if (!finalSku || !rawDesc) {
+      errors.push(`Row ${i + 1}: Missing SKU or Description.`);
+      continue;
+    }
+
+    const rawQtyToParse = rawQty || rawAvailableQtyStr;
+    if (rawQtyToParse && isNaN(Number(rawQtyToParse.replace(/[$,\s]/g, '')))) {
+      errors.push(`Row ${i + 1}: Malformed quantity "${rawQtyToParse}".`);
+      continue;
+    }
+
+    const quantityCases = parseInt(rawQtyToParse ? rawQtyToParse.replace(/,/g, '') : '0', 10) || 0;
+    const costPerCase = parseFloat(rawPrice ? rawPrice.replace(/[$,]/g, '') : '0') || 0;
+    const listPrice = parseFloat(rawListPrice ? rawListPrice.replace(/[$,]/g, '') : '0') || costPerCase;
+
+    let cleanName = rawDesc;
+    let category = rawCategory || 'Dry Goods';
+    if (!rawCategory) {
+      try {
+        const sidecarUrl = getSidecarUrl();
+        const sidecarRes = await axios.post(
+          `${sidecarUrl}/normalize-product-name`,
+          { name: rawDesc },
+          { timeout: 1000 }
+        );
+        if (sidecarRes.data) {
+          cleanName = sidecarRes.data.clean_name || cleanName;
+          category = sidecarRes.data.category || category;
+        }
+      } catch (err) {
+        // Non-blocking sidecar fallback
+      }
+    }
+
+    const shelfLifeDays = getCategoryShelfLifeDays(category);
+
+    let expirationDate = parseIngestionDate(rawExp);
+    if (!expirationDate) {
+      expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + shelfLifeDays);
+    }
+
+    const productionDate = parseIngestionDate(rawProductionDate);
+
+    let rowDistributionCenterId = defaultDistributionCenterId;
+    if (rawWarehouse) {
+      if (dcCache.has(rawWarehouse)) {
+        rowDistributionCenterId = dcCache.get(rawWarehouse)!;
+      } else {
+        let rowDc = await DistributionCenter.findOne({ supplierId, name: rawWarehouse });
+        if (!rowDc) {
+          rowDc = new DistributionCenter({
+            supplierId,
+            name: rawWarehouse,
+            code: `${primaryDc.code.split('-')[0]}-${rawWarehouse.toUpperCase().replace(/[^A-Z0-9]+/g, '-')}-DC`,
+            address: `${rawWarehouse}, United States`,
+            coordinates: { lat: 39.8283, lng: -98.5795 },
+            coldStorage: true
+          });
+          await rowDc.save();
+        }
+        rowDistributionCenterId = rowDc._id.toString();
+        dcCache.set(rawWarehouse, rowDistributionCenterId);
+      }
+    }
+
+    let product = productMap.get(finalSku);
+    if (!product) {
+      product = new ProductMaster({
+        supplierId,
+        sku: finalSku,
+        brand: rawBrand || undefined,
+        category,
+        subCategory: rawSubCategory || undefined,
+        description: cleanName,
+        shelfLifeDays
+      });
+      await product.save();
+      productMap.set(finalSku, product);
+    } else {
+      let modified = false;
+      if (product.description !== cleanName) {
+        product.description = cleanName;
+        modified = true;
+      }
+      if (product.category !== category) {
+        product.category = category;
+        modified = true;
+      }
+      if (rawBrand && product.brand !== rawBrand) {
+        product.brand = rawBrand;
+        modified = true;
+      }
+      if (rawSubCategory && product.subCategory !== rawSubCategory) {
+        product.subCategory = rawSubCategory;
+        modified = true;
+      }
+      if (!product.shelfLifeDays || product.shelfLifeDays === 30 || modified) {
+        product.shelfLifeDays = shelfLifeDays;
+        modified = true;
+      }
+      if (modified) {
+        await product.save();
+      }
+    }
+
+    const remainingShelfLife = calculateRemainingShelfLife({
+      expirationDate,
+      productionDate,
+      category,
+      shelfLifeDays: product.shelfLifeDays
+    });
+
+    const lotNumber = rawLotNumber || `LOT-${finalSku}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+
+    let parsedTempMin: number | undefined = undefined;
+    if (rawTempMinStr) {
+      const num = parseFloat(rawTempMinStr.replace(/[^\d\.\-]/g, ''));
+      if (!isNaN(num)) parsedTempMin = num;
+    }
+
+    let parsedTempMax: number | undefined = undefined;
+    if (rawTempMaxStr) {
+      const num = parseFloat(rawTempMaxStr.replace(/[^\d\.\-]/g, ''));
+      if (!isNaN(num)) parsedTempMax = num;
+    }
+
+    let lotAvailableQty = quantityCases;
+    if (rawAvailableQtyStr) {
+      const parsedAvail = parseInt(rawAvailableQtyStr.replace(/,/g, ''), 10);
+      if (!isNaN(parsedAvail)) lotAvailableQty = Math.max(0, parsedAvail);
+    }
+
+    const validStatuses = ['pending', 'active', 'sold', 'expired', 'donated', 'recycled', 'depleted', 'archived'];
+    let lotStatus: any = (batch.source === 'google-sheets' ? 'active' : 'pending');
+    if (validStatuses.includes(rawStatus)) {
+      lotStatus = rawStatus;
+    } else if (lotAvailableQty === 0) {
+      lotStatus = 'sold';
+    }
+
+    let isFdaRegulated = false;
+    if (rawFdaRegulated) {
+      const lower = rawFdaRegulated.toLowerCase();
+      isFdaRegulated = lower === 'true' || lower === 'yes' || lower === '1' || lower === 'y';
+    }
+
+    // Extract unmapped attributes and translate
+    const rawUnmappedObject: Record<string, any> = {};
+    for (const col of unmappedColumnIndices) {
+      rawUnmappedObject[col.header] = row[col.idx]?.trim() || '';
+    }
+    const translated = translateAttributes(rawUnmappedObject, semanticRules as any, aggregates);
+    const attributes = new Map<string, any>(Object.entries(translated.attributes));
+    const rawAttributes = new Map<string, any>(Object.entries(translated.rawAttributes));
+
+    let existingLot = await InventoryLot.findOne({
+      supplierId,
+      productId: product._id,
+      lotNumber
+    });
+
+    if (existingLot) {
+      existingLot.distributionCenterId = rowDistributionCenterId;
+      if (quantityCases === 0) {
+        existingLot.quantityCases = 0;
+        existingLot.availableQty = 0;
+        existingLot.status = 'depleted';
+        existingLot.attributes = attributes;
+        existingLot.rawAttributes = rawAttributes;
+        await existingLot.save();
+        depleted++;
+      } else {
+        existingLot.quantityCases = quantityCases;
+        existingLot.availableQty = lotAvailableQty;
+        existingLot.costPerCase = costPerCase;
+        existingLot.standardSellPrice = listPrice;
+        existingLot.expirationDate = expirationDate;
+        existingLot.productionDate = productionDate;
+        existingLot.remainingShelfLife = remainingShelfLife;
+        if (existingLot.status === 'depleted') {
+          existingLot.status = lotStatus && lotStatus !== 'pending' ? lotStatus : 'active';
+        } else if (lotStatus && lotStatus !== 'pending') {
+          existingLot.status = lotStatus;
+        }
+        existingLot.attributes = attributes;
+        existingLot.rawAttributes = rawAttributes;
+        await existingLot.save();
+        updated++;
+      }
+      lotIds.push(existingLot._id.toString());
+    } else {
+      const inventoryLot = new InventoryLot({
+        supplierId,
+        distributionCenterId: rowDistributionCenterId,
+        productId: product._id,
+        lotNumber,
+        productionDate,
+        expirationDate,
+        remainingShelfLife,
+        quantityCases,
+        availableQty: lotAvailableQty,
+        costPerCase,
+        standardSellPrice: listPrice,
+        status: quantityCases === 0 ? 'depleted' : lotStatus,
+        fdaRegulated: isFdaRegulated,
+        temperatureMin: parsedTempMin,
+        temperatureMax: parsedTempMax,
+        comment: rawComment || '',
+        attributes,
+        rawAttributes
+      });
+      await inventoryLot.save();
+      if (quantityCases === 0) {
+        depleted++;
+      } else {
+        inserted++;
+      }
+      lotIds.push(inventoryLot._id.toString());
+    }
+  }
+
+  return {
+    totalRows,
+    inserted,
+    updated,
+    depleted,
+    errors,
+    lotIds,
+    aggregates
+  };
+}
+
+export async function recordSyncCompletion(
+  configId: string | mongoose.Types.ObjectId,
+  metrics: ISyncMetrics,
+  status?: 'success' | 'error'
+): Promise<IGoogleSheetsSyncConfig | null> {
+  let query: any = null;
+  if (mongoose.Types.ObjectId.isValid(configId as any)) {
+    query = {
+      $or: [
+        { _id: configId },
+        { ingressKey: configId },
+        { supplierId: configId }
+      ]
+    };
+  } else if (typeof configId === 'string' && configId.trim().length > 0) {
+    query = {
+      $or: [
+        { ingressKey: configId.trim() },
+        { spreadsheetId: configId.trim() }
+      ]
+    };
+  } else {
+    return null;
+  }
+
+  const now = new Date();
+  const syncStatus = status || (metrics.errors && metrics.errors.length > 0 && metrics.totalRows > 0 && (metrics.inserted + metrics.updated + metrics.depleted === 0) ? 'error' : 'success');
+
+  const updatedConfig = await GoogleSheetsSyncConfig.findOneAndUpdate(
+    query,
+    {
+      $set: {
+        syncStatus,
+        lastSyncedAt: now,
+        lastSyncMetrics: {
+          totalRows: metrics.totalRows || 0,
+          inserted: metrics.inserted || 0,
+          updated: metrics.updated || 0,
+          depleted: metrics.depleted || 0,
+          errors: metrics.errors || []
+        }
+      }
+    },
+    { new: true }
+  );
+
+  return updatedConfig;
+}
+
+export async function getActiveLotCount(supplierId: string | mongoose.Types.ObjectId): Promise<number> {
+  if (!supplierId) return 0;
+  return InventoryLot.countDocuments({
+    supplierId,
+    status: { $ne: 'depleted' }
+  });
+}
+
+export interface ISaveGoogleSheetsMappingParams {
+  supplierId: string;
+  spreadsheetId?: string;
+  sheetName?: string;
+  templateName?: string;
+  columnMappings: Record<string, string>;
+}
+
+export async function saveGoogleSheetsMapping(params: ISaveGoogleSheetsMappingParams): Promise<{ supplierTemplateId: string }> {
+  const { supplierId, spreadsheetId, sheetName, templateName, columnMappings } = params;
+  if (!supplierId || !columnMappings || typeof columnMappings !== 'object' || Object.keys(columnMappings).length === 0) {
+    throw new Error('supplierId and columnMappings are required.');
+  }
+
+  let template = await SupplierTemplate.findOne({
+    supplierId,
+    templateName: templateName || 'Google Sheets Template'
+  });
+
+  if (template) {
+    template.columnMappings = columnMappings as any;
+    await template.save();
+  } else {
+    template = await SupplierTemplate.create({
+      supplierId,
+      templateName: templateName || 'Google Sheets Template',
+      columnMappings,
+      hasHeaderRow: true,
+      dateFormat: 'YYYY-MM-DD',
+      delimiter: ','
+    });
+  }
+
+  const config = await GoogleSheetsSyncConfig.findOne({ supplierId });
+  if (config) {
+    config.supplierTemplateId = template._id as any;
+    if (spreadsheetId) config.spreadsheetId = spreadsheetId;
+    if (sheetName) config.sheetName = sheetName;
+    await config.save();
+  }
+
+  return {
+    supplierTemplateId: template._id.toString()
+  };
+}
+
+export interface IGetGoogleSheetsSampleRowsParams {
+  supplierId: string;
+  spreadsheetId?: string;
+  sheetName?: string;
+}
+
+export async function getGoogleSheetsSampleRows(params: IGetGoogleSheetsSampleRowsParams): Promise<{
+  documentId: string;
+  fileName: string;
+  rawGrid: string[][];
+  suggestedMapping: Record<string, string>;
+}> {
+  const { supplierId, spreadsheetId = 'spreadsheet', sheetName = 'Sheet1' } = params;
+  if (!supplierId) {
+    throw new Error('supplierId is required.');
+  }
+
+  const existingTemplate = await SupplierTemplate.findOne({ supplierId });
+
+  // Baseline standard canonical headers
+  const defaultHeaderMap: Record<string, string> = {
+    sku: 'SKU / Item Code',
+    description: 'Product Title',
+    quantity: 'Cases Available',
+    expirationDate: 'Expiry Date',
+    originalPrice: 'Unit Price ($)',
+    warehouse: 'Warehouse Location'
+  };
+
+  let suggestedMapping: Record<string, string> = { ...defaultHeaderMap };
+
+  if (existingTemplate && existingTemplate.columnMappings) {
+    const templateMappings: Record<string, string> = {};
+    if (existingTemplate.columnMappings instanceof Map) {
+      existingTemplate.columnMappings.forEach((val: string, key: string) => {
+        templateMappings[key] = val;
+      });
+    } else {
+      Object.assign(templateMappings, existingTemplate.columnMappings);
+    }
+    suggestedMapping = { ...suggestedMapping, ...templateMappings };
+  }
+
+  // Derive rawHeaders dynamically from the active mappings so the preview stays aligned with the schema
+  const rawHeaders = Array.from(new Set(Object.values(suggestedMapping)));
+
+  // Generate dynamic sample rows reflecting the mapped headers
+  const sampleRow1 = rawHeaders.map((header) => {
+    if (header === suggestedMapping.sku) return 'SKU-ORG-101';
+    if (header === suggestedMapping.description) return 'Organic Almond Milk 1L';
+    if (header === suggestedMapping.quantity) return '240';
+    if (header === suggestedMapping.expirationDate) return '2026-11-30';
+    if (header === suggestedMapping.originalPrice) return '3.85';
+    if (header === suggestedMapping.warehouse) return 'Cold Facility A';
+    return 'Sample Value';
+  });
+
+  const sampleRow2 = rawHeaders.map((header) => {
+    if (header === suggestedMapping.sku) return 'SKU-ORG-102';
+    if (header === suggestedMapping.description) return 'Organic Oat Barista 1L';
+    if (header === suggestedMapping.quantity) return '180';
+    if (header === suggestedMapping.expirationDate) return '2026-12-15';
+    if (header === suggestedMapping.originalPrice) return '4.10';
+    if (header === suggestedMapping.warehouse) return 'Ambient Bay 4';
+    return 'Sample Value';
+  });
+
+  const sampleRow3 = rawHeaders.map((header) => {
+    if (header === suggestedMapping.sku) return 'SKU-ORG-103';
+    if (header === suggestedMapping.description) return 'Greek Yogurt Plain 500g';
+    if (header === suggestedMapping.quantity) return '95';
+    if (header === suggestedMapping.expirationDate) return '2026-10-18';
+    if (header === suggestedMapping.originalPrice) return '2.40';
+    if (header === suggestedMapping.warehouse) return 'Cold Facility B';
+    return 'Sample Value';
+  });
+
+  return {
+    documentId: `gsheet-handshake-${spreadsheetId.slice(0, 8)}`,
+    fileName: `Google Sheets: ${sheetName}`,
+    rawGrid: [rawHeaders, sampleRow1, sampleRow2, sampleRow3],
+    suggestedMapping
+  };
+}
 

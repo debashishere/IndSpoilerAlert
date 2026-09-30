@@ -7,9 +7,9 @@ import { assessLotRiskThunk } from '../../../services/inventoryService';
 
 export const RiskAssessmentModal: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { showRiskModal } = useSelector((state: RootState) => state.inventory.modals);
+  const showRiskModal = useSelector((state: RootState) => state.inventory?.modals?.showRiskModal ?? false);
   const selectedLotForRisk = useSelector(
-    (state: RootState) => state.inventory.modals.selectedLotForRisk || state.inventory.selectedLot
+    (state: RootState) => state.inventory?.modals?.selectedLotForRisk || state.inventory?.selectedLot
   );
   const riskAssessment = useSelector((state: RootState) => state.inventory.riskAssessment);
 

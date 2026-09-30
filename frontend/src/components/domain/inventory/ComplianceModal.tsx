@@ -7,9 +7,9 @@ import { uploadComplianceDocThunk, updateLotComplianceThunk } from '../../../ser
 
 export const ComplianceModal: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { showComplianceModal } = useSelector((state: RootState) => state.inventory.modals);
+  const showComplianceModal = useSelector((state: RootState) => state.inventory?.modals?.showComplianceModal ?? false);
   const selectedLotForCompliance = useSelector(
-    (state: RootState) => state.inventory.modals.selectedLotForCompliance || state.inventory.selectedLot
+    (state: RootState) => state.inventory?.modals?.selectedLotForCompliance || state.inventory?.selectedLot
   );
   const { uploading: complianceUploading, error: complianceError } = useSelector(
     (state: RootState) => state.inventory.compliance
