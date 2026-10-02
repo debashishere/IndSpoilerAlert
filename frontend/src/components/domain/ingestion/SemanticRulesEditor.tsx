@@ -35,9 +35,10 @@ export const SemanticRulesEditor = ({
   const dispatch = useAppDispatch();
   const isSales = pipelineType === 'sales';
 
-  const semanticRules = useAppSelector((state) =>
+  const rawSemanticRules = useAppSelector((state) =>
     isSales ? state.ingestion.salesSemanticRules : state.ingestion.inventorySemanticRules
   );
+  const semanticRules = rawSemanticRules || [];
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [newRuleSource, setNewRuleSource] = useState('');

@@ -145,11 +145,23 @@
   _Avoid_: `Simple File Dropzone`, `Upload-Only Banner`.
 - **Google Sheets Ingestion Sync**: The automated inbound data integration connector in the Ingestion Hub linking a supplier's Google Spreadsheet to the surplus inventory pipeline, periodically polling or ingesting spreadsheet rows into staged inventory lots with column schema normalization.
   _Avoid_: `Insight Google Sheets Sync`, `Outbound Sheet Export`.
-- **Google Sheets Configuration Drawer**: The slide-over configuration interface triggered by the "Google Sheets Sync" connector card in the Ingestion Hub, presenting the master Apps Script setup instructions, ingress key credentials, and the live Connected Sheets Roster.
-  _Avoid_: `Single-Sheet Settings`, `OAuth Credentials Form`.
+- **Google Sheets Configuration Drawer (Deprecated)**: The legacy slide-over configuration interface superseded by the Full-Page Ingestion Integration Manager suite.
+  _Avoid_: `Drawer-Only Ingestion Setup`, `Split-Brain Drawer/Page`.
+- **Full-Page Ingestion Integration Manager**: The dedicated full-page configuration, roster, and live telemetry workspace within the Ingestion domain (replacing restricted slide-over drawers and quick modals) for automated ingress channels (Google Sheets, Zapier, Image & Doc Scanner) sharing a unified institutional page architecture.
+  _Avoid_: `Drawer-Only Ingestion Setup`, `Inventory Ingress Sub-Tab`, `Fragmented Integration Modals`.
+- **Four-Quadrant Integration Page Architecture**: The standardized layout specification for full-page connector views comprising: 1) Header & Health Telemetry, 2) Credentials & Setup Guide, 3) Connected Sources Roster, and 4) In-Situ Schema Field Mapper.
+  _Avoid_: `Multi-Step Wizard Lockout`, `Scattered Settings Pages`.
+- **Zapier Ingestion Sync**: The event-driven inbound connector in the Ingestion Hub allowing third-party ERPs, forms, or automated webhooks to dispatch surplus inventory records into the platform using cryptographic token ingress and dynamic payload normalization.
+  _Avoid_: `Direct Database Injection`, `Unmapped Zapier Ingress`.
+- **Connected Zaps Roster**: The registry inside the Zapier Integration Manager displaying active Zap feeds, webhook endpoints, event types, lot counts, and per-feed column mapping configurations.
+  _Avoid_: `Unindexed Zap Endpoints`, `Blind Ingress Webhook`.
+- **Zapier Payload Ingress Log**: The telemetry stream beneath the Connected Zaps Roster rendering recent incoming webhook deliveries, execution latencies, and payload schemas for instant debugging.
+  _Avoid_: `Black Box Webhook Ingress`.
+- **Deep-Linkable Connector Sub-Routing**: The navigation strategy encoding the active connector state in the URL query string (`?tab=ingestion&connector=google-sheets` or `?tab=ingestion&connector=zapier`), paired with an in-page connector switcher bar and breadcrumb back to the Ingestion pipeline.
+  _Avoid_: `Volatile Ephemeral View State`, `Hidden Sub-Routes`.
 - **Dynamic Multi-Sheet Ingress**: The architecture where a supplier's single master ingress key allows multiple independent Google Spreadsheets and worksheet tabs to dynamically auto-register and stream inventory batches upon their first webhook dispatch.
   _Avoid_: `Single-Sheet Sync Lock`, `Per-Sheet API Keys`.
-- **Connected Sheets Roster**: The interactive table and status registry inside the Google Sheets Configuration Drawer rendering every connected spreadsheet (`Spreadsheet ID`, `Worksheet Tab Name`, `Last Synced`, `Lot Count`, and `Sync Status`) dynamically discovered through webhook traffic.
+- **Connected Sheets Roster**: The interactive table and status registry inside the Full-Page Google Sheets Integration View (Quadrant 3) rendering every connected spreadsheet (`Spreadsheet ID`, `Worksheet Tab Name`, `Last Synced`, `Lot Count`, and `Sync Status`) dynamically discovered through webhook traffic.
   _Avoid_: `Static Sheet Inputs`, `Manual Sheet Coordinate Box`.
 - **Per-Sheet Template Mapping**: The schema mapping paradigm where each dynamically discovered spreadsheet maintains an autonomous column mapping template (`SupplierTemplate`), applying canonical heuristic suggestions on first ingest while providing an in-situ 'Edit Mapping' action in the Connected Sheets Roster.
   _Avoid_: `Monolithic Supplier Schema`, `Forced Uniform Columns`.
@@ -172,6 +184,8 @@
   _Avoid_: `Destructive Sheet Purge`, `Blind Batch Duplication`, `Source-Specific Reconciliation Drift`.
 - **Unified Surplus Data Ingestion Modal**: The centralized modal overlay triggered by the "CSV / Excel Upload" connector or pipeline import action buttons, providing a 2-step batch upload flow: 1) dataset destination selection (`Inventory Data`, `Sales Data`, or `Buyer Data`), and 2) file drag-and-drop / selection that advances to the Ingestion Mapping Window.
   _Avoid_: `Fragmented Upload Modals`, `Per-Tab File Uploaders`.
+- **Ephemeral CSV Ingestion**: The lightweight, modal-based workflow reserved for one-off manual CSV/Excel file uploads, allowing operators to complete ad-hoc imports in-place without page transitions while executing through the shared Batch Ingestion Engine.
+  _Avoid_: `Full-Page CSV Overhead`, `Decoupled Ingestion Engine`.
 - **Progressive Row Inspection Drawer**: The collapsible in-situ accordion inspection workbench expanding directly beneath table rows (across Inventory, Sales, and Buyer pipelines) when selected, presenting detailed cold-chain/environmental telemetry, FEFO lifecycle matrix, date audit logs, financial settlement remittance, and context-sensitive operational actions.
   _Avoid_: `Full Page Lot Redirection on Row Click`, `Modal-Only Details Dialog`.
 - **Global Table Accordion Toggle ("Toggle All")**: The master control in the pipeline action strip that bulk-expands or bulk-collapses all visible Progressive Row Inspection Drawers across the active dataset.
@@ -185,6 +199,8 @@
   _Avoid_: `Stale Cross-Tab Toggle State`, `Unsynchronized Master Button`.
 - **Multi-Theme Ingestion Tokens**: The institutional Tailwind CSS color and typography taxonomy harmonizing `IngestionView`, `IngestionTelemetryBar`, and connector workbenches across light and dark modes (`dark:bg-slate-950`, `dark:bg-slate-900`, `dark:border-slate-800`, `dark:text-slate-100`) while honoring the 4px/8pt optical density standard.
   _Avoid_: `Hardcoded White Backgrounds`, `Inconsistent Dark Mode Surfaces`.
+- **Image & Doc Scanner Workbench**: The full-page integration management suite (`DocScannerIntegrationView.tsx`) structured around the canonical 4-Quadrant architecture (Header & Health Telemetry, AI OCR Upload Dropzone, Scanned Documents Roster, In-Situ Schema Field Mapper), enabling warehouse operators to ingest PDF manifests, bills of lading, and photo packing slips via IBM Docling and Tesseract OCR with real-time column mapping and verification.
+  _Avoid_: `Standalone File Dialog`, `Unmapped OCR Dump`.
 
 ## Liquidation Automation Studio Architecture
 

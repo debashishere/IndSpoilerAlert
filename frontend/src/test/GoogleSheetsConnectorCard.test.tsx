@@ -15,7 +15,7 @@ function renderWithStore(
   preloadedState?: any,
   props?: {
     onOpenUploadModal?: () => void;
-    onOpenGoogleSheetsDrawer?: () => void;
+    onSelectConnector?: (connector: any) => void;
   }
 ) {
   const store = configureStore({
@@ -32,7 +32,7 @@ function renderWithStore(
     ...render(
       <Provider store={store}>
         <IngestionHubConnectors
-          onOpenGoogleSheetsDrawer={props?.onOpenGoogleSheetsDrawer}
+          onSelectConnector={props?.onSelectConnector}
           onOpenUploadModal={props?.onOpenUploadModal}
         />
       </Provider>
@@ -46,19 +46,19 @@ describe('Vertical Slice 3: Google Sheets Connector Card (Dual-State & Sync Disp
   });
 
   it('renders State 1 (Unconnected) with "Connect Sheets" button by default', () => {
-    const onOpenGoogleSheetsDrawer = vi.fn();
-    renderWithStore(undefined, { onOpenGoogleSheetsDrawer });
+    const onSelectConnector = vi.fn();
+    renderWithStore(undefined, { onSelectConnector });
 
     expect(screen.getByText('Google Sheets Sync')).toBeInTheDocument();
     const connectBtn = screen.getByRole('button', { name: /connect sheets/i });
     expect(connectBtn).toBeInTheDocument();
 
     fireEvent.click(connectBtn);
-    expect(onOpenGoogleSheetsDrawer).toHaveBeenCalledTimes(1);
+    expect(onSelectConnector).toHaveBeenCalledWith('google-sheets');
   });
 
   it('renders State 2 (Connected) with emerald badge, synced lots, and "Sync Now" button', () => {
-    const onOpenGoogleSheetsDrawer = vi.fn();
+    const onSelectConnector = vi.fn();
     const preloadedState = {
       ingestion: {
         googleSheetsSync: {
@@ -78,7 +78,7 @@ describe('Vertical Slice 3: Google Sheets Connector Card (Dual-State & Sync Disp
       },
     };
 
-    renderWithStore(preloadedState, { onOpenGoogleSheetsDrawer });
+    renderWithStore(preloadedState, { onSelectConnector });
 
     // Emerald pulsating badge
     expect(screen.getByText(/active trigger • auto-sync/i)).toBeInTheDocument();
@@ -95,7 +95,7 @@ describe('Vertical Slice 3: Google Sheets Connector Card (Dual-State & Sync Disp
     const settingsBtn = screen.getByRole('button', { name: /configure sheets|google sheets settings/i });
     expect(settingsBtn).toBeInTheDocument();
     fireEvent.click(settingsBtn);
-    expect(onOpenGoogleSheetsDrawer).toHaveBeenCalledTimes(1);
+    expect(onSelectConnector).toHaveBeenCalledWith('google-sheets');
   });
 
   it('triggers on-demand sync dispatch with toast feedback and spinner animation when clicking "Sync Now"', async () => {

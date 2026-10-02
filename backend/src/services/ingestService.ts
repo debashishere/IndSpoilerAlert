@@ -1354,6 +1354,9 @@ export async function processBatch(batch: IngestionBatch): Promise<IngestionBatc
     if (batch.metadata?.sheetName) {
       attributes.set('sheetName', batch.metadata.sheetName);
     }
+    if (batch.metadata?.zapId) {
+      attributes.set('zapId', batch.metadata.zapId);
+    }
 
     let existingLot = await InventoryLot.findOne({
       supplierId,

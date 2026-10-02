@@ -4,7 +4,7 @@ import crypto from 'crypto';
  * Ingestion Normalization Core Utilities & Domain Contracts
  */
 
-export type IngestionSource = 'csv' | 'google-sheets' | 'manual';
+export type IngestionSource = 'csv' | 'google-sheets' | 'zapier' | 'manual';
 
 export interface IngestionBatch {
   supplierId: string;

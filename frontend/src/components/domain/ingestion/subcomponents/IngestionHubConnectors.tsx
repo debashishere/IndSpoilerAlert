@@ -34,16 +34,19 @@ function formatRelativeTime(dateStr?: string | null): string {
 export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
   className = '',
   onOpenUploadModal,
-  onOpenGoogleSheetsDrawer,
+  onSelectConnector,
   defaultCollapsed = false,
 }) => {
   const dispatch = useAppDispatch();
   const googleSheetsSync = useAppSelector((state) => state.ingestion.googleSheetsSync);
+  const zapierSync = useAppSelector((state) => (state as any).zapierSync);
   const selectedSupplier = useAppSelector((state) => state.ingestion.selectedSupplier);
   const suppliers = useAppSelector((state) => state.core?.suppliers || []);
 
   const isConnected = googleSheetsSync?.connectionStatus === 'connected';
   const isSyncing = Boolean(googleSheetsSync?.isSyncing);
+  const isZapierConnected = (zapierSync?.totalZaps ?? 0) > 0 || (zapierSync?.connectedZaps?.length ?? 0) > 0;
+  const zapCount = zapierSync?.totalZaps ?? zapierSync?.connectedZaps?.length ?? 0;
 
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
   const [notification, setNotification] = useState<string | null>(null);
@@ -134,35 +137,52 @@ export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
         <div className="p-3.5 transition-all duration-200" id="ingestion-hub-content">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
             {/* Card 1: Zapier Webhooks */}
-            <div className="p-3.5 rounded-xl bg-slate-50/50 hover:bg-slate-50 border border-slate-200 flex flex-col justify-between transition-colors shadow-2xs group">
+            <div className="p-3.5 rounded-xl bg-slate-50/50 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col justify-between transition-colors shadow-2xs group">
               <div className="space-y-1 mb-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
                     <span className="material-symbols-outlined text-[18px]">electric_bolt</span>
                     <Zap className="w-4 h-4 hidden" aria-hidden="true" />
                   </div>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200/60">
-                    Popular
-                  </span>
+                  {isZapierConnected ? (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      Active Feeds
+                    </span>
+                  ) : (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60">
+                      Popular
+                    </span>
+                  )}
                 </div>
-                <h3 className="text-[13px] font-bold text-slate-900 mt-1">Zapier Webhooks</h3>
-                <p className="text-[11px] text-slate-500 leading-snug">
+                <h3 className="text-[13px] font-bold text-slate-900 dark:text-slate-100 mt-1">Zapier Webhooks</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
                   Trigger automated lot creation directly from ERP, inbox, or custom workflows.
                 </p>
               </div>
               <div className="space-y-1.5">
                 <button
                   type="button"
-                  onClick={() => handleActionClick(INGESTION_CONSTANTS.CONNECTORS.ZAPIER_FEEDBACK)}
-                  className="w-full py-1.5 px-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer border border-slate-200/70"
+                  onClick={() => {
+                    if (onSelectConnector) {
+                      onSelectConnector('zapier');
+                    } else {
+                      handleActionClick(INGESTION_CONSTANTS.CONNECTORS.ZAPIER_FEEDBACK);
+                    }
+                  }}
+                  className="w-full py-1.5 px-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer border border-slate-200/70 dark:border-slate-700"
                 >
                   <span className="material-symbols-outlined text-[14px]">link</span>
                   <Link2 className="w-3.5 h-3.5 hidden" aria-hidden="true" />
-                  <span>Connect Zapier</span>
+                  <span>{isZapierConnected ? 'Manage Zaps' : 'Connect Zapier'}</span>
                 </button>
-                <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
-                  <span>Sync Delay</span>
-                  <span className="text-blue-600 font-semibold">&lt; 150ms</span>
+                <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                  <span>{isZapierConnected ? 'Status' : 'Sync Delay'}</span>
+                  {isZapierConnected ? (
+                    <span className="text-amber-600 dark:text-amber-400 font-semibold">{zapCount} Connected Zaps</span>
+                  ) : (
+                    <span className="text-blue-600 dark:text-blue-400 font-semibold">&lt; 150ms</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -209,7 +229,9 @@ export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
                       <button
                         type="button"
                         aria-label="Google Sheets Settings"
-                        onClick={() => onOpenGoogleSheetsDrawer?.()}
+                        onClick={() => {
+                          onSelectConnector?.('google-sheets');
+                        }}
                         className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 transition-colors cursor-pointer border border-slate-200/70 dark:border-slate-700"
                         title="Configure Sheets"
                       >
@@ -226,8 +248,8 @@ export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        if (onOpenGoogleSheetsDrawer) {
-                          onOpenGoogleSheetsDrawer();
+                        if (onSelectConnector) {
+                          onSelectConnector('google-sheets');
                         } else {
                           handleActionClick(INGESTION_CONSTANTS.CONNECTORS.SHEETS_FEEDBACK);
                         }
@@ -249,53 +271,59 @@ export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
 
 
             {/* Card 3: Image & Doc Scanner */}
-            <div className="p-3.5 rounded-xl bg-slate-50/50 hover:bg-slate-50 border border-slate-200 flex flex-col justify-between transition-colors shadow-2xs group">
+            <div className="p-3.5 rounded-xl bg-slate-50/50 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col justify-between transition-colors shadow-2xs group">
               <div className="space-y-1 mb-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                     <span className="material-symbols-outlined text-[18px]">document_scanner</span>
                     <FileSearch className="w-4 h-4 hidden" aria-hidden="true" />
                   </div>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60">
                     AI Docling
                   </span>
                 </div>
-                <h3 className="text-[13px] font-bold text-slate-900 mt-1">Image &amp; Doc Scanner</h3>
-                <p className="text-[11px] text-slate-500 leading-snug">
+                <h3 className="text-[13px] font-bold text-slate-900 dark:text-slate-100 mt-1">Image &amp; Doc Scanner</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
                   AI OCR parsing for PDF manifests, photo invoices, and physical packing slips.
                 </p>
               </div>
               <div className="space-y-1.5">
                 <button
                   type="button"
-                  onClick={() => handleActionClick(INGESTION_CONSTANTS.CONNECTORS.SCANNER_FEEDBACK)}
+                  onClick={() => {
+                    if (onSelectConnector) {
+                      onSelectConnector('doc-scanner');
+                    } else {
+                      handleActionClick(INGESTION_CONSTANTS.CONNECTORS.SCANNER_FEEDBACK);
+                    }
+                  }}
                   className="w-full py-1.5 px-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer shadow-2xs"
                 >
                   <span className="material-symbols-outlined text-[14px]">photo_camera</span>
                   <FileText className="w-3.5 h-3.5 hidden" aria-hidden="true" />
                   <span>Scan / Upload Doc</span>
                 </button>
-                <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
-                  <span>Supported</span>
-                  <span className="text-slate-600 font-medium">PDF, JPG, PNG</span>
+                <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                  <span>Status</span>
+                  <span className="text-blue-600 dark:text-blue-400 font-semibold">AI Engine Ready</span>
                 </div>
               </div>
             </div>
 
             {/* Card 4: CSV / Excel Upload */}
-            <div className="p-3.5 rounded-xl bg-slate-50/50 hover:bg-slate-50 border border-slate-200 flex flex-col justify-between transition-colors shadow-2xs group">
+            <div className="p-3.5 rounded-xl bg-slate-50/50 hover:bg-slate-50 dark:bg-slate-800/50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col justify-between transition-colors shadow-2xs group">
               <div className="space-y-1 mb-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
                     <span className="material-symbols-outlined text-[18px]">upload_file</span>
                     <UploadCloud className="w-4 h-4 hidden" aria-hidden="true" />
                   </div>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                     Batch
                   </span>
                 </div>
-                <h3 className="text-[13px] font-bold text-slate-900 mt-1">CSV / Excel Upload</h3>
-                <p className="text-[11px] text-slate-500 leading-snug">
+                <h3 className="text-[13px] font-bold text-slate-900 dark:text-slate-100 mt-1">CSV / Excel Upload</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
                   Manual batch upload with automated column schema detection &amp; mapping.
                 </p>
               </div>
@@ -309,15 +337,15 @@ export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
                       handleActionClick('Opening upload workflow...');
                     }
                   }}
-                  className="w-full py-1.5 px-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer border border-slate-200/70"
+                  className="w-full py-1.5 px-2 rounded-lg bg-slate-100 text-slate-800 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer border border-slate-200/70 dark:border-slate-700"
                 >
                   <span className="material-symbols-outlined text-[14px]">file_upload</span>
                   <Upload className="w-3.5 h-3.5 hidden" aria-hidden="true" />
                   <span>Upload File</span>
                 </button>
-                <div className="flex items-center justify-between text-[10px] font-mono text-slate-500">
+                <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 dark:text-slate-400">
                   <span>Max File Size</span>
-                  <span className="text-slate-600 font-medium">100 MB</span>
+                  <span className="text-slate-600 dark:text-slate-300 font-medium">100 MB</span>
                 </div>
               </div>
             </div>
@@ -325,19 +353,19 @@ export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
             {/* Card 5: + Add Integration */}
             <div
               onClick={() => handleActionClick(INGESTION_CONSTANTS.CONNECTORS.DIRECTORY_FEEDBACK)}
-              className="p-3.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50/20 hover:bg-slate-50/60 flex flex-col justify-between transition-colors cursor-pointer group"
+              className="p-3.5 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 bg-slate-50/20 hover:bg-slate-50/60 dark:bg-slate-800/20 dark:hover:bg-slate-800/50 flex flex-col justify-between transition-colors cursor-pointer group"
             >
               <div className="space-y-1 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-blue-600 group-hover:scale-105 transition-transform">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-105 transition-transform">
                   <span className="material-symbols-outlined text-[18px]">add</span>
                   <Plus className="w-4 h-4 hidden" aria-hidden="true" />
                 </div>
-                <h3 className="text-[13px] font-bold text-slate-900 mt-1">+ Add Integration</h3>
-                <p className="text-[11px] text-slate-500 leading-snug">
+                <h3 className="text-[13px] font-bold text-slate-900 dark:text-slate-100 mt-1">+ Add Integration</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
                   NetSuite, Shopify, SAP S/4HANA, Custom REST API, or EDI feeds.
                 </p>
               </div>
-              <div className="w-full py-1.5 px-2 rounded-lg bg-slate-100 group-hover:bg-slate-200 text-slate-600 group-hover:text-blue-700 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors border border-slate-200/70">
+              <div className="w-full py-1.5 px-2 rounded-lg bg-slate-100 group-hover:bg-slate-200 dark:bg-slate-800 dark:group-hover:bg-slate-700 text-slate-600 group-hover:text-blue-700 dark:text-slate-300 dark:group-hover:text-blue-400 text-[11px] font-semibold flex items-center justify-center gap-1 transition-colors border border-slate-200/70 dark:border-slate-700">
                 <span className="material-symbols-outlined text-[14px]">extension</span>
                 <LayoutGrid className="w-3.5 h-3.5 hidden" aria-hidden="true" />
                 <span>Explore Directory</span>

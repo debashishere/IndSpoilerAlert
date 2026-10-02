@@ -9,8 +9,35 @@ import {
   getConnectedSheetsRoster,
   disconnectGoogleSheet
 } from '../controllers/googleSheetsIngressController';
+import {
+  testPingZapier,
+  handleZapierWebhook,
+  saveZapierMappingHandler,
+  getZapierRosterHandler,
+  disconnectZapierFeedHandler
+} from '../controllers/zapierIngressController';
 
 const router = Router();
+
+// Zapier Ingestion Endpoints
+// POST /api/v1/ingestion/zapier/webhook
+router.post('/zapier/webhook', handleZapierWebhook);
+
+// GET /api/v1/ingestion/zapier/roster
+router.get('/zapier/roster', getZapierRosterHandler);
+
+// POST /api/v1/ingestion/zapier/test-ping
+router.post('/zapier/test-ping', testPingZapier);
+
+// POST /api/v1/ingestion/zapier/mapping
+router.post('/zapier/mapping', saveZapierMappingHandler);
+
+// DELETE /api/v1/ingestion/zapier/disconnect
+router.delete('/zapier/disconnect', disconnectZapierFeedHandler);
+
+
+
+
 
 // POST /api/v1/ingestion/google-sheets/webhook
 router.post('/google-sheets/webhook', handleGoogleSheetsWebhook);

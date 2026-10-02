@@ -17,10 +17,19 @@ export interface IngestionTelemetryBarProps {
   className?: string;
 }
 
+export type IngestionConnectorId = 'google-sheets' | 'zapier' | 'doc-scanner';
+
+export interface IngestionConnectorShellProps {
+  activeConnector: IngestionConnectorId;
+  onSelectConnector: (connector: IngestionConnectorId) => void;
+  onBack: () => void;
+  children?: React.ReactNode;
+}
+
 export interface IngestionHubConnectorsProps {
   className?: string;
   onOpenUploadModal?: () => void;
-  onOpenGoogleSheetsDrawer?: () => void;
+  onSelectConnector?: (connector: IngestionConnectorId) => void;
   defaultCollapsed?: boolean;
 }
 

@@ -6,13 +6,27 @@ import {
   SalesRegistryPanel,
   InventoryRegistryPanel,
   IngestionHubConnectors,
+  IngestionConnectorShell,
+  GoogleSheetsIntegrationView,
+  ZapierIntegrationView,
+  DocScannerIntegrationView,
   PipelineSwitcherBar,
   UnifiedIngestionModal,
-  GoogleSheetsConfigDrawer,
-  type IngestionTarget
+  type IngestionTarget,
+  type IngestionConnectorId
 } from '../components/domain/ingestion';
 import { INGESTION_CONSTANTS } from '../components/domain/ingestion/constants/ingestionConstants';
 import type { IngestionViewProps } from '../components/domain/ingestion/types/ingestion.types';
+
+function parseConnectorParam(): IngestionConnectorId | null {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  const connector = params.get('connector');
+  if (connector === 'google-sheets' || connector === 'zapier' || connector === 'doc-scanner') {
+    return connector;
+  }
+  return null;
+}
 
 export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) => {
   const dispatch = useAppDispatch();
@@ -20,9 +34,40 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
   const selectedSupplier = useAppSelector((state) => state.ingestion.selectedSupplier);
   const suppliers = useAppSelector((state) => state.core.suppliers);
 
+  const [activeConnector, setActiveConnector] = useState<IngestionConnectorId | null>(parseConnectorParam);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [isGoogleSheetsDrawerOpen, setIsGoogleSheetsDrawerOpen] = useState(false);
   const [modalTarget, setModalTarget] = useState<IngestionTarget>('inventory');
+
+  const handleSelectConnector = useCallback((connector: IngestionConnectorId) => {
+    setActiveConnector(connector);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', 'ingestion');
+      url.searchParams.set('connector', connector);
+      window.history.pushState({}, '', url.toString());
+    }
+  }, []);
+
+  const handleBackToPipeline = useCallback(() => {
+    setActiveConnector(null);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('connector');
+      window.history.pushState({}, '', url.toString());
+    }
+  }, []);
+
+  // Listen to popstate for browser back/forward history navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      setActiveConnector(parseConnectorParam());
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
 
   const currentSupplier = suppliers.find((s) => s._id === selectedSupplier) || suppliers[0];
   const supplierId = selectedSupplier || currentSupplier?._id || '';
@@ -71,6 +116,50 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
     };
   }, [handleOpenUploadModal]);
 
+  if (activeConnector) {
+    return (
+      <div className="w-full px-4 sm:px-6 py-4 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans text-slate-900 dark:text-slate-100" id="ingestion-view">
+        <IngestionConnectorShell
+          activeConnector={activeConnector}
+          onSelectConnector={handleSelectConnector}
+          onBack={handleBackToPipeline}
+        >
+          {activeConnector === 'google-sheets' && (
+            <div id="connector-google-sheets-workspace">
+              <GoogleSheetsIntegrationView
+                supplierId={supplierId}
+                supplierName={supplierName}
+              />
+            </div>
+          )}
+          {activeConnector === 'zapier' && (
+            <div id="connector-zapier-workspace">
+              <ZapierIntegrationView
+                supplierId={supplierId}
+                supplierName={supplierName}
+              />
+            </div>
+          )}
+          {activeConnector === 'doc-scanner' && (
+            <div id="connector-doc-scanner-workspace">
+              <DocScannerIntegrationView
+                supplierId={supplierId}
+                supplierName={supplierName}
+              />
+            </div>
+          )}
+        </IngestionConnectorShell>
+
+        {/* Unified Surplus Data Ingestion Modal remains accessible */}
+        <UnifiedIngestionModal
+          isOpen={isUploadModalOpen}
+          initialTarget={modalTarget}
+          onClose={handleCloseUploadModal}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full px-4 sm:px-6 py-4 bg-slate-50 dark:bg-slate-950 min-h-screen font-sans text-slate-900 dark:text-slate-100" id="ingestion-view">
       {/* 1. Master Header */}
@@ -86,7 +175,7 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
       {/* 2. Collapsible Dedicated Ingestion Hub & Connectors */}
       <IngestionHubConnectors
         onOpenUploadModal={() => handleOpenUploadModal(pipelineTab as IngestionTarget)}
-        onOpenGoogleSheetsDrawer={() => setIsGoogleSheetsDrawerOpen(true)}
+        onSelectConnector={handleSelectConnector}
       />
 
       {/* 3. Master Pipeline Switcher Bar */}
@@ -124,18 +213,6 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
         isOpen={isUploadModalOpen}
         initialTarget={modalTarget}
         onClose={handleCloseUploadModal}
-      />
-
-      {/* 6. Google Sheets Integration & Mapping Drawer */}
-      <GoogleSheetsConfigDrawer
-        isOpen={isGoogleSheetsDrawerOpen}
-        onClose={() => setIsGoogleSheetsDrawerOpen(false)}
-        supplierId={supplierId}
-        supplierName={supplierName}
-        onMappingHandoff={() => {
-          dispatch(setPipelineTab('inventory'));
-          setIsGoogleSheetsDrawerOpen(false);
-        }}
       />
     </div>
   );

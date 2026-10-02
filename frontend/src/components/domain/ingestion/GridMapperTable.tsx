@@ -11,7 +11,14 @@ import { DEFAULT_SUPPLIERS } from '../../../services/coreService';
 import { SemanticRulesEditor } from './SemanticRulesEditor';
 
 export interface GridMapperTableProps {
-  pipelineType: 'inventory' | 'sales';
+  pipelineType?: 'inventory' | 'sales';
+  mode?: 'import' | 'template';
+  title?: string;
+  subtitle?: string;
+  saveButtonText?: string;
+  onSave?: () => void;
+  isSaving?: boolean;
+  saveSuccess?: boolean;
 }
 
 const INVENTORY_OPTIONS = [
@@ -52,9 +59,19 @@ const SALES_OPTIONS = [
   { value: 'warehouse', label: 'Warehouse / DC' },
 ];
 
-export const GridMapperTable = ({ pipelineType }: GridMapperTableProps) => {
+export const GridMapperTable = ({
+  pipelineType = 'inventory',
+  mode = 'import',
+  title,
+  subtitle,
+  saveButtonText,
+  onSave,
+  isSaving = false,
+  saveSuccess = false,
+}: GridMapperTableProps) => {
   const dispatch = useAppDispatch();
   const isInventory = pipelineType === 'inventory';
+  const isTemplateMode = mode === 'template';
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasClicked, setHasClicked] = useState(false);
@@ -144,9 +161,22 @@ export const GridMapperTable = ({ pipelineType }: GridMapperTableProps) => {
     }
   };
 
-  const isDisabled = isImported || hasClicked || loading;
+  const handleAction = () => {
+    if (isTemplateMode) {
+      onSave?.();
+    } else {
+      handleConfirm();
+    }
+  };
+
+  const isDisabled = isTemplateMode ? (isSaving || loading) : (isImported || hasClicked || loading);
 
   const getButtonText = () => {
+    if (isTemplateMode) {
+      if (saveSuccess) return 'Mapping Saved ✓';
+      if (isSaving || loading) return 'Saving Mapping...';
+      return saveButtonText || 'Save Sheet Mapping';
+    }
     if (isImported) {
       return isInventory ? 'Lots Imported ✓' : 'Sales Reconciled ✓';
     }
@@ -204,12 +234,12 @@ export const GridMapperTable = ({ pipelineType }: GridMapperTableProps) => {
           <div className="preview-header-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <h3 style={{ fontSize: '1.125rem', marginBottom: '4px' }}>
-                {isInventory ? 'Confirm Inventory Data Mapping' : 'Confirm Sales Data Mapping'}
+                {title || (isInventory ? 'Confirm Inventory Data Mapping' : 'Confirm Sales Data Mapping')}
               </h3>
               <p style={{ fontSize: '0.8rem', color: 'hsl(var(--text-muted))', margin: 0 }}>
-                {isInventory
+                {subtitle || (isInventory
                   ? 'Verify suggested column templates and adjust manual overrides. Scroll horizontally to inspect grid.'
-                  : 'Map columns for sales reconciliation (SKU, quantity sold, warehouse, lot number). Scroll horizontally to inspect grid.'}
+                  : 'Map columns for sales reconciliation (SKU, quantity sold, warehouse, lot number). Scroll horizontally to inspect grid.')}
               </p>
             </div>
 
@@ -240,30 +270,27 @@ export const GridMapperTable = ({ pipelineType }: GridMapperTableProps) => {
 
               <button
                 type="button"
-                className={`btn ${isImported ? 'btn-secondary' : 'btn-primary'}`}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 16px',
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  borderRadius: '8px',
-                  cursor: isDisabled ? 'not-allowed' : 'pointer',
-                  opacity: isDisabled ? 0.75 : 1,
-                  background: isImported
-                    ? 'hsl(var(--success) / 40%)'
+                className={`flex items-center gap-1.5 px-4 py-2 text-sm font-bold rounded-lg transition-colors shadow-xs ${
+                  isDisabled ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'
+                } ${
+                  isImported || saveSuccess
+                    ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
                     : isInventory
-                    ? undefined
-                    : 'linear-gradient(135deg, hsl(var(--success)), hsl(var(--success)))',
-                  color: isImported ? 'hsl(142 76% 65%)' : 'white',
-                  border: isImported ? '1px solid hsl(var(--success) / 50%)' : 'none',
-                  boxShadow: isDisabled ? 'none' : '0 4px 12px hsl(var(--primary) / 0.25)',
-                }}
-                onClick={handleConfirm}
+                    ? 'bg-[#0f4cc9] hover:bg-[#1a42a0] text-white'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                }`}
+                onClick={handleAction}
                 disabled={isDisabled}
               >
-                {isImported ? <CheckCircle2 size={16} /> : isDisabled ? <Lock size={16} /> : <Check size={16} />}
+                {isTemplateMode ? (
+                  saveSuccess ? <CheckCircle2 size={16} /> : <Check size={16} />
+                ) : isImported ? (
+                  <CheckCircle2 size={16} />
+                ) : isDisabled ? (
+                  <Lock size={16} />
+                ) : (
+                  <Check size={16} />
+                )}
                 <span>{getButtonText()}</span>
               </button>
             </div>

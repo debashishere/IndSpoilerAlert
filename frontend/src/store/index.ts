@@ -5,6 +5,7 @@ import inventoryReducer from './slices/inventorySlice';
 import workflowReducer from './slices/workflowSlice';
 import logisticsReducer from './slices/logisticsSlice';
 import authReducer from './slices/authSlice';
+import zapierSyncReducer from './slices/zapierSyncSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     workflow: workflowReducer,
     logistics: logisticsReducer,
     auth: authReducer,
+    zapierSync: zapierSyncReducer,
   },
 });
 

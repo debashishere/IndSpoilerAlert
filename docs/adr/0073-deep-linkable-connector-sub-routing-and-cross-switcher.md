@@ -1,0 +1,3 @@
+# Deep-Linkable Connector Sub-Routing and Cross-Switcher
+
+To provide bookmarkable URLs, enable browser back/forward history navigation, and support frictionless context switching across automated ingress connectors, full-page integration suites are bound to URL query parameters (`?tab=ingestion&connector=<id>`). The view header incorporates both an immediate return path (`← Back to Ingestion Pipeline`) and an inline connector switcher tab bar (`[Google Sheets Sync] [Zapier Webhooks] [Image & Doc Scanner]`) allowing operators to manage multiple integrations without bouncing back to the root table view.

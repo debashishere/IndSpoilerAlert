@@ -1,0 +1,3 @@
+# Full-Page Ingestion Integration Manager Suite
+
+To support complex multi-sheet configurations, Apps Script code deployment, Zapier webhooks, and OCR document scanning without claustrophobic drawer constraints or leaking ingress concerns into the Inventory/Insight tab, automated connectors are housed in a dedicated Full-Page Integration Manager suite inside the Ingestion domain. Clicking a connector transitions the Ingestion workspace into an institutional full-page view featuring breadcrumbs, live connection telemetry, credential/webhook setup, mapping rules, and real-time execution rosters, while leaving one-off manual CSV/Excel batch ingestion in its streamlined modal flow.

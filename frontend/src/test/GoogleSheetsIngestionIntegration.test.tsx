@@ -70,6 +70,7 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.pushState({}, '', '/');
     store = createTestStore({
       core: {
         suppliers: [{ _id: 'sup-1', name: 'Acme Organics' }],
@@ -100,96 +101,49 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
     });
   });
 
-  it('clicking "Connect Sheets" on IngestionHubConnectors opens GoogleSheetsConfigDrawer', async () => {
+  it('clicking "Connect Sheets" on IngestionHubConnectors transitions to full-page GoogleSheetsIntegrationView', async () => {
     render(
       <Provider store={store}>
         <IngestionView />
       </Provider>
     );
 
-    // Initial state: drawer should not be present
-    expect(screen.queryByText('Google Sheets Integration & Sync')).toBeNull();
+    // Initial state: pipeline workbench is present
+    expect(document.querySelector('#panel-inventory')).toBeDefined();
 
     // Click "Connect Sheets" button on Card 2
     const connectSheetsBtn = screen.getByRole('button', { name: /Connect Sheets/i });
     expect(connectSheetsBtn).toBeDefined();
     fireEvent.click(connectSheetsBtn);
 
-    // Verify GoogleSheetsConfigDrawer opened
-    expect(await screen.findByText('Google Sheets Integration & Sync')).toBeDefined();
-    expect(screen.getByText('Master Apps Script Setup Guide')).toBeDefined();
+    // Verify full-page integration management suite opened
+    expect(await screen.findByText('Google Sheets Ingestion Suite')).toBeDefined();
+    expect(screen.getByTestId('gsheet-quadrant-1-telemetry')).toBeDefined();
+    expect(screen.getByTestId('gsheet-quadrant-2-credentials')).toBeDefined();
+    expect(screen.getByTestId('gsheet-quadrant-3-roster')).toBeDefined();
+    expect(screen.getByTestId('gsheet-quadrant-4-mapper')).toBeDefined();
   });
 
-  it('sample row handshake hydrates inventoryParsedResult, closes drawer, and mounts GridMapperTable for confirmation', async () => {
-    const mockSampleResult = {
-      documentId: 'gsheet-handshake-doc-123',
-      fileName: 'Google Sheets: Inventory Master',
-      rawGrid: [
-        ['SKU Header', 'Product Title', 'Quantity', 'Expiry Date'],
-        ['SKU-GS-100', 'Organic Almond Milk', '150', '2026-11-20'],
-      ],
-      suggestedMapping: {
-        sku: 'SKU Header',
-        description: 'Product Title',
-        quantity: 'Quantity',
-        expirationDate: 'Expiry Date',
-      },
-    };
-
-    (googleSheetsSyncService.fetchSampleRows as any).mockResolvedValueOnce(mockSampleResult);
-
+  it('clicking Back to Ingestion Pipeline returns to pipeline view without breaking pipeline state', async () => {
     render(
       <Provider store={store}>
         <IngestionView />
       </Provider>
     );
 
-    // Open drawer
+    // Open full-page integration view
     const connectSheetsBtn = screen.getByRole('button', { name: /Connect Sheets/i });
     fireEvent.click(connectSheetsBtn);
-    expect(await screen.findByText('Google Sheets Integration & Sync')).toBeDefined();
+    expect(await screen.findByText('Google Sheets Ingestion Suite')).toBeDefined();
 
-    // Click "Fetch Sample Rows & Open Column Mapper" CTA in drawer
-    const fetchSampleBtn = screen.getByRole('button', {
-      name: /Fetch Sample Rows & Open Column Mapper/i,
-    });
-    fireEvent.click(fetchSampleBtn);
+    // Click Back to Ingestion Pipeline button
+    const backBtn = screen.getByRole('button', { name: /Back to Ingestion Pipeline/i });
+    fireEvent.click(backBtn);
 
-    // Verify drawer closes and GridMapperTable / Confirmation mounts
+    // Full page connector view should be closed and inventory workbench visible
     await waitFor(() => {
-      expect(screen.queryByText('Google Sheets Integration & Sync')).toBeNull();
+      expect(screen.queryByText('Google Sheets Ingestion Suite')).toBeNull();
     });
-
-    // Verify GridMapperTable is rendered with the fetched Google Sheets headers & preview
-    expect(await screen.findByText('Confirm Inventory Data Mapping')).toBeDefined();
-    expect(screen.getByText('Google Sheets: Inventory Master')).toBeDefined();
-    expect(screen.getAllByText('SKU Header').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Product Title').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: /Confirm & Import Lots/i })).toBeDefined();
-  });
-
-  it('closes GoogleSheetsConfigDrawer when cancel or close button is clicked without breaking pipeline state', async () => {
-    render(
-      <Provider store={store}>
-        <IngestionView />
-      </Provider>
-    );
-
-    // Open drawer
-    const connectSheetsBtn = screen.getByRole('button', { name: /Connect Sheets/i });
-    fireEvent.click(connectSheetsBtn);
-    expect(await screen.findByText('Google Sheets Integration & Sync')).toBeDefined();
-
-    // Click Cancel button inside drawer
-    const cancelBtn = screen.getByRole('button', { name: /^Cancel$/i });
-    fireEvent.click(cancelBtn);
-
-    // Drawer should be closed
-    await waitFor(() => {
-      expect(screen.queryByText('Google Sheets Integration & Sync')).toBeNull();
-    });
-
-    // Pipeline should still show inventory workbench intact
     expect(document.querySelector('#panel-inventory')).toBeDefined();
   });
 
@@ -317,16 +271,16 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
       </Provider>
     );
 
-    // Open drawer
+    // Open full-page connector
     const connectSheetsBtn = screen.getByRole('button', { name: /Connect Sheets/i });
     fireEvent.click(connectSheetsBtn);
-    expect(await screen.findByText('Google Sheets Integration & Sync')).toBeDefined();
+    expect(await screen.findByText('Google Sheets Ingestion Suite')).toBeDefined();
 
     // Verify roster displays Produce Master
     expect(await screen.findByText('Produce Master')).toBeDefined();
 
-    // Click "Edit Column Mapping" on that row
-    const editMappingBtn = await screen.findByRole('button', { name: /Edit Column Mapping/i });
+    // Click "Edit Mapping" on that row
+    const editMappingBtn = await screen.findByRole('button', { name: /Edit Mapping/i });
     fireEvent.click(editMappingBtn);
 
     // In-situ workbench mounts with breadcrumbs and table preview
@@ -348,9 +302,7 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
       );
     });
 
-    // Returns to roster view and displays confirmation
-    expect(await screen.findByText('Master Apps Script Setup Guide')).toBeDefined();
-    expect(await screen.findByText(/Column mapping saved successfully/i)).toBeDefined();
+    expect(await screen.findByText(/Mapping Saved ✓/i)).toBeDefined();
   });
 });
 
