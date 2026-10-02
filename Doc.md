@@ -237,3 +237,6 @@ $$\text{Landfill Diversion Rate} = \frac{4,200 + 500 + 300}{11,800} \times 100\%
 
 ---
 *Document updated and verified on 2026-07-23 for IndSpoiler Alert Surplus Platform.*
+
+
+curl -X POST https://maternity-reconcile-playmate.ngrok-free.dev/api/v1/ingestion/google-sheets/test-ping -H "Content-Type: application/json" -H "X- Ingress-Key: $KEY" -d '{"spreadsheetId": "test-sheet-001", "sheetName": "Inventory"}'

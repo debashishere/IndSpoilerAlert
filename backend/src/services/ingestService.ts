@@ -37,6 +37,11 @@ export {
   categoryDefaults
 };
 
+export function toCellString(val: any): string {
+  if (val === null || val === undefined) return '';
+  return typeof val === 'string' ? val.trim() : String(val).trim();
+}
+
 export function getSidecarUrl(): string {
   return process.env.SIDE_CAR_URL || process.env.SIDECAR_URL || 'http://localhost:8000';
 }
@@ -565,21 +570,21 @@ export async function confirmSalesIngestion(
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const rawSku = skuIdx !== -1 ? row[skuIdx]?.trim() : '';
-    const rawDescription = descriptionIdx !== -1 ? row[descriptionIdx]?.trim() : '';
-    const rawBrand = brandIdx !== -1 ? row[brandIdx]?.trim() : '';
-    const rawLotNumber = lotNumberIdx !== -1 ? row[lotNumberIdx]?.trim() : '';
-    const rawBuyerEmail = buyerEmailIdx !== -1 ? row[buyerEmailIdx]?.trim() : '';
-    const rawBuyerCompany = buyerCompanyIdx !== -1 ? row[buyerCompanyIdx]?.trim() : '';
-    const rawQty = qtyIdx !== -1 ? row[qtyIdx]?.trim() : '';
-    const rawPrice = priceIdx !== -1 ? row[priceIdx]?.trim() : '';
-    const rawTotalValue = totalValueIdx !== -1 ? row[totalValueIdx]?.trim() : '';
-    const rawSaleDate = saleDateIdx !== -1 ? row[saleDateIdx]?.trim() : '';
-    const rawInvoiceNumber = invoiceNumberIdx !== -1 ? row[invoiceNumberIdx]?.trim() : '';
-    const rawProductName = productNameIdx !== -1 ? row[productNameIdx]?.trim() : '';
-    const rawStatus = statusIdx !== -1 ? row[statusIdx]?.trim() : '';
-    const rawWarehouse = warehouseIdx !== -1 ? row[warehouseIdx]?.trim() : '';
-    const rawRevenue = revenueIdx !== -1 ? row[revenueIdx]?.trim() : '';
+    const rawSku = skuIdx !== -1 ? toCellString(row[skuIdx]) : '';
+    const rawDescription = descriptionIdx !== -1 ? toCellString(row[descriptionIdx]) : '';
+    const rawBrand = brandIdx !== -1 ? toCellString(row[brandIdx]) : '';
+    const rawLotNumber = lotNumberIdx !== -1 ? toCellString(row[lotNumberIdx]) : '';
+    const rawBuyerEmail = buyerEmailIdx !== -1 ? toCellString(row[buyerEmailIdx]) : '';
+    const rawBuyerCompany = buyerCompanyIdx !== -1 ? toCellString(row[buyerCompanyIdx]) : '';
+    const rawQty = qtyIdx !== -1 ? toCellString(row[qtyIdx]) : '';
+    const rawPrice = priceIdx !== -1 ? toCellString(row[priceIdx]) : '';
+    const rawTotalValue = totalValueIdx !== -1 ? toCellString(row[totalValueIdx]) : '';
+    const rawSaleDate = saleDateIdx !== -1 ? toCellString(row[saleDateIdx]) : '';
+    const rawInvoiceNumber = invoiceNumberIdx !== -1 ? toCellString(row[invoiceNumberIdx]) : '';
+    const rawProductName = productNameIdx !== -1 ? toCellString(row[productNameIdx]) : '';
+    const rawStatus = statusIdx !== -1 ? toCellString(row[statusIdx]) : '';
+    const rawWarehouse = warehouseIdx !== -1 ? toCellString(row[warehouseIdx]) : '';
+    const rawRevenue = revenueIdx !== -1 ? toCellString(row[revenueIdx]) : '';
 
     if (!rawSku && !rawLotNumber) {
       continue; // Skip entirely empty row
@@ -1131,8 +1136,8 @@ export async function processBatch(batch: IngestionBatch): Promise<IngestionBatc
   // Pre-index ProductMaster across batch rows via single $in query
   const candidateSkus = new Set<string>();
   for (const row of rows) {
-    const rawSku = skuIdx !== -1 ? row[skuIdx]?.trim() : '';
-    const rawDesc = descIdx !== -1 ? row[descIdx]?.trim() : '';
+    const rawSku = skuIdx !== -1 ? toCellString(row[skuIdx]) : '';
+    const rawDesc = descIdx !== -1 ? toCellString(row[descIdx]) : '';
     if (rawSku) {
       candidateSkus.add(rawSku);
     } else if (rawDesc) {
@@ -1156,26 +1161,26 @@ export async function processBatch(batch: IngestionBatch): Promise<IngestionBatc
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const rawSku = skuIdx !== -1 ? row[skuIdx]?.trim() : '';
-    const rawDesc = descIdx !== -1 ? row[descIdx]?.trim() : '';
-    const rawBrand = brandIdx !== -1 ? row[brandIdx]?.trim() : '';
-    const rawQty = qtyIdx !== -1 ? row[qtyIdx]?.trim() : '';
-    const rawExp = expIdx !== -1 ? row[expIdx]?.trim() : '';
-    const rawPrice = priceIdx !== -1 ? row[priceIdx]?.trim() : '';
-    const rawLotNumber = lotNumberIdx !== -1 ? row[lotNumberIdx]?.trim() : '';
-    const rawProductionDate = productionDateIdx !== -1 ? row[productionDateIdx]?.trim() : '';
-    const rawCategory = categoryIdx !== -1 ? row[categoryIdx]?.trim() : '';
-    const rawSubCategory = subCategoryIdx !== -1 ? row[subCategoryIdx]?.trim() : '';
-    const rawListPrice = standardSellPriceIdx !== -1 ? row[standardSellPriceIdx]?.trim() : '';
-    const rawWarehouse = warehouseIdx !== -1 ? row[warehouseIdx]?.trim() : '';
-    const rawComment = commentIdx !== -1 ? row[commentIdx]?.trim() : '';
-    const rawStatus = statusIdx !== -1 ? row[statusIdx]?.trim().toLowerCase() : '';
-    const rawAvailableQtyStr = availableQtyIdx !== -1 ? row[availableQtyIdx]?.trim() : '';
-    const rawTempMinStr = tempMinIdx !== -1 ? row[tempMinIdx]?.trim() : '';
-    const rawTempMaxStr = tempMaxIdx !== -1 ? row[tempMaxIdx]?.trim() : '';
-    const rawFdaRegulated = fdaRegulatedIdx !== -1 ? row[fdaRegulatedIdx]?.trim() : '';
+    const rawSku = skuIdx !== -1 ? toCellString(row[skuIdx]) : '';
+    const rawDesc = descIdx !== -1 ? toCellString(row[descIdx]) : '';
+    const rawBrand = brandIdx !== -1 ? toCellString(row[brandIdx]) : '';
+    const rawQty = qtyIdx !== -1 ? toCellString(row[qtyIdx]) : '';
+    const rawExp = expIdx !== -1 ? toCellString(row[expIdx]) : '';
+    const rawPrice = priceIdx !== -1 ? toCellString(row[priceIdx]) : '';
+    const rawLotNumber = lotNumberIdx !== -1 ? toCellString(row[lotNumberIdx]) : '';
+    const rawProductionDate = productionDateIdx !== -1 ? toCellString(row[productionDateIdx]) : '';
+    const rawCategory = categoryIdx !== -1 ? toCellString(row[categoryIdx]) : '';
+    const rawSubCategory = subCategoryIdx !== -1 ? toCellString(row[subCategoryIdx]) : '';
+    const rawListPrice = standardSellPriceIdx !== -1 ? toCellString(row[standardSellPriceIdx]) : '';
+    const rawWarehouse = warehouseIdx !== -1 ? toCellString(row[warehouseIdx]) : '';
+    const rawComment = commentIdx !== -1 ? toCellString(row[commentIdx]) : '';
+    const rawStatus = statusIdx !== -1 ? toCellString(row[statusIdx]).toLowerCase() : '';
+    const rawAvailableQtyStr = availableQtyIdx !== -1 ? toCellString(row[availableQtyIdx]) : '';
+    const rawTempMinStr = tempMinIdx !== -1 ? toCellString(row[tempMinIdx]) : '';
+    const rawTempMaxStr = tempMaxIdx !== -1 ? toCellString(row[tempMaxIdx]) : '';
+    const rawFdaRegulated = fdaRegulatedIdx !== -1 ? toCellString(row[fdaRegulatedIdx]) : '';
 
-    const isEntirelyEmpty = row.length === 0 || row.every(cell => !cell || !cell.trim());
+    const isEntirelyEmpty = row.length === 0 || row.every(cell => !cell || !toCellString(cell));
     if (isEntirelyEmpty) {
       continue;
     }

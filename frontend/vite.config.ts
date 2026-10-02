@@ -8,6 +8,12 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
+    allowedHosts: [
+      'maternity-reconcile-playmate.ngrok-free.dev',
+      '.ngrok-free.dev',
+      '.ngrok.app',
+      '.ngrok-free.app',
+    ],
     proxy: {
       '/api': {
         target: backendTarget,

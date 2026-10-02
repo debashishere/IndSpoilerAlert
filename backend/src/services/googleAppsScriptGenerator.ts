@@ -122,7 +122,8 @@ function testConnection() {
     method: "post",
     contentType: "application/json",
     headers: {
-      "X-Ingress-Key": CONFIG.INGRESS_KEY
+      "X-Ingress-Key": CONFIG.INGRESS_KEY,
+      "ngrok-skip-browser-warning": "true"
     },
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
@@ -176,7 +177,8 @@ function syncToPlatform() {
     method: "post",
     contentType: "application/json",
     headers: {
-      "X-Ingress-Key": CONFIG.INGRESS_KEY
+      "X-Ingress-Key": CONFIG.INGRESS_KEY,
+      "ngrok-skip-browser-warning": "true"
     },
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
