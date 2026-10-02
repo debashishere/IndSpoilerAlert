@@ -60,6 +60,32 @@ export interface SyncNowResponse {
   [key: string]: any;
 }
 
+export interface ConnectedSheetInfo {
+  spreadsheetId: string;
+  spreadsheetTitle?: string;
+  sheetName: string;
+  syncStatus?: 'idle' | 'success' | 'error' | string;
+  lastSyncedAt?: string | null;
+  lotCount?: number;
+  lastSyncMetrics?: {
+    totalRows: number;
+    inserted: number;
+    updated: number;
+    depleted: number;
+    errors: string[];
+  };
+  supplierTemplateId?: string;
+}
+
+export interface ConnectedSheetsRosterResponse {
+  success: boolean;
+  supplierId: string;
+  ingressKey?: string;
+  connectedSheets: ConnectedSheetInfo[];
+  totalSheets: number;
+  [key: string]: any;
+}
+
 const COMMON_HEADERS = {
   'Cache-Control': 'no-cache, no-store',
   Pragma: 'no-cache',
@@ -163,6 +189,40 @@ export const googleSheetsSyncService = {
   },
 
   /**
+   * Fetches the connected multi-sheet roster for a supplier
+   */
+  async fetchRoster(
+    supplierIdOrPayload: string | { supplierId?: string; ingressKey?: string }
+  ): Promise<ConnectedSheetsRosterResponse> {
+    const supplierId =
+      typeof supplierIdOrPayload === 'string' ? supplierIdOrPayload : supplierIdOrPayload?.supplierId;
+    const ingressKey =
+      typeof supplierIdOrPayload === 'object' ? supplierIdOrPayload?.ingressKey : undefined;
+
+    let url = `${API_BASE_URL}/v1/ingestion/google-sheets/roster`;
+    if (supplierId) {
+      url += `?supplierId=${encodeURIComponent(supplierId)}`;
+    }
+
+    const headers: Record<string, string> = { ...JSON_HEADERS };
+    if (ingressKey) {
+      headers['x-ingress-key'] = ingressKey;
+    }
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to fetch connected sheets roster.');
+    }
+
+    return await res.json();
+  },
+
+  /**
    * Triggers on-demand Google Sheets sync pass
    */
   async syncNow(payload: SyncNowPayload): Promise<SyncNowResponse> {
@@ -181,6 +241,70 @@ export const googleSheetsSyncService = {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Failed to trigger on-demand sync.');
+    }
+
+    return await res.json();
+  },
+
+  /**
+   * Disconnects a specific spreadsheet / sheetName for a supplier
+   */
+  async disconnectSheet(payload: {
+    supplierId?: string;
+    ingressKey?: string;
+    spreadsheetId: string;
+    sheetName?: string;
+  }): Promise<{ success: boolean; message: string; remainingSheets?: number; [key: string]: any }> {
+    const url = `${API_BASE_URL}/v1/ingestion/google-sheets/disconnect`;
+    const headers: Record<string, string> = { ...JSON_HEADERS };
+    if (payload?.ingressKey) {
+      headers['x-ingress-key'] = payload.ingressKey;
+    }
+
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers,
+      body: JSON.stringify({
+        supplierId: payload.supplierId,
+        spreadsheetId: payload.spreadsheetId,
+        sheetName: payload.sheetName,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to disconnect spreadsheet.');
+    }
+
+    return await res.json();
+  },
+
+  /**
+   * Saves column mapping schema and binds to supplier template / connected sheet
+   */
+  async saveMapping(payload: {
+    supplierId?: string;
+    ingressKey?: string;
+    spreadsheetId?: string;
+    sheetName?: string;
+    templateName?: string;
+    columnMappings: Record<string, string>;
+  }): Promise<{ success: boolean; supplierTemplateId: string; message: string }> {
+    const url = `${API_BASE_URL}/v1/ingestion/google-sheets/save-mapping`;
+    const headers: Record<string, string> = { ...JSON_HEADERS };
+    if (payload?.ingressKey) {
+      headers['x-ingress-key'] = payload.ingressKey;
+    }
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to save Google Sheets column mapping.');
     }
 
     return await res.json();

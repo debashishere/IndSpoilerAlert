@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import ingestionService from '../../services/ingestionService';
-import googleSheetsSyncService from '../../services/googleSheetsSyncService';
+import googleSheetsSyncService, { type ConnectedSheetInfo } from '../../services/googleSheetsSyncService';
 
 export type PipelineTab = 'inventory' | 'sales' | 'buyers';
 
@@ -74,6 +74,7 @@ export interface IngestionState {
     connectedEmail: string;
     oauthConnected: boolean;
     ingressKey?: string;
+    webhookUrl?: string;
   };
   googleSheetsScript: string | null;
   googleSheetsScriptLoading: boolean;
@@ -82,6 +83,11 @@ export interface IngestionState {
   googleSheetsPingLatencyMs: number | null;
   googleSheetsPingError: string | null;
   googleSheetsHandshakeLoading: boolean;
+
+  // Multi-Sheet Ingress Roster State
+  connectedSheets: ConnectedSheetInfo[];
+  connectedSheetsLoading: boolean;
+  connectedSheetsError: string | null;
 
   // Dual-State Google Sheets Sync Health & Dispatch
   googleSheetsSync: {
@@ -154,6 +160,10 @@ const initialState: IngestionState = {
   googleSheetsPingLatencyMs: null,
   googleSheetsPingError: null,
   googleSheetsHandshakeLoading: false,
+
+  connectedSheets: [],
+  connectedSheetsLoading: false,
+  connectedSheetsError: null,
 
   googleSheetsSync: {
     connectionStatus: 'unconnected',
@@ -351,6 +361,7 @@ export const ingestionSlice = createSlice({
         connectedEmail?: string;
         oauthConnected?: boolean;
         ingressKey?: string;
+        webhookUrl?: string;
       }>
     ) => {
       state.googleSheetsConfig = {
@@ -383,6 +394,46 @@ export const ingestionSlice = createSlice({
     setGoogleSheetsHandshakeLoading: (state, action: PayloadAction<boolean>) => {
       state.googleSheetsHandshakeLoading = action.payload;
     },
+    setConnectedSheets: (state, action: PayloadAction<ConnectedSheetInfo[]>) => {
+      state.connectedSheets = action.payload;
+    },
+    setConnectedSheetsLoading: (state, action: PayloadAction<boolean>) => {
+      state.connectedSheetsLoading = action.payload;
+    },
+    setConnectedSheetsError: (state, action: PayloadAction<string | null>) => {
+      state.connectedSheetsError = action.payload;
+    },
+    removeConnectedSheet: (
+      state,
+      action: PayloadAction<{ spreadsheetId: string; sheetName?: string }>
+    ) => {
+      state.connectedSheets = state.connectedSheets.filter((sheet) => {
+        if (action.payload.sheetName) {
+          return !(
+            sheet.spreadsheetId === action.payload.spreadsheetId &&
+            sheet.sheetName === action.payload.sheetName
+          );
+        }
+        return sheet.spreadsheetId !== action.payload.spreadsheetId;
+      });
+    },
+    updateConnectedSheetTemplate: (
+      state,
+      action: PayloadAction<{ spreadsheetId: string; sheetName?: string; supplierTemplateId: string }>
+    ) => {
+      state.connectedSheets = state.connectedSheets.map((sheet) => {
+        if (
+          sheet.spreadsheetId === action.payload.spreadsheetId &&
+          (!action.payload.sheetName || sheet.sheetName === action.payload.sheetName)
+        ) {
+          return {
+            ...sheet,
+            supplierTemplateId: action.payload.supplierTemplateId,
+          };
+        }
+        return sheet;
+      });
+    },
     setGoogleSheetsSyncState: (
       state,
       action: PayloadAction<
@@ -396,17 +447,40 @@ export const ingestionSlice = createSlice({
       >
     ) => {
       state.googleSheetsSync = {
+        connectionStatus: 'unconnected',
+        lastSyncedAt: null,
+        syncedLotCount: 0,
+        isSyncing: false,
+        error: null,
         ...state.googleSheetsSync,
         ...action.payload,
       };
     },
     setGoogleSheetsSyncLoading: (state, action: PayloadAction<boolean>) => {
+      if (!state.googleSheetsSync) {
+        state.googleSheetsSync = {
+          connectionStatus: 'unconnected',
+          lastSyncedAt: null,
+          syncedLotCount: 0,
+          isSyncing: false,
+          error: null,
+        };
+      }
       state.googleSheetsSync.isSyncing = action.payload;
     },
     setGoogleSheetsSyncSuccess: (
       state,
       action: PayloadAction<{ lastSyncedAt: string; syncedLotCount: number }>
     ) => {
+      if (!state.googleSheetsSync) {
+        state.googleSheetsSync = {
+          connectionStatus: 'unconnected',
+          lastSyncedAt: null,
+          syncedLotCount: 0,
+          isSyncing: false,
+          error: null,
+        };
+      }
       state.googleSheetsSync.isSyncing = false;
       state.googleSheetsSync.connectionStatus = 'connected';
       state.googleSheetsSync.lastSyncedAt = action.payload.lastSyncedAt;
@@ -414,6 +488,15 @@ export const ingestionSlice = createSlice({
       state.googleSheetsSync.error = null;
     },
     setGoogleSheetsSyncError: (state, action: PayloadAction<string | null>) => {
+      if (!state.googleSheetsSync) {
+        state.googleSheetsSync = {
+          connectionStatus: 'unconnected',
+          lastSyncedAt: null,
+          syncedLotCount: 0,
+          isSyncing: false,
+          error: null,
+        };
+      }
       state.googleSheetsSync.isSyncing = false;
       state.googleSheetsSync.error = action.payload;
       if (action.payload) {
@@ -469,6 +552,11 @@ export const {
   setGoogleSheetsPingStatus,
   setGoogleSheetsPingResult,
   setGoogleSheetsHandshakeLoading,
+  setConnectedSheets,
+  setConnectedSheetsLoading,
+  setConnectedSheetsError,
+  removeConnectedSheet,
+  updateConnectedSheetTemplate,
   setGoogleSheetsSyncState,
   setGoogleSheetsSyncLoading,
   setGoogleSheetsSyncSuccess,
@@ -736,6 +824,7 @@ export const fetchGoogleSheetsScriptThunk = createAsyncThunk(
           spreadsheetId: res.spreadsheetId,
           sheetName: res.sheetName,
           ingressKey: res.ingressKey,
+          webhookUrl: res.webhookUrl,
         })
       );
       dispatch(setGoogleSheetsScriptLoading(false));
@@ -816,6 +905,94 @@ export const syncGoogleSheetsNowThunk = createAsyncThunk(
       const errorMsg = err.message || 'Failed to trigger on-demand sync.';
       dispatch(setGoogleSheetsSyncError(errorMsg));
       return rejectWithValue(errorMsg);
+    }
+  }
+);
+
+export const fetchGoogleSheetsRosterThunk = createAsyncThunk(
+  'ingestion/fetchGoogleSheetsRoster',
+  async (
+    supplierIdOrPayload: string | { supplierId?: string; ingressKey?: string },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      dispatch(setConnectedSheetsLoading(true));
+      dispatch(setConnectedSheetsError(null));
+      const res = await googleSheetsSyncService.fetchRoster(supplierIdOrPayload);
+      dispatch(setConnectedSheets(res.connectedSheets || []));
+      if (res.ingressKey) {
+        dispatch(setGoogleSheetsConfig({ ingressKey: res.ingressKey }));
+      }
+      dispatch(setConnectedSheetsLoading(false));
+      return res;
+    } catch (err: any) {
+      const errorMsg = err.message || 'Failed to fetch connected sheets roster.';
+      dispatch(setConnectedSheetsError(errorMsg));
+      dispatch(setConnectedSheetsLoading(false));
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
+
+export const disconnectGoogleSheetThunk = createAsyncThunk(
+  'ingestion/disconnectGoogleSheet',
+  async (
+    payload: {
+      supplierId?: string;
+      ingressKey?: string;
+      spreadsheetId: string;
+      sheetName?: string;
+    },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      dispatch(setConnectedSheetsLoading(true));
+      dispatch(setConnectedSheetsError(null));
+      const res = await googleSheetsSyncService.disconnectSheet(payload);
+      dispatch(
+        removeConnectedSheet({
+          spreadsheetId: payload.spreadsheetId,
+          sheetName: payload.sheetName,
+        })
+      );
+      dispatch(setConnectedSheetsLoading(false));
+      return res;
+    } catch (err: any) {
+      const errorMsg = err.message || 'Failed to disconnect spreadsheet.';
+      dispatch(setConnectedSheetsError(errorMsg));
+      dispatch(setConnectedSheetsLoading(false));
+      return rejectWithValue(errorMsg);
+    }
+  }
+);
+
+export const saveGoogleSheetsMappingThunk = createAsyncThunk(
+  'ingestion/saveGoogleSheetsMapping',
+  async (
+    payload: {
+      supplierId?: string;
+      ingressKey?: string;
+      spreadsheetId?: string;
+      sheetName?: string;
+      templateName?: string;
+      columnMappings: Record<string, string>;
+    },
+    { dispatch, rejectWithValue }
+  ) => {
+    try {
+      const res = await googleSheetsSyncService.saveMapping(payload);
+      if (res.supplierTemplateId && payload.spreadsheetId) {
+        dispatch(
+          updateConnectedSheetTemplate({
+            spreadsheetId: payload.spreadsheetId,
+            sheetName: payload.sheetName,
+            supplierTemplateId: res.supplierTemplateId,
+          })
+        );
+      }
+      return res;
+    } catch (err: any) {
+      return rejectWithValue(err.message || 'Failed to save Google Sheets column mapping.');
     }
   }
 );

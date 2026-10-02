@@ -1343,6 +1343,13 @@ export async function processBatch(batch: IngestionBatch): Promise<IngestionBatc
     const attributes = new Map<string, any>(Object.entries(translated.attributes));
     const rawAttributes = new Map<string, any>(Object.entries(translated.rawAttributes));
 
+    if (batch.metadata?.spreadsheetId) {
+      attributes.set('spreadsheetId', batch.metadata.spreadsheetId);
+    }
+    if (batch.metadata?.sheetName) {
+      attributes.set('sheetName', batch.metadata.sheetName);
+    }
+
     let existingLot = await InventoryLot.findOne({
       supplierId,
       productId: product._id,
@@ -1420,10 +1427,18 @@ export async function processBatch(batch: IngestionBatch): Promise<IngestionBatc
   };
 }
 
+export interface ISheetSyncDetails {
+  spreadsheetId: string;
+  spreadsheetTitle?: string;
+  sheetName: string;
+  supplierTemplateId?: mongoose.Types.ObjectId;
+}
+
 export async function recordSyncCompletion(
   configId: string | mongoose.Types.ObjectId,
   metrics: ISyncMetrics,
-  status?: 'success' | 'error'
+  status?: 'success' | 'error',
+  sheetDetails?: ISheetSyncDetails
 ): Promise<IGoogleSheetsSyncConfig | null> {
   let query: any = null;
   if (mongoose.Types.ObjectId.isValid(configId as any)) {
@@ -1448,25 +1463,79 @@ export async function recordSyncCompletion(
   const now = new Date();
   const syncStatus = status || (metrics.errors && metrics.errors.length > 0 && metrics.totalRows > 0 && (metrics.inserted + metrics.updated + metrics.depleted === 0) ? 'error' : 'success');
 
-  const updatedConfig = await GoogleSheetsSyncConfig.findOneAndUpdate(
-    query,
+  const metricsPayload: ISyncMetrics = {
+    totalRows: metrics.totalRows || 0,
+    inserted: metrics.inserted || 0,
+    updated: metrics.updated || 0,
+    depleted: metrics.depleted || 0,
+    errors: metrics.errors || []
+  };
+
+  if (!sheetDetails || !sheetDetails.spreadsheetId) {
+    return GoogleSheetsSyncConfig.findOneAndUpdate(
+      query,
+      {
+        $set: {
+          syncStatus,
+          lastSyncedAt: now,
+          lastSyncMetrics: metricsPayload
+        }
+      },
+      { new: true }
+    );
+  }
+
+  const targetSheetName = sheetDetails.sheetName || 'Sheet1';
+
+  // 1. Attempt atomic update of matching connectedSheets subdocument
+  const updated = await GoogleSheetsSyncConfig.findOneAndUpdate(
+    {
+      ...query,
+      'connectedSheets.spreadsheetId': sheetDetails.spreadsheetId,
+      'connectedSheets.sheetName': targetSheetName
+    },
     {
       $set: {
         syncStatus,
         lastSyncedAt: now,
-        lastSyncMetrics: {
-          totalRows: metrics.totalRows || 0,
-          inserted: metrics.inserted || 0,
-          updated: metrics.updated || 0,
-          depleted: metrics.depleted || 0,
-          errors: metrics.errors || []
-        }
+        lastSyncMetrics: metricsPayload,
+        'connectedSheets.$.syncStatus': syncStatus,
+        'connectedSheets.$.lastSyncedAt': now,
+        'connectedSheets.$.lastSyncMetrics': metricsPayload,
+        ...(sheetDetails.spreadsheetTitle ? { 'connectedSheets.$.spreadsheetTitle': sheetDetails.spreadsheetTitle } : {}),
+        ...(sheetDetails.supplierTemplateId ? { 'connectedSheets.$.supplierTemplateId': sheetDetails.supplierTemplateId } : {})
       }
     },
     { new: true }
   );
 
-  return updatedConfig;
+  if (updated) {
+    return updated;
+  }
+
+  // 2. If subdocument was not found, atomically $push the new sheet subdocument
+  return GoogleSheetsSyncConfig.findOneAndUpdate(
+    query,
+    {
+      $set: {
+        syncStatus,
+        lastSyncedAt: now,
+        lastSyncMetrics: metricsPayload
+      },
+      $push: {
+        connectedSheets: {
+          spreadsheetId: sheetDetails.spreadsheetId,
+          spreadsheetTitle: sheetDetails.spreadsheetTitle,
+          sheetName: targetSheetName,
+          syncStatus,
+          lastSyncedAt: now,
+          lastSyncMetrics: metricsPayload,
+          supplierTemplateId: sheetDetails.supplierTemplateId
+        }
+      }
+    },
+    { new: true }
+  );
 }
 
 export async function getActiveLotCount(supplierId: string | mongoose.Types.ObjectId): Promise<number> {
@@ -1493,7 +1562,7 @@ export async function saveGoogleSheetsMapping(params: ISaveGoogleSheetsMappingPa
 
   let template = await SupplierTemplate.findOne({
     supplierId,
-    templateName: templateName || 'Google Sheets Template'
+    templateName: templateName || (spreadsheetId ? `Google Sheets: ${spreadsheetId}` : 'Google Sheets Template')
   });
 
   if (template) {
@@ -1502,7 +1571,7 @@ export async function saveGoogleSheetsMapping(params: ISaveGoogleSheetsMappingPa
   } else {
     template = await SupplierTemplate.create({
       supplierId,
-      templateName: templateName || 'Google Sheets Template',
+      templateName: templateName || (spreadsheetId ? `Google Sheets: ${spreadsheetId}` : 'Google Sheets Template'),
       columnMappings,
       hasHeaderRow: true,
       dateFormat: 'YYYY-MM-DD',
@@ -1513,8 +1582,28 @@ export async function saveGoogleSheetsMapping(params: ISaveGoogleSheetsMappingPa
   const config = await GoogleSheetsSyncConfig.findOne({ supplierId });
   if (config) {
     config.supplierTemplateId = template._id as any;
-    if (spreadsheetId) config.spreadsheetId = spreadsheetId;
-    if (sheetName) config.sheetName = sheetName;
+    if (spreadsheetId) {
+      config.spreadsheetId = spreadsheetId;
+      if (sheetName) config.sheetName = sheetName;
+
+      // Update or register in connectedSheets subdocument array
+      if (config.connectedSheets && Array.isArray(config.connectedSheets)) {
+        const matchingSheet = config.connectedSheets.find(
+          s => s.spreadsheetId === spreadsheetId && (!sheetName || s.sheetName === sheetName)
+        );
+        if (matchingSheet) {
+          matchingSheet.supplierTemplateId = template._id as any;
+        } else {
+          config.connectedSheets.push({
+            spreadsheetId,
+            sheetName: sheetName || 'Sheet1',
+            syncStatus: 'idle',
+            lastSyncMetrics: { totalRows: 0, inserted: 0, updated: 0, depleted: 0, errors: [] },
+            supplierTemplateId: template._id as any
+          });
+        }
+      }
+    }
     await config.save();
   }
 
@@ -1540,7 +1629,25 @@ export async function getGoogleSheetsSampleRows(params: IGetGoogleSheetsSampleRo
     throw new Error('supplierId is required.');
   }
 
-  const existingTemplate = await SupplierTemplate.findOne({ supplierId });
+  // Check if a template is explicitly bound to this spreadsheet / sheetName
+  let existingTemplate: any = null;
+  const config = await GoogleSheetsSyncConfig.findOne({ supplierId });
+  if (config && config.connectedSheets) {
+    const matchingSheet = config.connectedSheets.find(
+      s => s.spreadsheetId === spreadsheetId && (!sheetName || s.sheetName === sheetName)
+    );
+    if (matchingSheet?.supplierTemplateId) {
+      existingTemplate = await SupplierTemplate.findById(matchingSheet.supplierTemplateId);
+    }
+  }
+
+  if (!existingTemplate && config?.supplierTemplateId) {
+    existingTemplate = await SupplierTemplate.findById(config.supplierTemplateId);
+  }
+
+  if (!existingTemplate) {
+    existingTemplate = await SupplierTemplate.findOne({ supplierId });
+  }
 
   // Baseline standard canonical headers
   const defaultHeaderMap: Record<string, string> = {

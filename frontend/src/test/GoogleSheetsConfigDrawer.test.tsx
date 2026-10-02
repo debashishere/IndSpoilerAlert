@@ -2,9 +2,35 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('../services/googleSheetsSyncService', () => {
   const mockService = {
-    fetchScriptTemplate: vi.fn(),
+    fetchScriptTemplate: vi.fn().mockResolvedValue({
+      success: true,
+      script: 'function onEdit(e) {\n  // Auto Sync Code\n}',
+      ingressKey: 'spoileralert_sec_live_key_999',
+      webhookUrl: 'http://localhost:5000/api/v1/ingestion/google-sheets/webhook',
+    }),
     testPing: vi.fn(),
     fetchSampleRows: vi.fn(),
+    fetchRoster: vi.fn().mockResolvedValue({
+      success: true,
+      connectedSheets: [],
+      totalSheets: 0,
+    }),
+    syncNow: vi.fn().mockResolvedValue({
+      success: true,
+      syncStatus: 'success',
+      lastSyncedAt: '2026-10-01T12:00:00.000Z',
+      syncedLotCount: 45,
+    }),
+    disconnectSheet: vi.fn().mockResolvedValue({
+      success: true,
+      message: 'Sheet disconnected successfully.',
+      remainingSheets: 0,
+    }),
+    saveMapping: vi.fn().mockResolvedValue({
+      success: true,
+      supplierTemplateId: 'tmpl-saved-123',
+      message: 'Column mapping saved successfully.',
+    }),
   };
   return {
     default: mockService,
@@ -49,10 +75,10 @@ describe('Slice 2: GoogleSheetsConfigDrawer Component Tests', () => {
     store = createTestStore({
       ingestion: {
         googleSheetsConfig: {
-          spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
-          sheetName: 'Inventory Master',
-          connectedEmail: 'ops@acmeorganics.com',
-          oauthConnected: true,
+          spreadsheetId: '',
+          sheetName: '',
+          connectedEmail: '',
+          oauthConnected: false,
           ingressKey: 'spoileralert_sec_live_key_999',
         },
         googleSheetsScript: 'function onEdit(e) {\n  // Auto Sync Code\n}',
@@ -62,6 +88,9 @@ describe('Slice 2: GoogleSheetsConfigDrawer Component Tests', () => {
         googleSheetsPingLatencyMs: null,
         googleSheetsPingError: null,
         googleSheetsHandshakeLoading: false,
+        connectedSheets: [],
+        connectedSheetsLoading: false,
+        connectedSheetsError: null,
       },
     });
 
@@ -71,9 +100,45 @@ describe('Slice 2: GoogleSheetsConfigDrawer Component Tests', () => {
         writeText: vi.fn().mockResolvedValue(undefined),
       },
     });
+
+    (googleSheetsSyncService.fetchScriptTemplate as any).mockResolvedValue({
+      success: true,
+      script: 'function onEdit(e) {\n  // Auto Sync Code\n}',
+      ingressKey: 'spoileralert_sec_live_key_999',
+      webhookUrl: 'http://localhost:5000/api/v1/ingestion/google-sheets/webhook',
+    });
+    (googleSheetsSyncService.fetchRoster as any).mockResolvedValue({
+      success: true,
+      connectedSheets: [],
+      totalSheets: 0,
+    });
+    (googleSheetsSyncService.syncNow as any).mockResolvedValue({
+      success: true,
+      syncStatus: 'success',
+      lastSyncedAt: '2026-10-01T12:00:00.000Z',
+      syncedLotCount: 45,
+    });
+    (googleSheetsSyncService.disconnectSheet as any).mockResolvedValue({
+      success: true,
+      message: 'Sheet disconnected successfully.',
+      remainingSheets: 0,
+    });
+    (googleSheetsSyncService.fetchSampleRows as any).mockResolvedValue({
+      documentId: 'gsheet-default-doc',
+      fileName: 'Google Sheets: Sample',
+      rawGrid: [
+        ['SKU', 'Description', 'Quantity'],
+        ['SKU-1', 'Product 1', '10'],
+      ],
+      suggestedMapping: {
+        sku: 'SKU',
+        description: 'Description',
+        quantity: 'Quantity',
+      },
+    });
   });
 
-  it('renders drawer header, OAuth status, and spreadsheet configuration fields when open', () => {
+  it('purges obsolete Google Workspace OAuth cards and manual coordinate inputs', () => {
     render(
       <Provider store={store}>
         <GoogleSheetsConfigDrawer
@@ -85,20 +150,65 @@ describe('Slice 2: GoogleSheetsConfigDrawer Component Tests', () => {
       </Provider>
     );
 
-    // Title and supplier context
+    // Title and supplier context render properly
     expect(screen.getByText('Google Sheets Integration & Sync')).toBeDefined();
     expect(screen.getByText(/Configure live bidirectional spreadsheet synchronization/i)).toBeDefined();
 
-    // OAuth status badge & connected email
-    expect(screen.getByText(/Connected: ops@acmeorganics.com/i)).toBeDefined();
-    expect(screen.getByText('OAuth Active')).toBeDefined();
+    // Verify obsolete OAuth elements are purged
+    expect(screen.queryByText(/Google Workspace Identity/i)).toBeNull();
+    expect(screen.queryByText(/OAuth Active/i)).toBeNull();
+    expect(screen.queryByText(/OAuth Pending/i)).toBeNull();
+    expect(screen.queryByRole('link', { name: /Manage Account/i })).toBeNull();
 
-    // Input fields
-    const spreadsheetInput = screen.getByLabelText(/Spreadsheet ID or URL/i) as HTMLInputElement;
-    expect(spreadsheetInput.value).toBe('1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms');
+    // Verify manual spreadsheet coordinate inputs are purged
+    expect(screen.queryByLabelText(/Spreadsheet ID or URL/i)).toBeNull();
+    expect(screen.queryByLabelText(/Worksheet Tab Name/i)).toBeNull();
+    expect(screen.queryByPlaceholderText(/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/i)).toBeNull();
+  });
 
-    const sheetTabInput = screen.getByLabelText(/Worksheet Tab Name/i) as HTMLInputElement;
-    expect(sheetTabInput.value).toBe('Inventory Master');
+  it('renders Master Apps Script Setup Hero with ingress key, webhook URL, 3-step setup guide, and local dev callout', () => {
+    render(
+      <Provider store={store}>
+        <GoogleSheetsConfigDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          supplierId="sup-1"
+          supplierName="Acme Organics"
+        />
+      </Provider>
+    );
+
+    // Master Ingress Key & Webhook URL Hero elements
+    expect(screen.getByText('Master Ingress Key')).toBeDefined();
+    expect(screen.getByText('spoileralert_sec_live_key_999')).toBeDefined();
+    expect(screen.getByText('Webhook Endpoint URL')).toBeDefined();
+    expect(screen.getByText(/api\/v1\/ingestion\/google-sheets\/webhook/i)).toBeDefined();
+
+    // 3-step setup instructions
+    expect(screen.getByText(/Extensions > Apps Script/i)).toBeDefined();
+    expect(screen.getByText(/Paste & Save/i)).toBeDefined();
+    expect(screen.getByText(/SpoilerAlert OS ⚡ > Sync to Platform Now/i)).toBeDefined();
+
+    // Local development tunnel callout (ngrok helper)
+    expect(screen.getByText(/Local Development Tunnel Notice/i)).toBeDefined();
+    expect(screen.getAllByText(/ngrok/i).length).toBeGreaterThan(0);
+  });
+
+  it('dispatches both script template and connected sheets roster thunks when opened', async () => {
+    render(
+      <Provider store={store}>
+        <GoogleSheetsConfigDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          supplierId="sup-1"
+          supplierName="Acme Organics"
+        />
+      </Provider>
+    );
+
+    await waitFor(() => {
+      expect(googleSheetsSyncService.fetchRoster).toHaveBeenCalledWith('sup-1');
+    });
   });
 
   it('copies generated Google Apps Script to clipboard and gives visual feedback', async () => {
@@ -304,6 +414,458 @@ describe('Slice 2: GoogleSheetsConfigDrawer Component Tests', () => {
     // Check that Redux store inventoryParsedResult is populated with dynamic sample rows
     const state = store.getState().ingestion;
     expect(state.inventoryParsedResult).toEqual(dynamicSampleRows);
+  });
+
+  it('renders friendly onboarding empty state when no connected sheets exist', () => {
+    const emptyStore = createTestStore({
+      ingestion: {
+        googleSheetsConfig: {
+          spreadsheetId: '',
+          sheetName: '',
+          ingressKey: 'spoileralert_sec_live_key_999',
+        },
+        googleSheetsScript: 'function onEdit() {}',
+        connectedSheets: [],
+        connectedSheetsLoading: false,
+      },
+    });
+
+    render(
+      <Provider store={emptyStore}>
+        <GoogleSheetsConfigDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          supplierId="sup-1"
+          supplierName="Acme Organics"
+        />
+      </Provider>
+    );
+
+    // Empty state container and guidance
+    expect(screen.getByText('Connected Sheets Roster')).toBeDefined();
+    expect(screen.getByText(/No spreadsheets connected yet/i)).toBeDefined();
+    expect(
+      screen.getByText(/Follow the 3-step setup guide above to link your first Google Sheet/i)
+    ).toBeDefined();
+  });
+
+  it('renders connected sheets roster table with ID, tab, lot count, relative time, and status badge', async () => {
+    const mockSheets = [
+      {
+        spreadsheetId: '1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms',
+        spreadsheetTitle: 'Acme Fresh Produce Inventory',
+        sheetName: 'Produce Master',
+        syncStatus: 'success',
+        lastSyncedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 mins ago
+        lotCount: 142,
+      },
+      {
+        spreadsheetId: '2CxiNVs1YSA6nGMdKwCeCAkgmUVrqtlcs85PhwF3vqnt',
+        spreadsheetTitle: 'Bakery Stock Daily',
+        sheetName: 'Bakery Log',
+        syncStatus: 'error',
+        lastSyncedAt: new Date(Date.now() - 3600 * 1000).toISOString(), // 1 hour ago
+        lotCount: 38,
+        lastSyncMetrics: {
+          totalRows: 40,
+          inserted: 0,
+          updated: 0,
+          depleted: 0,
+          errors: ['Invalid date format in row 12'],
+        },
+      },
+    ];
+
+    (googleSheetsSyncService.fetchRoster as any).mockResolvedValueOnce({
+      success: true,
+      connectedSheets: mockSheets,
+      totalSheets: 2,
+    });
+
+    const populatedStore = createTestStore({
+      ingestion: {
+        googleSheetsConfig: {
+          spreadsheetId: 'sheet-xyz',
+          sheetName: 'Sheet1',
+          ingressKey: 'spoileralert_sec_live_key_999',
+        },
+        googleSheetsScript: 'function onEdit() {}',
+        connectedSheets: mockSheets,
+        connectedSheetsLoading: false,
+      },
+    });
+
+    render(
+      <Provider store={populatedStore}>
+        <GoogleSheetsConfigDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          supplierId="sup-1"
+          supplierName="Acme Organics"
+        />
+      </Provider>
+    );
+
+    // Roster header and sheet rows
+    expect(screen.getByText('Connected Sheets Roster')).toBeDefined();
+    expect(await screen.findByText('Acme Fresh Produce Inventory')).toBeDefined();
+    expect(screen.getByText('Produce Master')).toBeDefined();
+    expect(screen.getByText('142 lots')).toBeDefined();
+    expect(screen.getByText('Live')).toBeDefined(); // Status badge
+
+    expect(screen.getByText('Bakery Stock Daily')).toBeDefined();
+    expect(screen.getByText('Bakery Log')).toBeDefined();
+    expect(screen.getByText('38 lots')).toBeDefined();
+    expect(screen.getByText('Error')).toBeDefined(); // Error status badge
+  });
+
+  it('triggers on-demand sync pass from row action button', async () => {
+    (googleSheetsSyncService.fetchRoster as any).mockResolvedValueOnce({
+      success: true,
+      connectedSheets: [
+        {
+          spreadsheetId: 'sheet-123',
+          spreadsheetTitle: 'Produce Master',
+          sheetName: 'Sheet1',
+          syncStatus: 'success',
+          lastSyncedAt: new Date().toISOString(),
+          lotCount: 50,
+        },
+      ],
+      totalSheets: 1,
+    });
+
+    const populatedStore = createTestStore({
+      ingestion: {
+        googleSheetsConfig: {
+          spreadsheetId: 'sheet-xyz',
+          sheetName: 'Sheet1',
+          ingressKey: 'spoileralert_sec_live_key_999',
+        },
+        googleSheetsScript: 'function onEdit() {}',
+        connectedSheets: [
+          {
+            spreadsheetId: 'sheet-123',
+            spreadsheetTitle: 'Produce Master',
+            sheetName: 'Sheet1',
+            syncStatus: 'success',
+            lastSyncedAt: new Date().toISOString(),
+            lotCount: 50,
+          },
+        ],
+      },
+    });
+
+    render(
+      <Provider store={populatedStore}>
+        <GoogleSheetsConfigDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          supplierId="sup-1"
+          supplierName="Acme Organics"
+        />
+      </Provider>
+    );
+
+    const syncNowBtn = await screen.findByRole('button', { name: /Sync Sheet Now/i });
+    fireEvent.click(syncNowBtn);
+
+    await waitFor(() => {
+      expect(googleSheetsSyncService.syncNow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          supplierId: 'sup-1',
+          ingressKey: 'spoileralert_sec_live_key_999',
+        })
+      );
+    });
+  });
+
+  it('disconnect action shows confirmation dialog and removes sheet when confirmed', async () => {
+    (googleSheetsSyncService.fetchRoster as any).mockResolvedValueOnce({
+      success: true,
+      connectedSheets: [
+        {
+          spreadsheetId: 'sheet-to-delete',
+          spreadsheetTitle: 'Old Surplus Sheet',
+          sheetName: 'Discontinued',
+          syncStatus: 'success',
+          lastSyncedAt: new Date().toISOString(),
+          lotCount: 12,
+        },
+      ],
+      totalSheets: 1,
+    });
+
+    const populatedStore = createTestStore({
+      ingestion: {
+        googleSheetsConfig: {
+          spreadsheetId: 'sheet-xyz',
+          sheetName: 'Sheet1',
+          ingressKey: 'spoileralert_sec_live_key_999',
+        },
+        googleSheetsScript: 'function onEdit() {}',
+        connectedSheets: [
+          {
+            spreadsheetId: 'sheet-to-delete',
+            spreadsheetTitle: 'Old Surplus Sheet',
+            sheetName: 'Discontinued',
+            syncStatus: 'success',
+            lastSyncedAt: new Date().toISOString(),
+            lotCount: 12,
+          },
+        ],
+      },
+    });
+
+    render(
+      <Provider store={populatedStore}>
+        <GoogleSheetsConfigDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          supplierId="sup-1"
+          supplierName="Acme Organics"
+        />
+      </Provider>
+    );
+
+    const disconnectBtn = await screen.findByRole('button', { name: /Disconnect Sheet/i });
+    fireEvent.click(disconnectBtn);
+
+    // Confirmation prompt appears
+    expect(screen.getByText(/Are you sure you want to disconnect/i)).toBeDefined();
+
+    // Confirm disconnection
+    const confirmBtn = screen.getByRole('button', { name: /Confirm Disconnect/i });
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(googleSheetsSyncService.disconnectSheet).toHaveBeenCalledWith(
+        expect.objectContaining({
+          supplierId: 'sup-1',
+          spreadsheetId: 'sheet-to-delete',
+          sheetName: 'Discontinued',
+        })
+      );
+    });
+  });
+
+  it('renders an "Edit Column Mapping" action button for each connected sheet entry', async () => {
+    const populatedStore = createTestStore({
+      ingestion: {
+        googleSheetsConfig: {
+          spreadsheetId: 'sheet-xyz',
+          sheetName: 'Sheet1',
+          ingressKey: 'spoileralert_sec_live_key_999',
+        },
+        connectedSheets: [
+          {
+            spreadsheetId: 'sheet-mapped-1',
+            spreadsheetTitle: 'Bakery Sheet',
+            sheetName: 'Breads',
+            syncStatus: 'success',
+            lastSyncedAt: new Date().toISOString(),
+            lotCount: 20,
+          },
+        ],
+      },
+    });
+
+    render(
+      <Provider store={populatedStore}>
+        <GoogleSheetsConfigDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          supplierId="sup-1"
+          supplierName="Acme Organics"
+        />
+      </Provider>
+    );
+
+    const editMappingBtn = await screen.findByRole('button', { name: /Edit Column Mapping/i });
+    expect(editMappingBtn).toBeDefined();
+  });
+
+  it('clicking "Edit Column Mapping" opens the in-situ mapping workbench with sheet headers, sample rows, and breadcrumb navigation', async () => {
+    const mockSampleResult = {
+      documentId: 'gsheet-handshake-produce',
+      fileName: 'Google Sheets: Produce Master',
+      rawGrid: [
+        ['Item Code', 'Fruit Description', 'Case Count', 'Expiry Date'],
+        ['FRUIT-101', 'Organic Apples', '100', '2026-11-20'],
+      ],
+      suggestedMapping: {
+        sku: 'Item Code',
+        description: 'Fruit Description',
+        quantity: 'Case Count',
+        expirationDate: 'Expiry Date',
+      },
+    };
+
+    (googleSheetsSyncService.fetchSampleRows as any).mockResolvedValue(mockSampleResult);
+    (googleSheetsSyncService.fetchRoster as any).mockResolvedValue({
+      success: true,
+      connectedSheets: [
+        {
+          spreadsheetId: 'sheet-produce-01',
+          spreadsheetTitle: 'Produce Master',
+          sheetName: 'ProduceTab',
+          syncStatus: 'success',
+          lastSyncedAt: new Date().toISOString(),
+          lotCount: 45,
+        },
+      ],
+      totalSheets: 1,
+    });
+
+    const populatedStore = createTestStore({
+      ingestion: {
+        googleSheetsConfig: {
+          spreadsheetId: 'sheet-xyz',
+          sheetName: 'Sheet1',
+          ingressKey: 'spoileralert_sec_live_key_999',
+        },
+        connectedSheets: [
+          {
+            spreadsheetId: 'sheet-produce-01',
+            spreadsheetTitle: 'Produce Master',
+            sheetName: 'ProduceTab',
+            syncStatus: 'success',
+            lastSyncedAt: new Date().toISOString(),
+            lotCount: 45,
+          },
+        ],
+      },
+    });
+
+    render(
+      <Provider store={populatedStore}>
+        <GoogleSheetsConfigDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          supplierId="sup-1"
+          supplierName="Acme Organics"
+        />
+      </Provider>
+    );
+
+    const editMappingBtn = await screen.findByRole('button', { name: /Edit Column Mapping/i });
+    fireEvent.click(editMappingBtn);
+
+    // Verify fetchSampleRows called with the specific sheet
+    await waitFor(() => {
+      expect(googleSheetsSyncService.fetchSampleRows).toHaveBeenCalledWith(
+        expect.objectContaining({
+          supplierId: 'sup-1',
+          spreadsheetId: 'sheet-produce-01',
+          sheetName: 'ProduceTab',
+        })
+      );
+    });
+
+    // In-situ mapping workbench surfaces with breadcrumbs
+    expect(await screen.findByText(/Connected Sheets Roster/i)).toBeDefined();
+    expect(screen.getByText(/Produce Master Mapping/i)).toBeDefined();
+    expect(screen.getByText('Item Code')).toBeDefined();
+    expect(screen.getByText('Fruit Description')).toBeDefined();
+
+    // Breadcrumb or "Back to Roster" returns to roster view
+    const backBtn = screen.getByRole('button', { name: /Back to Roster/i });
+    fireEvent.click(backBtn);
+
+    // Verify back on roster view
+    expect(await screen.findByText('Master Apps Script Setup Guide')).toBeDefined();
+  });
+
+  it('saving mapping in in-situ workbench persists SupplierTemplate to that sheet and returns to roster', async () => {
+    const mockSampleResult = {
+      documentId: 'gsheet-handshake-produce',
+      fileName: 'Google Sheets: Produce Master',
+      rawGrid: [
+        ['Item Code', 'Fruit Description', 'Case Count', 'Expiry Date'],
+        ['FRUIT-101', 'Organic Apples', '100', '2026-11-20'],
+      ],
+      suggestedMapping: {
+        sku: 'Item Code',
+        description: 'Fruit Description',
+        quantity: 'Case Count',
+        expirationDate: 'Expiry Date',
+      },
+    };
+
+    (googleSheetsSyncService.fetchSampleRows as any).mockResolvedValue(mockSampleResult);
+    (googleSheetsSyncService.fetchRoster as any).mockResolvedValue({
+      success: true,
+      connectedSheets: [
+        {
+          spreadsheetId: 'sheet-produce-01',
+          spreadsheetTitle: 'Produce Master',
+          sheetName: 'ProduceTab',
+          syncStatus: 'success',
+          lastSyncedAt: new Date().toISOString(),
+          lotCount: 45,
+        },
+      ],
+      totalSheets: 1,
+    });
+    (googleSheetsSyncService.saveMapping as any).mockResolvedValue({
+      success: true,
+      supplierTemplateId: 'tmpl-produce-created',
+      message: 'Mapping updated successfully',
+    });
+
+    const populatedStore = createTestStore({
+      ingestion: {
+        googleSheetsConfig: {
+          spreadsheetId: 'sheet-xyz',
+          sheetName: 'Sheet1',
+          ingressKey: 'spoileralert_sec_live_key_999',
+        },
+        connectedSheets: [
+          {
+            spreadsheetId: 'sheet-produce-01',
+            spreadsheetTitle: 'Produce Master',
+            sheetName: 'ProduceTab',
+            syncStatus: 'success',
+            lastSyncedAt: new Date().toISOString(),
+            lotCount: 45,
+          },
+        ],
+      },
+    });
+
+    render(
+      <Provider store={populatedStore}>
+        <GoogleSheetsConfigDrawer
+          isOpen={true}
+          onClose={vi.fn()}
+          supplierId="sup-1"
+          supplierName="Acme Organics"
+        />
+      </Provider>
+    );
+
+    const editMappingBtn = await screen.findByRole('button', { name: /Edit Column Mapping/i });
+    fireEvent.click(editMappingBtn);
+
+    expect(await screen.findByText(/Produce Master Mapping/i)).toBeDefined();
+
+    // Click "Save Sheet Mapping" button
+    const saveMappingBtn = screen.getByRole('button', { name: /Save Sheet Mapping/i });
+    fireEvent.click(saveMappingBtn);
+
+    await waitFor(() => {
+      expect(googleSheetsSyncService.saveMapping).toHaveBeenCalledWith(
+        expect.objectContaining({
+          supplierId: 'sup-1',
+          spreadsheetId: 'sheet-produce-01',
+          sheetName: 'ProduceTab',
+        })
+      );
+    });
+
+    // Should return to roster view and display success feedback
+    expect(await screen.findByText('Master Apps Script Setup Guide')).toBeDefined();
+    expect(await screen.findByText(/Column mapping saved successfully/i)).toBeDefined();
   });
 });
 

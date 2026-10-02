@@ -6,6 +6,7 @@ import * as ingestService from './ingestService';
 
 export interface IngressPayload {
   spreadsheetId?: string;
+  spreadsheetTitle?: string;
   sheetName?: string;
   headers?: string[];
   rows?: string[][];
@@ -40,10 +41,22 @@ export async function processGoogleSheetsWebhook(
   const rawRows = payload.rows || [];
   const supplierId = config.supplierId.toString();
 
+  const targetSpreadsheetId = payload.spreadsheetId?.trim() || config.spreadsheetId;
+  const targetSheetName = payload.sheetName?.trim() || config.sheetName || 'Sheet1';
+  const targetSpreadsheetTitle = payload.spreadsheetTitle?.trim();
+
   // Resolve Template column mappings or fallback to canonical suggestMappings
   let columnMappings: Record<string, string> = {};
-  if (config.supplierTemplateId) {
-    const template = await SupplierTemplate.findById(config.supplierTemplateId);
+
+  // Check if target sheet has a bound template in connectedSheets
+  const matchingConnectedSheet = config.connectedSheets?.find(
+    s => s.spreadsheetId === targetSpreadsheetId && s.sheetName === targetSheetName
+  );
+
+  const effectiveTemplateId = matchingConnectedSheet?.supplierTemplateId || config.supplierTemplateId;
+
+  if (effectiveTemplateId) {
+    const template = await SupplierTemplate.findById(effectiveTemplateId);
     if (template && template.columnMappings) {
       columnMappings = template.columnMappings instanceof Map
         ? Object.fromEntries(template.columnMappings)
@@ -72,8 +85,9 @@ export async function processGoogleSheetsWebhook(
     columnMappings,
     source: 'google-sheets',
     metadata: {
-      spreadsheetId: payload.spreadsheetId || config.spreadsheetId,
-      sheetName: payload.sheetName || config.sheetName,
+      spreadsheetId: targetSpreadsheetId,
+      sheetName: targetSheetName,
+      spreadsheetTitle: targetSpreadsheetTitle,
       configId: config._id.toString()
     }
   };
@@ -81,7 +95,17 @@ export async function processGoogleSheetsWebhook(
   const batchResult: IngestionBatchResult = await ingestService.processBatch(batch);
 
   // Atomically persist sync lifecycle metrics and state via ingestService
-  const updatedConfig = await ingestService.recordSyncCompletion(config._id, batchResult);
+  const updatedConfig = await ingestService.recordSyncCompletion(
+    config._id,
+    batchResult,
+    undefined,
+    targetSpreadsheetId ? {
+      spreadsheetId: targetSpreadsheetId,
+      spreadsheetTitle: targetSpreadsheetTitle || matchingConnectedSheet?.spreadsheetTitle,
+      sheetName: targetSheetName,
+      supplierTemplateId: effectiveTemplateId
+    } : undefined
+  );
 
   const isSuccessful = batchResult.errors.length === 0 || (batchResult.inserted + batchResult.updated + batchResult.depleted > 0);
   const syncStatus: 'success' | 'error' = (updatedConfig?.syncStatus === 'error' || !isSuccessful) ? 'error' : 'success';

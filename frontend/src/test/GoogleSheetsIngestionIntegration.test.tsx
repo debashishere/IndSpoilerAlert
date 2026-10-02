@@ -16,9 +16,26 @@ import googleSheetsSyncService from '../services/googleSheetsSyncService';
 
 vi.mock('../services/googleSheetsSyncService', () => {
   const mockService = {
-    fetchScriptTemplate: vi.fn(),
+    fetchScriptTemplate: vi.fn().mockResolvedValue({
+      success: true,
+      script: 'function onEdit(e) {}',
+      ingressKey: 'spoileralert_sec_live_key_999',
+      webhookUrl: 'http://localhost:5000/api/v1/ingestion/google-sheets/webhook',
+    }),
     testPing: vi.fn(),
     fetchSampleRows: vi.fn(),
+    fetchRoster: vi.fn().mockResolvedValue({
+      success: true,
+      connectedSheets: [],
+      totalSheets: 0,
+    }),
+    saveMapping: vi.fn().mockResolvedValue({
+      success: true,
+      supplierTemplateId: 'tmpl-produce-created',
+      message: 'Mapping updated successfully',
+    }),
+    syncNow: vi.fn(),
+    disconnectSheet: vi.fn(),
   };
   return {
     default: mockService,
@@ -100,7 +117,7 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
 
     // Verify GoogleSheetsConfigDrawer opened
     expect(await screen.findByText('Google Sheets Integration & Sync')).toBeDefined();
-    expect(screen.getByText('Google Workspace Identity')).toBeDefined();
+    expect(screen.getByText('Master Apps Script Setup Guide')).toBeDefined();
   });
 
   it('sample row handshake hydrates inventoryParsedResult, closes drawer, and mounts GridMapperTable for confirmation', async () => {
@@ -256,4 +273,84 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
     expect(screen.getByText('Google Sheets Sync')).toBeDefined();
     expect(screen.getByText('Surplus Ingestion Pipeline')).toBeDefined();
   });
+
+  it('verifies end-to-end per-sheet column re-mapping and ingestion reconciliation from roster through in-situ workbench', async () => {
+    const mockSampleResult = {
+      documentId: 'gsheet-handshake-produce-master',
+      fileName: 'Google Sheets: Produce Master',
+      rawGrid: [
+        ['Item Code', 'Fruit Description', 'Case Count', 'Expiry Date'],
+        ['FRUIT-101', 'Organic Apples', '100', '2026-11-20'],
+      ],
+      suggestedMapping: {
+        sku: 'Item Code',
+        description: 'Fruit Description',
+        quantity: 'Case Count',
+        expirationDate: 'Expiry Date',
+      },
+    };
+
+    (googleSheetsSyncService.fetchSampleRows as any).mockResolvedValue(mockSampleResult);
+    (googleSheetsSyncService.fetchRoster as any).mockResolvedValue({
+      success: true,
+      connectedSheets: [
+        {
+          spreadsheetId: 'sheet-produce-01',
+          spreadsheetTitle: 'Produce Master',
+          sheetName: 'ProduceTab',
+          syncStatus: 'success',
+          lastSyncedAt: new Date().toISOString(),
+          lotCount: 45,
+        },
+      ],
+      totalSheets: 1,
+    });
+    (googleSheetsSyncService.saveMapping as any).mockResolvedValue({
+      success: true,
+      supplierTemplateId: 'tmpl-produce-custom-001',
+      message: 'Column mapping saved successfully.',
+    });
+
+    render(
+      <Provider store={store}>
+        <IngestionView />
+      </Provider>
+    );
+
+    // Open drawer
+    const connectSheetsBtn = screen.getByRole('button', { name: /Connect Sheets/i });
+    fireEvent.click(connectSheetsBtn);
+    expect(await screen.findByText('Google Sheets Integration & Sync')).toBeDefined();
+
+    // Verify roster displays Produce Master
+    expect(await screen.findByText('Produce Master')).toBeDefined();
+
+    // Click "Edit Column Mapping" on that row
+    const editMappingBtn = await screen.findByRole('button', { name: /Edit Column Mapping/i });
+    fireEvent.click(editMappingBtn);
+
+    // In-situ workbench mounts with breadcrumbs and table preview
+    expect(await screen.findByText(/Produce Master Mapping/i)).toBeDefined();
+    expect(screen.getAllByText('Item Code').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Fruit Description').length).toBeGreaterThan(0);
+
+    // Save Sheet Mapping
+    const saveBtn = screen.getByRole('button', { name: /Save Sheet Mapping/i });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(googleSheetsSyncService.saveMapping).toHaveBeenCalledWith(
+        expect.objectContaining({
+          supplierId: 'sup-1',
+          spreadsheetId: 'sheet-produce-01',
+          sheetName: 'ProduceTab',
+        })
+      );
+    });
+
+    // Returns to roster view and displays confirmation
+    expect(await screen.findByText('Master Apps Script Setup Guide')).toBeDefined();
+    expect(await screen.findByText(/Column mapping saved successfully/i)).toBeDefined();
+  });
 });
+
