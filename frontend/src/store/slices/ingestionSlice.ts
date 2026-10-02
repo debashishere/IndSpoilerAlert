@@ -222,6 +222,9 @@ export const ingestionSlice = createSlice({
       }
       state.inventoryMappings = updated;
     },
+    setInventoryMappings: (state, action: PayloadAction<Record<string, string>>) => {
+      state.inventoryMappings = { ...action.payload };
+    },
     addSemanticRule: (state, action: PayloadAction<SemanticRule>) => {
       state.inventorySemanticRules.push(action.payload);
     },
@@ -447,11 +450,6 @@ export const ingestionSlice = createSlice({
       >
     ) => {
       state.googleSheetsSync = {
-        connectionStatus: 'unconnected',
-        lastSyncedAt: null,
-        syncedLotCount: 0,
-        isSyncing: false,
-        error: null,
         ...state.googleSheetsSync,
         ...action.payload,
       };
@@ -516,6 +514,7 @@ export const {
   setInventoryError,
   setInventoryParsedResult,
   updateInventoryMapping,
+  setInventoryMappings,
   addSemanticRule,
   removeSemanticRule,
   setInventoryImportSuccess,
@@ -621,6 +620,23 @@ export const confirmInventoryThunk = createAsyncThunk(
       dispatch(setInventoryLoadingStep(''));
       return rejectWithValue(err.message);
     }
+  }
+);
+
+export const saveInventoryMappingThunk = createAsyncThunk(
+  'ingestion/saveInventoryMapping',
+  async (
+    payload: {
+      supplierId?: string;
+      mappings: Record<string, string>;
+      templateName?: string;
+    },
+    { dispatch }
+  ) => {
+    if (payload.mappings) {
+      dispatch(setInventoryMappings(payload.mappings));
+    }
+    return payload;
   }
 );
 

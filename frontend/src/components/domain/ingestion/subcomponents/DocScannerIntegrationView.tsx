@@ -11,8 +11,6 @@ import {
   RefreshCw,
   Table,
   Check,
-  AlertCircle,
-  Eye,
   FileCheck,
 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks';
@@ -97,7 +95,7 @@ const EMPTY_MAPPINGS = {};
 
 export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps> = ({
   supplierId,
-  supplierName,
+  supplierName: _supplierName,
 }) => {
   const dispatch = useAppDispatch();
   const suppliers = useAppSelector((state) => state.core?.suppliers || []);
@@ -231,13 +229,6 @@ export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps>
         suggestedMapping: doc.suggestedMapping || {},
       })
     );
-  };
-
-  const handleFieldMappingChange = (standardField: string, incomingHeader: string) => {
-    setLocalMappings((prev) => ({
-      ...prev,
-      [standardField]: incomingHeader,
-    }));
   };
 
   const handleSaveMapping = async () => {

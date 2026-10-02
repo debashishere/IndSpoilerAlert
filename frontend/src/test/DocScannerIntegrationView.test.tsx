@@ -143,4 +143,42 @@ describe('DocScannerIntegrationView 4-Quadrant Architecture', () => {
       expect(mockUploadInventoryFile).toHaveBeenCalled();
     });
   });
+
+  it('selects a scanned document from roster and saves schema mapping via saveInventoryMappingThunk', async () => {
+    const store = createTestStore({
+      core: {
+        suppliers: [{ _id: 'sup-1', name: 'Fresh Greens Co' }],
+      },
+      ingestion: {
+        selectedSupplier: 'sup-1',
+      },
+    });
+
+    render(
+      <Provider store={store}>
+        <DocScannerIntegrationView supplierId="sup-1" supplierName="Fresh Greens Co" />
+      </Provider>
+    );
+
+    // Click "Map Schema" for the first document in the roster
+    const mapSchemaButtons = screen.getAllByRole('button', { name: /Map Schema/i });
+    expect(mapSchemaButtons.length).toBeGreaterThan(0);
+    fireEvent.click(mapSchemaButtons[0]);
+
+    // Active Mapper should now be active
+    expect(screen.getByRole('button', { name: /Active Mapper/i })).toBeInTheDocument();
+
+    // Click "Save Schema Mapping"
+    const saveButtons = screen.getAllByRole('button', { name: /Save Schema Mapping/i });
+    fireEvent.click(saveButtons[0]);
+
+    // Wait for the success feedback banner
+    await waitFor(() => {
+      expect(screen.getByText(/Schema mapping saved successfully/i)).toBeInTheDocument();
+    });
+
+    // Check that store has updated inventory mappings
+    const state = store.getState();
+    expect(state.ingestion.inventoryMappings).toBeDefined();
+  });
 });

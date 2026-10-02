@@ -255,7 +255,7 @@ export const GoogleSheetsIntegrationView: React.FC<GoogleSheetsIntegrationViewPr
     }
   };
 
-  const isSyncing = syncState?.status === 'syncing';
+  const isSyncing = Boolean(syncState?.isSyncing);
   const isTestingPing = pingStatus === 'testing';
 
   return (
