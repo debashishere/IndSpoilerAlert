@@ -10,6 +10,7 @@ export * from './subcomponents/IngestionConnectorShell';
 export * from './subcomponents/GoogleSheetsIntegrationView';
 export * from './subcomponents/ZapierIntegrationView';
 export * from './subcomponents/DocScannerIntegrationView';
+export * from './subcomponents/CsvExcelIntegrationView';
 export * from './subcomponents/PipelineSwitcherBar';
 export * from './subcomponents/UnifiedIngestionModal';
 export * from './subcomponents/InventoryFilterBar';

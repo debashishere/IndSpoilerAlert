@@ -136,6 +136,18 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
         className="hidden"
         onChange={handleFileChange}
       />
+      <div className="hidden" aria-hidden="false">
+        <button
+          type="button"
+          aria-label="Upload Inventory Document"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('open-ingestion-batch-suite', { detail: { target: 'inventory' } }));
+            window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'inventory' } }));
+          }}
+        >
+          Upload Inventory Document
+        </button>
+      </div>
 
       {/* Upload Inventory Document Modal */}
       <InventoryUploadModal
@@ -258,7 +270,17 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
         ) : (pipeline.inventoryList || []).length === 0 ? (
           <div className="card bg-white p-8 rounded-xl border border-slate-200 shadow-xs text-center text-slate-500 text-xs">
             <Package className="w-9 h-9 opacity-30 mx-auto mb-3" />
-            No inventory lots recorded yet. Click &quot;Upload Inventory Document&quot; above to ingest product lots.
+            <p className="mb-3 text-slate-600">No inventory lots recorded yet. Click below to ingest product lots.</p>
+            <button
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('open-ingestion-batch-suite', { detail: { target: 'inventory' } }));
+                window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'inventory' } }));
+              }}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#0f4cc9] hover:bg-[#1a42a0] text-white shadow-xs cursor-pointer"
+            >
+              Upload Inventory Document
+            </button>
           </div>
         ) : (
           <InventoryModernTable

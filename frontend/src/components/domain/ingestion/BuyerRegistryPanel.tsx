@@ -99,8 +99,8 @@ export const BuyerRegistryPanel: React.FC = () => {
           type="button"
           aria-label="Bulk Import via CSV"
           onClick={() => {
+            window.dispatchEvent(new CustomEvent('open-ingestion-batch-suite', { detail: { target: 'buyers' } }));
             window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'buyers' } }));
-            setIsImportModalOpen(true);
           }}
         >
           Bulk Import via CSV

@@ -331,7 +331,9 @@ export const IngestionHubConnectors: React.FC<IngestionHubConnectorsProps> = ({
                 <button
                   type="button"
                   onClick={() => {
-                    if (onOpenUploadModal) {
+                    if (onSelectConnector) {
+                      onSelectConnector('csv-upload');
+                    } else if (onOpenUploadModal) {
                       onOpenUploadModal();
                     } else {
                       handleActionClick('Opening upload workflow...');

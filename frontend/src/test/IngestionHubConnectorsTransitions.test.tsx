@@ -57,7 +57,24 @@ describe('IngestionHubConnectors Direct Transition Seam', () => {
     fireEvent.click(scannerBtn);
     expect(handleSelectConnector).toHaveBeenCalledWith('doc-scanner');
 
-    // 4. Batch CSV/Excel Upload continues to open modal
+    // 4. Batch CSV/Excel Upload triggers onSelectConnector('csv-upload')
+    const uploadBtn = screen.getByRole('button', { name: /Upload File/i });
+    fireEvent.click(uploadBtn);
+    expect(handleSelectConnector).toHaveBeenCalledWith('csv-upload');
+  });
+
+  it('falls back to onOpenUploadModal when onSelectConnector is not provided for CSV / Excel upload', () => {
+    const store = createTestStore();
+    const handleOpenUploadModal = vi.fn();
+
+    render(
+      <Provider store={store}>
+        <IngestionHubConnectors
+          onOpenUploadModal={handleOpenUploadModal}
+        />
+      </Provider>
+    );
+
     const uploadBtn = screen.getByRole('button', { name: /Upload File/i });
     fireEvent.click(uploadBtn);
     expect(handleOpenUploadModal).toHaveBeenCalledTimes(1);

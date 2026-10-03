@@ -17,7 +17,7 @@ export interface IngestionTelemetryBarProps {
   className?: string;
 }
 
-export type IngestionConnectorId = 'google-sheets' | 'zapier' | 'doc-scanner';
+export type IngestionConnectorId = 'google-sheets' | 'zapier' | 'doc-scanner' | 'csv-upload';
 
 export interface IngestionConnectorShellProps {
   activeConnector: IngestionConnectorId;

@@ -180,7 +180,7 @@ describe('Full-Page Ingestion Connector Suite End-to-End Regression Seam', () =>
     expect(screen.getByText('Surplus Ingestion Pipeline')).toBeInTheDocument();
   });
 
-  it('opens and closes rapid CSV/Excel modal without disturbing connector or pipeline state', async () => {
+  it('navigates to full-page CSV Integration Suite from Hub Card and returns cleanly to pipeline', async () => {
     window.history.replaceState({}, '', '/?tab=ingestion');
     const store = createFullTestStore();
 
@@ -194,15 +194,18 @@ describe('Full-Page Ingestion Connector Suite End-to-End Regression Seam', () =>
     const uploadBtn = screen.getByRole('button', { name: /Upload File/i });
     fireEvent.click(uploadBtn);
 
-    // Modal opens
-    expect(screen.getByRole('heading', { level: 2, name: /Data Ingestion/i })).toBeInTheDocument();
+    // Navigates to full-page CSV integration suite
+    await waitFor(() => {
+      expect(screen.getByTestId('connector-csv-upload-workspace')).toBeInTheDocument();
+    });
+    expect(window.location.search).toContain('connector=csv-upload');
 
-    // Cancel modal
-    const cancelBtn = screen.getByRole('button', { name: /Cancel/i });
-    fireEvent.click(cancelBtn);
+    // Click "← Back to Ingestion Pipeline" to return to parent pipeline
+    const backBtn = screen.getByRole('button', { name: /Back to Ingestion Pipeline/i });
+    fireEvent.click(backBtn);
 
     await waitFor(() => {
-      expect(screen.queryByRole('heading', { level: 2, name: /Data Ingestion/i })).toBeNull();
+      expect(screen.queryByTestId('connector-csv-upload-workspace')).toBeNull();
     });
 
     // Pipeline view remains healthy

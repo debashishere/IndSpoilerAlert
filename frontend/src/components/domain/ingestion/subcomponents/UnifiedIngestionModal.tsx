@@ -13,6 +13,12 @@ import { INGESTION_CONSTANTS } from '../constants/ingestionConstants';
 import { useUnifiedIngestionModal } from '../hooks/useUnifiedIngestionModal';
 import type { UnifiedIngestionModalProps } from '../types/ingestion.types';
 
+/**
+ * @deprecated Superseded by CsvExcelIntegrationView under ADR 0076.
+ * Batch ingestion has been promoted to a first-class full-page Integration Suite
+ * (?tab=ingestion&connector=csv-upload) supporting unified Four-Quadrant telemetry,
+ * batch history roster, and in-situ schema field mapping.
+ */
 export const UnifiedIngestionModal: React.FC<UnifiedIngestionModalProps> = (props) => {
   const { isOpen } = props;
   const {

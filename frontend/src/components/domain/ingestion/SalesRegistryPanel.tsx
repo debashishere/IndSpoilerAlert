@@ -125,8 +125,8 @@ export const SalesRegistryPanel: React.FC = () => {
         <button
           type="button"
           onClick={() => {
+            window.dispatchEvent(new CustomEvent('open-ingestion-batch-suite', { detail: { target: 'sales' } }));
             window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'sales' } }));
-            setIsImportModalOpen(true);
           }}
         >
           Upload Sales Report via CSV/PDF

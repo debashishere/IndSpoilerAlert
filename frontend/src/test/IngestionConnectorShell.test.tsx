@@ -75,4 +75,29 @@ describe('IngestionConnectorShell Component Seam', () => {
     expect(screen.getByTestId('zapier-workspace')).toBeDefined();
     expect(screen.getByText('Zapier Content')).toBeDefined();
   });
+
+  it('renders 4th tab for CSV / Excel Upload with icon upload_file and handles selection', () => {
+    const handleBack = vi.fn();
+    const handleSelectConnector = vi.fn();
+
+    render(
+      <IngestionConnectorShell
+        activeConnector="csv-upload"
+        onSelectConnector={handleSelectConnector}
+        onBack={handleBack}
+      >
+        <div data-testid="csv-workspace">CSV Workspace</div>
+      </IngestionConnectorShell>
+    );
+
+    const csvTab = screen.getByRole('tab', { name: /CSV \/ Excel Upload/i });
+    expect(csvTab).toBeDefined();
+    expect(csvTab.getAttribute('aria-selected')).toBe('true');
+    expect(csvTab.textContent).toContain('upload_file');
+    expect(csvTab.textContent).toContain('CSV / Excel Upload');
+
+    fireEvent.click(csvTab);
+    expect(handleSelectConnector).toHaveBeenCalledWith('csv-upload');
+  });
 });
+

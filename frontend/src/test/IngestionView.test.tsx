@@ -6,6 +6,7 @@ import { setPipelineTab, setInventoryParsedResult } from '../store/slices/ingest
 
 describe('Issue #37 Tracer Bullet 3: IngestionView & Domain Sub-Components', () => {
   beforeEach(() => {
+    window.history.replaceState({}, '', '/?tab=ingestion');
     store.dispatch(setPipelineTab('inventory'));
     store.dispatch(setInventoryParsedResult(null));
   });
@@ -143,11 +144,11 @@ describe('Issue #37 Tracer Bullet 3: IngestionView & Domain Sub-Components', () 
     const mockFile = new File(['Invoice#,Buyer,Qty,Total\nINV-001,Buyer A,10,500'], 'sales_report.csv', { type: 'text/csv' });
     fireEvent.change(fileInput, { target: { files: [mockFile] } });
 
-    // Open upload modal via ingestion hub upload button
+    // Open upload workflow via open-ingestion-upload-modal event
     window.dispatchEvent(new CustomEvent('open-ingestion-upload-modal', { detail: { target: 'sales' } }));
 
-    // Run Sales Extraction button or Unified Modal target should now be rendered
-    expect(await screen.findByText('Unified Surplus Data Ingestion')).toBeDefined();
+    // Deep-links to CSV integration suite with sales target
+    expect(await screen.findByTestId('connector-csv-upload-workspace')).toBeDefined();
   });
 });
 

@@ -52,6 +52,7 @@ describe('Issue #0120: Slice 2 - Unified Ingestion Modal & In-Situ Mapping Hando
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, '', '/?tab=ingestion');
     testStore = createTestStore({
       core: {
         activeTab: 'ingestion',
@@ -196,7 +197,7 @@ describe('Issue #0120: Slice 2 - Unified Ingestion Modal & In-Situ Mapping Hando
   });
 
   describe('In-Situ Mapping Handoff & Pipeline Integration', () => {
-    it('opens UnifiedIngestionModal from CSV / Excel connector card and pre-selects current pipeline', async () => {
+    it('navigates to CSV Integration Suite from CSV / Excel connector card and pre-selects current pipeline', async () => {
       render(
         <Provider store={testStore}>
           <IngestionView />
@@ -207,15 +208,18 @@ describe('Issue #0120: Slice 2 - Unified Ingestion Modal & In-Situ Mapping Hando
       const uploadConnectorBtn = screen.getByRole('button', { name: /Upload File/i });
       fireEvent.click(uploadConnectorBtn);
 
-      // Modal should open
-      expect(screen.getByText('Unified Surplus Data Ingestion')).toBeDefined();
+      // CSV integration suite workspace should mount
+      await waitFor(() => {
+        expect(screen.getByTestId('connector-csv-upload-workspace')).toBeInTheDocument();
+      });
+      expect(window.location.search).toContain('connector=csv-upload');
 
-      // Current active tab is inventory, so inventory should be selected
-      const inventoryRadio = screen.getByRole('radio', { name: /Inventory Data/i }) as HTMLInputElement;
-      expect(inventoryRadio.checked).toBe(true);
+      // Current active tab is inventory, so inventory destination card should be active
+      const inventoryCard = screen.getByTestId('target-card-inventory');
+      expect(inventoryCard).toHaveAttribute('data-active', 'true');
     });
 
-    it('opens UnifiedIngestionModal from pipeline import button and pre-selects target pipeline', async () => {
+    it('navigates to CSV Integration Suite from pipeline import button and pre-selects target pipeline', async () => {
       // Set active tab to sales
       testStore.dispatch(setPipelineTab('sales'));
 
@@ -228,58 +232,14 @@ describe('Issue #0120: Slice 2 - Unified Ingestion Modal & In-Situ Mapping Hando
       const importBtn = screen.getByRole('button', { name: /Upload Sales Report/i });
       fireEvent.click(importBtn);
 
-      expect(screen.getByText('Unified Surplus Data Ingestion')).toBeDefined();
-      const salesRadio = screen.getByRole('radio', { name: /Sales Data/i }) as HTMLInputElement;
-      expect(salesRadio.checked).toBe(true);
-    });
-
-    it('submitting modal with Buyer target switches tab to buyers and mounts in-situ mapping window above table', async () => {
-      (ingestionService.uploadBuyerFile as any).mockResolvedValueOnce({
-        documentId: 'doc-buyer-auto',
-        fileName: 'buyers_network.csv',
-        rawGrid: [
-          ['Company Name', 'Contact Email', 'Tier'],
-          ['Costco Wholesale', 'buyer@costco.com', 'tier1'],
-        ],
-        suggestedMapping: {
-          companyName: 'Company Name',
-          email: 'Contact Email',
-          tier: 'Tier',
-        },
-      });
-
-      render(
-        <Provider store={testStore}>
-          <IngestionView />
-        </Provider>
-      );
-
-      // Open modal via connector card
-      const uploadConnectorBtn = screen.getByRole('button', { name: /Upload File/i });
-      fireEvent.click(uploadConnectorBtn);
-
-      // Select Buyer Data card
-      fireEvent.click(screen.getByText('Buyer Data'));
-
-      // Attach file
-      const fileInput = screen.getByTestId('unified-ingestion-file-input') as HTMLInputElement;
-      const testFile = new File(['dummy'], 'buyers_network.csv', { type: 'text/csv' });
-      fireEvent.change(fileInput, { target: { files: [testFile] } });
-
-      // Click Ingest Dataset
-      fireEvent.click(screen.getByRole('button', { name: /Ingest Dataset/i }));
-
-      // Wait for thunk and state updates
       await waitFor(() => {
-        expect(testStore.getState().ingestion.pipelineTab).toBe('buyers');
+        expect(screen.getByTestId('connector-csv-upload-workspace')).toBeInTheDocument();
       });
+      expect(window.location.search).toContain('connector=csv-upload');
+      expect(window.location.search).toContain('target=sales');
 
-      // The Ingestion Mapping Window should be mounted in-situ in the buyers panel
-      await waitFor(() => {
-        expect(screen.getByText('Confirm Buyer Data Mapping')).toBeDefined();
-        expect(screen.getByText('buyers_network.csv')).toBeDefined();
-        expect(screen.getByRole('button', { name: /Confirm & Ingest Buyers/i })).toBeDefined();
-      });
+      const salesCard = screen.getByTestId('target-card-sales');
+      expect(salesCard).toHaveAttribute('data-active', 'true');
     });
 
     it('cancelling the in-situ mapping window dismisses the mapping preview and restores normal table display', () => {

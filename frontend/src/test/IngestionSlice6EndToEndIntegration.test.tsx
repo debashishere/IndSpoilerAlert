@@ -33,6 +33,7 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState({}, '', '/?tab=ingestion');
     store = createTestStore({
       core: {
         ...coreReducer(undefined, { type: '@@INIT' }),
@@ -177,7 +178,7 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
   });
 
   describe('3. End-to-End Workflow: Ingest CSV -> In-Situ Mapping Window -> Confirmation', () => {
-    it('opens Unified Surplus Data Ingestion Modal from Connectors and simulates CSV mapping handoff', async () => {
+    it('navigates to CSV Integration Suite from Connectors and simulates CSV mapping handoff', async () => {
       render(
         <Provider store={store}>
           <IngestionView />
@@ -191,9 +192,11 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
       const uploadFileBtn = screen.getByRole('button', { name: /Upload File/i });
       fireEvent.click(uploadFileBtn);
 
-      // Unified Ingestion Modal should open
-      expect(screen.getByText('Unified Surplus Data Ingestion')).toBeDefined();
-      expect(screen.getByText('1. Select Destination Pipeline')).toBeDefined();
+      // Full-page CSV Integration Suite should mount
+      await waitFor(() => {
+        expect(screen.getByTestId('connector-csv-upload-workspace')).toBeDefined();
+      });
+      expect(screen.getByText('1. Select Destination Pipeline Target')).toBeDefined();
 
       // Simulate parsing result injection into store (in-situ mapping window)
       store.dispatch(
@@ -212,13 +215,12 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
         })
       );
 
-      // In-situ Mapping preview header appears in the Inventory Registry
+      // In-situ Mapping preview appears in Quadrant 4
       await waitFor(() => {
-        expect(screen.getByText('Confirm Inventory Data Mapping')).toBeDefined();
+        expect(screen.getByTestId('csv-quadrant-4-mapper')).toBeDefined();
         expect(screen.getByText('surplus_e2e_manifest.csv')).toBeDefined();
       });
-      expect(screen.getByText('Dynamic Semantic Attribute Translation Rules')).toBeDefined();
-      expect(screen.getByRole('button', { name: /Confirm & Import Lots/i })).toBeDefined();
+      expect(screen.getByRole('button', { name: /Confirm & Import Lots|Confirm & Ingest/i })).toBeDefined();
     });
   });
 

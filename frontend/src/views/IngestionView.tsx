@@ -10,8 +10,8 @@ import {
   GoogleSheetsIntegrationView,
   ZapierIntegrationView,
   DocScannerIntegrationView,
+  CsvExcelIntegrationView,
   PipelineSwitcherBar,
-  UnifiedIngestionModal,
   type IngestionTarget,
   type IngestionConnectorId
 } from '../components/domain/ingestion';
@@ -22,8 +22,18 @@ function parseConnectorParam(): IngestionConnectorId | null {
   if (typeof window === 'undefined') return null;
   const params = new URLSearchParams(window.location.search);
   const connector = params.get('connector');
-  if (connector === 'google-sheets' || connector === 'zapier' || connector === 'doc-scanner') {
+  if (connector === 'google-sheets' || connector === 'zapier' || connector === 'doc-scanner' || connector === 'csv-upload') {
     return connector;
+  }
+  return null;
+}
+
+function parseTargetParam(): IngestionTarget | null {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  const target = params.get('target');
+  if (target === 'inventory' || target === 'sales' || target === 'buyers') {
+    return target;
   }
   return null;
 }
@@ -35,24 +45,33 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
   const suppliers = useAppSelector((state) => state.core.suppliers);
 
   const [activeConnector, setActiveConnector] = useState<IngestionConnectorId | null>(parseConnectorParam);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [modalTarget, setModalTarget] = useState<IngestionTarget>('inventory');
+  const [activeTarget, setActiveTarget] = useState<IngestionTarget | null>(parseTargetParam);
 
-  const handleSelectConnector = useCallback((connector: IngestionConnectorId) => {
+  const handleSelectConnector = useCallback((connector: IngestionConnectorId, target?: IngestionTarget) => {
     setActiveConnector(connector);
+    if (target) {
+      setActiveTarget(target);
+    }
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.set('tab', 'ingestion');
       url.searchParams.set('connector', connector);
+      if (target) {
+        url.searchParams.set('target', target);
+      } else if (connector !== 'csv-upload') {
+        url.searchParams.delete('target');
+      }
       window.history.pushState({}, '', url.toString());
     }
   }, []);
 
   const handleBackToPipeline = useCallback(() => {
     setActiveConnector(null);
+    setActiveTarget(null);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.delete('connector');
+      url.searchParams.delete('target');
       window.history.pushState({}, '', url.toString());
     }
   }, []);
@@ -61,6 +80,7 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
   useEffect(() => {
     const handlePopState = () => {
       setActiveConnector(parseConnectorParam());
+      setActiveTarget(parseTargetParam());
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -93,28 +113,21 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
     window.dispatchEvent(new CustomEvent('toggle-all-rows'));
   }, []);
 
-  const handleOpenUploadModal = useCallback((target?: IngestionTarget) => {
-    setModalTarget(target || (pipelineTab as IngestionTarget) || 'inventory');
-    setIsUploadModalOpen(true);
-  }, [pipelineTab]);
-
-  const handleCloseUploadModal = useCallback(() => {
-    setIsUploadModalOpen(false);
-  }, []);
-
-  // Listen for open-ingestion-upload-modal event (can be dispatched from child panels or global actions)
+  // Listen for batch ingress navigation events: deep-link smoothly to full-page CSV Integration Suite
   useEffect(() => {
     const handleOpenEvent = (e: CustomEvent<{ target?: IngestionTarget }> | Event) => {
       const customEvent = e as CustomEvent<{ target?: IngestionTarget }>;
-      const customTarget = customEvent.detail?.target;
-      handleOpenUploadModal(customTarget);
+      const customTarget = customEvent.detail?.target || (pipelineTab as IngestionTarget) || 'inventory';
+      handleSelectConnector('csv-upload', customTarget);
     };
 
+    window.addEventListener('open-ingestion-batch-suite', handleOpenEvent);
     window.addEventListener('open-ingestion-upload-modal', handleOpenEvent);
     return () => {
+      window.removeEventListener('open-ingestion-batch-suite', handleOpenEvent);
       window.removeEventListener('open-ingestion-upload-modal', handleOpenEvent);
     };
-  }, [handleOpenUploadModal]);
+  }, [handleSelectConnector, pipelineTab]);
 
   if (activeConnector) {
     return (
@@ -148,14 +161,20 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
               />
             </div>
           )}
+          {activeConnector === 'csv-upload' && (
+            <div id="connector-csv-upload-workspace" data-testid="connector-csv-upload-workspace">
+              <CsvExcelIntegrationView
+                supplierId={supplierId}
+                supplierName={supplierName}
+                initialTarget={activeTarget || parseTargetParam() || (pipelineTab as IngestionTarget) || 'inventory'}
+                onNavigateToPipeline={(tgt) => {
+                  handleBackToPipeline();
+                  dispatch(setPipelineTab(tgt));
+                }}
+              />
+            </div>
+          )}
         </IngestionConnectorShell>
-
-        {/* Unified Surplus Data Ingestion Modal remains accessible */}
-        <UnifiedIngestionModal
-          isOpen={isUploadModalOpen}
-          initialTarget={modalTarget}
-          onClose={handleCloseUploadModal}
-        />
       </div>
     );
   }
@@ -174,7 +193,7 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
 
       {/* 2. Collapsible Dedicated Ingestion Hub & Connectors */}
       <IngestionHubConnectors
-        onOpenUploadModal={() => handleOpenUploadModal(pipelineTab as IngestionTarget)}
+        onOpenUploadModal={() => handleSelectConnector('csv-upload', (pipelineTab as IngestionTarget) || 'inventory')}
         onSelectConnector={handleSelectConnector}
       />
 
@@ -207,13 +226,6 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
           </div>
         )}
       </div>
-
-      {/* 5. Unified Surplus Data Ingestion Modal (Root Overlay) */}
-      <UnifiedIngestionModal
-        isOpen={isUploadModalOpen}
-        initialTarget={modalTarget}
-        onClose={handleCloseUploadModal}
-      />
     </div>
   );
 };

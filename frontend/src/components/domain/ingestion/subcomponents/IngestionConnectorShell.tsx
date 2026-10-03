@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Zap, FileSearch, ArrowLeft } from 'lucide-react';
+import { Table, Zap, FileSearch, ArrowLeft, Upload } from 'lucide-react';
 import type { IngestionConnectorId, IngestionConnectorShellProps } from '../types/ingestion.types';
 
 interface ConnectorTabDef {
@@ -27,6 +27,12 @@ const CONNECTOR_TABS: ConnectorTabDef[] = [
     label: 'Image & Doc Scanner',
     iconSymbol: 'document_scanner',
     FallbackIcon: FileSearch,
+  },
+  {
+    id: 'csv-upload',
+    label: 'CSV / Excel Upload',
+    iconSymbol: 'upload_file',
+    FallbackIcon: Upload,
   },
 ];
 

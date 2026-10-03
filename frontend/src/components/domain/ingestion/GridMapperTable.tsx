@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Check, UploadCloud, DollarSign, Maximize2, Minimize2, CheckCircle2, Lock } from 'lucide-react';
+import { Check, UploadCloud, DollarSign, Users, Maximize2, Minimize2, CheckCircle2, Lock } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { 
   updateInventoryMapping, 
   updateSalesMapping, 
+  updateBuyerMapping,
   confirmInventoryThunk, 
-  confirmSalesThunk 
+  confirmSalesThunk,
+  confirmBuyerThunk,
 } from '../../../store/slices/ingestionSlice';
 import { DEFAULT_SUPPLIERS } from '../../../services/coreService';
 import { SemanticRulesEditor } from './SemanticRulesEditor';
 
 export interface GridMapperTableProps {
-  pipelineType?: 'inventory' | 'sales';
+  pipelineType?: 'inventory' | 'sales' | 'buyers';
   mode?: 'import' | 'template';
   title?: string;
   subtitle?: string;
@@ -19,6 +21,7 @@ export interface GridMapperTableProps {
   onSave?: () => void;
   isSaving?: boolean;
   saveSuccess?: boolean;
+  onConfirmSuccess?: (result: any) => void;
 }
 
 const INVENTORY_OPTIONS = [
@@ -59,6 +62,19 @@ const SALES_OPTIONS = [
   { value: 'warehouse', label: 'Warehouse / DC' },
 ];
 
+const BUYER_OPTIONS = [
+  { value: 'companyName', label: 'Company / Buyer Name' },
+  { value: 'email', label: 'Email Address' },
+  { value: 'tier', label: 'Buyer Tier' },
+  { value: 'acceptsShortDated', label: 'Accepts Short-Dated' },
+  { value: 'minShelfLife', label: 'Min Shelf Life (Days)' },
+  { value: 'categories', label: 'Categories' },
+  { value: 'transportRadius', label: 'Transport Radius (Miles)' },
+  { value: 'excludedAllergens', label: 'Excluded Allergens' },
+  { value: 'phone', label: 'Phone Number' },
+  { value: 'address', label: 'Address' },
+];
+
 export const GridMapperTable = ({
   pipelineType = 'inventory',
   mode = 'import',
@@ -68,29 +84,46 @@ export const GridMapperTable = ({
   onSave,
   isSaving = false,
   saveSuccess = false,
+  onConfirmSuccess,
 }: GridMapperTableProps) => {
   const dispatch = useAppDispatch();
   const isInventory = pipelineType === 'inventory';
+  const isSales = pipelineType === 'sales';
+  const isBuyers = pipelineType === 'buyers';
   const isTemplateMode = mode === 'template';
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasClicked, setHasClicked] = useState(false);
 
-  const loading = useAppSelector((state) => 
-    isInventory ? state.ingestion.inventoryLoading : state.ingestion.salesLoading
-  );
-  const loadingStep = useAppSelector((state) => 
-    isInventory ? state.ingestion.inventoryLoadingStep : state.ingestion.salesLoadingStep
-  );
-  const parsedResult = useAppSelector((state) => 
-    isInventory ? state.ingestion.inventoryParsedResult : state.ingestion.salesParsedResult
-  );
-  const mappings = useAppSelector((state) => 
-    isInventory ? state.ingestion.inventoryMappings : state.ingestion.salesMappings
-  );
-  const isImported = useAppSelector((state) => 
-    isInventory ? state.ingestion.inventoryIsImported : state.ingestion.salesIsImported
-  );
+  const { loading, loadingStep, parsedResult, mappings, isImported } = useAppSelector((state) => {
+    switch (pipelineType) {
+      case 'sales':
+        return {
+          loading: state.ingestion.salesLoading,
+          loadingStep: state.ingestion.salesLoadingStep,
+          parsedResult: state.ingestion.salesParsedResult,
+          mappings: state.ingestion.salesMappings,
+          isImported: state.ingestion.salesIsImported,
+        };
+      case 'buyers':
+        return {
+          loading: state.ingestion.buyerLoading,
+          loadingStep: state.ingestion.buyerLoadingStep,
+          parsedResult: state.ingestion.buyerParsedResult,
+          mappings: state.ingestion.buyerMappings,
+          isImported: state.ingestion.buyerIsImported,
+        };
+      case 'inventory':
+      default:
+        return {
+          loading: state.ingestion.inventoryLoading,
+          loadingStep: state.ingestion.inventoryLoadingStep,
+          parsedResult: state.ingestion.inventoryParsedResult,
+          mappings: state.ingestion.inventoryMappings,
+          isImported: state.ingestion.inventoryIsImported,
+        };
+    }
+  });
   const suppliers = useAppSelector((state) => state.core.suppliers);
   const selectedSupplier = useAppSelector((state) => state.ingestion.selectedSupplier);
   const semanticRules = useAppSelector((state) => state.ingestion.inventorySemanticRules);
@@ -115,31 +148,39 @@ export const GridMapperTable = ({
   }, [isFullscreen]);
 
   const getMappedField = (headerName: string): string => {
-    return Object.entries(mappings).find(([, h]) => h === headerName)?.[0] || '';
+    const found = Object.entries(mappings).find(([, h]) => h === headerName)?.[0] || '';
+    if (isBuyers && found === 'name') return 'companyName';
+    return found;
   };
 
   const getFieldNameLabel = (fieldValue: string): string => {
-    const options = isInventory ? INVENTORY_OPTIONS : SALES_OPTIONS;
-    const found = options.find((o) => o.value === fieldValue);
+    const options = isInventory ? INVENTORY_OPTIONS : isSales ? SALES_OPTIONS : BUYER_OPTIONS;
+    const norm = (isBuyers && fieldValue === 'name') ? 'companyName' : fieldValue;
+    const found = options.find((o) => o.value === norm);
     return found ? found.label : fieldValue;
   };
 
   const handleMappingChange = (dbField: string, headerName: string) => {
     if (isInventory) {
       dispatch(updateInventoryMapping({ dbField, headerName }));
-    } else {
+    } else if (isSales) {
       dispatch(updateSalesMapping({ dbField, headerName }));
+    } else {
+      dispatch(updateBuyerMapping({ dbField, headerName }));
+      if (dbField === 'companyName') {
+        dispatch(updateBuyerMapping({ dbField: 'name', headerName }));
+      }
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!parsedResult || !effectiveSupplierId || isImported || hasClicked || loading) return;
     setHasClicked(true);
     const documentId = parsedResult.documentId || parsedResult._id || parsedResult.ingestionJobId || '';
     if (isInventory) {
       const supplierObj = suppliers.find((s) => s._id === effectiveSupplierId);
       const templateName = supplierObj ? `${supplierObj.name} Template` : 'Default Template';
-      dispatch(
+      const res = await dispatch(
         confirmInventoryThunk({
           documentId,
           supplierId: effectiveSupplierId,
@@ -149,8 +190,11 @@ export const GridMapperTable = ({
           semanticRules,
         })
       );
-    } else {
-      dispatch(
+      if (confirmInventoryThunk.fulfilled.match(res)) {
+        onConfirmSuccess?.(res.payload);
+      }
+    } else if (isSales) {
+      const res = await dispatch(
         confirmSalesThunk({
           documentId,
           supplierId: effectiveSupplierId,
@@ -158,6 +202,20 @@ export const GridMapperTable = ({
           saveTemplate: false,
         })
       );
+      if (confirmSalesThunk.fulfilled.match(res)) {
+        onConfirmSuccess?.(res.payload);
+      }
+    } else {
+      const res = await dispatch(
+        confirmBuyerThunk({
+          documentId,
+          mappings,
+          supplierId: effectiveSupplierId,
+        })
+      );
+      if (confirmBuyerThunk.fulfilled.match(res)) {
+        onConfirmSuccess?.(res.payload);
+      }
     }
   };
 
@@ -178,12 +236,12 @@ export const GridMapperTable = ({
       return saveButtonText || 'Save Sheet Mapping';
     }
     if (isImported) {
-      return isInventory ? 'Lots Imported ✓' : 'Sales Reconciled ✓';
+      return isInventory ? 'Lots Imported ✓' : isSales ? 'Sales Reconciled ✓' : 'Buyers Ingested ✓';
     }
     if (hasClicked || loading) {
-      return isInventory ? 'Importing Lots...' : 'Reconciling Sales...';
+      return isInventory ? 'Importing Lots...' : isSales ? 'Reconciling Sales...' : 'Ingesting Buyers...';
     }
-    return isInventory ? 'Confirm & Import Lots' : 'Confirm & Reconcile Sales';
+    return isInventory ? 'Confirm & Import Lots' : isSales ? 'Confirm & Reconcile Sales' : 'Confirm & Ingest Buyers';
   };
 
   return (
@@ -323,7 +381,7 @@ export const GridMapperTable = ({
                             onChange={(e) => handleMappingChange(e.target.value, header)}
                           >
                             <option value="">Unmapped</option>
-                            {(isInventory ? INVENTORY_OPTIONS : SALES_OPTIONS).map((opt) => (
+                            {(isInventory ? INVENTORY_OPTIONS : isSales ? SALES_OPTIONS : BUYER_OPTIONS).map((opt) => (
                               <option key={opt.value} value={opt.value}>
                                 {opt.label}
                               </option>
@@ -363,22 +421,24 @@ export const GridMapperTable = ({
           <div
             className="empty-state-icon-wrapper"
             style={{
-              background: isInventory ? 'hsl(var(--primary) / 10%)' : 'hsl(var(--success) / 10%)',
-              color: isInventory ? 'hsl(var(--primary))' : 'hsl(var(--success))',
+              background: isInventory ? 'hsl(var(--primary) / 10%)' : isSales ? 'hsl(var(--success) / 10%)' : 'hsl(var(--primary) / 10%)',
+              color: isInventory ? 'hsl(var(--primary))' : isSales ? 'hsl(var(--success))' : 'hsl(var(--primary))',
             }}
           >
-            {isInventory ? <UploadCloud size={36} /> : <DollarSign size={36} />}
+            {isInventory ? <UploadCloud size={36} /> : isSales ? <DollarSign size={36} /> : <Users size={36} />}
           </div>
           <h3 style={{ fontSize: '1.1rem', margin: '4px 0' }}>
-            {isInventory ? 'No Data Extracted' : 'No Sales Data Extracted'}
+            {isInventory ? 'No Data Extracted' : isSales ? 'No Sales Data Extracted' : 'No Buyer Data Extracted'}
           </h3>
           <p style={{ maxWidth: '340px', fontSize: '0.85rem', color: 'hsl(var(--text-muted))', lineHeight: '1.4' }}>
             {isInventory
               ? 'Upload a PDF invoice or CSV surplus product spreadsheet on the left to preview raw grid extractions and verify database column mapping templates.'
-              : 'Upload a distributor sales report (CSV or PDF) on the left to parse and reconcile against active inventory lots using FEFO allocation.'}
+              : isSales
+              ? 'Upload a distributor sales report (CSV or PDF) on the left to parse and reconcile against active inventory lots using FEFO allocation.'
+              : 'Upload a buyer directory spreadsheet (.csv or .xlsx) on the left to preview raw grid extractions and verify column mappings.'}
           </p>
           <div className="ingestion-feature-pills">
-            <span className="pill">{isInventory ? '⚡ Docling OCR' : '⚡ FEFO Allocation'}</span>
+            <span className="pill">{isInventory ? '⚡ Docling OCR' : isSales ? '⚡ FEFO Allocation' : '⚡ Deduplication Engine'}</span>
             <span className="pill">🔍 Auto Schema Detection</span>
             <span className="pill">🛡️ Dynamic Rules</span>
           </div>
