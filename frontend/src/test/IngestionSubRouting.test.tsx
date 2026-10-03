@@ -73,7 +73,7 @@ describe('IngestionView Sub-Routing and Connector Deep Linking Seam', () => {
 
     // Initial state: standard pipeline view
     expect(screen.getByText('Surplus Ingestion Pipeline')).toBeDefined();
-    expect(screen.getByText('Ingestion Hub & Connectors')).toBeDefined();
+    expect(screen.getByText('Data Sources')).toBeDefined();
 
     // Click "Connect Zapier"
     const zapierBtn = screen.getByRole('button', { name: /Connect Zapier/i });
@@ -131,7 +131,7 @@ describe('IngestionView Sub-Routing and Connector Deep Linking Seam', () => {
 
     // Parent pipeline elements should be restored
     expect(screen.getByText('Surplus Ingestion Pipeline')).toBeDefined();
-    expect(screen.getByText('Ingestion Hub & Connectors')).toBeDefined();
+    expect(screen.getByText('Data Sources')).toBeDefined();
   });
 
   it('handles browser popstate events to navigate between connector and pipeline views', () => {

@@ -34,57 +34,32 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
   });
 
   describe('IngestionHubConnectors', () => {
-    it('renders the 5 integration cards with icons, labels, and badges', () => {
+    it('renders the Data Sources Dock with section header, auto-sync badge, preview chips, and Add button', () => {
       render(
         <Provider store={testStore}>
           <IngestionHubConnectors onOpenUploadModal={vi.fn()} />
         </Provider>
       );
 
-      expect(screen.getByText('Ingestion Hub & Connectors')).toBeDefined();
+      expect(screen.getByText('Data Sources')).toBeDefined();
       expect(screen.getByText(/Auto-sync Active/i)).toBeDefined();
 
-      // 5 Cards
-      expect(screen.getByText('Zapier Webhooks')).toBeDefined();
-      expect(screen.getByText('Google Sheets Sync')).toBeDefined();
-      expect(screen.getByText('Image & Doc Scanner')).toBeDefined();
+      // 4 Preview Chips & Add Button
+      expect(screen.getByTestId('data-source-chip-google-sheets')).toBeDefined();
+      expect(screen.getByTestId('data-source-chip-csv-upload')).toBeDefined();
+      expect(screen.getByTestId('data-source-chip-zapier')).toBeDefined();
+      expect(screen.getByTestId('data-source-chip-doc-scanner')).toBeDefined();
+      expect(screen.getByTestId('data-sources-add-button')).toBeDefined();
+
+      // Labels & Badges
+      expect(screen.getByText('Google Sheets')).toBeDefined();
       expect(screen.getByText('CSV / Excel Upload')).toBeDefined();
-      expect(screen.getByText('+ Add Integration')).toBeDefined();
-
-      // Buttons
-      expect(screen.getByRole('button', { name: /Connect Zapier/i })).toBeDefined();
-      expect(screen.getByRole('button', { name: /Connect Sheets/i })).toBeDefined();
-      expect(screen.getByRole('button', { name: /Scan \/ Upload Doc/i })).toBeDefined();
-      expect(screen.getByRole('button', { name: /Upload File/i })).toBeDefined();
-      expect(screen.getByText(/Explore Directory/i)).toBeDefined();
-    });
-
-    it('toggles collapse/expand when the toggle button is clicked', () => {
-      render(
-        <Provider store={testStore}>
-          <IngestionHubConnectors onOpenUploadModal={vi.fn()} />
-        </Provider>
-      );
-
-      const toggleBtn = screen.getByRole('button', { name: /Collapse Hub/i });
-      expect(toggleBtn).toBeDefined();
-
-      // Click to collapse
-      fireEvent.click(toggleBtn);
-      expect(screen.getByRole('button', { name: /Expand Hub/i })).toBeDefined();
-
-      // When collapsed, the connectors grid is collapsed/hidden
-      const zapierCard = screen.queryByText('Zapier Webhooks');
-      // If visually collapsed or hidden
-      expect(screen.getByRole('button', { name: /Expand Hub/i })).toBeDefined();
-
-      // Click to expand back
-      fireEvent.click(screen.getByRole('button', { name: /Expand Hub/i }));
-      expect(screen.getByRole('button', { name: /Collapse Hub/i })).toBeDefined();
       expect(screen.getByText('Zapier Webhooks')).toBeDefined();
+      expect(screen.getByText('Image & Doc Scanner')).toBeDefined();
+      expect(screen.getByText('Add Data Source')).toBeDefined();
     });
 
-    it('calls onOpenUploadModal when CSV / Excel Upload button is clicked', () => {
+    it('calls onOpenUploadModal when CSV / Excel Upload chip is clicked without onSelectConnector', () => {
       const onOpenUploadModal = vi.fn();
       render(
         <Provider store={testStore}>
@@ -92,7 +67,7 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
         </Provider>
       );
 
-      const uploadBtn = screen.getByRole('button', { name: /Upload File/i });
+      const uploadBtn = screen.getByTestId('data-source-chip-csv-upload');
       fireEvent.click(uploadBtn);
       expect(onOpenUploadModal).toHaveBeenCalledTimes(1);
     });
@@ -203,7 +178,7 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
         </Provider>
       );
 
-      expect(screen.getByText('Ingestion Hub & Connectors')).toBeDefined();
+      expect(screen.getByText('Data Sources')).toBeDefined();
       expect(screen.getByText('Inventory Pipeline')).toBeDefined();
     });
 

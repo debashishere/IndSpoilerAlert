@@ -80,7 +80,7 @@ describe('IngestionHubConnectors Direct Transition Seam', () => {
     expect(handleOpenUploadModal).toHaveBeenCalledTimes(1);
   });
 
-  it('triggers onSelectConnector("google-sheets") when Settings button is clicked in connected Sheets state', () => {
+  it('triggers onSelectConnector("google-sheets") when Settings / chip is clicked in connected Sheets state', () => {
     const connectedStore = createTestStore({
       ingestion: {
         googleSheetsSync: {
@@ -103,8 +103,8 @@ describe('IngestionHubConnectors Direct Transition Seam', () => {
       </Provider>
     );
 
-    const settingsBtn = screen.getByRole('button', { name: /Google Sheets Settings/i });
-    fireEvent.click(settingsBtn);
+    const sheetsChip = screen.getByTestId('data-source-chip-google-sheets');
+    fireEvent.click(sheetsChip);
     expect(handleSelectConnector).toHaveBeenCalledWith('google-sheets');
   });
 
@@ -130,7 +130,7 @@ describe('IngestionHubConnectors Direct Transition Seam', () => {
       </Provider>
     );
 
-    expect(screen.getByText(/3 Connected Zaps/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 Feeds/i)).toBeInTheDocument();
   });
 
   it('reflects operational health for Image & Doc Scanner with active AI OCR engine', () => {
@@ -142,6 +142,6 @@ describe('IngestionHubConnectors Direct Transition Seam', () => {
       </Provider>
     );
 
-    expect(screen.getByText(/AI Engine Ready/i)).toBeInTheDocument();
+    expect(screen.getByText(/AI OCR/i)).toBeInTheDocument();
   });
 });

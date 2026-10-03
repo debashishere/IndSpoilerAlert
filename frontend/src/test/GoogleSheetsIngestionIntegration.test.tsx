@@ -224,7 +224,8 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
     );
 
     // Pipeline should remain mounted and operational
-    expect(screen.getByText('Google Sheets Sync')).toBeDefined();
+    expect(screen.getByTestId('data-source-chip-google-sheets')).toBeDefined();
+    expect(screen.getByText('Google Sheets')).toBeDefined();
     expect(screen.getByText('Surplus Ingestion Pipeline')).toBeDefined();
   });
 

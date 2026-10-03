@@ -141,7 +141,11 @@
 
 ## Dedicated Ingestion Hub & Surplus Pipelines
 
-- **Dedicated Ingestion Hub & Connectors**: The collapsible top-level multi-source ingestion workbench in the Ingestion Tab displaying ingestion channel cards (`Zapier Webhooks`, `Google Sheets Sync`, `Image & Doc Scanner`, `CSV / Excel Upload`, and `+ Add Integration` Directory) with real-time status and sync telemetry.
+- **Data Sources Dock**: The streamlined, high-density ingress bar in the Ingestion and Inventory view featuring a primary visual `+` connector launch action alongside semi-visible data source preview chips (Google Sheets, CSV/Excel, Zapier, Image & Doc Scanner) that provide instant at-a-glance channel visibility and direct ingress into the Integration Management Suite.
+  _Avoid_: `Scattered Connectors Grid`, `Hidden Connectors Drawer`.
+- **Semi-Visible Source Preview Chips**: The interactive translucent badge controls inside the Data Sources Dock representing inbound pipelines (Google Sheets, CSV/Excel, Zapier, Image & Doc Scanner) with subtle brand styling and live sync pulse dots, providing at-a-glance discovery while preserving rapid one-click ingress routing.
+  _Avoid_: `Disabled Connector Chips`, `Static Decorative Badges`.
+- **Dedicated Ingestion Hub & Connectors (Legacy)**: The superseded 5-card collapsible ingestion workbench grid replaced by the streamlined Data Sources Dock.
   _Avoid_: `Simple File Dropzone`, `Upload-Only Banner`.
 - **Google Sheets Ingestion Sync**: The automated inbound data integration connector in the Ingestion Hub linking a supplier's Google Spreadsheet to the surplus inventory pipeline, periodically polling or ingesting spreadsheet rows into staged inventory lots with column schema normalization.
   _Avoid_: `Insight Google Sheets Sync`, `Outbound Sheet Export`.

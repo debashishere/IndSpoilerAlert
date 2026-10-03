@@ -135,7 +135,7 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
       );
 
       // Verify Connectors workbench is immediately available
-      expect(screen.getByText('Ingestion Hub & Connectors')).toBeDefined();
+      expect(screen.getByText('Data Sources')).toBeDefined();
 
       // Verify Telemetry KPI cards are retired from IngestionView
       expect(screen.queryByText('Critical RSL (<14 Days)')).toBeNull();
@@ -185,8 +185,8 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
         </Provider>
       );
 
-      // Ingestion Hub & Connectors exists
-      expect(screen.getByText('Ingestion Hub & Connectors')).toBeDefined();
+      // Data Sources dock exists
+      expect(screen.getByText('Data Sources')).toBeDefined();
 
       // Click Upload File button in Connectors card
       const uploadFileBtn = screen.getByRole('button', { name: /Upload File/i });

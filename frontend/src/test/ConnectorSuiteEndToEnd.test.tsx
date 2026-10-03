@@ -72,7 +72,7 @@ describe('Full-Page Ingestion Connector Suite End-to-End Regression Seam', () =>
 
     // 1. Initial State: Main Ingestion View
     expect(screen.getByText('Surplus Ingestion Pipeline')).toBeInTheDocument();
-    expect(screen.getByText('Ingestion Hub & Connectors')).toBeInTheDocument();
+    expect(screen.getByText('Data Sources')).toBeInTheDocument();
 
     // 2. Click Zapier Card -> Navigates to Zapier suite
     const zapierCardBtn = screen.getByRole('button', { name: /Connect Zapier/i });
@@ -111,7 +111,7 @@ describe('Full-Page Ingestion Connector Suite End-to-End Regression Seam', () =>
 
     expect(window.location.search).not.toContain('connector=');
     expect(screen.getByText('Surplus Ingestion Pipeline')).toBeInTheDocument();
-    expect(screen.getByText('Ingestion Hub & Connectors')).toBeInTheDocument();
+    expect(screen.getByText('Data Sources')).toBeInTheDocument();
   });
 
   it('navigates directly to Image & Doc Scanner via deep-link URL on initial mount', () => {
