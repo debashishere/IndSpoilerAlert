@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import coreReducer from '../store/slices/coreSlice';
@@ -204,9 +204,10 @@ describe('Issue #0120: Slice 2 - Unified Ingestion Modal & In-Situ Mapping Hando
         </Provider>
       );
 
-      // Click "Upload File" in CSV / Excel connector card
-      const uploadConnectorBtn = screen.getByRole('button', { name: /Upload File/i });
-      fireEvent.click(uploadConnectorBtn);
+      // Trigger navigation to CSV Integration Suite
+      act(() => {
+        window.dispatchEvent(new CustomEvent('open-ingestion-batch-suite', { detail: { target: 'inventory' } }));
+      });
 
       // CSV integration suite workspace should mount
       await waitFor(() => {

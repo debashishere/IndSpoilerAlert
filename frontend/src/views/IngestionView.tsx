@@ -12,6 +12,8 @@ import {
   DocScannerIntegrationView,
   CsvExcelIntegrationView,
   PipelineSwitcherBar,
+  CreateInventoryModal,
+  CreateSalesModal,
   type IngestionTarget,
   type IngestionConnectorId
 } from '../components/domain/ingestion';
@@ -93,6 +95,9 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
   const supplierId = selectedSupplier || currentSupplier?._id || '';
   const supplierName = currentSupplier?.name || 'Verified Supplier';
 
+  const [isCreateInventoryOpen, setIsCreateInventoryOpen] = useState(false);
+  const [isCreateSalesOpen, setIsCreateSalesOpen] = useState(false);
+
   const handleTabChange = useCallback((tab: PipelineTab) => {
     dispatch(setPipelineTab(tab));
     // Reset toggle-all state and notify switcher bar
@@ -109,8 +114,36 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
     window.dispatchEvent(new CustomEvent('open-add-buyer-modal'));
   }, [dispatch]);
 
+  const handleCreateBuyer = useCallback(() => {
+    dispatch(setPipelineTab('buyers'));
+    window.dispatchEvent(new CustomEvent('open-add-buyer-modal'));
+  }, [dispatch]);
+
+  const handleCreateInventory = useCallback(() => {
+    dispatch(setPipelineTab('inventory'));
+    setIsCreateInventoryOpen(true);
+  }, [dispatch]);
+
+  const handleCreateSales = useCallback(() => {
+    dispatch(setPipelineTab('sales'));
+    setIsCreateSalesOpen(true);
+  }, [dispatch]);
+
   const handleToggleAll = useCallback(() => {
     window.dispatchEvent(new CustomEvent('toggle-all-rows'));
+  }, []);
+
+  // Listen for create record modal open events
+  useEffect(() => {
+    const handleOpenCreateInv = () => setIsCreateInventoryOpen(true);
+    const handleOpenCreateSale = () => setIsCreateSalesOpen(true);
+
+    window.addEventListener('open-create-inventory-modal', handleOpenCreateInv);
+    window.addEventListener('open-create-sales-modal', handleOpenCreateSale);
+    return () => {
+      window.removeEventListener('open-create-inventory-modal', handleOpenCreateInv);
+      window.removeEventListener('open-create-sales-modal', handleOpenCreateSale);
+    };
   }, []);
 
   // Listen for batch ingress navigation events: deep-link smoothly to full-page CSV Integration Suite
@@ -203,6 +236,9 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
         onTabChange={handleTabChange}
         onOpenBuyerLists={handleOpenBuyerLists}
         onAddBuyer={handleAddBuyer}
+        onCreateBuyer={handleCreateBuyer}
+        onCreateInventory={handleCreateInventory}
+        onCreateSales={handleCreateSales}
         onToggleAll={handleToggleAll}
       />
 
@@ -226,6 +262,18 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
           </div>
         )}
       </div>
+
+      {/* Create Record Modals */}
+      <CreateInventoryModal
+        isOpen={isCreateInventoryOpen}
+        onClose={() => setIsCreateInventoryOpen(false)}
+        supplierId={supplierId}
+      />
+
+      <CreateSalesModal
+        isOpen={isCreateSalesOpen}
+        onClose={() => setIsCreateSalesOpen(false)}
+      />
     </div>
   );
 };

@@ -27,113 +27,29 @@ const createTestStore = (preloadedState?: any) => {
   });
 };
 
-describe('IngestionHubConnectors Direct Transition Seam', () => {
-  it('triggers onSelectConnector when Zapier, Scanner, or Sheets buttons are clicked', () => {
+describe('IngestionHubConnectors Unified Ingress Seam', () => {
+  it('triggers onSelectConnector("google-sheets") when "+ Add Data Source" button is clicked', () => {
     const store = createTestStore();
     const handleSelectConnector = vi.fn();
-    const handleOpenUploadModal = vi.fn();
 
     render(
       <Provider store={store}>
         <IngestionHubConnectors
           onSelectConnector={handleSelectConnector}
-          onOpenUploadModal={handleOpenUploadModal}
         />
       </Provider>
     );
 
-    // 1. Zapier
-    const zapierBtn = screen.getByRole('button', { name: /Connect Zapier/i });
-    fireEvent.click(zapierBtn);
-    expect(handleSelectConnector).toHaveBeenCalledWith('zapier');
+    const addBtn = screen.getByTestId('data-sources-add-button');
+    expect(addBtn).toBeInTheDocument();
+    expect(addBtn).toHaveTextContent(/Add Data Source/i);
 
-    // 2. Google Sheets (disconnected state)
-    const sheetsBtn = screen.getByRole('button', { name: /Connect Sheets/i });
-    fireEvent.click(sheetsBtn);
-    expect(handleSelectConnector).toHaveBeenCalledWith('google-sheets');
-
-    // 3. Image & Doc Scanner
-    const scannerBtn = screen.getByRole('button', { name: /Scan \/ Upload Doc/i });
-    fireEvent.click(scannerBtn);
-    expect(handleSelectConnector).toHaveBeenCalledWith('doc-scanner');
-
-    // 4. Batch CSV/Excel Upload triggers onSelectConnector('csv-upload')
-    const uploadBtn = screen.getByRole('button', { name: /Upload File/i });
-    fireEvent.click(uploadBtn);
-    expect(handleSelectConnector).toHaveBeenCalledWith('csv-upload');
-  });
-
-  it('falls back to onOpenUploadModal when onSelectConnector is not provided for CSV / Excel upload', () => {
-    const store = createTestStore();
-    const handleOpenUploadModal = vi.fn();
-
-    render(
-      <Provider store={store}>
-        <IngestionHubConnectors
-          onOpenUploadModal={handleOpenUploadModal}
-        />
-      </Provider>
-    );
-
-    const uploadBtn = screen.getByRole('button', { name: /Upload File/i });
-    fireEvent.click(uploadBtn);
-    expect(handleOpenUploadModal).toHaveBeenCalledTimes(1);
-  });
-
-  it('triggers onSelectConnector("google-sheets") when Settings / chip is clicked in connected Sheets state', () => {
-    const connectedStore = createTestStore({
-      ingestion: {
-        googleSheetsSync: {
-          connectionStatus: 'connected',
-          isSyncing: false,
-          syncedLotCount: 15,
-          lastSyncedAt: new Date().toISOString(),
-        },
-      },
-    });
-
-    const handleSelectConnector = vi.fn();
-
-    render(
-      <Provider store={connectedStore}>
-        <IngestionHubConnectors
-          onSelectConnector={handleSelectConnector}
-          onOpenUploadModal={vi.fn()}
-        />
-      </Provider>
-    );
-
-    const sheetsChip = screen.getByTestId('data-source-chip-google-sheets');
-    fireEvent.click(sheetsChip);
+    fireEvent.click(addBtn);
+    expect(handleSelectConnector).toHaveBeenCalledTimes(1);
     expect(handleSelectConnector).toHaveBeenCalledWith('google-sheets');
   });
 
-  it('reflects operational health for Zapier when connected zaps exist', () => {
-    const zapierStore = createTestStore({
-      zapierSync: {
-        totalZaps: 3,
-        connectedZaps: [
-          {
-            zapId: 'zap-001',
-            zapName: 'ERP Inbound Receiver',
-            status: 'active',
-            deliveryCount: 42,
-            lastDeliveredAt: new Date().toISOString(),
-          },
-        ],
-      },
-    });
-
-    render(
-      <Provider store={zapierStore}>
-        <IngestionHubConnectors />
-      </Provider>
-    );
-
-    expect(screen.getByText(/3 Feeds/i)).toBeInTheDocument();
-  });
-
-  it('reflects operational health for Image & Doc Scanner with active AI OCR engine', () => {
+  it('displays fallback notification when onSelectConnector is not provided and "+ Add Data Source" is clicked', () => {
     const store = createTestStore();
 
     render(
@@ -142,6 +58,38 @@ describe('IngestionHubConnectors Direct Transition Seam', () => {
       </Provider>
     );
 
-    expect(screen.getByText(/AI OCR/i)).toBeInTheDocument();
+    const addBtn = screen.getByTestId('data-sources-add-button');
+    fireEvent.click(addBtn);
+
+    expect(screen.getByText(/Navigating to Integration Management Suite\.\.\./i)).toBeInTheDocument();
+  });
+
+  it('renders operational auto-sync telemetry badge and container attributes', () => {
+    const store = createTestStore();
+
+    render(
+      <Provider store={store}>
+        <IngestionHubConnectors />
+      </Provider>
+    );
+
+    expect(screen.getByRole('heading', { level: 2, name: /Data Sources/i })).toBeInTheDocument();
+    expect(screen.getByText(/Auto-sync Active • 4 sources configured/i)).toBeInTheDocument();
+  });
+
+  it('does not render individual connector dock chips or preview tabs', () => {
+    const store = createTestStore();
+
+    render(
+      <Provider store={store}>
+        <IngestionHubConnectors />
+      </Provider>
+    );
+
+    expect(screen.queryByTestId('data-source-chip-google-sheets')).toBeNull();
+    expect(screen.queryByTestId('data-source-chip-csv-upload')).toBeNull();
+    expect(screen.queryByTestId('data-source-chip-zapier')).toBeNull();
+    expect(screen.queryByTestId('data-source-chip-doc-scanner')).toBeNull();
   });
 });
+

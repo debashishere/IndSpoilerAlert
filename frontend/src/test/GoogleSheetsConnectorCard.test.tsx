@@ -37,65 +37,42 @@ function renderWithStore(
   };
 }
 
-describe('Google Sheets Source Chip (Dual-State & Ingress Dispatch)', () => {
+describe('Google Sheets Ingress Dispatch & Dock Surface Seam', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('renders State 1 (Unconnected) with "Connect Sheets" action by default', () => {
+  it('renders "+ Add Data Source" primary button and dispatches ingress to "google-sheets"', () => {
     const onSelectConnector = vi.fn();
     renderWithStore(undefined, { onSelectConnector });
 
-    expect(screen.getByText('Google Sheets')).toBeInTheDocument();
-    const connectBtn = screen.getByTestId('data-source-chip-google-sheets');
-    expect(connectBtn).toBeInTheDocument();
+    const addBtn = screen.getByTestId('data-sources-add-button');
+    expect(addBtn).toBeInTheDocument();
+    expect(addBtn).toHaveTextContent(/Add Data Source/i);
 
-    fireEvent.click(connectBtn);
+    fireEvent.click(addBtn);
+    expect(onSelectConnector).toHaveBeenCalledTimes(1);
     expect(onSelectConnector).toHaveBeenCalledWith('google-sheets');
   });
 
-  it('renders State 2 (Connected) with emerald badge, active status, and synced time', () => {
-    const onSelectConnector = vi.fn();
-    const preloadedState = {
-      ingestion: {
-        googleSheetsSync: {
-          connectionStatus: 'connected' as const,
-          lastSyncedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 mins ago
-          syncedLotCount: 142,
-          isSyncing: false,
-          error: null,
-        },
-        googleSheetsConfig: {
-          spreadsheetId: 'sheet-xyz-123',
-          sheetName: 'Live Inventory',
-          connectedEmail: 'supplier@example.com',
-          oauthConnected: true,
-          ingressKey: 'ingress-key-123',
-        },
-      },
-    };
+  it('renders auto-sync telemetry badge reflecting configured sources', () => {
+    renderWithStore();
 
-    renderWithStore(preloadedState, { onSelectConnector });
-
-    // Emerald pulsating badge
-    const chip = screen.getByTestId('data-source-chip-google-sheets');
-    expect(chip).toHaveTextContent(/Active • 5m ago/i);
-    expect(chip.querySelector('.animate-pulse')).toBeInTheDocument();
-
-    // Clicking connected chip also navigates to google-sheets
-    fireEvent.click(chip);
-    expect(onSelectConnector).toHaveBeenCalledWith('google-sheets');
+    expect(screen.getByText(/Auto-sync Active • 4 sources configured/i)).toBeInTheDocument();
   });
 
-  it('provides dark-mode surface tokens on dock container and Google Sheets chip', () => {
+  it('provides dark-mode surface tokens on dock container', () => {
     renderWithStore();
 
     const dock = screen.getByTestId('data-sources-dock');
     expect(dock.className).toContain('dark:bg-slate-900');
     expect(dock.className).toContain('dark:border-slate-800');
+  });
 
-    const chip = screen.getByTestId('data-source-chip-google-sheets');
-    expect(chip.className).toContain('dark:bg-slate-800/80');
-    expect(chip.className).toContain('dark:border-slate-700');
+  it('ensures individual preview chips are not rendered in the dock', () => {
+    renderWithStore();
+
+    expect(screen.queryByTestId('data-source-chip-google-sheets')).not.toBeInTheDocument();
   });
 });
+

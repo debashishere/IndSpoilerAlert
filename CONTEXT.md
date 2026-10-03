@@ -141,9 +141,9 @@
 
 ## Dedicated Ingestion Hub & Surplus Pipelines
 
-- **Data Sources Dock**: The streamlined, high-density ingress bar in the Ingestion and Inventory view featuring a primary visual `+` connector launch action alongside semi-visible data source preview chips (Google Sheets, CSV/Excel, Zapier, Image & Doc Scanner) that provide instant at-a-glance channel visibility and direct ingress into the Integration Management Suite.
-  _Avoid_: `Scattered Connectors Grid`, `Hidden Connectors Drawer`.
-- **Semi-Visible Source Preview Chips**: The interactive translucent badge controls inside the Data Sources Dock representing inbound pipelines (Google Sheets, CSV/Excel, Zapier, Image & Doc Scanner) with subtle brand styling and live sync pulse dots, providing at-a-glance discovery while preserving rapid one-click ingress routing.
+- **Data Sources Dock**: The streamlined, high-density header bar in the Ingestion and Inventory view featuring the section title, telemetry badge, and a primary visual `+ Add Data Source` action serving as the single unified entrypoint into the Integration Management Suite.
+  _Avoid_: `Scattered Connectors Grid`, `Hidden Connectors Drawer`, `Connector Tab Bar`.
+- **Semi-Visible Source Preview Chips (Deprecated)**: The legacy interactive translucent badge controls inside the Data Sources Dock (Google Sheets, CSV/Excel, Zapier, Image & Doc Scanner), superseded in favor of a clean single `+ Add Data Source` action.
   _Avoid_: `Disabled Connector Chips`, `Static Decorative Badges`.
 - **Dedicated Ingestion Hub & Connectors (Legacy)**: The superseded 5-card collapsible ingestion workbench grid replaced by the streamlined Data Sources Dock.
   _Avoid_: `Simple File Dropzone`, `Upload-Only Banner`.
@@ -201,6 +201,8 @@
   _Avoid_: `Generic Row Actions Menu`.
 - **Master Pipeline Synchronizer**: The event-driven coordination protocol connecting `PipelineSwitcherBar`, pipeline datasets, and progressive inspection drawers via `toggle-all-rows` and `toggle-all-state-changed` DOM CustomEvents. Ensures that the master "Toggle All" control accurately reflects visible drawer states and cleanly resets upon pipeline tab transitions.
   _Avoid_: `Stale Cross-Tab Toggle State`, `Unsynchronized Master Button`.
+- **Pipeline Contextual Action Utilities**: Contextual action triggers (`Create Inventory`, `Create Sales`, `Buyer Lists`, `Create Buyer`) positioned in the `PipelineSwitcherBar` action strip that mount dynamically based on the active tab (`Inventory`, `Sales`, or `Buyers`), providing fast manual record creation via custom form modals while preserving the global `Toggle All` control across all workbenches.
+  _Avoid_: `Static Global Pipeline Action Bar`, `Cross-Tab Persistent Action Leak`, `Generic Add Item Buttons`.
 - **Multi-Theme Ingestion Tokens**: The institutional Tailwind CSS color and typography taxonomy harmonizing `IngestionView`, `IngestionTelemetryBar`, and connector workbenches across light and dark modes (`dark:bg-slate-950`, `dark:bg-slate-900`, `dark:border-slate-800`, `dark:text-slate-100`) while honoring the 4px/8pt optical density standard.
   _Avoid_: `Hardcoded White Backgrounds`, `Inconsistent Dark Mode Surfaces`.
 - **Image & Doc Scanner Workbench**: The full-page integration management suite (`DocScannerIntegrationView.tsx`) structured around the canonical 4-Quadrant architecture (Header & Health Telemetry, AI OCR Upload Dropzone, Scanned Documents Roster, In-Situ Schema Field Mapper), enabling warehouse operators to ingest PDF manifests, bills of lading, and photo packing slips via IBM Docling and Tesseract OCR with real-time column mapping and verification.

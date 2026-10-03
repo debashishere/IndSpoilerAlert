@@ -3,8 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import coreReducer from '../store/slices/coreSlice';
-import ingestionReducer, { setPipelineTab, setSalesRecords } from '../store/slices/ingestionSlice';
-import inventoryReducer, { setInventoryList } from '../store/slices/inventorySlice';
+import ingestionReducer from '../store/slices/ingestionSlice';
+import inventoryReducer from '../store/slices/inventorySlice';
 import workflowReducer from '../store/slices/workflowSlice';
 import logisticsReducer from '../store/slices/logisticsSlice';
 import authReducer from '../store/slices/authSlice';
@@ -34,7 +34,7 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
   });
 
   describe('IngestionHubConnectors', () => {
-    it('renders the Data Sources Dock with section header, auto-sync badge, preview chips, and Add button', () => {
+    it('renders the Data Sources Dock with section header, auto-sync badge, and Add Data Source button', () => {
       render(
         <Provider store={testStore}>
           <IngestionHubConnectors onOpenUploadModal={vi.fn()} />
@@ -43,33 +43,27 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
 
       expect(screen.getByText('Data Sources')).toBeDefined();
       expect(screen.getByText(/Auto-sync Active/i)).toBeDefined();
-
-      // 4 Preview Chips & Add Button
-      expect(screen.getByTestId('data-source-chip-google-sheets')).toBeDefined();
-      expect(screen.getByTestId('data-source-chip-csv-upload')).toBeDefined();
-      expect(screen.getByTestId('data-source-chip-zapier')).toBeDefined();
-      expect(screen.getByTestId('data-source-chip-doc-scanner')).toBeDefined();
       expect(screen.getByTestId('data-sources-add-button')).toBeDefined();
-
-      // Labels & Badges
-      expect(screen.getByText('Google Sheets')).toBeDefined();
-      expect(screen.getByText('CSV / Excel Upload')).toBeDefined();
-      expect(screen.getByText('Zapier Webhooks')).toBeDefined();
-      expect(screen.getByText('Image & Doc Scanner')).toBeDefined();
       expect(screen.getByText('Add Data Source')).toBeDefined();
+
+      // Legacy chips are removed
+      expect(screen.queryByTestId('data-source-chip-google-sheets')).toBeNull();
+      expect(screen.queryByTestId('data-source-chip-csv-upload')).toBeNull();
+      expect(screen.queryByTestId('data-source-chip-zapier')).toBeNull();
+      expect(screen.queryByTestId('data-source-chip-doc-scanner')).toBeNull();
     });
 
-    it('calls onOpenUploadModal when CSV / Excel Upload chip is clicked without onSelectConnector', () => {
-      const onOpenUploadModal = vi.fn();
+    it('dispatches onSelectConnector with google-sheets when Add Data Source button is clicked', () => {
+      const onSelectConnector = vi.fn();
       render(
         <Provider store={testStore}>
-          <IngestionHubConnectors onOpenUploadModal={onOpenUploadModal} />
+          <IngestionHubConnectors onSelectConnector={onSelectConnector} />
         </Provider>
       );
 
-      const uploadBtn = screen.getByTestId('data-source-chip-csv-upload');
-      fireEvent.click(uploadBtn);
-      expect(onOpenUploadModal).toHaveBeenCalledTimes(1);
+      const addBtn = screen.getByTestId('data-sources-add-button');
+      fireEvent.click(addBtn);
+      expect(onSelectConnector).toHaveBeenCalledWith('google-sheets');
     });
   });
 
@@ -104,18 +98,110 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
       );
 
       // Verify tabs
-      expect(screen.getByText('Inventory Pipeline')).toBeDefined();
-      expect(screen.getByText('Sales Pipeline')).toBeDefined();
-      expect(screen.getByText('Buyer Pipeline')).toBeDefined();
+      expect(screen.getByText('Inventory')).toBeDefined();
+      expect(screen.getByText('Sales')).toBeDefined();
+      expect(screen.getByText('Buyers')).toBeDefined();
 
       // Counts
       expect(screen.getByText('2')).toBeDefined(); // Inventory count
       expect(screen.getByText('3')).toBeDefined(); // Sales count
       expect(screen.getByText('1')).toBeDefined(); // Buyer count
 
-      // Action Utilities
+      // Action Utilities on inventory tab (Create Inventory and Toggle All present)
+      expect(screen.getByRole('button', { name: /Create Inventory/i })).toBeDefined();
+      expect(screen.queryByRole('button', { name: /Create Sales/i })).toBeNull();
+      expect(screen.queryByRole('button', { name: /Buyer Lists/i })).toBeNull();
+      expect(screen.queryByRole('button', { name: /Create Buyer/i })).toBeNull();
+      expect(screen.getByRole('button', { name: /Toggle All/i })).toBeDefined();
+    });
+
+    it('preserves screen-reader and legacy test compatibility tokens for all dataset tabs', () => {
+      render(
+        <Provider store={testStore}>
+          <PipelineSwitcherBar
+            activeTab="inventory"
+            onTabChange={vi.fn()}
+          />
+        </Provider>
+      );
+
+      // Inventory tab compatibility
+      expect(screen.getByText('📦 Inventory Pipeline')).toBeDefined();
+      expect(screen.getByRole('tab', { name: /Inventory Pipeline/i })).toBeDefined();
+
+      // Sales tab compatibility
+      expect(screen.getByText('💰 Sales Pipeline')).toBeDefined();
+      expect(screen.getByRole('tab', { name: /Sales Pipeline/i })).toBeDefined();
+
+      // Buyer tab compatibility (supports legacy assertions for Buyer List or Buyer Pipeline)
+      expect(screen.getByText(/Buyer List/i)).toBeDefined();
+      expect(screen.getByRole('tab', { name: /Buyer Pipeline/i })).toBeDefined();
+      expect(screen.getByRole('tab', { name: /Buyer List/i })).toBeDefined();
+    });
+
+    it('renders contextual action buttons for each activeTab', () => {
+      const { rerender } = render(
+        <Provider store={testStore}>
+          <PipelineSwitcherBar
+            activeTab="inventory"
+            onTabChange={vi.fn()}
+            onOpenBuyerLists={vi.fn()}
+            onAddBuyer={vi.fn()}
+            onCreateBuyer={vi.fn()}
+            onCreateInventory={vi.fn()}
+            onCreateSales={vi.fn()}
+            onToggleAll={vi.fn()}
+          />
+        </Provider>
+      );
+
+      // Inventory tab: Create Inventory visible, others hidden
+      expect(screen.getByRole('button', { name: /Create Inventory/i })).toBeDefined();
+      expect(screen.queryByRole('button', { name: /Create Sales/i })).toBeNull();
+      expect(screen.queryByRole('button', { name: /Buyer Lists/i })).toBeNull();
+      expect(screen.queryByRole('button', { name: /Create Buyer/i })).toBeNull();
+      expect(screen.getByRole('button', { name: /Toggle All/i })).toBeDefined();
+
+      // Switch to sales tab: Create Sales visible, others hidden
+      rerender(
+        <Provider store={testStore}>
+          <PipelineSwitcherBar
+            activeTab="sales"
+            onTabChange={vi.fn()}
+            onOpenBuyerLists={vi.fn()}
+            onAddBuyer={vi.fn()}
+            onCreateBuyer={vi.fn()}
+            onCreateInventory={vi.fn()}
+            onCreateSales={vi.fn()}
+            onToggleAll={vi.fn()}
+          />
+        </Provider>
+      );
+      expect(screen.queryByRole('button', { name: /Create Inventory/i })).toBeNull();
+      expect(screen.getByRole('button', { name: /Create Sales/i })).toBeDefined();
+      expect(screen.queryByRole('button', { name: /Buyer Lists/i })).toBeNull();
+      expect(screen.queryByRole('button', { name: /Create Buyer/i })).toBeNull();
+      expect(screen.getByRole('button', { name: /Toggle All/i })).toBeDefined();
+
+      // Switch to buyers tab: Buyer Lists and Create Buyer visible, others hidden
+      rerender(
+        <Provider store={testStore}>
+          <PipelineSwitcherBar
+            activeTab="buyers"
+            onTabChange={vi.fn()}
+            onOpenBuyerLists={vi.fn()}
+            onAddBuyer={vi.fn()}
+            onCreateBuyer={vi.fn()}
+            onCreateInventory={vi.fn()}
+            onCreateSales={vi.fn()}
+            onToggleAll={vi.fn()}
+          />
+        </Provider>
+      );
+      expect(screen.queryByRole('button', { name: /Create Inventory/i })).toBeNull();
+      expect(screen.queryByRole('button', { name: /Create Sales/i })).toBeNull();
       expect(screen.getByRole('button', { name: /Buyer Lists/i })).toBeDefined();
-      expect(screen.getByRole('button', { name: /Add Buyer/i })).toBeDefined();
+      expect(screen.getByRole('button', { name: /Create Buyer/i })).toBeDefined();
       expect(screen.getByRole('button', { name: /Toggle All/i })).toBeDefined();
     });
 
@@ -125,7 +211,7 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
       const onAddBuyer = vi.fn();
       const onToggleAll = vi.fn();
 
-      render(
+      const { rerender } = render(
         <Provider store={testStore}>
           <PipelineSwitcherBar
             activeTab="inventory"
@@ -138,22 +224,52 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
       );
 
       // Switch to sales
-      fireEvent.click(screen.getByText('Sales Pipeline'));
+      fireEvent.click(screen.getByText('Sales'));
       expect(onTabChange).toHaveBeenCalledWith('sales');
 
       // Switch to buyer
-      fireEvent.click(screen.getByText('Buyer Pipeline'));
+      fireEvent.click(screen.getByText('Buyers'));
       expect(onTabChange).toHaveBeenCalledWith('buyers');
 
-      // Click utility buttons
+      // Toggle all works on inventory tab
+      fireEvent.click(screen.getByRole('button', { name: /Toggle All/i }));
+      expect(onToggleAll).toHaveBeenCalledTimes(1);
+
+      // Rerender with activeTab="buyers" to click contextual buyer buttons
+      rerender(
+        <Provider store={testStore}>
+          <PipelineSwitcherBar
+            activeTab="buyers"
+            onTabChange={onTabChange}
+            onOpenBuyerLists={onOpenBuyerLists}
+            onAddBuyer={onAddBuyer}
+            onToggleAll={onToggleAll}
+          />
+        </Provider>
+      );
+
+      // Click contextual utility buttons
       fireEvent.click(screen.getByRole('button', { name: /Buyer Lists/i }));
       expect(onOpenBuyerLists).toHaveBeenCalledTimes(1);
 
-      fireEvent.click(screen.getByRole('button', { name: /Add Buyer/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Create Buyer/i }));
       expect(onAddBuyer).toHaveBeenCalledTimes(1);
+    });
 
-      fireEvent.click(screen.getByRole('button', { name: /Toggle All/i }));
-      expect(onToggleAll).toHaveBeenCalledTimes(1);
+    it('triggers onCreateBuyer callback when "Create Buyer" is clicked', () => {
+      const onCreateBuyer = vi.fn();
+      render(
+        <Provider store={testStore}>
+          <PipelineSwitcherBar
+            activeTab="buyers"
+            onTabChange={vi.fn()}
+            onCreateBuyer={onCreateBuyer}
+          />
+        </Provider>
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: /Create Buyer/i }));
+      expect(onCreateBuyer).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -179,7 +295,7 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
       );
 
       expect(screen.getByText('Data Sources')).toBeDefined();
-      expect(screen.getByText('Inventory Pipeline')).toBeDefined();
+      expect(screen.getByText('Inventory')).toBeDefined();
     });
 
     it('switches tabs cleanly and preserves Redux state without resetting', () => {
@@ -193,11 +309,11 @@ describe('Issue #0119: Slice 1 - Ingestion Shell, Telemetry Bar, Connectors Work
       expect(testStore.getState().ingestion.pipelineTab).toBe('inventory');
 
       // Switch to sales
-      fireEvent.click(screen.getByText('Sales Pipeline'));
+      fireEvent.click(screen.getByText('Sales'));
       expect(testStore.getState().ingestion.pipelineTab).toBe('sales');
 
       // Switch to buyers
-      fireEvent.click(screen.getByText('Buyer Pipeline'));
+      fireEvent.click(screen.getByText('Buyers'));
       expect(testStore.getState().ingestion.pipelineTab).toBe('buyers');
     });
   });

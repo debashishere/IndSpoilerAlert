@@ -29,6 +29,8 @@ export * from './subcomponents/BuyerRowInspectionDrawer';
 export * from './subcomponents/BuyerUploadModal';
 export * from './subcomponents/BuyerMappingPreview';
 export * from './subcomponents/AddBuyerModal';
+export * from './subcomponents/CreateInventoryModal';
+export * from './subcomponents/CreateSalesModal';
 export * from './hooks/useIngestionTelemetry';
 export * from './hooks/useUnifiedIngestionModal';
 export * from './hooks/useInventoryPipeline';

@@ -39,6 +39,9 @@ export interface PipelineSwitcherBarProps {
   onTabChange: (tab: PipelineTab) => void;
   onOpenBuyerLists?: () => void;
   onAddBuyer?: () => void;
+  onCreateBuyer?: () => void;
+  onCreateInventory?: () => void;
+  onCreateSales?: () => void;
   onToggleAll?: () => void;
 }
 

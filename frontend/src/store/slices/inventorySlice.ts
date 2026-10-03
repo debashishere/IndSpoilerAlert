@@ -189,6 +189,9 @@ export const inventorySlice = createSlice({
     setInventoryList: (state, action: PayloadAction<any[]>) => {
       state.inventoryList = action.payload;
     },
+    addInventoryLot: (state, action: PayloadAction<any>) => {
+      state.inventoryList.unshift(action.payload);
+    },
     setAllBids: (state, action: PayloadAction<any[]>) => {
       state.allBids = action.payload;
     },
@@ -408,6 +411,7 @@ export const inventorySlice = createSlice({
 
 export const {
   setInventoryList,
+  addInventoryLot,
   setAllBids,
   setAllBidsLoading,
   setLoading,

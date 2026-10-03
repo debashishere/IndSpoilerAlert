@@ -188,8 +188,8 @@ describe('Issue #0124: Slice 6 - End-to-End Integration, Styling Polish & Test S
       // Data Sources dock exists
       expect(screen.getByText('Data Sources')).toBeDefined();
 
-      // Click Upload File button in Connectors card
-      const uploadFileBtn = screen.getByRole('button', { name: /Upload File/i });
+      // Click Upload Inventory Document button in registry panel
+      const uploadFileBtn = screen.getByRole('button', { name: /Upload Inventory Document/i });
       fireEvent.click(uploadFileBtn);
 
       // Full-page CSV Integration Suite should mount

@@ -147,6 +147,15 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
         >
           Upload Inventory Document
         </button>
+        <button
+          type="button"
+          aria-label="Create Inventory"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('open-create-inventory-modal'));
+          }}
+        >
+          Create Inventory
+        </button>
       </div>
 
       {/* Upload Inventory Document Modal */}

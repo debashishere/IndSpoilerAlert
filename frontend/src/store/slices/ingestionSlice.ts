@@ -291,6 +291,9 @@ export const ingestionSlice = createSlice({
     setSalesRecords: (state, action: PayloadAction<any[]>) => {
       state.salesRecords = action.payload;
     },
+    addSalesRecord: (state, action: PayloadAction<any>) => {
+      state.salesRecords.unshift(action.payload);
+    },
     setSalesRecordsLoading: (state, action: PayloadAction<boolean>) => {
       state.salesRecordsLoading = action.payload;
     },
@@ -529,6 +532,7 @@ export const {
   removeSalesSemanticRule,
   setSalesImportSuccess,
   setSalesRecords,
+  addSalesRecord,
   setSalesRecordsLoading,
   setBuyerSearch,
   setBuyerTierFilter,

@@ -61,7 +61,7 @@ describe('IngestionView Sub-Routing and Connector Deep Linking Seam', () => {
     expect(screen.queryByText('Surplus Ingestion Pipeline')).toBeNull();
   });
 
-  it('navigates from IngestionHubConnectors directly to full-page connector mode and updates URL', () => {
+  it('navigates from IngestionHubConnectors via "+ Add Data Source" into Integration Management Suite and switches connectors via switcher tabs', () => {
     window.history.replaceState({}, '', '/?tab=ingestion');
     const store = createTestStore();
 
@@ -75,16 +75,20 @@ describe('IngestionView Sub-Routing and Connector Deep Linking Seam', () => {
     expect(screen.getByText('Surplus Ingestion Pipeline')).toBeDefined();
     expect(screen.getByText('Data Sources')).toBeDefined();
 
-    // Click "Connect Zapier"
-    const zapierBtn = screen.getByRole('button', { name: /Connect Zapier/i });
-    fireEvent.click(zapierBtn);
+    // Click "+ Add Data Source" button on dock
+    const addBtn = screen.getByTestId('data-sources-add-button');
+    fireEvent.click(addBtn);
+
+    // Ingress defaults to google-sheets
+    expect(window.location.search).toContain('connector=google-sheets');
+    expect(screen.getByRole('button', { name: /Back to Ingestion Pipeline/i })).toBeDefined();
+
+    // Switch to Zapier via in-suite switcher tab
+    const zapierTab = screen.getByRole('tab', { name: /Zapier Webhooks/i });
+    fireEvent.click(zapierTab);
 
     // Should update URL query param to connector=zapier
     expect(window.location.search).toContain('connector=zapier');
-
-    // Should now display connector shell with Zapier selected
-    expect(screen.getByRole('button', { name: /Back to Ingestion Pipeline/i })).toBeDefined();
-    const zapierTab = screen.getByRole('tab', { name: /Zapier Webhooks/i });
     expect(zapierTab.getAttribute('aria-selected')).toBe('true');
   });
 
@@ -274,7 +278,7 @@ describe('IngestionView Sub-Routing and Connector Deep Linking Seam', () => {
     expect(screen.getByTestId('csv-excel-integration-view')).toBeInTheDocument();
   });
 
-  it('transitions from IngestionHubConnectors CSV / Excel Upload card to connector=csv-upload mode', () => {
+  it('transitions from IngestionHubConnectors via "+ Add Data Source" and switches to connector=csv-upload mode via switcher tab', () => {
     window.history.replaceState({}, '', '/?tab=ingestion');
     const store = createTestStore();
 
@@ -284,15 +288,21 @@ describe('IngestionView Sub-Routing and Connector Deep Linking Seam', () => {
       </Provider>
     );
 
-    // Click "Upload File" in CSV / Excel card
-    const uploadBtn = screen.getByRole('button', { name: /Upload File/i });
-    fireEvent.click(uploadBtn);
+    // Click "+ Add Data Source" button on dock
+    const addBtn = screen.getByTestId('data-sources-add-button');
+    fireEvent.click(addBtn);
+
+    // Ingress defaults to google-sheets
+    expect(window.location.search).toContain('connector=google-sheets');
+
+    // Switch to CSV / Excel Upload tab in connector shell
+    const csvTab = screen.getByRole('tab', { name: /CSV \/ Excel Upload/i });
+    fireEvent.click(csvTab);
 
     // URL is updated
     expect(window.location.search).toContain('connector=csv-upload');
 
     // Shell is mounted with CSV tab active
-    const csvTab = screen.getByRole('tab', { name: /CSV \/ Excel Upload/i });
     expect(csvTab.getAttribute('aria-selected')).toBe('true');
     expect(screen.getByTestId('connector-csv-upload-workspace')).toBeInTheDocument();
   });

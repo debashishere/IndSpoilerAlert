@@ -101,7 +101,7 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
     });
   });
 
-  it('clicking "Connect Sheets" on IngestionHubConnectors transitions to full-page GoogleSheetsIntegrationView', async () => {
+  it('clicking "+ Add Data Source" on IngestionHubConnectors transitions to full-page GoogleSheetsIntegrationView', async () => {
     render(
       <Provider store={store}>
         <IngestionView />
@@ -111,10 +111,10 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
     // Initial state: pipeline workbench is present
     expect(document.querySelector('#panel-inventory')).toBeDefined();
 
-    // Click "Connect Sheets" button on Card 2
-    const connectSheetsBtn = screen.getByRole('button', { name: /Connect Sheets/i });
-    expect(connectSheetsBtn).toBeDefined();
-    fireEvent.click(connectSheetsBtn);
+    // Click "+ Add Data Source" button on dock
+    const addDataSourcesBtn = screen.getByTestId('data-sources-add-button');
+    expect(addDataSourcesBtn).toBeDefined();
+    fireEvent.click(addDataSourcesBtn);
 
     // Verify full-page integration management suite opened
     expect(await screen.findByText('Google Sheets Ingestion Suite')).toBeDefined();
@@ -132,8 +132,8 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
     );
 
     // Open full-page integration view
-    const connectSheetsBtn = screen.getByRole('button', { name: /Connect Sheets/i });
-    fireEvent.click(connectSheetsBtn);
+    const addDataSourcesBtn = screen.getByTestId('data-sources-add-button');
+    fireEvent.click(addDataSourcesBtn);
     expect(await screen.findByText('Google Sheets Ingestion Suite')).toBeDefined();
 
     // Click Back to Ingestion Pipeline button
@@ -224,8 +224,8 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
     );
 
     // Pipeline should remain mounted and operational
-    expect(screen.getByTestId('data-source-chip-google-sheets')).toBeDefined();
-    expect(screen.getByText('Google Sheets')).toBeDefined();
+    expect(screen.getByTestId('data-sources-dock')).toBeDefined();
+    expect(screen.getByTestId('data-sources-add-button')).toBeDefined();
     expect(screen.getByText('Surplus Ingestion Pipeline')).toBeDefined();
   });
 
@@ -272,9 +272,9 @@ describe('Vertical Slice 3: Ingestion View & GridMapperTable Handoff Integration
       </Provider>
     );
 
-    // Open full-page connector
-    const connectSheetsBtn = screen.getByRole('button', { name: /Connect Sheets/i });
-    fireEvent.click(connectSheetsBtn);
+    // Open full-page connector via + Add Data Source
+    const addDataSourcesBtn = screen.getByTestId('data-sources-add-button');
+    fireEvent.click(addDataSourcesBtn);
     expect(await screen.findByText('Google Sheets Ingestion Suite')).toBeDefined();
 
     // Verify roster displays Produce Master

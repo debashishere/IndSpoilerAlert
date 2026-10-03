@@ -16,6 +16,9 @@ export const PipelineSwitcherBar: React.FC<PipelineSwitcherBarProps> = ({
   onTabChange,
   onOpenBuyerLists,
   onAddBuyer,
+  onCreateBuyer,
+  onCreateInventory,
+  onCreateSales,
   onToggleAll,
 }) => {
   const { counts } = useIngestionTelemetry();
@@ -68,7 +71,7 @@ export const PipelineSwitcherBar: React.FC<PipelineSwitcherBarProps> = ({
             <span className="sr-only">📦 Inventory Pipeline</span>
             <span className="material-symbols-outlined text-[18px]">inventory_2</span>
             <Package className="w-4 h-4 hidden" aria-hidden="true" />
-            <span>Inventory Pipeline</span>
+            <span>Inventory</span>
             <span
               className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold transition-colors ${
                 activeTab === 'inventory'
@@ -97,7 +100,7 @@ export const PipelineSwitcherBar: React.FC<PipelineSwitcherBarProps> = ({
             <span className="sr-only">💰 Sales Pipeline</span>
             <span className="material-symbols-outlined text-[18px]">point_of_sale</span>
             <DollarSign className="w-4 h-4 hidden" aria-hidden="true" />
-            <span>Sales Pipeline</span>
+            <span>Sales</span>
             <span
               className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold transition-colors ${
                 activeTab === 'sales'
@@ -124,9 +127,10 @@ export const PipelineSwitcherBar: React.FC<PipelineSwitcherBarProps> = ({
           >
             {/* Screen reader / legacy test compatibility token */}
             <span className="sr-only">👥 Buyer List</span>
+            <span className="sr-only">Buyer Pipeline</span>
             <span className="material-symbols-outlined text-[18px]">domain</span>
             <Users className="w-4 h-4 hidden" aria-hidden="true" />
-            <span>Buyer Pipeline</span>
+            <span>Buyers</span>
             <span
               className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold transition-colors ${
                 activeTab === 'buyers'
@@ -141,26 +145,60 @@ export const PipelineSwitcherBar: React.FC<PipelineSwitcherBarProps> = ({
 
         {/* Action Utilities */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          <div className="flex items-center gap-1.5 mr-1">
-            <button
-              type="button"
-              onClick={onOpenBuyerLists}
-              className="px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1 transition-colors border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[15px]">folder_shared</span>
-              <FolderKanban className="w-3.5 h-3.5 hidden" aria-hidden="true" />
-              <span className="hidden sm:inline">Buyer Lists</span>
-            </button>
-            <button
-              type="button"
-              onClick={onAddBuyer}
-              className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[15px]">add</span>
-              <Plus className="w-3.5 h-3.5 hidden" aria-hidden="true" />
-              <span>Add Buyer</span>
-            </button>
-          </div>
+          {activeTab === 'inventory' && (
+            <div className="flex items-center gap-1.5 mr-1" id="inventory-tab-actions">
+              <button
+                type="button"
+                id="create-inventory-btn"
+                onClick={onCreateInventory}
+                className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px]">add</span>
+                <Plus className="w-3.5 h-3.5 hidden" aria-hidden="true" />
+                <span>Create Inventory</span>
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'sales' && (
+            <div className="flex items-center gap-1.5 mr-1" id="sales-tab-actions">
+              <button
+                type="button"
+                id="create-sales-btn"
+                onClick={onCreateSales}
+                className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px]">add</span>
+                <Plus className="w-3.5 h-3.5 hidden" aria-hidden="true" />
+                <span>Create Sales</span>
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'buyers' && (
+            <div className="flex items-center gap-1.5 mr-1" id="buyer-tab-actions">
+              <button
+                type="button"
+                onClick={onOpenBuyerLists}
+                className="px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1 transition-colors border border-slate-200 dark:border-slate-700 shadow-2xs cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px]">folder_shared</span>
+                <FolderKanban className="w-3.5 h-3.5 hidden" aria-hidden="true" />
+                <span className="hidden sm:inline">Buyer Lists</span>
+              </button>
+              <button
+                type="button"
+                id="create-buyer-btn"
+                onClick={onCreateBuyer || onAddBuyer}
+                className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[15px]">add</span>
+                <Plus className="w-3.5 h-3.5 hidden" aria-hidden="true" />
+                <span>Create Buyer</span>
+                <span className="sr-only">Add Buyer</span>
+              </button>
+            </div>
+          )}
           <button
             type="button"
             id="toggle-all-btn"

@@ -44,6 +44,7 @@ describe('DataSourcesDock Seam', () => {
     expect(
       screen.getByText(/Automate surplus inventory, sales reports, and buyer intake via live integrations/i)
     ).toBeInTheDocument();
+    expect(screen.getByText(/Auto-sync Active • 4 sources configured/i)).toBeInTheDocument();
   });
 
   it('renders visual "+ Add Data Source" primary button with testid and dispatches navigation to google-sheets', () => {
@@ -65,8 +66,8 @@ describe('DataSourcesDock Seam', () => {
     expect(handleSelectConnector).toHaveBeenCalledWith('google-sheets');
   });
 
-  describe('Semi-Visible Source Preview Chips & Deep Linking', () => {
-    it('renders all four semi-visible preview chips with icons and badges', () => {
+  describe('Streamlined Dock Layout (No Preview Chips)', () => {
+    it('does not render any connector preview chips or tabs', () => {
       const store = createTestStore();
       render(
         <Provider store={store}>
@@ -74,84 +75,10 @@ describe('DataSourcesDock Seam', () => {
         </Provider>
       );
 
-      const sheetsChip = screen.getByTestId('data-source-chip-google-sheets');
-      const csvChip = screen.getByTestId('data-source-chip-csv-upload');
-      const zapierChip = screen.getByTestId('data-source-chip-zapier');
-      const scannerChip = screen.getByTestId('data-source-chip-doc-scanner');
-
-      expect(sheetsChip).toBeInTheDocument();
-      expect(csvChip).toBeInTheDocument();
-      expect(zapierChip).toBeInTheDocument();
-      expect(scannerChip).toBeInTheDocument();
-
-      expect(csvChip).toHaveTextContent(/Batch Ingress/i);
-      expect(scannerChip).toHaveTextContent(/AI OCR/i);
-    });
-
-    it('navigates directly to connector when each preview chip is clicked', () => {
-      const store = createTestStore();
-      const handleSelectConnector = vi.fn();
-
-      render(
-        <Provider store={store}>
-          <IngestionHubConnectors onSelectConnector={handleSelectConnector} />
-        </Provider>
-      );
-
-      fireEvent.click(screen.getByTestId('data-source-chip-google-sheets'));
-      expect(handleSelectConnector).toHaveBeenCalledWith('google-sheets');
-
-      fireEvent.click(screen.getByTestId('data-source-chip-csv-upload'));
-      expect(handleSelectConnector).toHaveBeenCalledWith('csv-upload');
-
-      fireEvent.click(screen.getByTestId('data-source-chip-zapier'));
-      expect(handleSelectConnector).toHaveBeenCalledWith('zapier');
-
-      fireEvent.click(screen.getByTestId('data-source-chip-doc-scanner'));
-      expect(handleSelectConnector).toHaveBeenCalledWith('doc-scanner');
-    });
-
-    it('reflects live connected state and last synced status on Google Sheets chip', () => {
-      const store = createTestStore({
-        ingestion: {
-          googleSheetsSync: {
-            connectionStatus: 'connected',
-            isSyncing: false,
-            syncedLotCount: 24,
-            lastSyncedAt: new Date(Date.now() - 5 * 60000).toISOString(),
-          },
-        },
-      });
-
-      render(
-        <Provider store={store}>
-          <IngestionHubConnectors />
-        </Provider>
-      );
-
-      const sheetsChip = screen.getByTestId('data-source-chip-google-sheets');
-      expect(sheetsChip).toHaveTextContent(/Active/i);
-      expect(sheetsChip).toHaveTextContent(/5m ago/i);
-      expect(sheetsChip.querySelector('.animate-pulse')).toBeInTheDocument();
-    });
-
-    it('reflects active feeds on Zapier chip when zaps exist', () => {
-      const store = createTestStore({
-        zapierSync: {
-          totalZaps: 2,
-          connectedZaps: [{ zapId: 'z1', status: 'active' }],
-        },
-      });
-
-      render(
-        <Provider store={store}>
-          <IngestionHubConnectors />
-        </Provider>
-      );
-
-      const zapierChip = screen.getByTestId('data-source-chip-zapier');
-      expect(zapierChip).toHaveTextContent(/2 Feeds/i);
-      expect(zapierChip.querySelector('.animate-pulse')).toBeInTheDocument();
+      expect(screen.queryByTestId('data-source-chip-google-sheets')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('data-source-chip-csv-upload')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('data-source-chip-zapier')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('data-source-chip-doc-scanner')).not.toBeInTheDocument();
     });
   });
 
@@ -191,32 +118,6 @@ describe('DataSourcesDock Seam', () => {
 
       // Back on pipeline view
       expect(window.location.search).not.toContain('connector=');
-      expect(screen.getByTestId('data-sources-dock')).toBeInTheDocument();
-    });
-
-    it('navigates to specific connector from preview chips and preserves browser popstate', async () => {
-      const IngestionView = (await import('../views/IngestionView')).default;
-      const store = createTestStore();
-
-      render(
-        <Provider store={store}>
-          <IngestionView />
-        </Provider>
-      );
-
-      // Click Zapier preview chip
-      const zapierChip = screen.getByTestId('data-source-chip-zapier');
-      fireEvent.click(zapierChip);
-
-      expect(window.location.search).toContain('connector=zapier');
-      expect(screen.getByRole('tab', { name: /Zapier Webhooks/i })).toHaveAttribute('aria-selected', 'true');
-
-      // Simulate popstate back to pipeline
-      act(() => {
-        window.history.pushState({}, '', '/?tab=ingestion');
-        window.dispatchEvent(new PopStateEvent('popstate'));
-      });
-
       expect(screen.getByTestId('data-sources-dock')).toBeInTheDocument();
     });
   });

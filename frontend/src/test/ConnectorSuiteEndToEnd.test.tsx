@@ -74,9 +74,12 @@ describe('Full-Page Ingestion Connector Suite End-to-End Regression Seam', () =>
     expect(screen.getByText('Surplus Ingestion Pipeline')).toBeInTheDocument();
     expect(screen.getByText('Data Sources')).toBeInTheDocument();
 
-    // 2. Click Zapier Card -> Navigates to Zapier suite
-    const zapierCardBtn = screen.getByRole('button', { name: /Connect Zapier/i });
-    fireEvent.click(zapierCardBtn);
+    // 2. Click Add Data Source -> Navigates to connector suite, then select Zapier tab
+    const addSourceBtn = screen.getByTestId('data-sources-add-button');
+    fireEvent.click(addSourceBtn);
+
+    const zapierTab = screen.getByRole('tab', { name: /Zapier Webhooks/i });
+    fireEvent.click(zapierTab);
 
     expect(window.location.search).toContain('connector=zapier');
     expect(screen.getByTestId('zapier-quadrant-1-telemetry')).toBeInTheDocument();
@@ -190,9 +193,13 @@ describe('Full-Page Ingestion Connector Suite End-to-End Regression Seam', () =>
       </Provider>
     );
 
-    // Click "Upload File" on the CSV/Excel card
-    const uploadBtn = screen.getByRole('button', { name: /Upload File/i });
-    fireEvent.click(uploadBtn);
+    // Click "+ Add Data Source" button in Data Sources Dock (per ADR 0078)
+    const addSourceBtn = screen.getByTestId('data-sources-add-button');
+    fireEvent.click(addSourceBtn);
+
+    // Switch to CSV / Excel Upload tab in connector shell
+    const csvTab = screen.getByRole('tab', { name: /CSV \/ Excel Upload/i });
+    fireEvent.click(csvTab);
 
     // Navigates to full-page CSV integration suite
     await waitFor(() => {

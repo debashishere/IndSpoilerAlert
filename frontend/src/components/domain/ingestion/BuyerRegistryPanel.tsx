@@ -107,6 +107,13 @@ export const BuyerRegistryPanel: React.FC = () => {
         </button>
         <button
           type="button"
+          aria-label="Create Buyer"
+          onClick={() => pipeline.setIsAddBuyerModalOpen(true)}
+        >
+          Create Buyer
+        </button>
+        <button
+          type="button"
           aria-label="Add Buyer Manually"
           onClick={() => pipeline.setIsAddBuyerModalOpen(true)}
         >

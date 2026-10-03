@@ -131,6 +131,15 @@ export const SalesRegistryPanel: React.FC = () => {
         >
           Upload Sales Report via CSV/PDF
         </button>
+        <button
+          type="button"
+          aria-label="Create Sales"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('open-create-sales-modal'));
+          }}
+        >
+          Create Sales
+        </button>
       </div>
 
       {/* Upload Sales Report Modal */}
