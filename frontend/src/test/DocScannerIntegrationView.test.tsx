@@ -764,4 +764,94 @@ describe('DocScannerIntegrationView 4-Quadrant Architecture', () => {
     expect(screen.getByTestId('scanner-error-notice')).toHaveTextContent(/File size exceeds the 50MB limit/i);
     expect(screen.getByTestId('doc-scanner-run-extraction-button')).toBeDisabled();
   });
+
+  it('closes mapper view and clears staged mapping state when Close Mapper is clicked', () => {
+    const store = createTestStore({
+      core: { suppliers: [{ _id: 'sup-1', name: 'Fresh Greens Co' }] },
+      ingestion: {
+        selectedSupplier: 'sup-1',
+        inventoryParsedResult: {
+          documentId: 'doc-ocr-001',
+          fileName: 'Produce_Invoice_Scan.pdf',
+          rawHeaders: ['Item Description', 'Lot Code', 'Quantity Cases', 'Price / Case'],
+          rawGrid: [['Item Description', 'Lot Code', 'Quantity Cases', 'Price / Case'], ['Apples', 'LOT-1', '10', '20.00']],
+          suggestedMapping: { description: 'Item Description' },
+        },
+      },
+    });
+
+    render(
+      <Provider store={store}>
+        <DocScannerIntegrationView supplierId="sup-1" initialTarget="inventory" />
+      </Provider>
+    );
+
+    // Header close mapper button
+    const closeBtn = screen.getByTestId('doc-scanner-close-mapper-button');
+    expect(closeBtn).toBeInTheDocument();
+
+    fireEvent.click(closeBtn);
+
+    // Mapper empty state should now be displayed
+    expect(screen.getByTestId('doc-scanner-mapper-empty-state')).toBeInTheDocument();
+    expect(screen.queryByTestId('doc-scanner-close-mapper-button')).not.toBeInTheDocument();
+
+    // Redux inventoryParsedResult should be cleared
+    expect(store.getState().ingestion.inventoryParsedResult).toBeNull();
+  });
+
+  it('preserves target selection and does not switch to Buyer Data when image extraction is run', async () => {
+    mockUploadInventoryFile.mockResolvedValueOnce({
+      documentId: 'doc-ocr-inv-new',
+      fileName: 'Supplier_Invoice.pdf',
+      rawHeaders: ['Item Description', 'Lot Code', 'Quantity Cases', 'Price / Case'],
+      rawGrid: [['Item Description', 'Lot Code', 'Quantity Cases', 'Price / Case'], ['Organic Kale', 'KALE-01', '40', '15.00']],
+      suggestedMapping: { description: 'Item Description' },
+    });
+
+    const onTargetChange = vi.fn();
+    const store = createTestStore({
+      core: { suppliers: [{ _id: 'sup-1', name: 'Fresh Greens Co' }] },
+      ingestion: {
+        selectedSupplier: 'sup-1',
+        pipelineTab: 'inventory',
+      },
+    });
+
+    render(
+      <Provider store={store}>
+        <DocScannerIntegrationView
+          supplierId="sup-1"
+          initialTarget="inventory"
+          onTargetChange={onTargetChange}
+        />
+      </Provider>
+    );
+
+    // Active target should be inventory
+    expect(screen.getByTestId('kpi-active-target')).toHaveTextContent('Inventory Data');
+    expect(screen.getByTestId('doc-scanner-mapper-target-pill')).toHaveTextContent('Target: Inventory Data');
+
+    // Select a file
+    const file = new File(['dummy invoice content'], 'Supplier_Invoice.pdf', { type: 'application/pdf' });
+    const input = screen.getByTestId('doc-scanner-file-input');
+    fireEvent.change(input, { target: { files: [file] } });
+
+    // Run extraction
+    const extractBtn = screen.getByTestId('doc-scanner-run-extraction-button');
+    expect(extractBtn).not.toBeDisabled();
+    fireEvent.click(extractBtn);
+
+    // Wait for extraction to complete
+    await waitFor(() => {
+      expect(screen.queryByText(/Extracting OCR Entities/i)).not.toBeInTheDocument();
+    });
+
+    // Verify target remains inventory, not buyers!
+    expect(screen.getByTestId('kpi-active-target')).toHaveTextContent('Inventory Data');
+    expect(screen.getByTestId('doc-scanner-mapper-target-pill')).toHaveTextContent('Target: Inventory Data');
+    expect(screen.getByTestId('target-card-inventory')).toHaveAttribute('data-active', 'true');
+    expect(screen.getByTestId('target-card-buyers')).toHaveAttribute('data-active', 'false');
+    expect(onTargetChange).toHaveBeenCalledWith('inventory');
+  });
 });

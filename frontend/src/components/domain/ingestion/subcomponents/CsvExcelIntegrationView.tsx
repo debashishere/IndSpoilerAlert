@@ -18,6 +18,9 @@ import {
   setInventoryParsedResult,
   setSalesParsedResult,
   setBuyerParsedResult,
+  setInventoryFile,
+  setSalesFile,
+  setBuyerFile,
   setPipelineTab,
 } from '../../../../store/slices/ingestionSlice';
 import { INGESTION_CONSTANTS } from '../constants/ingestionConstants';
@@ -101,6 +104,7 @@ export interface CsvExcelIntegrationViewProps {
   supplierId?: string;
   supplierName?: string;
   initialTarget?: IngestionTarget;
+  onTargetChange?: (target: IngestionTarget) => void;
   onNavigateToPipeline?: (target: IngestionTarget) => void;
   className?: string;
 }
@@ -109,6 +113,7 @@ export const CsvExcelIntegrationView: React.FC<CsvExcelIntegrationViewProps> = (
   supplierId,
   supplierName,
   initialTarget = 'inventory',
+  onTargetChange,
   onNavigateToPipeline,
   className = '',
 }) => {
@@ -125,12 +130,28 @@ export const CsvExcelIntegrationView: React.FC<CsvExcelIntegrationViewProps> = (
   const buyerMappings = useAppSelector((state) => state.ingestion?.buyerMappings);
 
   const [target, setTarget] = useState<IngestionTarget>(initialTarget);
+  const [isMapperClosed, setIsMapperClosed] = useState<boolean>(false);
 
   const activeParsedResult = target === 'inventory' ? inventoryParsedResult : target === 'sales' ? salesParsedResult : buyerParsedResult;
   const activeMappings = target === 'inventory' ? inventoryMappings : target === 'sales' ? salesMappings : buyerMappings;
 
+  const prevInitialTargetRef = React.useRef(initialTarget);
+
+  const handleTargetChange = (newTarget: IngestionTarget) => {
+    setTarget(newTarget);
+    prevInitialTargetRef.current = newTarget;
+    setIsMapperClosed(false);
+    onTargetChange?.(newTarget);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.set('target', newTarget);
+      window.history.pushState({}, '', url.toString());
+    }
+  };
+
   React.useEffect(() => {
-    if (initialTarget) {
+    if (initialTarget && initialTarget !== prevInitialTargetRef.current) {
+      prevInitialTargetRef.current = initialTarget;
       setTarget(initialTarget);
     }
   }, [initialTarget]);
@@ -183,9 +204,27 @@ export const CsvExcelIntegrationView: React.FC<CsvExcelIntegrationViewProps> = (
     setBatchHistory((prev) => [newRecord, ...prev]);
   };
 
+  // Clean up staged parsed results upon unmount to ensure mapping windows don't linger
+  React.useEffect(() => {
+    return () => {
+      dispatch(setInventoryParsedResult(null));
+      dispatch(setSalesParsedResult(null));
+      dispatch(setBuyerParsedResult(null));
+      dispatch(setInventoryFile(null));
+      dispatch(setSalesFile(null));
+      dispatch(setBuyerFile(null));
+    };
+  }, [dispatch]);
+
   const handleViewPipeline = () => {
     const activeDest = completionData?.target || target;
     dispatch(setPipelineTab(activeDest));
+    dispatch(setInventoryParsedResult(null));
+    dispatch(setSalesParsedResult(null));
+    dispatch(setBuyerParsedResult(null));
+    dispatch(setInventoryFile(null));
+    dispatch(setSalesFile(null));
+    dispatch(setBuyerFile(null));
     if (onNavigateToPipeline) {
       onNavigateToPipeline(activeDest);
     } else if (typeof window !== 'undefined') {
@@ -211,9 +250,32 @@ export const CsvExcelIntegrationView: React.FC<CsvExcelIntegrationViewProps> = (
     dispatch(setBuyerParsedResult(null));
   };
 
+  const handleCloseCsvMapping = () => {
+    setSelectedFile(null);
+    setActiveBatchId(null);
+    setCompletionData(null);
+    setSubmitSuccess(false);
+    setErrorMessage(null);
+    setIsMapperClosed(true);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    if (target === 'inventory') {
+      dispatch(setInventoryParsedResult(null));
+      dispatch(setInventoryFile(null));
+    } else if (target === 'sales') {
+      dispatch(setSalesParsedResult(null));
+      dispatch(setSalesFile(null));
+    } else if (target === 'buyers') {
+      dispatch(setBuyerParsedResult(null));
+      dispatch(setBuyerFile(null));
+    }
+  };
+
   const handleRestageBatch = (batch: IngestionBatchRecord) => {
     setActiveBatchId(batch.id);
-    setTarget(batch.target);
+    handleTargetChange(batch.target);
+    setIsMapperClosed(false);
 
     const defaultHeaders =
       batch.target === 'sales'
@@ -287,6 +349,7 @@ export const CsvExcelIntegrationView: React.FC<CsvExcelIntegrationViewProps> = (
 
     setErrorMessage(null);
     setSelectedFile(file);
+    setIsMapperClosed(false);
     return true;
   };
 
@@ -464,7 +527,7 @@ export const CsvExcelIntegrationView: React.FC<CsvExcelIntegrationViewProps> = (
                   key={dest.id}
                   data-testid={`target-card-${dest.id}`}
                   data-active={isSelected ? 'true' : 'false'}
-                  onClick={() => setTarget(dest.id as IngestionTarget)}
+                  onClick={() => handleTargetChange(dest.id as IngestionTarget)}
                   className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
                     isSelected
                       ? 'border-[#0f4cc9] bg-blue-50/50 dark:bg-blue-950/20 ring-2 ring-[#0f4cc9]/20 shadow-2xs'
@@ -487,7 +550,7 @@ export const CsvExcelIntegrationView: React.FC<CsvExcelIntegrationViewProps> = (
                       id={`target-radio-${dest.id}`}
                       aria-label={dest.title}
                       checked={isSelected}
-                      onChange={() => setTarget(dest.id as IngestionTarget)}
+                      onChange={() => handleTargetChange(dest.id as IngestionTarget)}
                       className="w-4 h-4 text-[#0f4cc9] border-slate-300 dark:border-slate-700 focus:ring-[#0f4cc9] cursor-pointer"
                     />
                   </div>
@@ -745,6 +808,29 @@ export const CsvExcelIntegrationView: React.FC<CsvExcelIntegrationViewProps> = (
               Bind parsed column headers to target schema attributes with semantic translation rules.
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            {!isMapperClosed ? (
+              <button
+                type="button"
+                data-testid="csv-close-mapper-button"
+                onClick={handleCloseCsvMapping}
+                aria-label="Close Mapper"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                Close Mapper
+              </button>
+            ) : (
+              <button
+                type="button"
+                data-testid="csv-open-mapper-button"
+                onClick={() => setIsMapperClosed(false)}
+                aria-label="Open Mapper"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 bg-blue-50/50 dark:bg-blue-950/30 hover:bg-blue-100 dark:hover:bg-blue-900/50 transition cursor-pointer"
+              >
+                Open Mapper
+              </button>
+            )}
+          </div>
         </div>
 
         {completionData && (
@@ -810,14 +896,42 @@ export const CsvExcelIntegrationView: React.FC<CsvExcelIntegrationViewProps> = (
           </div>
         )}
 
-        <GridMapperTable
-          pipelineType={target}
-          mode="import"
-          title={`${targetLabels[target]} Schema Mapping`}
-          subtitle={`Map source columns to standardized ${targetLabels[target].toLowerCase()} attributes. Adjust overrides and click Confirm to commit.`}
-          saveButtonText={`Confirm & Ingest ${targetLabels[target]}`}
-          onConfirmSuccess={handleConfirmSuccess}
-        />
+        {!isMapperClosed ? (
+          <GridMapperTable
+            pipelineType={target}
+            mode="import"
+            title={`${targetLabels[target]} Schema Mapping`}
+            subtitle={`Map source columns to standardized ${targetLabels[target].toLowerCase()} attributes. Adjust overrides and click Confirm to commit.`}
+            saveButtonText={`Confirm & Ingest ${targetLabels[target]}`}
+            onConfirmSuccess={handleConfirmSuccess}
+            onClose={handleCloseCsvMapping}
+          />
+        ) : (
+          <div
+            data-testid="csv-mapper-empty-state"
+            className="p-8 text-center rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col items-center justify-center space-y-3"
+          >
+            <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shadow-2xs">
+              <Table className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                Schema Mapper Closed
+              </h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md">
+                The mapping interface is currently closed. Re-stage a batch or click Open Mapper to view and configure schema alignments.
+              </p>
+            </div>
+            <button
+              type="button"
+              data-testid="csv-open-mapper-button-empty"
+              onClick={() => setIsMapperClosed(false)}
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition cursor-pointer"
+            >
+              Open Mapper
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

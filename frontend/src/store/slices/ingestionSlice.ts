@@ -20,7 +20,24 @@ export interface IngestionParsedResult {
   [key: string]: any;
 }
 
+export type IngestionConnectorId = 'google-sheets' | 'zapier' | 'doc-scanner' | 'csv-upload';
+
+function parseInitialConnector(): IngestionConnectorId | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const connector = params.get('connector');
+    if (connector === 'google-sheets' || connector === 'zapier' || connector === 'doc-scanner' || connector === 'csv-upload') {
+      return connector;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 export interface IngestionState {
+  activeConnector: IngestionConnectorId | null;
   pipelineTab: PipelineTab;
   selectedSupplier: string;
   inventoryFile: { name: string; size: number } | null;
@@ -100,6 +117,7 @@ export interface IngestionState {
 }
 
 const initialState: IngestionState = {
+  activeConnector: parseInitialConnector(),
   pipelineTab: 'inventory',
   selectedSupplier: '',
   inventoryFile: null,
@@ -179,6 +197,9 @@ export const ingestionSlice = createSlice({
   name: 'ingestion',
   initialState,
   reducers: {
+    setActiveConnector: (state, action: PayloadAction<IngestionConnectorId | null>) => {
+      state.activeConnector = action.payload;
+    },
     setPipelineTab: (state, action: PayloadAction<PipelineTab>) => {
       state.pipelineTab = action.payload;
     },
@@ -508,6 +529,7 @@ export const ingestionSlice = createSlice({
 });
 
 export const {
+  setActiveConnector,
   setPipelineTab,
   setSelectedSupplier,
   setInventoryFile,

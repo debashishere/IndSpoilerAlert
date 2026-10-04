@@ -30,12 +30,12 @@ const WorkflowsView = React.lazy(() => import('../../components/WorkflowsView').
 const LogisticsView = React.lazy(() => import('../LogisticsView').then(m => ({ default: m.LogisticsView || m.default })));
 const InventoryListView = React.lazy(() => import('../InventoryListView').then(m => ({ default: m.InventoryListView })));
 const IngestionView = React.lazy(() => import('../IngestionView').then(m => ({ default: m.IngestionView || m.default })));
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { setActiveTab as setActiveTabRedux, setReturnTab as setReturnTabRedux, fetchCoreReferenceData, fetchBuyerLists, clearSupplierState } from '../../store/slices/coreSlice';
 import { clearWorkflowState } from '../../store/slices/workflowSlice';
 import { clearInventoryState } from '../../store/slices/inventorySlice';
 import { setBuyerAuth } from '../../store/slices/authSlice';
-import { setSelectedSupplier as setSelectedSupplierIngestion, setSalesRecords as setReduxSalesRecords } from '../../store/slices/ingestionSlice';
+import { setSelectedSupplier as setSelectedSupplierIngestion, setSalesRecords as setReduxSalesRecords, setActiveConnector } from '../../store/slices/ingestionSlice';
 import { fetchShipmentsThunk } from '../../store/slices/logisticsSlice';
 import { fetchInventoryLotsThunk } from '../../services/inventoryService';
 const AnalyticsView = React.lazy(() => import('../AnalyticsView').then(m => ({ default: m.AnalyticsView || m.default })));
@@ -101,6 +101,39 @@ export function SupplierWorkspace() {
   const [forceLanding, setForceLanding] = useState<boolean>(isLandingMode);
   const { isAuthenticated, isLoading, user, token, logout } = useAuth();
   const isSupplier = Boolean(user?.profiles?.supplier);
+
+  const activeConnector = useSelector((state: any) => state.ingestion?.activeConnector);
+  const isDistractionFreeMode = activeTab === 'ingestion' && Boolean(activeConnector);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const conn = params.get('connector');
+    if (conn === 'google-sheets' || conn === 'zapier' || conn === 'doc-scanner' || conn === 'csv-upload') {
+      dispatch(setActiveConnector(conn));
+    }
+  }, [dispatch]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window === 'undefined') return;
+      const params = new URLSearchParams(window.location.search);
+      const conn = params.get('connector');
+      if (conn === 'google-sheets' || conn === 'zapier' || conn === 'doc-scanner' || conn === 'csv-upload') {
+        dispatch(setActiveConnector(conn));
+      } else {
+        dispatch(setActiveConnector(null));
+      }
+      const tab = params.get('tab');
+      if (tab && ['ingestion', 'dashboard', 'analytics', 'marketplace', 'inventory', 'logistics', 'lot-hub', 'workflows', 'inbox', 'settings'].includes(tab)) {
+        setActiveTab(tab as any);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [dispatch]);
 
   const [suppliers, setSuppliers] = useState<Supplier[]>(DEFAULT_SUPPLIERS);
   const [selectedSupplier, setSelectedSupplier] = useState<string>(DEFAULT_SUPPLIERS[0]._id);
@@ -1546,22 +1579,24 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
 
   return (
     <div className="app-container flex flex-col min-h-screen w-full">
-      {/* Top-Anchored Global Navigation Bar */}
-      <GlobalNavigationBar
-        onTabChange={(tab) => {
-          setActiveTab(tab);
-          dispatch(setActiveTabRedux(tab));
-          setSelectedLot(null);
-        }}
-        selectedSupplier={selectedSupplier}
-        onSelectSupplier={(supplierId) => {
-          setSelectedSupplier(supplierId);
-          dispatch(setSelectedSupplierIngestion(supplierId));
-          dispatch(fetchCoreReferenceData({ supplierId, token }) as any);
-          dispatch(fetchBuyerLists(supplierId) as any);
-        }}
-        onLogout={handleAppLogout}
-      />
+      {/* Top-Anchored Global Navigation Bar (Suppressed in Distraction-Free Integration Suite Workspace) */}
+      {!isDistractionFreeMode && (
+        <GlobalNavigationBar
+          onTabChange={(tab) => {
+            setActiveTab(tab);
+            dispatch(setActiveTabRedux(tab));
+            setSelectedLot(null);
+          }}
+          selectedSupplier={selectedSupplier}
+          onSelectSupplier={(supplierId) => {
+            setSelectedSupplier(supplierId);
+            dispatch(setSelectedSupplierIngestion(supplierId));
+            dispatch(fetchCoreReferenceData({ supplierId, token }) as any);
+            dispatch(fetchBuyerLists(supplierId) as any);
+          }}
+          onLogout={handleAppLogout}
+        />
+      )}
 
       {/* Main Content Pane */}
       <main className="main-content w-full flex-1">

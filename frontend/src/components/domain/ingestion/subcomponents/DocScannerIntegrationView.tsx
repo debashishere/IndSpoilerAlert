@@ -37,6 +37,7 @@ export interface DocScannerIntegrationViewProps {
   supplierId?: string;
   supplierName?: string;
   initialTarget?: IngestionTarget;
+  onTargetChange?: (target: IngestionTarget) => void;
   onNavigateToPipeline?: (target: IngestionTarget) => void;
   className?: string;
 }
@@ -195,6 +196,7 @@ export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps>
   supplierId,
   supplierName: _supplierName,
   initialTarget,
+  onTargetChange,
   onNavigateToPipeline,
   className = '',
 }) => {
@@ -225,8 +227,12 @@ export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps>
     return DEFAULT_SCANNED_DOCS.find((d) => d.target === initialTgt) || DEFAULT_SCANNED_DOCS[0];
   });
 
+  const prevInitialTargetRef = useRef(initialTarget);
+
   const handleTargetChange = (newTarget: IngestionTarget) => {
     setTarget(newTarget);
+    prevInitialTargetRef.current = newTarget;
+    onTargetChange?.(newTarget);
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.set('target', newTarget);
@@ -239,7 +245,8 @@ export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps>
   };
 
   useEffect(() => {
-    if (initialTarget) {
+    if (initialTarget && initialTarget !== prevInitialTargetRef.current) {
+      prevInitialTargetRef.current = initialTarget;
       setTarget(initialTarget);
       if (!activeDocForMapping || activeDocForMapping.target !== initialTarget) {
         const matchingDoc = scannedDocs.find((d) => d.target === initialTarget);
@@ -248,7 +255,7 @@ export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps>
         }
       }
     }
-  }, [initialTarget, scannedDocs]);
+  }, [initialTarget]);
 
   const [selectedSupplier, setSelectedSupplier] = useState<string>(
     supplierId || selectedSupplierId || (suppliers[0]?._id ?? '')
@@ -408,6 +415,9 @@ export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps>
 
       setScannedDocs((prev) => [newDoc, ...prev]);
       setActiveDocForMapping(newDoc);
+      setTarget(newDoc.target);
+      prevInitialTargetRef.current = newDoc.target;
+      onTargetChange?.(newDoc.target);
       if (newDoc.suggestedMapping) {
         setLocalMappings(newDoc.suggestedMapping);
       }
@@ -506,9 +516,27 @@ export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps>
     });
   };
 
+  // Clean up staged parsed results upon unmount to ensure mapping windows don't linger
+  useEffect(() => {
+    return () => {
+      dispatch(setInventoryParsedResult(null));
+      dispatch(setSalesParsedResult(null));
+      dispatch(setBuyerParsedResult(null));
+      dispatch(setInventoryFile(null));
+      dispatch(setSalesFile(null));
+      dispatch(setBuyerFile(null));
+    };
+  }, [dispatch]);
+
   const handleViewPipeline = () => {
     const activeDest = completionData?.target || target;
     dispatch(setPipelineTab(activeDest));
+    dispatch(setInventoryParsedResult(null));
+    dispatch(setSalesParsedResult(null));
+    dispatch(setBuyerParsedResult(null));
+    dispatch(setInventoryFile(null));
+    dispatch(setSalesFile(null));
+    dispatch(setBuyerFile(null));
     if (onNavigateToPipeline) {
       onNavigateToPipeline(activeDest);
     } else if (typeof window !== 'undefined') {
@@ -535,6 +563,22 @@ export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps>
     dispatch(setInventoryParsedResult(null));
     dispatch(setSalesParsedResult(null));
     dispatch(setBuyerParsedResult(null));
+  };
+
+  const handleCloseDocMapping = () => {
+    setActiveDocForMapping(null);
+    setCompletionData(null);
+    setSaveStatus(null);
+    if (target === 'inventory') {
+      dispatch(setInventoryParsedResult(null));
+      dispatch(setInventoryFile(null));
+    } else if (target === 'sales') {
+      dispatch(setSalesParsedResult(null));
+      dispatch(setSalesFile(null));
+    } else if (target === 'buyers') {
+      dispatch(setBuyerParsedResult(null));
+      dispatch(setBuyerFile(null));
+    }
   };
 
   return (
@@ -981,6 +1025,17 @@ export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps>
               <Check className="w-3.5 h-3.5" />
               <span>Save Schema Mapping</span>
             </button>
+            {activeDocForMapping && (
+              <button
+                type="button"
+                data-testid="doc-scanner-close-mapper-button"
+                onClick={handleCloseDocMapping}
+                aria-label="Close Mapper"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              >
+                Close Mapper
+              </button>
+            )}
           </div>
         </div>
 
@@ -1064,6 +1119,7 @@ export const DocScannerIntegrationView: React.FC<DocScannerIntegrationViewProps>
             subtitle={`Bind OCR-detected column headers to standardized ${targetLabels[target].toLowerCase()} attributes. Adjust overrides and click Confirm to commit.`}
             saveButtonText={`Confirm & Ingest ${targetLabels[target]}`}
             onConfirmSuccess={handleConfirmSuccess}
+            onClose={handleCloseDocMapping}
           />
         ) : (
           <div

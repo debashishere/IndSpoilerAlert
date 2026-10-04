@@ -563,8 +563,8 @@ describe('ZapierIntegrationView Component Seam', () => {
         within(mapperSection).getAllByText('Clover POS Inbound Sync').length
       ).toBeGreaterThanOrEqual(1);
       expect(
-        within(mapperSection).getByRole('button', { name: /close mapper/i })
-      ).toBeInTheDocument();
+        within(mapperSection).getAllByRole('button', { name: /close mapper/i }).length
+      ).toBeGreaterThanOrEqual(1);
 
       // GridMapperTable save button should be rendered
       expect(
@@ -572,7 +572,7 @@ describe('ZapierIntegrationView Component Seam', () => {
       ).toBeInTheDocument();
 
       // Click Close Mapper
-      const closeBtn = within(mapperSection).getByRole('button', { name: /close mapper/i });
+      const closeBtn = within(mapperSection).getAllByRole('button', { name: /close mapper/i })[0];
       fireEvent.click(closeBtn);
 
       // Returns to empty prompt

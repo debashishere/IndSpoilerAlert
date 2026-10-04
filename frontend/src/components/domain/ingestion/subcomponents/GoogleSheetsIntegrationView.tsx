@@ -30,6 +30,7 @@ import {
   disconnectGoogleSheetThunk,
   hydrateGoogleSheetsHandshakeThunk,
   saveGoogleSheetsMappingThunk,
+  setInventoryParsedResult,
 } from '../../../../store/slices/ingestionSlice';
 import { GridMapperTable } from '../GridMapperTable';
 import type { ConnectedSheetInfo } from '../../../../services/googleSheetsSyncService';
@@ -64,6 +65,13 @@ export const GoogleSheetsIntegrationView: React.FC<GoogleSheetsIntegrationViewPr
   const [mappingSaving, setMappingSaving] = useState(false);
   const [mappingSaveSuccess, setMappingSaveSuccess] = useState(false);
   const [localFeedback, setLocalFeedback] = useState<string | null>(null);
+
+  // Clean up staged parsed results upon unmount to ensure mapping windows don't linger
+  useEffect(() => {
+    return () => {
+      dispatch(setInventoryParsedResult(null));
+    };
+  }, [dispatch]);
 
   const ingressKey = googleSheetsConfig?.ingressKey || 'spoileralert_sec_live_key_999';
   const webhookUrl =
@@ -638,6 +646,7 @@ export const GoogleSheetsIntegrationView: React.FC<GoogleSheetsIntegrationViewPr
                 type="button"
                 onClick={() => {
                   setActiveMappingSheet(null);
+                  dispatch(setInventoryParsedResult(null));
                 }}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               >
@@ -663,6 +672,10 @@ export const GoogleSheetsIntegrationView: React.FC<GoogleSheetsIntegrationViewPr
               onSave={handleSaveSheetMapping}
               isSaving={mappingSaving}
               saveSuccess={mappingSaveSuccess}
+              onClose={() => {
+                setActiveMappingSheet(null);
+                dispatch(setInventoryParsedResult(null));
+              }}
             />
           </div>
         ) : (

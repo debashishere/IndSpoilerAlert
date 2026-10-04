@@ -22,6 +22,7 @@ export interface GridMapperTableProps {
   isSaving?: boolean;
   saveSuccess?: boolean;
   onConfirmSuccess?: (result: any) => void;
+  onClose?: () => void;
 }
 
 const INVENTORY_OPTIONS = [
@@ -85,6 +86,7 @@ export const GridMapperTable = ({
   isSaving = false,
   saveSuccess = false,
   onConfirmSuccess,
+  onClose,
 }: GridMapperTableProps) => {
   const dispatch = useAppDispatch();
   const isInventory = pipelineType === 'inventory';
@@ -95,35 +97,41 @@ export const GridMapperTable = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasClicked, setHasClicked] = useState(false);
 
-  const { loading, loadingStep, parsedResult, mappings, isImported } = useAppSelector((state) => {
-    switch (pipelineType) {
-      case 'sales':
-        return {
-          loading: state.ingestion.salesLoading,
-          loadingStep: state.ingestion.salesLoadingStep,
-          parsedResult: state.ingestion.salesParsedResult,
-          mappings: state.ingestion.salesMappings,
-          isImported: state.ingestion.salesIsImported,
-        };
-      case 'buyers':
-        return {
-          loading: state.ingestion.buyerLoading,
-          loadingStep: state.ingestion.buyerLoadingStep,
-          parsedResult: state.ingestion.buyerParsedResult,
-          mappings: state.ingestion.buyerMappings,
-          isImported: state.ingestion.buyerIsImported,
-        };
-      case 'inventory':
-      default:
-        return {
-          loading: state.ingestion.inventoryLoading,
-          loadingStep: state.ingestion.inventoryLoadingStep,
-          parsedResult: state.ingestion.inventoryParsedResult,
-          mappings: state.ingestion.inventoryMappings,
-          isImported: state.ingestion.inventoryIsImported,
-        };
-    }
-  });
+  const loading = useAppSelector((state) =>
+    pipelineType === 'sales'
+      ? state.ingestion.salesLoading
+      : pipelineType === 'buyers'
+      ? state.ingestion.buyerLoading
+      : state.ingestion.inventoryLoading
+  );
+  const loadingStep = useAppSelector((state) =>
+    pipelineType === 'sales'
+      ? state.ingestion.salesLoadingStep
+      : pipelineType === 'buyers'
+      ? state.ingestion.buyerLoadingStep
+      : state.ingestion.inventoryLoadingStep
+  );
+  const parsedResult = useAppSelector((state) =>
+    pipelineType === 'sales'
+      ? state.ingestion.salesParsedResult
+      : pipelineType === 'buyers'
+      ? state.ingestion.buyerParsedResult
+      : state.ingestion.inventoryParsedResult
+  );
+  const mappings = useAppSelector((state) =>
+    pipelineType === 'sales'
+      ? state.ingestion.salesMappings
+      : pipelineType === 'buyers'
+      ? state.ingestion.buyerMappings
+      : state.ingestion.inventoryMappings
+  );
+  const isImported = useAppSelector((state) =>
+    pipelineType === 'sales'
+      ? state.ingestion.salesIsImported
+      : pipelineType === 'buyers'
+      ? state.ingestion.buyerIsImported
+      : state.ingestion.inventoryIsImported
+  );
   const suppliers = useAppSelector((state) => state.core.suppliers);
   const selectedSupplier = useAppSelector((state) => state.ingestion.selectedSupplier);
   const semanticRules = useAppSelector((state) => state.ingestion.inventorySemanticRules);
@@ -328,6 +336,18 @@ export const GridMapperTable = ({
                 {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
                 <span>{isFullscreen ? 'Exit Fullscreen' : 'Full Screen'}</span>
               </button>
+
+              {onClose && (
+                <button
+                  type="button"
+                  data-testid="grid-mapper-close-btn"
+                  onClick={onClose}
+                  aria-label="Close Mapper"
+                  className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer flex items-center gap-1.5"
+                >
+                  Close Mapper
+                </button>
+              )}
 
               <button
                 type="button"

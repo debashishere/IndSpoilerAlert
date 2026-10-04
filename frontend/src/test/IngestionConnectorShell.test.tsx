@@ -4,7 +4,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { IngestionConnectorShell } from '../components/domain/ingestion/subcomponents/IngestionConnectorShell';
 
 describe('IngestionConnectorShell Component Seam', () => {
-  it('renders breadcrumb return button and calls onBack when clicked', () => {
+  it('renders single-arrow return button without duplicate glyphs and calls onBack when clicked', () => {
     const handleBack = vi.fn();
     const handleSelectConnector = vi.fn();
 
@@ -19,7 +19,13 @@ describe('IngestionConnectorShell Component Seam', () => {
     );
 
     const backButton = screen.getByRole('button', { name: /Back to Ingestion Pipeline/i });
-    expect(backButton).toBeDefined();
+    expect(backButton).toBeInTheDocument();
+    expect(backButton.textContent?.trim()).toBe('Back to Ingestion Pipeline');
+    expect(backButton.textContent).not.toContain('←');
+
+    const svgIcons = backButton.querySelectorAll('svg');
+    expect(svgIcons).toHaveLength(1);
+    expect(svgIcons[0]).toHaveClass('w-4', 'h-4');
 
     fireEvent.click(backButton);
     expect(handleBack).toHaveBeenCalledTimes(1);

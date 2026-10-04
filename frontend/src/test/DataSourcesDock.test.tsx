@@ -110,13 +110,41 @@ describe('DataSourcesDock Seam', () => {
 
       // URL updated to google-sheets connector
       expect(window.location.search).toContain('connector=google-sheets');
-      expect(screen.getByRole('button', { name: /Back to Ingestion Pipeline/i })).toBeInTheDocument();
+      const backBtn = screen.getByRole('button', { name: /Back to Ingestion Pipeline/i });
+      expect(backBtn).toBeInTheDocument();
+      expect(backBtn.textContent?.trim()).toBe('Back to Ingestion Pipeline');
+      expect(backBtn.textContent).not.toContain('←');
+      expect(backBtn.querySelectorAll('svg')).toHaveLength(1);
 
       // Click Back to Ingestion Pipeline
-      const backBtn = screen.getByRole('button', { name: /Back to Ingestion Pipeline/i });
       fireEvent.click(backBtn);
 
       // Back on pipeline view
+      expect(window.location.search).not.toContain('connector=');
+      expect(screen.getByTestId('data-sources-dock')).toBeInTheDocument();
+    });
+
+    it('clears active connector parameter and restores pipeline when returning from deep-linked connector', async () => {
+      window.history.replaceState({}, '', '/?tab=ingestion&connector=zapier');
+      const IngestionView = (await import('../views/IngestionView')).default;
+      const store = createTestStore();
+
+      render(
+        <Provider store={store}>
+          <IngestionView />
+        </Provider>
+      );
+
+      // Verify active connector shell rendered
+      expect(screen.getByRole('heading', { level: 1, name: /Integration Management Suite/i })).toBeInTheDocument();
+      const backBtn = screen.getByRole('button', { name: /Back to Ingestion Pipeline/i });
+      expect(backBtn.textContent?.trim()).toBe('Back to Ingestion Pipeline');
+      expect(backBtn.textContent).not.toContain('←');
+
+      // Click return
+      fireEvent.click(backBtn);
+
+      // Verified returned to pipeline
       expect(window.location.search).not.toContain('connector=');
       expect(screen.getByTestId('data-sources-dock')).toBeInTheDocument();
     });

@@ -378,8 +378,8 @@ describe('Issue 04: Pipeline Triggers, Modal Deprecation & End-to-End Verificati
         </Provider>
       );
 
-      // 1. Click Hub Card 4 "Upload File"
-      const uploadFileBtn = screen.getByRole('button', { name: /Upload File/i });
+      // 1. Click Ingestion Ingress "Upload Inventory Document"
+      const uploadFileBtn = screen.getByRole('button', { name: /Upload Inventory Document/i, hidden: true });
       fireEvent.click(uploadFileBtn);
 
       await waitFor(() => {

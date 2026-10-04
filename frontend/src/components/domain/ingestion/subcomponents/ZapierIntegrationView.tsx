@@ -61,6 +61,13 @@ export const ZapierIntegrationView: React.FC<ZapierIntegrationViewProps> = ({
   const [localFeedback, setLocalFeedback] = useState<string | null>(null);
   const [expandedLogIndices, setExpandedLogIndices] = useState<Set<number>>(new Set());
 
+  // Clean up staged parsed results upon unmount to ensure mapping windows don't linger
+  useEffect(() => {
+    return () => {
+      dispatch(setInventoryParsedResult(null));
+    };
+  }, [dispatch]);
+
   const toggleLogExpanded = (idx: number) => {
     setExpandedLogIndices((prev) => {
       const next = new Set(prev);
@@ -883,6 +890,7 @@ export const ZapierIntegrationView: React.FC<ZapierIntegrationViewProps> = ({
               onSave={handleSaveZapMapping}
               isSaving={mappingSaving}
               saveSuccess={mappingSaveSuccess}
+              onClose={handleCloseZapMapping}
             />
           </div>
         ) : (

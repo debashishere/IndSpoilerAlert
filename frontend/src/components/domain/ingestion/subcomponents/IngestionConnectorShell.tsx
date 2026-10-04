@@ -52,8 +52,8 @@ export const IngestionConnectorShell: React.FC<IngestionConnectorShellProps> = (
             onClick={onBack}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer group"
           >
-            <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-            <span>← Back to Ingestion Pipeline</span>
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+            <span>Back to Ingestion Pipeline</span>
           </button>
         </div>
 

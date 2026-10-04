@@ -151,8 +151,12 @@
   _Avoid_: `Insight Google Sheets Sync`, `Outbound Sheet Export`.
 - **Google Sheets Configuration Drawer (Deprecated)**: The legacy slide-over configuration interface superseded by the Full-Page Ingestion Integration Manager suite.
   _Avoid_: `Drawer-Only Ingestion Setup`, `Split-Brain Drawer/Page`.
-- **Full-Page Ingestion Integration Manager**: The dedicated full-page configuration, roster, and live telemetry workspace within the Ingestion domain (replacing restricted slide-over drawers and quick modals) for automated ingress channels (Google Sheets, Zapier, Image & Doc Scanner) sharing a unified institutional page architecture.
+- **Full-Page Ingestion Integration Manager**: The dedicated full-page configuration, roster, and live telemetry workspace within the Ingestion domain (replacing restricted slide-over drawers and quick modals) for automated ingress channels (Google Sheets, Zapier, Image & Doc Scanner, CSV/Excel) sharing a unified institutional page architecture.
   _Avoid_: `Drawer-Only Ingestion Setup`, `Inventory Ingress Sub-Tab`, `Fragmented Integration Modals`.
+- **Distraction-Free Integration Suite Workspace**: The immersive, full-viewport layout mode activated when configuring external ingress channels (`?tab=ingestion&connector=...`), hiding the top `GlobalNavigationBar` and requiring operators to commit Back navigation before switching primary application tabs.
+  _Avoid_: `Persistent Header Ingress Mode`, `Accidental Tab Switching During Setup`.
+- **Single-Arrow Return Anchor**: The dedicated, un-duplicated directional return action (`<ArrowLeft>` icon + `Back to Ingestion Pipeline` text) in the Integration Management Suite header that resets active connector parameters and restores the global navigation shell.
+  _Avoid_: `Double-Arrow Back Button`, `Multi-Chevron Return`.
 - **Four-Quadrant Integration Page Architecture**: The standardized layout specification for full-page connector views comprising: 1) Header & Health Telemetry, 2) Credentials & Setup Guide, 3) Connected Sources Roster, and 4) In-Situ Schema Field Mapper.
   _Avoid_: `Multi-Step Wizard Lockout`, `Scattered Settings Pages`.
 - **Zapier Ingestion Sync**: The event-driven inbound connector in the Ingestion Hub allowing third-party ERPs, forms, or automated webhooks to dispatch surplus inventory records into the platform using cryptographic token ingress and dynamic payload normalization.

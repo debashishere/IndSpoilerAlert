@@ -1,6 +1,16 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setPipelineTab, type PipelineTab } from '../store/slices/ingestionSlice';
+import { 
+  setPipelineTab, 
+  setInventoryParsedResult, 
+  setSalesParsedResult, 
+  setBuyerParsedResult,
+  setInventoryFile,
+  setSalesFile,
+  setBuyerFile,
+  setActiveConnector as setReduxActiveConnector,
+  type PipelineTab 
+} from '../store/slices/ingestionSlice';
 import { 
   BuyerRegistryPanel,
   SalesRegistryPanel,
@@ -46,11 +56,20 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
   const selectedSupplier = useAppSelector((state) => state.ingestion.selectedSupplier);
   const suppliers = useAppSelector((state) => state.core.suppliers);
 
-  const [activeConnector, setActiveConnector] = useState<IngestionConnectorId | null>(parseConnectorParam);
+  const reduxActiveConnector = useAppSelector((state) => state.ingestion.activeConnector);
+  const activeConnector = reduxActiveConnector ?? parseConnectorParam();
   const [activeTarget, setActiveTarget] = useState<IngestionTarget | null>(parseTargetParam);
 
+  // Sync initial connector from URL to Redux if present on mount
+  useEffect(() => {
+    const conn = parseConnectorParam();
+    if (conn && conn !== reduxActiveConnector) {
+      dispatch(setReduxActiveConnector(conn));
+    }
+  }, [dispatch, reduxActiveConnector]);
+
   const handleSelectConnector = useCallback((connector: IngestionConnectorId, target?: IngestionTarget) => {
-    setActiveConnector(connector);
+    dispatch(setReduxActiveConnector(connector));
     if (target) {
       setActiveTarget(target);
     }
@@ -65,31 +84,47 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
       }
       window.history.pushState({}, '', url.toString());
     }
-  }, []);
+  }, [dispatch]);
 
   const handleBackToPipeline = useCallback(() => {
-    setActiveConnector(null);
+    dispatch(setReduxActiveConnector(null));
     setActiveTarget(null);
+    dispatch(setInventoryParsedResult(null));
+    dispatch(setSalesParsedResult(null));
+    dispatch(setBuyerParsedResult(null));
+    dispatch(setInventoryFile(null));
+    dispatch(setSalesFile(null));
+    dispatch(setBuyerFile(null));
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.delete('connector');
       url.searchParams.delete('target');
       window.history.pushState({}, '', url.toString());
     }
-  }, []);
+  }, [dispatch]);
 
   // Listen to popstate for browser back/forward history navigation
   useEffect(() => {
     const handlePopState = () => {
-      setActiveConnector(parseConnectorParam());
-      setActiveTarget(parseTargetParam());
+      const conn = parseConnectorParam();
+      const tgt = parseTargetParam();
+      dispatch(setReduxActiveConnector(conn));
+      setActiveTarget(tgt);
+      if (!conn) {
+        dispatch(setInventoryParsedResult(null));
+        dispatch(setSalesParsedResult(null));
+        dispatch(setBuyerParsedResult(null));
+        dispatch(setInventoryFile(null));
+        dispatch(setSalesFile(null));
+        dispatch(setBuyerFile(null));
+      }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [dispatch]);
 
   const currentSupplier = suppliers.find((s) => s._id === selectedSupplier) || suppliers[0];
   const supplierId = selectedSupplier || currentSupplier?._id || '';
@@ -192,6 +227,14 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
                 supplierId={supplierId}
                 supplierName={supplierName}
                 initialTarget={activeTarget || parseTargetParam() || (pipelineTab as IngestionTarget) || 'inventory'}
+                onTargetChange={(newTarget) => {
+                  setActiveTarget(newTarget);
+                  if (typeof window !== 'undefined') {
+                    const u = new URL(window.location.href);
+                    u.searchParams.set('target', newTarget);
+                    window.history.pushState({}, '', u.toString());
+                  }
+                }}
                 onNavigateToPipeline={(tgt) => {
                   handleBackToPipeline();
                   dispatch(setPipelineTab(tgt));
@@ -205,6 +248,14 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
                 supplierId={supplierId}
                 supplierName={supplierName}
                 initialTarget={activeTarget || parseTargetParam() || (pipelineTab as IngestionTarget) || 'inventory'}
+                onTargetChange={(newTarget) => {
+                  setActiveTarget(newTarget);
+                  if (typeof window !== 'undefined') {
+                    const u = new URL(window.location.href);
+                    u.searchParams.set('target', newTarget);
+                    window.history.pushState({}, '', u.toString());
+                  }
+                }}
                 onNavigateToPipeline={(tgt) => {
                   handleBackToPipeline();
                   dispatch(setPipelineTab(tgt));

@@ -150,5 +150,78 @@ describe('Issue #37 Tracer Bullet 3: IngestionView & Domain Sub-Components', () 
     // Deep-links to CSV integration suite with sales target
     expect(await screen.findByTestId('connector-csv-upload-workspace')).toBeDefined();
   });
+
+  it('does NOT display CSV ingestion Mapping window above Inventory Data List Section when Navigated back from Integration Management Section after opening a Mapper', async () => {
+    const IngestionViewModule = await import('../views/IngestionView');
+    const IngestionView = IngestionViewModule.default || IngestionViewModule.IngestionView;
+
+    render(
+      <Provider store={store}>
+        <IngestionView />
+      </Provider>
+    );
+
+    // 1. Operator is on Ingestion View (inventory pipeline)
+    expect(document.querySelector('#panel-inventory')).toBeDefined();
+
+    // 2. Navigate to CSV / Excel Upload in Integration Management Suite
+    window.dispatchEvent(new CustomEvent('open-ingestion-batch-suite', { detail: { target: 'inventory' } }));
+    expect(await screen.findByTestId('connector-csv-upload-workspace')).toBeDefined();
+
+    // 3. User opens a mapper (e.g. by re-staging an inventory batch)
+    const restageBtn = screen.getByTestId('restage-batch-batch-inv-01');
+    fireEvent.click(restageBtn);
+
+    // Verify in-situ schema field mapper is open in Integration Management Section
+    expect(screen.getByTestId('csv-quadrant-4-mapper')).toBeDefined();
+    expect(screen.getByText('Inventory Data Schema Mapping')).toBeDefined();
+
+    // 4. Operator navigates back from Integration Management Section via "← Back to Ingestion Pipeline"
+    const backBtn = screen.getByRole('button', { name: /Back to Ingestion Pipeline/i });
+    fireEvent.click(backBtn);
+
+    // 5. Verify returned to Inventory Data List Section
+    expect(screen.queryByTestId('connector-csv-upload-workspace')).toBeNull();
+    expect(document.querySelector('#panel-inventory')).toBeDefined();
+
+    // CRITICAL: The CSV ingestion Mapping window must NOT appear above Inventory Data List Section
+    expect(screen.queryByText('Confirm Inventory Data Mapping')).toBeNull();
+    expect(screen.queryByTestId('csv-quadrant-4-mapper')).toBeNull();
+    expect(store.getState().ingestion.inventoryParsedResult).toBeNull();
+  });
+
+  it('does NOT display Mapping window above Inventory Data List Section when browser back (popstate) occurs from Integration Management Section', async () => {
+    const IngestionViewModule = await import('../views/IngestionView');
+    const IngestionView = IngestionViewModule.default || IngestionViewModule.IngestionView;
+
+    render(
+      <Provider store={store}>
+        <IngestionView />
+      </Provider>
+    );
+
+    // Navigate to Integration Management Section
+    window.dispatchEvent(new CustomEvent('open-ingestion-batch-suite', { detail: { target: 'inventory' } }));
+    expect(await screen.findByTestId('connector-csv-upload-workspace')).toBeDefined();
+
+    // Open mapper
+    const restageBtn = screen.getByTestId('restage-batch-batch-inv-01');
+    fireEvent.click(restageBtn);
+    expect(screen.getByText('Inventory Data Schema Mapping')).toBeDefined();
+
+    // Simulate browser Back button: URL query param connector removed and popstate fired
+    const { act } = await import('react');
+    act(() => {
+      window.history.pushState({}, '', '/?tab=ingestion');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    // Verify returned to Inventory Data List Section without mapping window
+    expect(screen.queryByTestId('connector-csv-upload-workspace')).toBeNull();
+    expect(document.querySelector('#panel-inventory')).toBeDefined();
+    expect(screen.queryByText('Confirm Inventory Data Mapping')).toBeNull();
+    expect(screen.queryByTestId('csv-quadrant-4-mapper')).toBeNull();
+    expect(store.getState().ingestion.inventoryParsedResult).toBeNull();
+  });
 });
 

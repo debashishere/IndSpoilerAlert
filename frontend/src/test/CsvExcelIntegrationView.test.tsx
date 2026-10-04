@@ -650,6 +650,74 @@ describe('CsvExcelIntegrationView Seams', () => {
       expect(store.getState().ingestion.inventoryParsedResult).toBeNull();
     });
   });
+
+  describe('Slice 9: In-Situ Schema Field Mapper Close & Open Seams', () => {
+    it('closes the schema mapper upon clicking Close Mapper and reopens when Open Mapper is clicked', () => {
+      const store = createTestStore({
+        core: { suppliers: [{ _id: 'sup-apex', name: 'Apex Foods' }] },
+        ingestion: {
+          inventoryParsedResult: {
+            documentId: 'doc-inv-close',
+            fileName: 'manifest_close.csv',
+            rawHeaders: ['SKU', 'Qty'],
+            rawGrid: [['SKU', 'Qty'], ['A1', '10']],
+            suggestedMapping: { sku: 'SKU', quantity: 'Qty' },
+          },
+        },
+      });
+
+      render(
+        <Provider store={store}>
+          <CsvExcelIntegrationView initialTarget="inventory" supplierId="sup-apex" />
+        </Provider>
+      );
+
+      // Close Mapper button should be present in Quadrant 4 header
+      const closeBtn = screen.getByTestId('csv-close-mapper-button');
+      expect(closeBtn).toBeDefined();
+
+      fireEvent.click(closeBtn);
+
+      // Empty/closed state should be rendered
+      expect(screen.getByTestId('csv-mapper-empty-state')).toBeDefined();
+      expect(screen.getByText(/Schema Mapper Closed/i)).toBeDefined();
+
+      // Open mapper button in header and empty state should be present
+      const openBtn = screen.getByTestId('csv-open-mapper-button');
+      expect(openBtn).toBeDefined();
+
+      // Click Open Mapper
+      fireEvent.click(openBtn);
+
+      // Grid mapper table should be restored
+      expect(screen.queryByTestId('csv-mapper-empty-state')).toBeNull();
+      expect(screen.getByTestId('csv-close-mapper-button')).toBeDefined();
+    });
+
+    it('invokes onTargetChange when destination target is clicked in Step 1', () => {
+      const onTargetChangeSpy = vi.fn();
+      const store = createTestStore({
+        core: { suppliers: [{ _id: 'sup-apex', name: 'Apex Foods' }] },
+      });
+
+      render(
+        <Provider store={store}>
+          <CsvExcelIntegrationView
+            initialTarget="inventory"
+            supplierId="sup-apex"
+            onTargetChange={onTargetChangeSpy}
+          />
+        </Provider>
+      );
+
+      // Click Sales destination card
+      const salesCard = screen.getByTestId('target-card-sales');
+      fireEvent.click(salesCard);
+
+      expect(onTargetChangeSpy).toHaveBeenCalledWith('sales');
+      expect(screen.getByTestId('csv-mapper-target-pill')).toHaveTextContent('Target: Sales Data');
+    });
+  });
 });
 
 
