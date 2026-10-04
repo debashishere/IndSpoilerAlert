@@ -60,7 +60,7 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
       url.searchParams.set('connector', connector);
       if (target) {
         url.searchParams.set('target', target);
-      } else if (connector !== 'csv-upload') {
+      } else if (connector !== 'csv-upload' && connector !== 'doc-scanner') {
         url.searchParams.delete('target');
       }
       window.history.pushState({}, '', url.toString());
@@ -187,10 +187,15 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
             </div>
           )}
           {activeConnector === 'doc-scanner' && (
-            <div id="connector-doc-scanner-workspace">
+            <div id="connector-doc-scanner-workspace" data-testid="connector-doc-scanner-workspace">
               <DocScannerIntegrationView
                 supplierId={supplierId}
                 supplierName={supplierName}
+                initialTarget={activeTarget || parseTargetParam() || (pipelineTab as IngestionTarget) || 'inventory'}
+                onNavigateToPipeline={(tgt) => {
+                  handleBackToPipeline();
+                  dispatch(setPipelineTab(tgt));
+                }}
               />
             </div>
           )}

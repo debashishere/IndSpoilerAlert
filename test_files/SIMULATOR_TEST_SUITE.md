@@ -16,6 +16,8 @@ Welcome to the **SpoilerAlert Simulation & Feature Verification Suite**. This re
 | 🛡️ [`scenario_3_buyer_segmentation_and_allergens.csv`](file:///Users/debashisroy/Documents/SpoilerAlert/test_files/scenario_3_buyer_segmentation_and_allergens.csv) | **Specialized Buyer Profiles**: Partners with strict allergen exclusions (`peanuts`, `tree_nuts`, `gluten`, `dairy`), custom non-profit tiers, and short-dated toggles. | • Allergen Exclusions Engine<br>• Non-Profit Food Bank Matching<br>• Tier-Based Exclusivity Rules |
 | ⚡ [`scenario_4_edge_cases_and_anomalies.csv`](file:///Users/debashisroy/Documents/SpoilerAlert/test_files/scenario_4_edge_cases_and_anomalies.csv) | **Ingestion Stress & Anomaly Dataset**: Lots with quoted commas in descriptions, special characters (`Ben & Jerry's`), zero stock balances, and high unit values ($250/cs). | • Ingestion Parser Resilience<br>• CSV Quote/Escaping Verification<br>• Zero Balance Inventory State |
 
+| 📄 [`scanned_documents/`](file:///Users/debashisroy/Documents/SpoilerAlert/test_files/scanned_documents/README.md) | **Multi-Pipeline Doc Scanner Image Suite**: High-resolution `.png`, `.jpg`, and `.jpeg` packing slips, BOLs, wholesale invoices, and buyer directories. | • Multi-Pipeline Target Dispatch<br>• OCR Dropzone Ingress (.png, .jpg, .jpeg)<br>• Scanned Docs Lineage & Re-staging<br>• In-Situ Commit Handshake |
+
 ---
 
 ## 🛠️ Step-by-Step Upload & Verification Walkthrough
@@ -38,7 +40,14 @@ Welcome to the **SpoilerAlert Simulation & Feature Verification Suite**. This re
    - `Stock_Cases` ➔ `quantityCases`
    - `Dist_Center` ➔ `warehouse`
 
-### 3. Simulating Emergency Liquidation & Donation Cascading
+### 3. Testing Multi-Pipeline OCR Image Ingress (.png, .jpg, .jpeg)
+1. Navigate to **`Ingestion`** tab ➔ **`Image & Doc Scanner`** (`/?tab=ingestion&connector=doc-scanner`).
+2. Test **Inventory Data** target with [`01_inventory_manifest_packing_slip.png`](file:///Users/debashisroy/Documents/SpoilerAlert/test_files/scanned_documents/01_inventory_manifest_packing_slip.png).
+3. Test **Sales Data** target with [`03_sales_wholesale_invoice_photo.jpg`](file:///Users/debashisroy/Documents/SpoilerAlert/test_files/scanned_documents/03_sales_wholesale_invoice_photo.jpg).
+4. Test **Buyer Data** target with [`06_buyer_partner_intake_sheet.jpeg`](file:///Users/debashisroy/Documents/SpoilerAlert/test_files/scanned_documents/06_buyer_partner_intake_sheet.jpeg).
+5. Verify lineage badges in the **Scanned Documents Roster** and complete the in-situ commit handshake in Quadrant 4.
+
+### 4. Simulating Emergency Liquidation & Donation Cascading
 1. Upload [`scenario_1_emergency_short_dated_inventory.csv`](file:///Users/debashisroy/Documents/SpoilerAlert/test_files/scenario_1_emergency_short_dated_inventory.csv).
 2. Switch to the **`Workflow`** tab and launch the **Liquidation Automation Studio**.
 3. Create a workflow with:
@@ -46,7 +55,7 @@ Welcome to the **SpoilerAlert Simulation & Feature Verification Suite**. This re
    - **Stage 2 (Donation)**: Cascade remaining inventory to Food Bank non-profits.
 4. Verify that ultra-short dated items (`LOT-EMERG-003`, 3 days remaining) trigger automated donation routing.
 
-### 4. Auditing ERP Sales Clearance & Margin Recovery
+### 5. Auditing ERP Sales Clearance & Margin Recovery
 1. Upload [`sales.csv`](file:///Users/debashisroy/Documents/SpoilerAlert/test_files/sales.csv) under **`Sales Data`**.
 2. Inspect the **Sales Filter Bar** to confirm the **Live ERP Clearing Connected Badge** hydrates live ledger stats.
 3. Click **"Toggle All"** on the pipeline action strip to expand the **Progressive Row Inspection Drawers** and view real-time fleet telemetry and invoice reconciliation CTAs.
@@ -60,3 +69,5 @@ Welcome to the **SpoilerAlert Simulation & Feature Verification Suite**. This re
 - [x] Allergen warnings surfaced when attempting to route lots containing peanuts/dairy to restricted buyers.
 - [x] Multi-warehouse telemetry reflected accurately across Chicago, Newark, Atlanta, Dallas, and Seattle.
 - [x] Deal contracts and settlement tokens executable without data truncation.
+- [x] Multi-Pipeline Doc Scanner image ingestion verified across PNG, JPG, and JPEG formats for Inventory, Sales, and Buyer pipelines.
+

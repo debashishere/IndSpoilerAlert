@@ -53,14 +53,15 @@ const storage = s3StorageEngine();
 
 const upload = multer({
   storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const isAllowedExt = ext === '.csv' || ext === '.pdf';
-    const isAllowedMime = /pdf|csv|excel|spreadsheet|text\/plain|octet-stream/.test(file.mimetype);
+    const isAllowedExt = ext === '.csv' || ext === '.pdf' || ext === '.png' || ext === '.jpg' || ext === '.jpeg';
+    const isAllowedMime = /pdf|csv|excel|spreadsheet|text\/plain|octet-stream|image\//.test(file.mimetype);
     if (isAllowedExt || isAllowedMime) {
       return cb(null, true);
     }
-    cb(new Error('Only PDF and CSV files are allowed.'));
+    cb(new Error('Only PDF, CSV, and image files (PNG, JPG) are allowed.'));
   }
 });
 

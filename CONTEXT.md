@@ -205,8 +205,12 @@
   _Avoid_: `Static Global Pipeline Action Bar`, `Cross-Tab Persistent Action Leak`, `Generic Add Item Buttons`.
 - **Multi-Theme Ingestion Tokens**: The institutional Tailwind CSS color and typography taxonomy harmonizing `IngestionView`, `IngestionTelemetryBar`, and connector workbenches across light and dark modes (`dark:bg-slate-950`, `dark:bg-slate-900`, `dark:border-slate-800`, `dark:text-slate-100`) while honoring the 4px/8pt optical density standard.
   _Avoid_: `Hardcoded White Backgrounds`, `Inconsistent Dark Mode Surfaces`.
-- **Image & Doc Scanner Workbench**: The full-page integration management suite (`DocScannerIntegrationView.tsx`) structured around the canonical 4-Quadrant architecture (Header & Health Telemetry, AI OCR Upload Dropzone, Scanned Documents Roster, In-Situ Schema Field Mapper), enabling warehouse operators to ingest PDF manifests, bills of lading, and photo packing slips via IBM Docling and Tesseract OCR with real-time column mapping and verification.
-  _Avoid_: `Standalone File Dialog`, `Unmapped OCR Dump`.
+- **Image & Doc Scanner Workbench**: The full-page integration management suite (`DocScannerIntegrationView.tsx`) structured around the canonical 4-Quadrant architecture (Header & Health Telemetry, Multi-Pipeline AI OCR Intake, Scanned Documents Roster, In-Situ Schema Field Mapper), enabling warehouse operators to ingest PDF manifests, bills of lading, and photo packing slips via IBM Docling and Tesseract OCR into Inventory, Sales, or Buyer pipelines with real-time column mapping and verification.
+  _Avoid_: `Standalone File Dialog`, `Unmapped OCR Dump`, `Single-Pipeline Scanner`.
+- **Multi-Pipeline Document Ingress Target**: The explicit upstream target selector (`inventory` | `sales` | `buyers`) in the Image & Doc Scanner workbench directing OCR-extracted tabular rows and suggested mappings into their designated destination pipeline schema before extraction and commit.
+  _Avoid_: `Implicit Document Routing`, `Single-Target OCR Ingest`.
+- **In-Situ Document Commit Handshake**: The direct commit and reconciliation workflow within the Image & Doc Scanner where parsed OCR tables are committed via `GridMapperTable` in import mode, rendering a completion summary with generated lot/record IDs and pipeline navigation CTAs ("Scan Another Document", "View in Pipeline Table →").
+  _Avoid_: `Template-Only Scanner Limitation`, `Silent OCR Commit`.
 
 ## Liquidation Automation Studio Architecture
 

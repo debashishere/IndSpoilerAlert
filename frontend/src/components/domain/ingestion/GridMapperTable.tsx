@@ -148,7 +148,7 @@ export const GridMapperTable = ({
   }, [isFullscreen]);
 
   const getMappedField = (headerName: string): string => {
-    const found = Object.entries(mappings).find(([, h]) => h === headerName)?.[0] || '';
+    const found = Object.entries(mappings || {}).find(([, h]) => h === headerName)?.[0] || '';
     if (isBuyers && found === 'name') return 'companyName';
     return found;
   };
@@ -241,7 +241,10 @@ export const GridMapperTable = ({
     if (hasClicked || loading) {
       return isInventory ? 'Importing Lots...' : isSales ? 'Reconciling Sales...' : 'Ingesting Buyers...';
     }
-    return isInventory ? 'Confirm & Import Lots' : isSales ? 'Confirm & Reconcile Sales' : 'Confirm & Ingest Buyers';
+    if (isInventory) {
+      return 'Confirm & Import Lots';
+    }
+    return saveButtonText || (isSales ? 'Confirm & Reconcile Sales' : 'Confirm & Ingest Buyers');
   };
 
   return (

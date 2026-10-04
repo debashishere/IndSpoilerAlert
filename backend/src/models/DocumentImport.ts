@@ -26,6 +26,9 @@ const DocumentImportSchema: Schema = new Schema({
   s3Bucket: { type: String, required: false },
   s3Key: { type: String, required: false },
   createdAt: { type: Date, default: Date.now }
+}, {
+  toJSON: { flattenMaps: true },
+  toObject: { flattenMaps: true }
 });
 
 export default mongoose.model<IDocumentImport>('DocumentImport', DocumentImportSchema);

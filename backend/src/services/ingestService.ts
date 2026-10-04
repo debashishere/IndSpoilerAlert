@@ -190,9 +190,16 @@ export async function getIngestionJobStatus(id: string) {
     throw new Error('Ingestion job not found.');
   }
   const obj = docImport.toObject();
+  const rawMapping = docImport.suggestedMapping;
+  const suggestedMapping = rawMapping instanceof Map
+    ? Object.fromEntries(rawMapping)
+    : (rawMapping || {});
+
   return {
     ...obj,
-    documentId: docImport._id.toString()
+    suggestedMapping,
+    documentId: docImport._id.toString(),
+    rawHeaders: (docImport.rawGrid && docImport.rawGrid.length > 0) ? docImport.rawGrid[0] : []
   };
 }
 
@@ -391,6 +398,7 @@ export async function uploadAndParseFile(
     return {
       documentId: docImport._id,
       fileName: docImport.fileName,
+      rawHeaders: headers,
       rawGrid,
       suggestedMapping
     };

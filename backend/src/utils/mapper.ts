@@ -119,13 +119,13 @@ export function suggestMappings(headers: string[]): Record<string, string> {
     return mapping;
   }
 
-  const skuRegex = /^(sku|stock.*keeping|prod.*id|product.*id|part.*num|item.*num|code|id)$/i;
-  const skuRegexFuzzy = /sku|stock.*keeping|prod.*id|product.*id|part.*num|item.*num|code|id/i;
-  
-  const lotRegex = /^(lot|lot.*number|lot.*no|batch|batch.*no|batch.*number)$/i;
+  const lotRegex = /^(lot|lot.*number|lot.*code|lot.*no|batch|batch.*no|batch.*number|batch.*code)$/i;
   const lotRegexFuzzy = /lot|batch/i;
 
-  const qtyRegex = /^(qty|quantity|cases|volume|count|units|pack|quantity.*cases|qty.*cases|sold.*cases)$/i;
+  const skuRegex = /^(sku|stock.*keeping|prod.*id|product.*id|part.*num|item.*num|item.*code|sku.*code|product.*code|id)$/i;
+  const skuRegexFuzzy = /sku|stock.*keeping|prod.*id|product.*id|part.*num|item.*num|item.*code/i;
+  
+  const qtyRegex = /^(qty|quantity|cases|volume|count|units|pack|quantity.*cases|qty.*cases|sold.*cases|cases.*available)$/i;
   const qtyRegexFuzzy = /qty|quantity|cases|volume|count|units|pack|sold/i;
 
   const warehouseRegex = /^(warehouse|dc|dist.*center|distribution.*center|location|facility|site)$/i;
@@ -278,7 +278,7 @@ export function suggestMappings(headers: string[]): Record<string, string> {
     const expRegex = /^(exp|expiry|expiration|date|best.*before|exp.*date|expiration.*date)$/i;
     const expRegexFuzzy = /exp|expiry|expiration|date|best.*before/i;
     
-    const priceRegex = /^(price|cost|original.*price|unit.*cost|rate|value|unit.*price)$/i;
+    const priceRegex = /^(price|cost|original.*price|unit.*cost|rate|value|unit.*price|price.*case|price\s*[\/\-]\s*case)$/i;
     const priceRegexFuzzy = /price|cost|original.*price|unit.*cost|rate|value/i;
 
     const mfgRegex = /^(mfg.*date|production.*date|manufacture.*date|mfg|mfg.*dt)$/i;
@@ -312,7 +312,9 @@ export function suggestMappings(headers: string[]): Record<string, string> {
     for (const header of headers) {
       if (!header || typeof header !== 'string') continue;
       const cleanHeader = header.trim();
-      if (!mapping.sku && skuRegex.test(cleanHeader)) {
+      if (!mapping.lotNumber && lotRegex.test(cleanHeader)) {
+        mapping.lotNumber = cleanHeader;
+      } else if (!mapping.sku && skuRegex.test(cleanHeader)) {
         mapping.sku = cleanHeader;
       } else if (!mapping.description && descRegex.test(cleanHeader)) {
         mapping.description = cleanHeader;
@@ -329,8 +331,6 @@ export function suggestMappings(headers: string[]): Record<string, string> {
         mapping.expirationDate = cleanHeader;
       } else if (!mapping.originalPrice && priceRegex.test(cleanHeader)) {
         mapping.originalPrice = cleanHeader;
-      } else if (!mapping.lotNumber && lotRegex.test(cleanHeader)) {
-        mapping.lotNumber = cleanHeader;
       } else if (!mapping.productionDate && mfgRegex.test(cleanHeader)) {
         mapping.productionDate = cleanHeader;
       } else if (!mapping.subCategory && subCategoryRegex.test(cleanHeader)) {
