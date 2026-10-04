@@ -213,8 +213,13 @@
   _Avoid_: `Standalone File Dialog`, `Unmapped OCR Dump`, `Single-Pipeline Scanner`.
 - **Multi-Pipeline Document Ingress Target**: The explicit upstream target selector (`inventory` | `sales` | `buyers`) in the Image & Doc Scanner workbench directing OCR-extracted tabular rows and suggested mappings into their designated destination pipeline schema before extraction and commit.
   _Avoid_: `Implicit Document Routing`, `Single-Target OCR Ingest`.
-- **In-Situ Document Commit Handshake**: The direct commit and reconciliation workflow within the Image & Doc Scanner where parsed OCR tables are committed via `GridMapperTable` in import mode, rendering a completion summary with generated lot/record IDs and pipeline navigation CTAs ("Scan Another Document", "View in Pipeline Table →").
-  _Avoid_: `Template-Only Scanner Limitation`, `Silent OCR Commit`.
+- **Dedicated Subtab Ingress Architecture**: The layout organization within batch and document ingress workbenches (`CsvExcelIntegrationView`, `DocScannerIntegrationView`) dividing operations into two distinct views: `New Upload` (or `New Scan`) for active document ingestion, and `History` for historical batch audit rosters, avoiding vertical page crowding.
+  _Avoid_: `Single-Page 4-Quadrant Waterfall`, `Scroll-Heavy Ingress Stack`.
+- **Deferred Schema Mapper Lifecycle**: The operational state lifecycle wherein `In-Situ Schema Field Mapper` remains unrendered by default until a source file is explicitly selected and parsed, or until a historical batch is actively re-staged, preserving cognitive calm and viewport space.
+  _Avoid_: `Eager Empty Schema Mapper`, `Permanent Unmapped Grid`.
+- **Compact Data Type Selector**: The ergonomic, low-profile destination pipeline target selector (`inventory` | `sales` | `buyers`) styled as sleek, compact cards or segmented buttons (`h-11`) with clear iconography and clean labels without cognitive badge noise.
+  _Avoid_: `Bloated Multi-Line Target Cards`, `Badge-Spammed Radio Stacks`.
+
 
 ## Liquidation Automation Studio Architecture
 

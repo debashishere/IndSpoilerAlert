@@ -854,4 +854,53 @@ describe('DocScannerIntegrationView 4-Quadrant Architecture', () => {
     expect(screen.getByTestId('target-card-buyers')).toHaveAttribute('data-active', 'false');
     expect(onTargetChange).toHaveBeenCalledWith('inventory');
   });
+
+  it('renders dedicated subtabs ("New Scan" and "History") and keeps mapper hidden until document is staged or re-staged', async () => {
+    const store = createTestStore({
+      core: { suppliers: [{ _id: 'sup-1', name: 'Fresh Greens Co' }] },
+      ingestion: { selectedSupplier: 'sup-1', pipelineTab: 'inventory' },
+    });
+
+    render(
+      <Provider store={store}>
+        <DocScannerIntegrationView supplierId="sup-1" initialTarget="inventory" />
+      </Provider>
+    );
+
+    // Both subtabs exist
+    const scanTab = screen.getByRole('tab', { name: /New Scan/i });
+    const historyTab = screen.getByRole('tab', { name: /History/i });
+    expect(scanTab).toBeInTheDocument();
+    expect(historyTab).toBeInTheDocument();
+
+    // Default active subtab is New Scan
+    expect(scanTab).toHaveAttribute('aria-selected', 'true');
+    expect(historyTab).toHaveAttribute('aria-selected', 'false');
+
+    // Intake is visible
+    expect(screen.getByTestId('doc-scanner-quadrant-2-dropzone')).toBeVisible();
+
+    // Mapper is hidden by default before upload/re-staging
+    const mapper = screen.getByTestId('doc-scanner-quadrant-4-mapper');
+    expect(mapper).toHaveClass('hidden');
+
+    // Switch to History subtab
+    fireEvent.click(historyTab);
+    expect(historyTab).toHaveAttribute('aria-selected', 'true');
+    expect(scanTab).toHaveAttribute('aria-selected', 'false');
+
+    // Roster panel is now visible
+    const historyPanel = screen.getByTestId('doc-scanner-quadrant-3-roster').parentElement;
+    expect(historyPanel).toHaveClass('block');
+
+    // Re-stage doc-ocr-001 from History
+    const restageBtn = screen.getByTestId('map-schema-doc-ocr-001');
+    fireEvent.click(restageBtn);
+
+    // Switches automatically back to New Scan subtab and unhides mapper
+    expect(scanTab).toHaveAttribute('aria-selected', 'true');
+    expect(mapper).toHaveClass('block');
+    expect(mapper).not.toHaveClass('hidden');
+  });
 });
+

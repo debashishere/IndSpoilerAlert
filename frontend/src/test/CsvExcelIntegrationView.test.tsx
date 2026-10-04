@@ -717,8 +717,49 @@ describe('CsvExcelIntegrationView Seams', () => {
       expect(onTargetChangeSpy).toHaveBeenCalledWith('sales');
       expect(screen.getByTestId('csv-mapper-target-pill')).toHaveTextContent('Target: Sales Data');
     });
+
+    it('renders dedicated subtabs ("New Upload" and "History") and hides mapper until document upload or re-staging', () => {
+      const store = createTestStore({
+        core: { suppliers: [{ _id: 'sup-apex', name: 'Apex Foods' }] },
+      });
+
+      render(
+        <Provider store={store}>
+          <CsvExcelIntegrationView initialTarget="inventory" supplierId="sup-apex" />
+        </Provider>
+      );
+
+      // Verify subtabs
+      const uploadTab = screen.getByRole('tab', { name: /New Upload/i });
+      const historyTab = screen.getByRole('tab', { name: /History/i });
+      expect(uploadTab).toBeInTheDocument();
+      expect(historyTab).toBeInTheDocument();
+
+      // Default active is New Upload
+      expect(uploadTab).toHaveAttribute('aria-selected', 'true');
+      expect(historyTab).toHaveAttribute('aria-selected', 'false');
+
+      // Mapper is hidden initially
+      const mapper = screen.getByTestId('csv-quadrant-4-mapper');
+      expect(mapper).toHaveClass('hidden');
+
+      // Switch to History subtab
+      fireEvent.click(historyTab);
+      expect(historyTab).toHaveAttribute('aria-selected', 'true');
+      expect(uploadTab).toHaveAttribute('aria-selected', 'false');
+
+      // Re-stage batch-inv-01 from History
+      const restageBtn = screen.getByTestId('restage-batch-batch-inv-01');
+      fireEvent.click(restageBtn);
+
+      // Switches back to New Upload and unhides mapper
+      expect(uploadTab).toHaveAttribute('aria-selected', 'true');
+      expect(mapper).toHaveClass('block');
+      expect(mapper).not.toHaveClass('hidden');
+    });
   });
 });
+
 
 
 
