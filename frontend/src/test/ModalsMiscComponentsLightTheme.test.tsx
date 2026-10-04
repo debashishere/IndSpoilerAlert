@@ -10,7 +10,6 @@ import { BuyerBidModal } from '../components/domain/marketplace/BuyerBidModal';
 import { SmartAudienceLotSelector } from '../components/SmartAudienceLotSelector';
 import { BuyerListManagerModal } from '../components/domain/ingestion/BuyerListManagerModal';
 import { LiveDevicePreview } from '../components/LiveDevicePreview';
-import { InteractiveTour } from '../components/InteractiveTour';
 
 function createMockStore(preloadedState = {}) {
   return configureStore({
@@ -183,44 +182,6 @@ describe('Issue 09 — Modals & Misc Components Light Theme', () => {
       const mobileBtn = screen.getByTestId('device-toggle-mobile');
       expect(mobileBtn.className).toContain('text-slate-600');
       expect(mobileBtn.className).toContain('dark:text-slate-400');
-    });
-  });
-
-  describe('6. InteractiveTour Light Theme', () => {
-    it('renders tour assistant widget card legibly with light mode theme support', () => {
-      render(
-        <InteractiveTour
-          activeTab="ingestion"
-          setActiveTab={vi.fn()}
-          selectedSupplier="supp-1"
-          setSelectedSupplier={vi.fn()}
-          setFile={vi.fn()}
-          setParsedResult={vi.fn()}
-          setMappings={vi.fn()}
-          setIsImported={vi.fn()}
-          setImportCount={vi.fn()}
-          setImportedLotIds={vi.fn()}
-          setSelectedLot={vi.fn()}
-          setSelectedLotHubId={vi.fn()}
-          inventoryList={[]}
-          fetchInventory={vi.fn()}
-          fetchShipments={vi.fn()}
-          API_BASE_URL="/api"
-          suppliers={[]}
-          openLotOperationsHub={vi.fn()}
-        />
-      );
-
-      const tourTitle = screen.getByText('Surplus Liquidation Loop');
-      expect(tourTitle).toBeInTheDocument();
-      expect(tourTitle.className).toContain('text-slate-900');
-      expect(tourTitle.className).toContain('dark:text-white');
-
-      const widgetCard = tourTitle.closest('div.fixed') as HTMLElement;
-      expect(widgetCard).toBeInTheDocument();
-      expect(widgetCard.className).toContain('bg-white');
-      expect(widgetCard.className).toContain('dark:bg-slate-900');
-      expect(widgetCard.className).toContain('border-slate-200');
     });
   });
 });

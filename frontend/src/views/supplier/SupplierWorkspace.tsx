@@ -41,7 +41,6 @@ import { fetchInventoryLotsThunk } from '../../services/inventoryService';
 const AnalyticsView = React.lazy(() => import('../AnalyticsView').then(m => ({ default: m.AnalyticsView || m.default })));
 const MarketplaceLandingView = React.lazy(() => import('../marketplace/MarketplaceLandingView').then(m => ({ default: m.MarketplaceLandingView || m.default })));
 import { MarketplaceLayout } from '../../components/shell/MarketplaceLayout';
-import { InteractiveTour } from '../../components/InteractiveTour';
 import { SettingsView } from '../SettingsView';
 import { EmailCommunicationsView } from '../EmailCommunicationsView';
 import { EmailsHubView } from '../EmailsHubView';
@@ -2665,28 +2664,7 @@ ${selectedLot.supplierId?.name || 'CPG Supplier'} Operations Team`);
         </div>
       )}
 
-      {activeTab === 'ingestion' && (
-        <InteractiveTour
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          selectedSupplier={selectedSupplier}
-          setSelectedSupplier={setSelectedSupplier}
-          setFile={setFile}
-          setParsedResult={setParsedResult}
-          setMappings={setMappings}
-          setIsImported={setIsImported}
-          setImportCount={setImportCount}
-          setImportedLotIds={setImportedLotIds}
-          setSelectedLot={setSelectedLot}
-          setSelectedLotHubId={setSelectedLotHubId}
-          inventoryList={inventoryList}
-          fetchInventory={fetchInventory}
-          fetchShipments={fetchShipments}
-          API_BASE_URL={API_BASE_URL}
-          suppliers={suppliers}
-          openLotOperationsHub={openLotOperationsHub}
-        />
-      )}
+
       {/* Reference unused state/handlers for TS compliance */}
       {(() => { void [file, parsedResult, mappings, isImported, importCount, importedLotIds, _fileInputRef, _handleSelectLotById, _handlePlaceBid, _handleBuyerBuyItNow]; return null; })()}
     </div>
