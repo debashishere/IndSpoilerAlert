@@ -1448,6 +1448,8 @@ export interface ISheetSyncDetails {
   spreadsheetTitle?: string;
   sheetName: string;
   supplierTemplateId?: mongoose.Types.ObjectId;
+  sampleHeaders?: string[];
+  sampleRows?: string[][];
 }
 
 export async function recordSyncCompletion(
@@ -1519,7 +1521,9 @@ export async function recordSyncCompletion(
         'connectedSheets.$.lastSyncedAt': now,
         'connectedSheets.$.lastSyncMetrics': metricsPayload,
         ...(sheetDetails.spreadsheetTitle ? { 'connectedSheets.$.spreadsheetTitle': sheetDetails.spreadsheetTitle } : {}),
-        ...(sheetDetails.supplierTemplateId ? { 'connectedSheets.$.supplierTemplateId': sheetDetails.supplierTemplateId } : {})
+        ...(sheetDetails.supplierTemplateId ? { 'connectedSheets.$.supplierTemplateId': sheetDetails.supplierTemplateId } : {}),
+        ...(sheetDetails.sampleHeaders && sheetDetails.sampleHeaders.length > 0 ? { 'connectedSheets.$.sampleHeaders': sheetDetails.sampleHeaders } : {}),
+        ...(sheetDetails.sampleRows && sheetDetails.sampleRows.length > 0 ? { 'connectedSheets.$.sampleRows': sheetDetails.sampleRows } : {})
       }
     },
     { new: true }
@@ -1546,7 +1550,9 @@ export async function recordSyncCompletion(
           syncStatus,
           lastSyncedAt: now,
           lastSyncMetrics: metricsPayload,
-          supplierTemplateId: sheetDetails.supplierTemplateId
+          supplierTemplateId: sheetDetails.supplierTemplateId,
+          sampleHeaders: sheetDetails.sampleHeaders || [],
+          sampleRows: sheetDetails.sampleRows || []
         }
       }
     },
@@ -1648,13 +1654,12 @@ export async function getGoogleSheetsSampleRows(params: IGetGoogleSheetsSampleRo
   // Check if a template is explicitly bound to this spreadsheet / sheetName
   let existingTemplate: any = null;
   const config = await GoogleSheetsSyncConfig.findOne({ supplierId });
-  if (config && config.connectedSheets) {
-    const matchingSheet = config.connectedSheets.find(
-      s => s.spreadsheetId === spreadsheetId && (!sheetName || s.sheetName === sheetName)
-    );
-    if (matchingSheet?.supplierTemplateId) {
-      existingTemplate = await SupplierTemplate.findById(matchingSheet.supplierTemplateId);
-    }
+  const matchingSheet = config?.connectedSheets?.find(
+    s => s.spreadsheetId === spreadsheetId && (!sheetName || s.sheetName === sheetName)
+  );
+
+  if (matchingSheet?.supplierTemplateId) {
+    existingTemplate = await SupplierTemplate.findById(matchingSheet.supplierTemplateId);
   }
 
   if (!existingTemplate && config?.supplierTemplateId) {
@@ -1665,7 +1670,129 @@ export async function getGoogleSheetsSampleRows(params: IGetGoogleSheetsSampleRo
     existingTemplate = await SupplierTemplate.findOne({ supplierId });
   }
 
-  // Baseline standard canonical headers
+  // 1. Prioritize real sheet sample headers & rows captured directly during webhook sync
+  if (
+    matchingSheet?.sampleHeaders &&
+    matchingSheet.sampleHeaders.length > 0 &&
+    matchingSheet.sampleRows &&
+    matchingSheet.sampleRows.length > 0
+  ) {
+    const rawHeaders = matchingSheet.sampleHeaders;
+    const sampleRows = matchingSheet.sampleRows.slice(0, 5);
+
+    let suggestedMapping: Record<string, string> = {};
+    if (existingTemplate && existingTemplate.columnMappings) {
+      if (existingTemplate.columnMappings instanceof Map) {
+        existingTemplate.columnMappings.forEach((val: string, key: string) => {
+          suggestedMapping[key] = val;
+        });
+      } else {
+        Object.assign(suggestedMapping, existingTemplate.columnMappings);
+      }
+    } else {
+      suggestedMapping = suggestMappings(rawHeaders);
+    }
+
+    return {
+      documentId: `gsheet-handshake-${spreadsheetId.slice(0, 8)}`,
+      fileName: `Google Sheets: ${sheetName}`,
+      rawGrid: [rawHeaders, ...sampleRows],
+      suggestedMapping
+    };
+  }
+
+  // 2. Alternatively, check if synced InventoryLot records exist for this spreadsheet
+  const syncedLots = await InventoryLot.find({
+    supplierId,
+    'attributes.spreadsheetId': spreadsheetId,
+    ...(sheetName ? { 'attributes.sheetName': sheetName } : {})
+  })
+    .populate('productId')
+    .populate('distributionCenterId')
+    .sort({ updatedAt: -1 })
+    .limit(5);
+
+  if (syncedLots.length > 0) {
+    const firstLot = syncedLots[0];
+    const rawAttrKeys = firstLot.rawAttributes instanceof Map
+      ? Array.from(firstLot.rawAttributes.keys())
+      : (firstLot.rawAttributes ? Object.keys(firstLot.rawAttributes) : []);
+
+    const baseHeaders = [
+      'lotNumber',
+      'sku',
+      'brand',
+      'category',
+      'subCategory',
+      'description',
+      'productionDate',
+      'expirationDate',
+      'quantityCases',
+      'availableQty',
+      'costPerCase',
+      'standardSellPrice',
+      'status',
+      'fdaRegulated',
+      'temperatureMin',
+      'temperatureMax',
+      'warehouse'
+    ];
+
+    const rawHeaders = Array.from(new Set([...baseHeaders, ...rawAttrKeys]));
+
+    const realSampleRows = syncedLots.map((lot: any) => {
+      const prod: any = lot.productId || {};
+      const dc: any = lot.distributionCenterId || {};
+      const rawAttrs = lot.rawAttributes instanceof Map
+        ? Object.fromEntries(lot.rawAttributes)
+        : (lot.rawAttributes || {});
+
+      return rawHeaders.map((header) => {
+        switch (header) {
+          case 'lotNumber': return lot.lotNumber || '';
+          case 'sku': return prod.sku || '';
+          case 'brand': return prod.brand || '';
+          case 'category': return prod.category || '';
+          case 'subCategory': return prod.subCategory || '';
+          case 'description': return prod.description || '';
+          case 'productionDate': return lot.productionDate ? new Date(lot.productionDate).toISOString().slice(0, 10) : '';
+          case 'expirationDate': return lot.expirationDate ? new Date(lot.expirationDate).toISOString().slice(0, 10) : '';
+          case 'quantityCases': return lot.quantityCases != null ? String(lot.quantityCases) : '';
+          case 'availableQty': return lot.availableQty != null ? String(lot.availableQty) : '';
+          case 'costPerCase': return lot.costPerCase != null ? String(lot.costPerCase) : '';
+          case 'standardSellPrice': return lot.standardSellPrice != null ? String(lot.standardSellPrice) : '';
+          case 'status': return lot.status || 'active';
+          case 'fdaRegulated': return lot.fdaRegulated != null ? String(lot.fdaRegulated).toUpperCase() : '';
+          case 'temperatureMin': return lot.temperatureMin != null ? String(lot.temperatureMin) : '';
+          case 'temperatureMax': return lot.temperatureMax != null ? String(lot.temperatureMax) : '';
+          case 'warehouse': return dc.name || dc.address || '';
+          default: return rawAttrs[header] != null ? String(rawAttrs[header]) : '';
+        }
+      });
+    });
+
+    let suggestedMapping: Record<string, string> = {};
+    if (existingTemplate && existingTemplate.columnMappings) {
+      if (existingTemplate.columnMappings instanceof Map) {
+        existingTemplate.columnMappings.forEach((val: string, key: string) => {
+          suggestedMapping[key] = val;
+        });
+      } else {
+        Object.assign(suggestedMapping, existingTemplate.columnMappings);
+      }
+    } else {
+      suggestedMapping = suggestMappings(rawHeaders);
+    }
+
+    return {
+      documentId: `gsheet-handshake-${spreadsheetId.slice(0, 8)}`,
+      fileName: `Google Sheets: ${sheetName}`,
+      rawGrid: [rawHeaders, ...realSampleRows],
+      suggestedMapping
+    };
+  }
+
+  // Baseline standard canonical headers (fallback when no live data has synced)
   const defaultHeaderMap: Record<string, string> = {
     sku: 'SKU / Item Code',
     description: 'Product Title',

@@ -90,4 +90,33 @@ describe('Slice 1: ingestService Template Mapping Persistence and Dynamic Sample
     expect(sampleResult.suggestedMapping.description).toBe('Product Title');
     expect(sampleResult.suggestedMapping.quantity).toBe('Case Count');
   });
+
+  it('getGoogleSheetsSampleRows returns real live sheet sample rows and headers when present in connectedSheets', async () => {
+    await GoogleSheetsSyncConfig.findOneAndUpdate(
+      { supplierId },
+      {
+        $push: {
+          connectedSheets: {
+            spreadsheetId: 'sheet-real-headers-456',
+            sheetName: 'LiveInventory',
+            syncStatus: 'success',
+            lastSyncMetrics: { totalRows: 1, inserted: 1, updated: 0, depleted: 0, errors: [] },
+            sampleHeaders: ['MySKU', 'MyProduct', 'MyCases'],
+            sampleRows: [['REAL-SKU-999', 'Real Organic Apples', '500']]
+          }
+        }
+      }
+    );
+
+    const sampleResult = await (ingestService as any).getGoogleSheetsSampleRows({
+      supplierId,
+      spreadsheetId: 'sheet-real-headers-456',
+      sheetName: 'LiveInventory'
+    });
+
+    expect(sampleResult).toBeDefined();
+    expect(sampleResult.rawGrid).toHaveLength(2); // 1 header row + 1 data row
+    expect(sampleResult.rawGrid[0]).toEqual(['MySKU', 'MyProduct', 'MyCases']);
+    expect(sampleResult.rawGrid[1]).toEqual(['REAL-SKU-999', 'Real Organic Apples', '500']);
+  });
 });

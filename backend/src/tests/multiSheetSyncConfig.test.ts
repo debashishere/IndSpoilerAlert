@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import GoogleSheetsSyncConfig, { IConnectedSheet } from '../models/GoogleSheetsSyncConfig';
 import Supplier from '../models/Supplier';
+import SupplierTemplate from '../models/SupplierTemplate';
 
 describe('GoogleSheetsSyncConfig Model Seam - Multi-Sheet Subdocument Array', () => {
   let supplierId: mongoose.Types.ObjectId;
@@ -450,6 +451,8 @@ describe('GoogleSheetsSyncConfig Model Seam - Multi-Sheet Subdocument Array', ()
     let supplierId: mongoose.Types.ObjectId;
 
     beforeAll(async () => {
+      await Supplier.deleteMany({ companyCode: 'PERSHEET_SUPPLIER' });
+      await GoogleSheetsSyncConfig.deleteMany({ ingressKey });
       const supplier = await Supplier.create({
         name: 'Per-Sheet Mapping Supplier',
         companyCode: 'PERSHEET_SUPPLIER',

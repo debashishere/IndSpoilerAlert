@@ -103,7 +103,9 @@ export async function processGoogleSheetsWebhook(
       spreadsheetId: targetSpreadsheetId,
       spreadsheetTitle: targetSpreadsheetTitle || matchingConnectedSheet?.spreadsheetTitle,
       sheetName: targetSheetName,
-      supplierTemplateId: effectiveTemplateId
+      supplierTemplateId: effectiveTemplateId,
+      sampleHeaders: rawHeaders.length > 0 ? rawHeaders : matchingConnectedSheet?.sampleHeaders,
+      sampleRows: rawRows.length > 0 ? rawRows.slice(0, 10) : matchingConnectedSheet?.sampleRows
     } : undefined
   );
 

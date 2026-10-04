@@ -16,6 +16,8 @@ export interface IConnectedSheet {
   lastSyncedAt?: Date;
   lastSyncMetrics: ISyncMetrics;
   supplierTemplateId?: mongoose.Types.ObjectId;
+  sampleHeaders?: string[];
+  sampleRows?: string[][];
 }
 
 export interface IGoogleSheetsSyncConfig extends Document {
@@ -50,7 +52,9 @@ const ConnectedSheetSchema: Schema = new Schema(
       depleted: { type: Number, default: 0 },
       errors: { type: [String], default: [] }
     },
-    supplierTemplateId: { type: Schema.Types.ObjectId, ref: 'SupplierTemplate' }
+    supplierTemplateId: { type: Schema.Types.ObjectId, ref: 'SupplierTemplate' },
+    sampleHeaders: { type: [String], default: [] },
+    sampleRows: { type: [[String]], default: [] }
   },
   { _id: false }
 );
