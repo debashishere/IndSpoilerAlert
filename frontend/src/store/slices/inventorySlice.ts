@@ -263,12 +263,36 @@ export const inventorySlice = createSlice({
     },
     updateLotInList: (state, action: PayloadAction<any>) => {
       const updated = action.payload;
-      const idx = state.inventoryList.findIndex((item) => item._id === updated._id);
+      const idx = state.inventoryList.findIndex((item) => (item._id && item._id === updated._id) || (item.id && item.id === updated.id));
       if (idx !== -1) {
         state.inventoryList[idx] = { ...state.inventoryList[idx], ...updated };
       }
-      if (state.selectedLot?._id === updated._id) {
+      if (state.selectedLot && ((state.selectedLot._id && state.selectedLot._id === updated._id) || (state.selectedLot.id && state.selectedLot.id === updated.id))) {
         state.selectedLot = { ...state.selectedLot, ...updated };
+      }
+    },
+    editInventoryLot: (state, action: PayloadAction<any>) => {
+      const updated = action.payload;
+      const idx = state.inventoryList.findIndex((item) => (item._id && item._id === updated._id) || (item.id && item.id === updated.id));
+      if (idx !== -1) {
+        state.inventoryList[idx] = { ...state.inventoryList[idx], ...updated };
+      }
+      if (state.selectedLot && ((state.selectedLot._id && state.selectedLot._id === updated._id) || (state.selectedLot.id && state.selectedLot.id === updated.id))) {
+        state.selectedLot = { ...state.selectedLot, ...updated };
+      }
+    },
+    archiveInventoryLot: (state, action: PayloadAction<string>) => {
+      const lotId = action.payload;
+      const lot = state.inventoryList.find((l) => l._id === lotId || l.id === lotId);
+      if (lot) {
+        lot.status = lot.status === 'Archived' ? 'Available' : 'Archived';
+      }
+    },
+    deleteInventoryLot: (state, action: PayloadAction<string>) => {
+      const lotId = action.payload;
+      state.inventoryList = state.inventoryList.filter((l) => l._id !== lotId && l.id !== lotId);
+      if (state.selectedLot && (state.selectedLot._id === lotId || state.selectedLot.id === lotId)) {
+        state.selectedLot = null;
       }
     },
     openRiskModal: (state, action: PayloadAction<any>) => {
@@ -433,6 +457,9 @@ export const {
   setComplianceUploading,
   setComplianceError,
   updateLotInList,
+  editInventoryLot,
+  archiveInventoryLot,
+  deleteInventoryLot,
   openRiskModal,
   openComplianceModal,
   openAwardModal,

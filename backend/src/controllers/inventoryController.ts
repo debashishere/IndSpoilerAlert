@@ -206,9 +206,10 @@ export async function addShipmentTemperatureLog(req: Request, res: Response) {
 
 export async function updateLot(req: Request, res: Response) {
   const { id } = req.params;
-  const { fdaRegulated, temperatureMin, temperatureMax, comment } = req.body;
+  const { fdaRegulated, temperatureMin, temperatureMax, comment, ...rest } = req.body;
   try {
     const result = await inventoryService.updateLot(id, {
+      ...rest,
       fdaRegulated,
       temperatureMin: temperatureMin !== undefined && temperatureMin !== null && temperatureMin !== '' ? parseFloat(temperatureMin) : undefined,
       temperatureMax: temperatureMax !== undefined && temperatureMax !== null && temperatureMax !== '' ? parseFloat(temperatureMax) : undefined,
@@ -216,6 +217,9 @@ export async function updateLot(req: Request, res: Response) {
     });
     return res.json(result);
   } catch (error: any) {
+    if (error.message && error.message.includes('Cannot edit inventory')) {
+      return res.status(400).json({ error: error.message });
+    }
     return res.status(500).json({ error: error.message });
   }
 }

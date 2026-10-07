@@ -24,8 +24,14 @@ import { SalesFilterBar } from './subcomponents/SalesFilterBar';
 import { SalesModernTable } from './subcomponents/SalesModernTable';
 import { SalesUploadModal } from './subcomponents/SalesUploadModal';
 import { SalesMappingPreview } from './subcomponents/SalesMappingPreview';
+import { EditSaleModal } from './subcomponents/EditSaleModal';
+import type { SalesRecord } from './types/ingestion.types';
 
-export const SalesRegistryPanel: React.FC = () => {
+export interface SalesRegistryPanelProps {
+  onEditSale?: (record: SalesRecord) => void;
+}
+
+export const SalesRegistryPanel: React.FC<SalesRegistryPanelProps> = ({ onEditSale }) => {
   const dispatch = useAppDispatch();
   
   const suppliers = useAppSelector((state) => state.core.suppliers);
@@ -45,6 +51,32 @@ export const SalesRegistryPanel: React.FC = () => {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isEditSaleOpen, setIsEditSaleOpen] = useState(false);
+  const [selectedSaleForEdit, setSelectedSaleForEdit] = useState<SalesRecord | null>(null);
+
+  const handleEditSale = (record: SalesRecord) => {
+    if (onEditSale) {
+      onEditSale(record);
+    } else {
+      setSelectedSaleForEdit(record);
+      setIsEditSaleOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    const handleOpenEditEvent = (e: any) => {
+      if (e.detail?.record) {
+        setSelectedSaleForEdit(e.detail.record);
+        setIsEditSaleOpen(true);
+      }
+    };
+    window.addEventListener('open-edit-sale-modal', handleOpenEditEvent);
+    window.addEventListener('open-edit-sales-modal', handleOpenEditEvent);
+    return () => {
+      window.removeEventListener('open-edit-sale-modal', handleOpenEditEvent);
+      window.removeEventListener('open-edit-sales-modal', handleOpenEditEvent);
+    };
+  }, []);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const actualFileRef = useRef<File | null>(null);
@@ -53,7 +85,9 @@ export const SalesRegistryPanel: React.FC = () => {
   const effectiveSupplierId = selectedSupplier || (availableSuppliers.length > 0 ? (availableSuppliers[0]._id || '') : '');
 
   // Headless hook orchestrating sales records, filters, progressive drawer, and master toggle-all sync
-  const pipeline = useSalesPipeline();
+  const pipeline = useSalesPipeline({
+    onEditSale: handleEditSale,
+  });
 
   useEffect(() => {
     dispatch(fetchSalesRecordsThunk(effectiveSupplierId));
@@ -273,6 +307,7 @@ export const SalesRegistryPanel: React.FC = () => {
             onReconcileInvoice={pipeline.handleReconcileInvoice}
             onAuthorizeDockGatePass={pipeline.handleAuthorizeDockGatePass}
             onLiveFleetTelemetry={pipeline.handleLiveFleetTelemetry}
+            onEditSale={handleEditSale}
             currentPage={pipeline.currentPage}
             totalPages={pipeline.totalPages}
             onPageChange={pipeline.setCurrentPage}
@@ -282,6 +317,16 @@ export const SalesRegistryPanel: React.FC = () => {
           />
         )}
       </div>
+
+      {/* Edit Sale Record Modal */}
+      <EditSaleModal
+        isOpen={isEditSaleOpen}
+        onClose={() => {
+          setIsEditSaleOpen(false);
+          setSelectedSaleForEdit(null);
+        }}
+        saleRecord={selectedSaleForEdit}
+      />
     </div>
   );
 };

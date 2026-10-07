@@ -120,6 +120,21 @@ export class InventoryService {
     return res.json();
   }
 
+  static async editInventoryLot(lotId: string, updates: any): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/inventory/lot/${lotId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `Failed to edit inventory lot: ${res.statusText}`);
+    }
+    return res.json();
+  }
+
   static async uploadComplianceDoc(lotId: string, docType: string, file: File): Promise<any> {
     const formData = new FormData();
     formData.append('file', file);

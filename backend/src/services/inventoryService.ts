@@ -971,10 +971,22 @@ export async function addShipmentTemperatureLog(shipmentId: string, temperature:
   return shipment;
 }
 
-export async function updateLot(lotId: string, updates: { fdaRegulated?: boolean; temperatureMin?: number; temperatureMax?: number; comment?: string }) {
+export async function updateLot(lotId: string, updates: { fdaRegulated?: boolean; temperatureMin?: number; temperatureMax?: number; comment?: string; [key: string]: any }) {
   const lot = await InventoryLot.findById(lotId);
   if (!lot) {
     throw new Error('Inventory Lot not found.');
+  }
+
+  // Reject edit if inventory is listed in bidding
+  const activeListing = await MarketplaceListing.findOne({
+    lotId: lot._id,
+    allowBidding: true,
+    status: 'active'
+  });
+  const isBiddingStatus = typeof lot.status === 'string' && lot.status.toLowerCase().includes('bidding');
+  const isBiddingFlag = (lot as any).isListedInBidding || (lot as any).listedInBidding || (lot as any).bidding;
+  if (activeListing || isBiddingStatus || isBiddingFlag) {
+    throw new Error('Cannot edit inventory: Lot is currently listed in bidding.');
   }
 
   if (updates.fdaRegulated !== undefined) {
@@ -988,6 +1000,25 @@ export async function updateLot(lotId: string, updates: { fdaRegulated?: boolean
   }
   if (updates.comment !== undefined) {
     lot.comment = updates.comment;
+  }
+  if (updates.quantityCases !== undefined) {
+    lot.quantityCases = updates.quantityCases;
+    lot.availableQty = updates.availableQty ?? updates.quantityCases;
+  }
+  if (updates.costPerCase !== undefined) {
+    lot.costPerCase = updates.costPerCase;
+  }
+  if (updates.standardSellPrice !== undefined) {
+    lot.standardSellPrice = updates.standardSellPrice;
+  }
+  if (updates.expirationDate !== undefined) {
+    lot.expirationDate = new Date(updates.expirationDate);
+  }
+  if (updates.lotNumber !== undefined) {
+    lot.lotNumber = updates.lotNumber;
+  }
+  if (updates.status !== undefined) {
+    lot.status = updates.status;
   }
 
   await lot.save();

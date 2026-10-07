@@ -18,6 +18,7 @@ export const PipelineSwitcherBar: React.FC<PipelineSwitcherBarProps> = ({
   onAddBuyer,
   onCreateBuyer,
   onCreateInventory,
+  onEditInventory,
   onCreateSales,
   onToggleAll,
 }) => {

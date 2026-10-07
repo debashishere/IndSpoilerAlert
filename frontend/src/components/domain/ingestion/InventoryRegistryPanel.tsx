@@ -29,7 +29,10 @@ import { InventoryModernTable } from './subcomponents/InventoryModernTable';
 import { InventoryUploadModal } from './subcomponents/InventoryUploadModal';
 import { InventoryMappingPreview } from './subcomponents/InventoryMappingPreview';
 
-export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => void }> = ({ onOpenLotHub }) => {
+export const InventoryRegistryPanel: React.FC<{
+  onOpenLotHub?: (lot: any) => void;
+  onEditInventory?: (lot?: any) => void;
+}> = ({ onOpenLotHub, onEditInventory }) => {
   const dispatch = useAppDispatch();
   const { user, token } = useAuth();
 
@@ -299,6 +302,9 @@ export const InventoryRegistryPanel: React.FC<{ onOpenLotHub?: (lot: any) => voi
             onOpenLotHub={pipeline.handleOpenLotHub}
             onOpenRiskModal={pipeline.handleOpenRiskModal}
             onOpenComplianceModal={pipeline.handleOpenComplianceModal}
+            onEditInventory={onEditInventory || ((lot) => {
+              window.dispatchEvent(new CustomEvent('open-edit-inventory-modal', { detail: { lot } }));
+            })}
             currentPage={pipeline.currentPage}
             totalPages={pipeline.totalPages}
             onPageChange={pipeline.setCurrentPage}

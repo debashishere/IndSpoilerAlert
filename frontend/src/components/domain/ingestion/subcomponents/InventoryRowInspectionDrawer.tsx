@@ -7,9 +7,12 @@ import {
   Thermometer, 
   Calendar, 
   DollarSign, 
-  Layers 
+  Layers,
+  Archive,
+  Edit3
 } from 'lucide-react';
 import type { InventoryRowInspectionDrawerProps } from '../types/ingestion.types';
+import { isLotListedInBidding } from '../utils/inventoryUtils';
 
 export const InventoryRowInspectionDrawer: React.FC<InventoryRowInspectionDrawerProps> = ({
   lot,
@@ -17,9 +20,17 @@ export const InventoryRowInspectionDrawer: React.FC<InventoryRowInspectionDrawer
   onOpenComplianceModal,
   onPushToBidding,
   onQuarantine,
+  onArchive,
+  onDelete,
+  onEditInventory,
 }) => {
-  const [quarantined, setQuarantined] = useState(false);
+  const [quarantined, setQuarantined] = useState(
+    lot.status === 'Archived' || lot.status === 'Quarantined' || false
+  );
   const [biddingPushed, setBiddingPushed] = useState(false);
+  const [editRejection, setEditRejection] = useState<string | null>(null);
+
+  const isBiddingActive = biddingPushed || isLotListedInBidding(lot);
 
   // Formatting helpers
   const tempMin = lot.temperatureMin ?? 34;
@@ -70,10 +81,30 @@ export const InventoryRowInspectionDrawer: React.FC<InventoryRowInspectionDrawer
     }
   };
 
-  const handleQuarantine = () => {
-    setQuarantined(!quarantined);
+  const handleArchiveOrDelete = () => {
+    const nextState = !quarantined;
+    setQuarantined(nextState);
+    if (onArchive) {
+      onArchive(lot);
+    }
+    if (onDelete) {
+      onDelete(lot);
+    }
     if (onQuarantine) {
       onQuarantine(lot);
+    }
+  };
+
+  const handleEdit = () => {
+    if (isBiddingActive) {
+      setEditRejection('Cannot edit inventory: Lot is currently listed in bidding.');
+      return;
+    }
+    setEditRejection(null);
+    if (onEditInventory) {
+      onEditInventory(lot);
+    } else {
+      window.dispatchEvent(new CustomEvent('open-edit-inventory-modal', { detail: { lot } }));
     }
   };
 
@@ -184,6 +215,26 @@ export const InventoryRowInspectionDrawer: React.FC<InventoryRowInspectionDrawer
               <span>Open Operations Hub</span>
             </button>
 
+            {/* Edit Inventory Button */}
+            <button
+              type="button"
+              id={`edit-inv-btn-${lot._id}`}
+              onClick={handleEdit}
+              className={`w-full py-1 px-2.5 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer border ${
+                isBiddingActive
+                  ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed'
+                  : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
+              }`}
+            >
+              <Edit3 className="w-3 h-3 text-slate-500" />
+              <span>{isBiddingActive ? 'Edit (Locked in Bidding)' : 'Edit Inventory'}</span>
+            </button>
+            {editRejection && (
+              <div role="alert" className="text-[10px] text-rose-600 bg-rose-50 border border-rose-200 rounded p-1 font-medium text-center">
+                {editRejection}
+              </div>
+            )}
+
             {/* Push to Bidding */}
             <button
               type="button"
@@ -198,7 +249,7 @@ export const InventoryRowInspectionDrawer: React.FC<InventoryRowInspectionDrawer
               <span>{biddingPushed ? 'Pushed to Bidding ✓' : 'Push to Bidding'}</span>
             </button>
 
-            {/* COA and Quarantine buttons */}
+            {/* COA and Delete buttons */}
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -210,15 +261,16 @@ export const InventoryRowInspectionDrawer: React.FC<InventoryRowInspectionDrawer
               </button>
               <button
                 type="button"
-                onClick={handleQuarantine}
+                aria-label={quarantined ? 'Archived' : 'Delete'}
+                onClick={handleArchiveOrDelete}
                 className={`py-1 px-2 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1 border transition-colors cursor-pointer ${
                   quarantined
                     ? 'bg-rose-600 text-white border-rose-600'
                     : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border-rose-200'
                 }`}
               >
-                <ShieldAlert className="w-3 h-3" />
-                <span>{quarantined ? 'Quarantined' : 'Quarantine'}</span>
+                <Archive className="w-3 h-3" />
+                <span>{quarantined ? 'Archived' : 'Delete'}</span>
               </button>
             </div>
           </div>

@@ -315,6 +315,14 @@ export const ingestionSlice = createSlice({
     addSalesRecord: (state, action: PayloadAction<any>) => {
       state.salesRecords.unshift(action.payload);
     },
+    updateSalesRecord: (state, action: PayloadAction<any>) => {
+      const updated = action.payload;
+      const id = updated._id || updated.id;
+      const index = state.salesRecords.findIndex((r) => (r._id || r.id) === id);
+      if (index !== -1) {
+        state.salesRecords[index] = { ...state.salesRecords[index], ...updated };
+      }
+    },
     setSalesRecordsLoading: (state, action: PayloadAction<boolean>) => {
       state.salesRecordsLoading = action.payload;
     },
@@ -555,6 +563,7 @@ export const {
   setSalesImportSuccess,
   setSalesRecords,
   addSalesRecord,
+  updateSalesRecord,
   setSalesRecordsLoading,
   setBuyerSearch,
   setBuyerTierFilter,

@@ -296,8 +296,9 @@ describe('Issue #0121: Slice 3 - Inventory Pipeline Modern Grid & Progressive In
 
       // Verify Batch Operations CTA buttons
       expect(screen.getByRole('button', { name: /Open Operations Hub/i })).toBeDefined();
+      expect(screen.getAllByRole('button', { name: /Edit/i }).length).toBeGreaterThanOrEqual(1);
       expect(screen.getByRole('button', { name: /COA/i })).toBeDefined();
-      expect(screen.getByRole('button', { name: /Quarantine/i })).toBeDefined();
+      expect(screen.getByRole('button', { name: /Delete|Archive/i })).toBeDefined();
       expect(screen.getByRole('button', { name: /Push to Bidding/i })).toBeDefined();
 
       // Re-clicking collapses the drawer

@@ -10,6 +10,9 @@ export const InventoryModernTable: React.FC<InventoryModernTableProps> = ({
   onOpenLotHub,
   onOpenRiskModal,
   onOpenComplianceModal,
+  onEditInventory,
+  onArchive,
+  onDelete,
   currentPage = 1,
   totalPages = 1,
   onPageChange,
@@ -306,6 +309,9 @@ export const InventoryModernTable: React.FC<InventoryModernTableProps> = ({
                         lot={lot}
                         onOpenLotHub={onOpenLotHub}
                         onOpenComplianceModal={onOpenComplianceModal}
+                        onEditInventory={onEditInventory}
+                        onArchive={onArchive}
+                        onDelete={onDelete}
                       />
                     </div>
                   )}

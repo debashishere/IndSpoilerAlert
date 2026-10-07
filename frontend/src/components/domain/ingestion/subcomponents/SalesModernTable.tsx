@@ -10,6 +10,7 @@ export const SalesModernTable: React.FC<SalesModernTableProps> = ({
   onReconcileInvoice,
   onAuthorizeDockGatePass,
   onLiveFleetTelemetry,
+  onEditSale,
   currentPage = 1,
   totalPages = 1,
   onPageChange,
@@ -266,6 +267,7 @@ export const SalesModernTable: React.FC<SalesModernTableProps> = ({
                         onReconcileInvoice={onReconcileInvoice}
                         onAuthorizeDockGatePass={onAuthorizeDockGatePass}
                         onLiveFleetTelemetry={onLiveFleetTelemetry}
+                        onEditSale={onEditSale}
                       />
                     </div>
                   )}

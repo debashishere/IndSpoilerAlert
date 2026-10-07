@@ -7,12 +7,14 @@ export interface UseSalesPipelineOptions {
   onReconcileInvoice?: (record: SalesRecord) => void;
   onAuthorizeDockGatePass?: (record: SalesRecord) => void;
   onLiveFleetTelemetry?: (record: SalesRecord) => void;
+  onEditSale?: (record: SalesRecord) => void;
 }
 
 export function useSalesPipeline({
   onReconcileInvoice,
   onAuthorizeDockGatePass,
   onLiveFleetTelemetry,
+  onEditSale,
 }: UseSalesPipelineOptions = {}) {
   const dispatch = useAppDispatch();
 
@@ -296,6 +298,12 @@ export function useSalesPipeline({
     }
   }, [onLiveFleetTelemetry]);
 
+  const handleEditSale = useCallback((record: SalesRecord) => {
+    if (onEditSale) {
+      onEditSale(record);
+    }
+  }, [onEditSale]);
+
   // Live ERP Clearing Count
   const clearingRecordCount = useMemo(() => {
     return rawSalesRecords?.length || 0;
@@ -323,11 +331,7 @@ export function useSalesPipeline({
     clearingRecordCount,
     expandedRowIds,
     allAreOpen,
-    currentPage,
     pageSize,
-    totalPages,
-    paginatedRecords,
-    setCurrentPage,
     setPageSize: handlePageSizeChange,
     toggleRow,
     expandAllRows,
@@ -343,5 +347,6 @@ export function useSalesPipeline({
     handleReconcileInvoice,
     handleAuthorizeDockGatePass,
     handleLiveFleetTelemetry,
+    handleEditSale,
   };
 }

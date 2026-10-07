@@ -41,6 +41,7 @@ export interface PipelineSwitcherBarProps {
   onAddBuyer?: () => void;
   onCreateBuyer?: () => void;
   onCreateInventory?: () => void;
+  onEditInventory?: (lot?: any) => void;
   onCreateSales?: () => void;
   onToggleAll?: () => void;
 }
@@ -81,6 +82,9 @@ export interface InventoryRowInspectionDrawerProps {
   onOpenComplianceModal?: (lot: any) => void;
   onPushToBidding?: (lot: any) => void;
   onQuarantine?: (lot: any) => void;
+  onArchive?: (lot: any) => void;
+  onDelete?: (lot: any) => void;
+  onEditInventory?: (lot: any) => void;
 }
 
 export interface InventoryModernTableProps {
@@ -90,6 +94,9 @@ export interface InventoryModernTableProps {
   onOpenLotHub?: (lot: any) => void;
   onOpenRiskModal?: (lot: any) => void;
   onOpenComplianceModal?: (lot: any) => void;
+  onEditInventory?: (lot: any) => void;
+  onArchive?: (lot: any) => void;
+  onDelete?: (lot: any) => void;
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;
@@ -167,6 +174,7 @@ export interface SalesRowInspectionDrawerProps {
   onReconcileInvoice?: (record: SalesRecord) => void;
   onAuthorizeDockGatePass?: (record: SalesRecord) => void;
   onLiveFleetTelemetry?: (record: SalesRecord) => void;
+  onEditSale?: (record: SalesRecord) => void;
 }
 
 export interface SalesModernTableProps {
@@ -176,6 +184,7 @@ export interface SalesModernTableProps {
   onReconcileInvoice?: (record: SalesRecord) => void;
   onAuthorizeDockGatePass?: (record: SalesRecord) => void;
   onLiveFleetTelemetry?: (record: SalesRecord) => void;
+  onEditSale?: (record: SalesRecord) => void;
   currentPage?: number;
   totalPages?: number;
   onPageChange?: (page: number) => void;

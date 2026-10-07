@@ -7,7 +7,8 @@ import {
   Calendar, 
   DollarSign, 
   CheckCircle2, 
-  ExternalLink 
+  ExternalLink,
+  Edit3
 } from 'lucide-react';
 import type { SalesRowInspectionDrawerProps } from '../types/ingestion.types';
 
@@ -16,6 +17,7 @@ export const SalesRowInspectionDrawer: React.FC<SalesRowInspectionDrawerProps> =
   onReconcileInvoice,
   onAuthorizeDockGatePass,
   onLiveFleetTelemetry,
+  onEditSale,
 }) => {
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
 
@@ -62,6 +64,15 @@ export const SalesRowInspectionDrawer: React.FC<SalesRowInspectionDrawerProps> =
     setTimeout(() => setActionFeedback(null), 3000);
     if (onLiveFleetTelemetry) {
       onLiveFleetTelemetry(record);
+    }
+  };
+
+  const handleEditSale = () => {
+    if (onEditSale) {
+      onEditSale(record);
+    } else {
+      window.dispatchEvent(new CustomEvent('open-edit-sale-modal', { detail: { record } }));
+      window.dispatchEvent(new CustomEvent('open-edit-sales-modal', { detail: { record } }));
     }
   };
 
@@ -236,6 +247,18 @@ export const SalesRowInspectionDrawer: React.FC<SalesRowInspectionDrawerProps> =
                 <span>Reconcile Invoice</span>
               </button>
             )}
+
+            {/* Edit Sale Button */}
+            <button
+              type="button"
+              id={`edit-sale-btn-${record._id}`}
+              data-testid={`edit-sale-btn-${record._id}`}
+              onClick={handleEditSale}
+              className="w-full py-1.5 px-2.5 rounded-lg text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer border bg-white hover:bg-slate-50 text-slate-700 border-slate-300 shadow-2xs"
+            >
+              <Edit3 className="w-3 h-3 text-slate-500" />
+              <span>Edit Sale</span>
+            </button>
 
             {/* Contextual auxiliary actions if not already primary */}
             <div className="flex items-center gap-1.5">

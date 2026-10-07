@@ -23,6 +23,7 @@ import {
   CsvExcelIntegrationView,
   PipelineSwitcherBar,
   CreateInventoryModal,
+  EditInventoryModal,
   CreateSalesModal,
   type IngestionTarget,
   type IngestionConnectorId
@@ -131,6 +132,8 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
   const supplierName = currentSupplier?.name || 'Verified Supplier';
 
   const [isCreateInventoryOpen, setIsCreateInventoryOpen] = useState(false);
+  const [isEditInventoryOpen, setIsEditInventoryOpen] = useState(false);
+  const [selectedLotForEdit, setSelectedLotForEdit] = useState<any | null>(null);
   const [isCreateSalesOpen, setIsCreateSalesOpen] = useState(false);
 
   const handleTabChange = useCallback((tab: PipelineTab) => {
@@ -159,6 +162,12 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
     setIsCreateInventoryOpen(true);
   }, [dispatch]);
 
+  const handleEditInventory = useCallback((lot?: any) => {
+    dispatch(setPipelineTab('inventory'));
+    setSelectedLotForEdit(lot || null);
+    setIsEditInventoryOpen(true);
+  }, [dispatch]);
+
   const handleCreateSales = useCallback(() => {
     dispatch(setPipelineTab('sales'));
     setIsCreateSalesOpen(true);
@@ -168,15 +177,21 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
     window.dispatchEvent(new CustomEvent('toggle-all-rows'));
   }, []);
 
-  // Listen for create record modal open events
+  // Listen for create/edit record modal open events
   useEffect(() => {
     const handleOpenCreateInv = () => setIsCreateInventoryOpen(true);
+    const handleOpenEditInv = (e: any) => {
+      setSelectedLotForEdit(e.detail?.lot || null);
+      setIsEditInventoryOpen(true);
+    };
     const handleOpenCreateSale = () => setIsCreateSalesOpen(true);
 
     window.addEventListener('open-create-inventory-modal', handleOpenCreateInv);
+    window.addEventListener('open-edit-inventory-modal', handleOpenEditInv);
     window.addEventListener('open-create-sales-modal', handleOpenCreateSale);
     return () => {
       window.removeEventListener('open-create-inventory-modal', handleOpenCreateInv);
+      window.removeEventListener('open-edit-inventory-modal', handleOpenEditInv);
       window.removeEventListener('open-create-sales-modal', handleOpenCreateSale);
     };
   }, []);
@@ -294,6 +309,7 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
         onAddBuyer={handleAddBuyer}
         onCreateBuyer={handleCreateBuyer}
         onCreateInventory={handleCreateInventory}
+        onEditInventory={handleEditInventory}
         onCreateSales={handleCreateSales}
         onToggleAll={handleToggleAll}
       />
@@ -302,7 +318,10 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
       <div className="w-full transition-opacity duration-150">
         {pipelineTab === 'inventory' && (
           <div id="panel-inventory">
-            <InventoryRegistryPanel onOpenLotHub={onOpenLotHub} />
+            <InventoryRegistryPanel
+              onOpenLotHub={onOpenLotHub}
+              onEditInventory={handleEditInventory}
+            />
           </div>
         )}
 
@@ -319,11 +338,20 @@ export const IngestionView: React.FC<IngestionViewProps> = ({ onOpenLotHub }) =>
         )}
       </div>
 
-      {/* Create Record Modals */}
+      {/* Create & Edit Record Modals */}
       <CreateInventoryModal
         isOpen={isCreateInventoryOpen}
         onClose={() => setIsCreateInventoryOpen(false)}
         supplierId={supplierId}
+      />
+
+      <EditInventoryModal
+        isOpen={isEditInventoryOpen}
+        onClose={() => {
+          setIsEditInventoryOpen(false);
+          setSelectedLotForEdit(null);
+        }}
+        lot={selectedLotForEdit}
       />
 
       <CreateSalesModal
