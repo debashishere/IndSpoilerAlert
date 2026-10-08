@@ -46,7 +46,18 @@ export function useSalesPipeline({
   // Dynamic filter lists
   const buyersList = useMemo(() => {
     const fromRecords = salesRecords
-      .map((r) => r.buyerName || r.buyerCompany || r.buyerEmail || r.customer)
+      .map((r) =>
+        r.buyerName ||
+        r.buyerCompany ||
+        r.buyerId?.companyName ||
+        r.buyerId?.name ||
+        r.buyerOrg ||
+        r.buyerOrganization ||
+        r.buyerEmail ||
+        r.buyerId?.email ||
+        r.customer ||
+        (typeof r.buyer === 'string' ? r.buyer : r.buyer?.companyName)
+      )
       .filter(Boolean) as string[];
     const combined = Array.from(new Set([...fromRecords, ...INGESTION_CONSTANTS.SALES_FILTER_DEFAULTS.BUYERS]));
     return combined;
@@ -75,8 +86,18 @@ export function useSalesPipeline({
       const prod = (r.productName || r.description || r.product || '').toLowerCase();
       const sku = (r.sku || r.productId || '').toLowerCase();
       const lotNum = (r.lotNumber || r['Lot Number'] || r.lot || r.lotNo || '').toLowerCase();
-      const bName = (r.buyerName || r.buyerCompany || r.customer || '').toLowerCase();
-      const bEmail = (r.buyerEmail || '').toLowerCase();
+      const bName = (
+        r.buyerName ||
+        r.buyerCompany ||
+        r.buyerId?.companyName ||
+        r.buyerId?.name ||
+        r.buyerOrg ||
+        r.buyerOrganization ||
+        r.customer ||
+        (typeof r.buyer === 'string' ? r.buyer : r.buyer?.companyName) ||
+        ''
+      ).toLowerCase();
+      const bEmail = (r.buyerEmail || r.buyerId?.email || '').toLowerCase();
       const inv = (r.invoiceNumber || r.contractNumber || r.invoice || '').toLowerCase();
       const warehouse = (r.warehouse || r.dc || r.location || '').toLowerCase();
       const carrier = (r.trackingCarrier || '').toLowerCase();

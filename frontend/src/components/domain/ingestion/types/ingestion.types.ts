@@ -117,6 +117,9 @@ export interface SalesRecord {
   buyerName?: string;
   buyerEmail?: string;
   buyerCompany?: string;
+  buyerOrg?: string;
+  buyerOrganization?: string;
+  buyerId?: any;
   buyerNode?: string;
   warehouse?: string;
   dc?: string;
@@ -124,6 +127,9 @@ export interface SalesRecord {
   storageTemp?: string;
   dockType?: string;
   quantitySold: number;
+  quantityCases?: number;
+  cases?: number;
+  quantity?: number;
   pricePerCase: number;
   totalRevenue?: number;
   totalValue?: number;

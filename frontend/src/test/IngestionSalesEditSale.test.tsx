@@ -138,6 +138,41 @@ describe('Sales Tab: Row-Level "Edit Sale" Button in OPERATIONAL ACTIONS', () =>
     expect(handleEditSale).toHaveBeenCalledWith(mockSalesRecords[1]);
   });
 
+  it('renders Buyer Organization and Cases in SalesModernTable from backend schema (buyerId.companyName and quantityCases)', () => {
+    const backendSaleRecord: any = {
+      _id: 'sales-row-backend',
+      sku: 'SKU-BEV-99',
+      description: 'Sparkling Spring Water 12-Pack',
+      lotNumber: 'LOT-2026-99',
+      quantityCases: 1250,
+      pricePerCase: 8.5,
+      totalValue: 10625,
+      buyerId: {
+        _id: 'buyer-org-123',
+        companyName: 'Ocean State Job Lot Regional',
+        email: 'procurement@oceanstate.com',
+      },
+      warehouse: 'DC-East (Edison, NJ)',
+      saleDate: '2026-09-20',
+      status: 'confirmed',
+    };
+
+    render(
+      <SalesModernTable
+        records={[backendSaleRecord]}
+        expandedRowIds={new Set()}
+        onToggleRow={vi.fn()}
+      />
+    );
+
+    // Verify buyer company name is displayed instead of fallback 'Enterprise Liquidator'
+    expect(screen.getByText('Ocean State Job Lot Regional')).toBeDefined();
+    expect(screen.queryByText('Enterprise Liquidator')).toBeNull();
+
+    // Verify cases quantity is displayed as formatted number (1,250 cs) instead of 0 cs
+    expect(screen.getByText('1,250 cs')).toBeDefined();
+  });
+
   it('opens EditSaleModal from SalesRegistryPanel and allows updating a sale record', async () => {
     // Return empty on fetchSalesRecords so preloaded state is preserved or mock returns updated
     vi.spyOn(ingestionService, 'fetchSalesRecords').mockImplementation(async () => mockSalesRecords);
@@ -217,5 +252,83 @@ describe('Sales Tab: Row-Level "Edit Sale" Button in OPERATIONAL ACTIONS', () =>
 
     expect(screen.getByRole('alert')).toBeDefined();
     expect(screen.getByText(/Please provide a product title\/description/i)).toBeDefined();
+  });
+
+  it('prefills Buyer Organization and Quantity Sold (Cases) when record uses backend schema (buyerId.companyName and quantityCases)', () => {
+    const store = createTestStore();
+    const backendSaleRecord: any = {
+      _id: 'sales-backend-101',
+      sku: 'SKU-BEV-99',
+      description: 'Sparkling Spring Water 12-Pack',
+      lotNumber: 'LOT-2026-99',
+      quantityCases: 1250,
+      pricePerCase: 8.5,
+      totalValue: 10625,
+      buyerId: {
+        _id: 'buyer-org-123',
+        companyName: 'Ocean State Job Lot Regional',
+        email: 'procurement@oceanstate.com',
+      },
+      warehouse: 'DC-East (Edison, NJ)',
+      saleDate: '2026-09-20',
+      status: 'confirmed',
+    };
+
+    render(
+      <Provider store={store}>
+        <EditSaleModal
+          isOpen={true}
+          onClose={vi.fn()}
+          saleRecord={backendSaleRecord}
+        />
+      </Provider>
+    );
+
+    // Verify Buyer Organization is prefilled
+    const buyerInput = screen.getByPlaceholderText('e.g. Whole Foods Market Regional') as HTMLInputElement;
+    expect(buyerInput.value).toBe('Ocean State Job Lot Regional');
+
+    // Verify Quantity Sold (Cases) is prefilled
+    const casesInput = screen.getByPlaceholderText('e.g. 5400') as HTMLInputElement;
+    expect(casesInput.value).toBe('1250');
+
+    // Submitting without modifying buyer or cases should not trigger validation error for buyer or cases
+    const submitBtn = screen.getByRole('button', { name: /Save Changes/i });
+    fireEvent.click(submitBtn);
+
+    expect(screen.queryByText(/Please provide a buyer company or organization name/i)).toBeNull();
+    expect(screen.queryByText(/Please enter a valid quantity sold greater than 0/i)).toBeNull();
+  });
+
+  it('prefills Buyer Organization and Quantity Sold (Cases) when record uses buyerOrg and cases properties', () => {
+    const store = createTestStore();
+    const altSaleRecord: any = {
+      _id: 'sales-alt-102',
+      productName: 'Organic Cheddar Blocks',
+      sku: 'SKU-CHK-55',
+      lotNumber: 'LOT-2026-55',
+      cases: 840,
+      pricePerCase: 12.0,
+      buyerOrg: 'Costco Wholesale Clearing',
+      warehouse: 'DC-Central (Dallas, TX)',
+      saleDate: '2026-09-21',
+      status: 'Settled',
+    };
+
+    render(
+      <Provider store={store}>
+        <EditSaleModal
+          isOpen={true}
+          onClose={vi.fn()}
+          saleRecord={altSaleRecord}
+        />
+      </Provider>
+    );
+
+    const buyerInput = screen.getByPlaceholderText('e.g. Whole Foods Market Regional') as HTMLInputElement;
+    expect(buyerInput.value).toBe('Costco Wholesale Clearing');
+
+    const casesInput = screen.getByPlaceholderText('e.g. 5400') as HTMLInputElement;
+    expect(casesInput.value).toBe('840');
   });
 });

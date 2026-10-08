@@ -41,9 +41,32 @@ export const EditSaleModal: React.FC<EditSaleModalProps> = ({
       setProductName(saleRecord.productName || saleRecord.description || saleRecord.product || '');
       setSku(saleRecord.sku || saleRecord.productId || '');
       setLotNumber(saleRecord.lotNumber || saleRecord['Lot Number'] || saleRecord.lot || saleRecord.lotNo || '');
-      setBuyerName(saleRecord.buyerName || saleRecord.buyerCompany || saleRecord.customer || '');
-      setBuyerEmail(saleRecord.buyerEmail || '');
-      setQuantitySold(saleRecord.quantitySold ?? saleRecord.quantity ?? '');
+      const resolvedBuyer =
+        saleRecord.buyerName ||
+        saleRecord.buyerCompany ||
+        saleRecord.buyerId?.companyName ||
+        saleRecord.buyerId?.name ||
+        saleRecord.buyerOrg ||
+        saleRecord.buyerOrganization ||
+        saleRecord['Buyer Organization'] ||
+        saleRecord.customer ||
+        (typeof saleRecord.buyer === 'string' ? saleRecord.buyer : saleRecord.buyer?.companyName) ||
+        '';
+      const resolvedBuyerEmail =
+        saleRecord.buyerEmail ||
+        saleRecord.buyerId?.email ||
+        saleRecord.buyer?.email ||
+        '';
+      const resolvedCases =
+        saleRecord.quantitySold ??
+        saleRecord.quantityCases ??
+        saleRecord.cases ??
+        saleRecord.quantity ??
+        '';
+
+      setBuyerName(resolvedBuyer);
+      setBuyerEmail(resolvedBuyerEmail);
+      setQuantitySold(resolvedCases);
       setPricePerCase(saleRecord.pricePerCase ?? saleRecord.unitPrice ?? saleRecord.price ?? '');
 
       const st = saleRecord.status || 'Settled';
@@ -130,6 +153,8 @@ export const EditSaleModal: React.FC<EditSaleModalProps> = ({
       location: dcLocation,
       quantitySold: Number(quantitySold),
       quantity: Number(quantitySold),
+      quantityCases: Number(quantitySold),
+      cases: Number(quantitySold),
       pricePerCase: Number(pricePerCase),
       totalRevenue: calculatedRevenue,
       totalValue: calculatedRevenue,

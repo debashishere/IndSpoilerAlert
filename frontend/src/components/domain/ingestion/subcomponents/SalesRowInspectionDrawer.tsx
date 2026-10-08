@@ -52,7 +52,8 @@ export const SalesRowInspectionDrawer: React.FC<SalesRowInspectionDrawerProps> =
   };
 
   const handleGatePass = () => {
-    setActionFeedback(`Dock gate pass authorized for ${record.buyerName || record.buyerCompany || 'carrier'}!`);
+    const bName = record.buyerName || record.buyerCompany || record.buyerId?.companyName || record.buyerOrg || 'carrier';
+    setActionFeedback(`Dock gate pass authorized for ${bName}!`);
     setTimeout(() => setActionFeedback(null), 3000);
     if (onAuthorizeDockGatePass) {
       onAuthorizeDockGatePass(record);

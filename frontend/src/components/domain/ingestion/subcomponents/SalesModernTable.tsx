@@ -156,11 +156,20 @@ export const SalesModernTable: React.FC<SalesModernTableProps> = ({
               const productName = record.productName || record.description || record.product || 'Surplus Sales Item';
               const sku = record.sku || record.productId || 'SKU-GEN';
               const lotNumber = record.lotNumber || record['Lot Number'] || record.lot || record.lotNo || '#001';
-              const buyerCompany = record.buyerCompany || record.buyerName || record.customer || 'Enterprise Liquidator';
+              const buyerCompany =
+                record.buyerCompany ||
+                record.buyerName ||
+                record.buyerId?.companyName ||
+                record.buyerId?.name ||
+                record.buyerOrg ||
+                record.buyerOrganization ||
+                record.customer ||
+                (typeof record.buyer === 'string' ? record.buyer : record.buyer?.companyName) ||
+                'Enterprise Liquidator';
               const buyerNode = record.buyerNode || 'Regional Outlet';
               const dcName = record.warehouse || record.dc || record.location || 'Logistics Hub Central';
               const dockType = record.dockType || record.storageTemp || 'Ambient Freight';
-              const qtySold = record.quantitySold ?? record.quantity ?? 0;
+              const qtySold = record.quantitySold ?? record.quantityCases ?? record.cases ?? record.quantity ?? 0;
               const pricePerCase = record.pricePerCase ?? record.unitPrice ?? record.price ?? 0;
               const revenue = record.totalRevenue ?? record.totalValue ?? (qtySold * pricePerCase);
 
